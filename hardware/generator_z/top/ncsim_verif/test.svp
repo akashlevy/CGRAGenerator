@@ -48,16 +48,33 @@ program automatic `mname`(
    jtag_regfile_trans_t jtag_config_trans;      
    task run_test;
       begin
-	 jdrv.ReadID(jtag_ofst_trans);
+	 jdrv.ReadID(jtag_config_trans);
 	//Begin CGRA configuration
  	 
 	 // initialization of structs:
 	 jtag_config_trans.domain = sc_domain;
-	 jtag_config_trans.addr = 31'd1;
-	 jtag_config_trans.data_out = '0;
-	 
+	 jtag_config_trans.addr = 32'd1;
+	 jtag_config_trans.data_out = 32'd0;
+	 	
+	 @(posedge ifc.Clk);
+	 jtag_config_trans.data_in = 32'd25;
+	 jtag_config_trans.done = 0;
+	 jtag_config_trans.op = write;
+	 jdrv.Send(jtag_config_trans);
+	 $fdisplay(fd,"%t: %m: Trans 1 (Write):  Address to GC=%d, Data to GC=%d",  
+		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
+ 
+	 @(posedge ifc.Clk);
+	 jtag_config_trans.data_in = 32'd0;
+	 jtag_config_trans.done = 0;
+	 jtag_config_trans.op = read;
+	 jtag_config_trans.data_out = 0;
+	 jdrv.Send(jtag_config_trans);
+	 jtag_config_trans = jdrv.GetResult();
+	 $fdisplay(fd,"%t: %m: Trans 2 (Read):  Address to GC=%d, Data to GC=%d, Data from GC=%d",  
+		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
 	//PARAMETRIZE THESE
-	 while( !feof(config_file) ) begin
+	 /*while( !feof(config_file) ) begin
 		@(posedge ifc.Clk);
 		status = $fscanf(config_file,"%x %x", config_addr,config_data);
 		jtag_config_trans.data_in = config_data;
@@ -80,7 +97,8 @@ program automatic `mname`(
 		//REVERSE THE BITS
 		for(i=0; i<8; i++)
 			pads_S2[15-i] = pads_in_char[i];	
-	 end 
+	 end */
+
 	 /*@(posedge ifc.Clk);
 	 jtag_ofst_trans.data_in = 25;
 	 jtag_ofst_trans.done = 0;
@@ -109,10 +127,10 @@ program automatic `mname`(
       $display("%t:\t********************Loading Arguments***********************",$time);
       init_test;
       fd = $fopen("test.log","w");
-      config_file = $fopen(`$config_bs`,"r");
+      config_file = $fopen("`$config_bs`","r");
       if(!config_file)
 	$display("ERROR: Could not open `$config_bs`");	
-      input_file = $fopen(`$input_file`,"r");
+      input_file = $fopen("`$input_file`","r");
       if(!input_file)
 	$display("ERROR: Could not open `$input_file`");
       $display("%t:\t*************************START*****************************",$time);
@@ -130,7 +148,7 @@ program automatic `mname`(
       begin
 	 // read user input
 	 //ProcessArgs();
-	 rnd0 = $random(seed); // initial the random number generator
+	 //rnd0 = $random(seed); // initial the random number generator
 	 
 	 // init the environment
 	 jdrv = new(ifc);

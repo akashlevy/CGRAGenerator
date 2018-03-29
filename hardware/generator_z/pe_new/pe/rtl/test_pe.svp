@@ -88,6 +88,7 @@ module   `mname`  #(
   input         [31:0] cfg_d,
   input         [7:0]  cfg_a,
   input                cfg_en,
+  input                config_write,
 
 //;} else {
   input [15:0]                  op_code,
@@ -134,7 +135,7 @@ module   `mname`  #(
   output logic                   irq,
 //;}
   output logic                   res_p,
-  output logic [DataWidth-1:0]  read_data
+  output logic [31:0]  read_data
 );
 
 logic  [DataWidth-1:0]        op_a;
@@ -171,7 +172,7 @@ always_ff @(posedge clk or negedge rst_n) begin
   if(~rst_n) begin
     inp_code <= 'h0;
     op_code  <= 'h0;
-  end else if(cfg_en && (&cfg_a)) begin // (&cfg_a) means cfg_a == 8'hFF
+  end else if(cfg_en && (&cfg_a) && config_write) begin // (&cfg_a) means cfg_a == 8'hFF
     inp_code <= cfg_d[31:16];
     op_code  <= cfg_d[15:0];
   end
@@ -189,7 +190,7 @@ assign nc_op_code = op_code;
   .clk        (clk),
   .clk_en     (clk_en),
   .rst_n      (rst_n),
-  .load       (cfg_en && (cfg_a == 8'hF0)),
+  .load       (cfg_en && (cfg_a == 8'hF0) && config_write),
   .val        (cfg_d[DataWidth-1:0]),
   .mode       (inp_code[1:0]),
   .data_in    (data0),//op_a_in),
@@ -249,13 +250,13 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
 
 
 //; if($use_cntr | $use_acc) {
-  assign op_b_ld  = (cfg_en && (cfg_a == 8'hF1)) | (clk_en & (`$b_en_acc`));
-  assign op_b_val = (cfg_en && (cfg_a == 8'hF1)) ?
+  assign op_b_ld  = (cfg_en && (cfg_a == 8'hF1) && config_write) | (clk_en & (`$b_en_acc`));
+  assign op_b_val = (cfg_en && (cfg_a == 8'hF1) && config_write) ?
                     cfg_d[DataWidth-1:0] :
                     (`$b_acc_rst` ? {DataWidth{1'b0}}: comp_res);
 
 //;} else {
-  assign op_b_ld  = cfg_en && (cfg_a == 8'hF1);
+  assign op_b_ld  = cfg_en && (cfg_a == 8'hF1) && config_write;
   assign op_b_val = cfg_d[DataWidth-1:0];
 //;}
 
@@ -270,7 +271,7 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
 //; if($use_reg_file) {
   .cfg_d        (cfg_d[DataWidth-1:0]),
   .cfg_a        (cfg_a[7:0]),
-  .cfg_en       (cfg_en),
+  .cfg_en       (cfg_en && config_write),
 //; }
   .mode       (inp_code[4:2]),
   .data_in    (data1),//op_b_in),
@@ -303,7 +304,7 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
   .clk        (clk),
   .clk_en     (clk_en),
   .rst_n      (rst_n),
-  .load       (cfg_en && (cfg_a == 8'hF2)),
+  .load       (cfg_en && (cfg_a == 8'hF2) && config_write),
   .val        (cfg_d[DataWidth-1:0]),
   .mode       (inp_code[6:5]),
   .data_in    (data2),//op_c_in),
@@ -332,7 +333,7 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
   .clk        (clk),
   .clk_en     (clk_en),
   .rst_n      (rst_n),
-  .load       (cfg_en && (cfg_a == 8'hF3)),
+  .load       (cfg_en && (cfg_a == 8'hF3) && config_write),
   .val        (cfg_d[0]),
   .mode       (inp_code[9:8]),
   .data_in    (bit0),//op_d_p_in),
@@ -361,7 +362,7 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
   .clk        (clk),
   .clk_en     (clk_en),
   .rst_n      (rst_n),
-  .load       (cfg_en && (cfg_a == 8'hF4)),
+  .load       (cfg_en && (cfg_a == 8'hF4) && config_write),
   .val        (cfg_d[0]),
   .mode       (inp_code[11:10]),
   .data_in    (bit1),//op_e_p_in),
@@ -390,7 +391,7 @@ assign en_acc = op_code[`$opcode_acc_en_bith`:`$opcode_acc_en_bitl`];
   .clk        (clk),
   .clk_en     (clk_en),
   .rst_n      (rst_n),
-  .load       (cfg_en && (cfg_a == 8'hF5)),
+  .load       (cfg_en && (cfg_a == 8'hF5) && config_write),
   .val        (cfg_d[0]),
   .mode       (inp_code[13:12]),
   .data_in    (bit2),//op_f_p_in),
@@ -700,13 +701,14 @@ logic res_lut;
 //;    $lut_c_inp     = "op_c".$c_in_slice;
 //; }
 
+    logic [`2**$lut_inps-1`:0] read_data_lut;
 `$lut->mname()` #(.DataWidth(1)) `$lut->iname()`
 (
   .cfg_clk  (clk),
   .cfg_rst_n(rst_n),
   .cfg_d    (cfg_d),
   .cfg_a    (cfg_a),
-  .cfg_en   (cfg_en),
+  .cfg_en   (cfg_en && config_write),
 
   .op_a_in  (op_d_p),
   .op_b_in  (op_e_p),
@@ -714,7 +716,8 @@ logic res_lut;
   .op_c_in  (`$lut_c_inp`),
 //;}
 
-  .res      (res_lut)
+  .res      (res_lut),
+  .read_data (read_data_lut),
 );
 
 //; 	 if(!$get_carry) {
@@ -783,7 +786,7 @@ logic irq_bit;
   .cfg_clk   (clk),
   .cfg_rst_n (rst_n),
   .cfg_d     (cfg_d[DataWidth-1:0]),
-  .cfg_en    (cfg_en && (cfg_a == 8'hE0)),
+  .cfg_en    (cfg_en && (cfg_a == 8'hE0) && config_write),
 
   .data_in   (res),
 
@@ -796,7 +799,7 @@ logic irq_bit;
   .cfg_clk   (clk),
   .cfg_rst_n (rst_n),
   .cfg_d     (cfg_d[0]),
-  .cfg_en    (cfg_en && (cfg_a == 8'hE1)),
+  .cfg_en    (cfg_en && (cfg_a == 8'hE1) && config_write),
 
   .data_in   (res_p),
 
@@ -831,13 +834,8 @@ assign irq = |({irq_data,irq_bit} & irq_en);
 //; if($reg_inputs) {
 //; $read_data_hash->{'op_code'} = {
 //;   src => 'FF',
-//;   data => 'op_code',
+//;   data => '{inp_code, op_code}',
 //;   name => 'op_code'
-//; };
-//; $read_data_hash->{'inp_code'} = {
-//;   src => 'FE',
-//;   data => 'inp_code',
-//;   name => 'inp_code'
 //; };
 //; $read_data_hash->{'op_a'} = {
 //;   src => 'F0',
@@ -883,6 +881,13 @@ assign irq = |({irq_data,irq_bit} & irq_en);
 //; };
 //; }
 //; }
+//; if($use_lut) {
+//; $read_data_hash->{'lut'} = {
+//;   src => '00',
+//;   data => 'read_data_lut',
+//;   name => 'lut'
+//; };
+//; }
 //; if($reg_out) {
 //; $read_data_hash->{'res'} = {
 //;   src => 'C0',
@@ -896,12 +901,13 @@ assign irq = |({irq_data,irq_bit} & irq_en);
 //; };
 //; }
 always_comb begin
-    case (cfg_a)
-//; foreach my $key (sort { $read_data_hash->{$a}{'src'} cmp $read_data_hash->{$b}{'src'} } keys(%$read_data_hash))  {
-        8'h`$read_data_hash->{$key}->{'src'}` : read_data = `$read_data_hash->{$key}->{'data'}`;
-//; }
-        default : read_data = 'h0;
-    endcase
+        case (cfg_a)
+    //; foreach my $key (sort { $read_data_hash->{$a}{'src'} cmp $read_data_hash->{$b}{'src'} } keys(%$read_data_hash))  {
+            8'h`$read_data_hash->{$key}->{'src'}` : read_data = `$read_data_hash->{$key}->{'data'}`;
+    //; }
+            default : read_data = 'h0;
+        endcase
+    end
 end
 
 //;#######################################################################

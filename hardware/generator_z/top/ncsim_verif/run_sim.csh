@@ -32,7 +32,7 @@ $RTL_FOLDER/memory_core_unq1.v \
 $RTL_FOLDER/memory_tile_unq1.v \
 $RTL_FOLDER/mem_unq1.v \
 $RTL_FOLDER/output_sr_unq1.v \
-$RTL_FOLDER/pe_tile_new_unq1.v \
+$RTL_FOLDER/pe_tile_new_unq1.sv \
 $RTL_FOLDER/sb_unq1.v \
 $RTL_FOLDER/sb_unq2.v \
 $RTL_FOLDER/sb_unq3.v \
@@ -51,4 +51,5 @@ $RTL_FOLDER/test_shifter_unq1.sv \
 $RTL_FOLDER/test_top.sv \
 $RTL_FOLDER/test_unq1.sv \
 $RTL_FOLDER/top.v \
-$SYNOPSYS/dw/sim_ver/DW_tap.v 
+$SYNOPSYS/dw/sim_ver/DW_tap.v \
+../sram_512w_16b.v 

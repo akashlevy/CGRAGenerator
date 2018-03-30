@@ -409,7 +409,7 @@ wire [31:0] read_data_memory;
       .reset_in(reset_in),
       .reset_out(reset),
       .config_addr_out(config_addr),
-      .config_data_in(config_data_in),
+      .config_data_in(read_data),
       .config_data_out(config_data),
       .tdi(tdi),
       .tdo(tdo),

@@ -42,7 +42,7 @@ Genesis2.pl -parse -generate -top test_top -hierarchy top.xml -input\
   ../pe_new/pe/rtl/test_debug_reg.svp  \
   ../pe_new/pe/rtl/test_opt_reg_file.svp  \
   \
-  ../pe_tile_new/pe_tile_new.vp \
+  ../pe_tile_new/pe_tile_new.svp \
   \
   ../empty/empty.vp \
   ../io1bit/io1bit.vp \
@@ -89,7 +89,7 @@ Genesis2.pl -parse -generate -top test_top -hierarchy top.xml -input\
 
 source clean_up_cgra_inputs.csh
 source remove_genesis_wires.csh
-
+cp ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
 
 # Fixed now maybe
 # # Must fix e.g.  <depth bith='15' bitl='3'>0</depth>

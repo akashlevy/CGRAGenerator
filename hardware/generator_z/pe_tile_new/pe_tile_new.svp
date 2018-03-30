@@ -121,7 +121,7 @@ read_data
   output gout;
   input [15:0] tile_id;
   input reset;
-  output [31:0] read_data;
+  output reg [31:0] read_data;
 
   wire ___genesis_wire_`${global_signal_count}`_`${bus_config}`_`${all_segments_for_all_tiles}`_`${sides}`_`${feedthrough_outputs}`_`${registered_outputs}`_`${is_bidi}`_`${sb_fs}`_`${cb_connections}`_`${has_constant}`_`${reg_inputs}`_`${reg_out}`_`${use_add}`_`${use_cntr}`_`${use_bool}`_`${use_shift}`_`${mult_mode}`_`${use_div}`_`${is_msb}`_`${en_double}`_`${lut_inps}`;
 //; # wire clk;

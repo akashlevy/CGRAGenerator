@@ -88,8 +88,8 @@ module `mname`();
    //Since we aren't using interface here, assign singals 
    //Inputs
    assign dut.tck = dut_ifc.tck;
-   assign dut.clk_in = dut_ifc.Clk;
-   assign dut.reset_in = dut_ifc.Reset;
+   //assign dut.clk_in = dut_ifc.Clk;
+   //assign dut.reset_in = dut_ifc.Reset;
    assign dut.tdi = dut_ifc.tdi;
    assign dut.tms = dut_ifc.tms;
    assign dut.trst_n = dut_ifc.trst_n;

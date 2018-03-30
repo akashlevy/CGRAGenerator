@@ -1,7 +1,7 @@
 #!/bin/tcsh
 set RTL_FOLDER="../genesis_verif"
 rm -rf INCA_libs irun.*
-irun -top top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
+irun -top test_top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
 -input \
 cmd.tcl \
 $RTL_FOLDER/cb_unq1.v  \

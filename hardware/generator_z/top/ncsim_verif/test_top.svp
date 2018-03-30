@@ -45,10 +45,10 @@
 module `mname`();
    logic Clk;
    logic Reset;
-   logic [`$num_tracks-1`:0] pads_S0;
-   logic [`$num_tracks-1`:0] pads_S1;
-   logic [`$num_tracks-1`:0] pads_S2;
-   logic [`$num_tracks-1`:0] pads_S3;
+   wire [`$num_tracks-1`:0] pads_S0;
+   wire [`$num_tracks-1`:0] pads_S1;
+   wire [`$num_tracks-1`:0] pads_S2;
+   wire [`$num_tracks-1`:0] pads_S3;
    
    /****************************************************************************
     * Instantiate clocks
@@ -85,7 +85,7 @@ module `mname`();
 	.clk_in(Clk),
 	.reset_in(Reset)
    );
-   //Since we aren't using interface here, assign singals 
+   //Since we aren't using interface here, assign signals 
    //Inputs
    assign dut.tck = dut_ifc.tck;
    //assign dut.clk_in = dut_ifc.Clk;
@@ -93,12 +93,11 @@ module `mname`();
    assign dut.tdi = dut_ifc.tdi;
    assign dut.tms = dut_ifc.tms;
    assign dut.trst_n = dut_ifc.trst_n;
-   assign dut.config_data_in = dut_ifc.config_data_from_gc;
    //Outputs
-   assign dut_ifc.config_addr_to_gc = dut.config_addr_out;
-   assign dut_ifc.config_data_to_gc = dut.config_data_out;
+   assign dut_ifc.config_addr_to_gc = dut.global_controller.config_addr_out;
+   assign dut_ifc.config_data_to_gc = dut.global_controller.config_data_out;
    assign dut_ifc.tdo = dut.tdo;
-
+//   assign dut_ifc.config_data_from_gc = dut.global_controller.config_data_in;
    /****************************************************************************
     * Instantiate Test
     * **************************************************************************/

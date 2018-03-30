@@ -1,9 +1,9 @@
 #!/bin/tcsh
-set RTL_FOLDER="../genesis_verif"
+set RTL_FOLDER="~/CGRAGenerator/hardware/generator_z/top/genesis_verif"
 rm -rf INCA_libs irun.*
 irun -top test_top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
 -input \
-cmd.tcl \
+$RTL_FOLDER/../ncsim_verif/cmd.tcl \
 $RTL_FOLDER/cb_unq1.v  \
 $RTL_FOLDER/cb_unq2.v \
 $RTL_FOLDER/cb_unq3.v \
@@ -52,4 +52,4 @@ $RTL_FOLDER/test_top.sv \
 $RTL_FOLDER/test_unq1.sv \
 $RTL_FOLDER/top.v \
 $SYNOPSYS/dw/sim_ver/DW_tap.v \
-../sram_512w_16b.v 
+$RTL_FOLDER/../sram_512w_16b.v 

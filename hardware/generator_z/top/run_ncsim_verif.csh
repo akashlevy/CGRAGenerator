@@ -113,3 +113,4 @@ if [ `hostname` == "kiwi" ]; then
   echo xmllint --noout cgra_info.txt
   xmllint --noout cgra_info.txt 2>&1 | head -n 20
 fi
+

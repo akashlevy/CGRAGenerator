@@ -167,7 +167,9 @@ program automatic `mname`(
     * Control the simulation
     * *************************************************************************/
    initial begin
+      $finish();
       $display("%t:\t********************Loading Arguments***********************",$time);
+      $finish();
       init_test;
       fd = $fopen("test.log","w");
       /*config_file = $fopen("`$config_bs`","r");

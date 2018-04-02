@@ -1,5 +1,5 @@
 #!/bin/tcsh
-set RTL_FOLDER="~/CGRAGenerator/hardware/generator_z/top/genesis_verif"
+set RTL_FOLDER="../genesis_verif"
 rm -rf INCA_libs irun.*
 irun -top test_top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
 -input \

@@ -458,7 +458,7 @@ wire [31:0] read_data_cb_`$mem_input_name`;
 //; #####################################
 
 
-//  assign clk = clk_in & cg_en;
+  assign clk = clk_in & cg_en;
 
 
 
@@ -478,8 +478,8 @@ wire [31:0] read_data_cb_`$mem_input_name`;
 wire [31:0] read_data_mem;
   `$mem_core->instantiate()`
   (
-      .clk(clk_in),
-      .clk_en(cg_en),
+      .clk(clk),
+//      .clk_en(cg_en),
       .reset(reset),
       .config_addr(config_addr),
       .config_data(config_data),

@@ -6,15 +6,15 @@
 //;open(TILEINFO, ">$filename") or die "Couldn't open file $filename, $!";
 
 module `mname` (
-clk, 
-reset,
-pad,
-p2f,
-f2p_16,
-f2p_1,
-config_addr,
-config_data,
-tile_id
+  clk, 
+  reset,
+  pad,
+  p2f,
+  f2p_16,
+  f2p_1,
+  config_addr,
+  config_data,
+  tile_id
 );
 
   /* verilator lint_off UNUSED */
@@ -63,23 +63,22 @@ tile_id
     end
   end
 
-  //assign pad = (io_bit==1'b1)?((out_bus==1'b0)?f2p_16:f2p_1):1'bz;
-  //assign p2f = pad;
-
-// mname = `mname` = `$self->mname()`
-//; if (mname eq "io1bit_unq1" || mname eq "io1bit_unq2") {
+  assign pad = (io_bit==1'b1) ? ((out_bus==1'b0) ? f2p_16 : f2p_1) : 1'bz;
   assign p2f = pad;
+<<<<<<< dev
+=======
 //; } else {
   assign pad = (out_bus==1'b0) ? f2p_16 : f2p_1;
 //; }
 
+>>>>>>> master
 
 endmodule
 
 //;print TILEINFO "    <io_group>$io_group</io_group>\n";
 //;print TILEINFO "    <tri feature_address='0' reg_address='0' bitl='0' bith='0'>\n";
-//;print TILEINFO "        <src sel='0'>in</src>  <!--input-->\n";
-//;print TILEINFO "        <src sel='1'>out</src> <!--output-->\n";
+//;print TILEINFO "        <direction sel='0'>in</direction>  <!--input-->\n";
+//;print TILEINFO "        <direction sel='1'>out</direction> <!--output-->\n";
 //;print TILEINFO "    </tri>\n";
 //;print TILEINFO "    <mux feature_address='0' reg_address='0' bitl='1' bith='1'>\n";
 //;print TILEINFO "        <src sel='0'>16</src> <!-- 16 bit mode -->\n";

@@ -2,7 +2,7 @@ import pe
 from testvectors import complete, random, test_input, test_output
 from verilator import testsource, bodysource, run_verilator_test
 from collections import OrderedDict
-from random import randint
+from random import randint, choice
 import pytest
 import os
 
@@ -109,6 +109,9 @@ def pytest_generate_tests(metafunc):
     if 'lut_code' in metafunc.fixturenames:
         metafunc.parametrize("lut_code", range(0, 16))
 
+    if 'random_op' in metafunc.fixturenames:
+        metafunc.parametrize("random_op", choice(foo))
+
 @pytest.fixture
 def worker_id(request):
     if hasattr(request.config, 'slaveinput'):
@@ -175,8 +178,8 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
 
     run_verilator_test('test_pe_unq1', f'sim_test_pe_{op}_{strategy.__name__}', 'test_pe_unq1', build_directory)
 
-def test_lut(strategy, signed, lut_code, worker_id):
-    op = "add"
+def test_lut(strategy, signed, lut_code, worker_id, random_op):
+    op = random_op
     flag_sel = 0xE  # Lut output
     bit2_mode = 0x2  # BYPASS
     bit1_mode = 0x2  # BYPASS

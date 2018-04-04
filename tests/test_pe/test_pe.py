@@ -110,7 +110,11 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("lut_code", range(0, 16))
 
     if 'random_op' in metafunc.fixturenames:
-        metafunc.parametrize("random_op", choice(foo))
+        metafunc.parametrize("random_op", [choice(ops)])
+
+    if 'input_modes' in metafunc.fixturenames:
+        input_modes = itertools.product(*(range(0, 4) for _ in range(5)))
+        metafunc.parametrize("input_modes", input_modes)
 
 @pytest.fixture
 def worker_id(request):

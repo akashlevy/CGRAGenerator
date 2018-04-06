@@ -207,6 +207,11 @@ def test_input_modes(signed, worker_id, input_modes):
     op = "add"
     lut_code = randint(0, 15)
     flag_sel = randint(0, 15)
+    if not signed:
+        # Skip flags involving V for unsigned mode
+        while flag_sel in [0x6, 0x7, 0xA, 0xB, 0xC, 0xD]:
+            flag_sel = randint(0, 15)
+    print(f"flag_sel={flag_sel}")
     data0_mode, data1_mode, bit0_mode, bit1_mode, bit2_mode = input_modes
     if 1 in input_modes:
         return  # skip delay for now

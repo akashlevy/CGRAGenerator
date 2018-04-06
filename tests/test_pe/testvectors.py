@@ -22,6 +22,8 @@ def complete(func, args, outputs):
     for arg_vals in itertools.product(*(value for value in args.values())):
         _args = OrderedDict([(k, v) for k, v in zip(keys, arg_vals)])
         result = func(**_args)
+        irq_trigger = (func.get_irq_trigger())
+        result = result + (irq_trigger,)
         test = [test_input(k, v) for k, v in _args.items()] + list(outputs(result))
         tests.append(test)
     return tests

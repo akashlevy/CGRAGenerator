@@ -37,7 +37,7 @@ signed_ops = ['min', 'max', 'le', 'ge']
 # '''
 
 
-def compile_harness(name, test, body, lut_code, cfg_d):
+def compile_harness(name, test, body, lut_code, cfg_d, debug_trig=0, debug_trig_p=0):
     harness = f"""\
 #include "Vtest_pe_unq1.h"
 #include "verilated.h"
@@ -69,6 +69,7 @@ int main(int argc, char **argv, char **env) {{
     top->clk_en = 1;
 
     top->cfg_en = 1;
+
     top->cfg_d = {lut_code};
     top->cfg_a = 0x00;  // lut_code
     step(top);
@@ -76,6 +77,15 @@ int main(int argc, char **argv, char **env) {{
     top->cfg_d = {cfg_d};
     top->cfg_a = 0xFF;  // opcode
     step(top);
+
+    top->cfg_d = {debug_trig};
+    top->cfg_a = 0xE0;  // debug_trig
+    step(top);
+
+    top->cfg_d = {debug_trig_p};
+    top->cfg_a = 0xE1;  // debug_trig_p
+    step(top);
+
     top->cfg_en = 0;
 
     {body}
@@ -115,6 +125,15 @@ def pytest_generate_tests(metafunc):
     if 'input_modes' in metafunc.fixturenames:
         input_modes = itertools.product(*(range(0, 4) for _ in range(5)))
         metafunc.parametrize("input_modes", input_modes)
+
+    if 'irq_en_0' in metafunc.fixturenames:
+        metafunc.parametrize("irq_en_0", [True, False])
+    if 'irq_en_1' in metafunc.fixturenames:
+        metafunc.parametrize("irq_en_1", [True, False])
+    if 'debug_trig' in metafunc.fixturenames:
+        metafunc.parametrize("debug_trig", [0])
+    if 'debug_trig_p' in metafunc.fixturenames:
+        metafunc.parametrize("debug_trig_p", [0])
 
 @pytest.fixture
 def worker_id(request):
@@ -225,5 +244,53 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
     compile_harness(f'{build_directory}/sim_test_pe_lut_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
+
+    run_verilator_test('test_pe_unq1', f'sim_test_pe_lut_{strategy.__name__}', 'test_pe_unq1', build_directory)
+
+def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, worker_id):
+    op = "add"
+    flag_sel = 0x0  # Z
+    bit2_mode = 0x2  # BYPASS
+    bit1_mode = 0x2  # BYPASS
+    bit0_mode = 0x2  # BYPASS
+    data1_mode = 0x2  # BYPASS
+    data0_mode = 0x2  # BYPASS
+    lut_code = 0x0
+    acc_en = 0
+    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1)
+    cfg_d = bit2_mode << 28 | \
+            bit1_mode << 26 | \
+            bit0_mode << 24 | \
+            data1_mode << 18 | \
+            data0_mode << 16 | \
+            flag_sel << 12 | \
+            irq_en_1 << 11 | \
+            irq_en_0 << 10 | \
+            acc_en << 9 | \
+            signed << 6 | \
+            _op.opcode
+
+    if strategy is complete:
+        width = 4
+        N = 1 << width
+        tests = complete(_op, OrderedDict([
+            ("data0", range(-1, 1)),  # For now we'll verify that data0/data1
+            ("data1", range(-1, 1)),  # don't affect the output
+            ("bit0", range(0, 2)),
+            ("bit1", range(0, 2)),
+            ("bit2", range(0, 2)),
+        ]), lambda result: (test_output("res", result[0]),
+                            test_output("res_p", result[1]),
+                            test_output("irq", 1 if result[2] else 0)))
+    elif strategy is random:
+        return # We just test the LUT completely
+
+    body = bodysource(tests)
+    test = testsource(tests)
+
+    build_directory = "build_{}".format(worker_id)
+    if not os.path.exists(build_directory):
+        os.makedirs(build_directory)
+    compile_harness(f'{build_directory}/sim_test_pe_lut_{strategy.__name__}.cpp', test, body, lut_code, cfg_d, debug_trig, debug_trig_p)
 
     run_verilator_test('test_pe_unq1', f'sim_test_pe_lut_{strategy.__name__}', 'test_pe_unq1', build_directory)

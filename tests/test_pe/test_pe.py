@@ -5,6 +5,7 @@ from collections import OrderedDict
 from random import randint, choice
 import pytest
 import os
+import itertools
 
 
 ops  = ['or_', 'and_', 'xor']
@@ -72,6 +73,26 @@ int main(int argc, char **argv, char **env) {{
 
     top->cfg_d = {lut_code};
     top->cfg_a = 0x00;  // lut_code
+    step(top);
+
+    top->cfg_d = 0;
+    top->cfg_a = 0xF0;
+    step(top);
+
+    top->cfg_d = 0;
+    top->cfg_a = 0xF1;
+    step(top);
+
+    top->cfg_d = 0;
+    top->cfg_a = 0xF3;
+    step(top);
+
+    top->cfg_d = 0;
+    top->cfg_a = 0xF4;
+    step(top);
+
+    top->cfg_d = 0;
+    top->cfg_a = 0xF5;
     step(top);
 
     top->cfg_d = {cfg_d};
@@ -200,6 +221,59 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
     compile_harness(f'{build_directory}/sim_test_pe_{op}_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
 
     run_verilator_test('test_pe_unq1', f'sim_test_pe_{op}_{strategy.__name__}', 'test_pe_unq1', build_directory)
+
+def test_input_modes(signed, worker_id, input_modes):
+    op = "add"
+    lut_code = randint(0, 15)
+    flag_sel = randint(0, 15)
+    if not signed:
+        # Skip flags involving V for unsigned mode
+        while flag_sel in [0x6, 0x7, 0xA, 0xB, 0xC, 0xD]:
+            flag_sel = randint(0, 15)
+    print(f"flag_sel={flag_sel}")
+    data0_mode, data1_mode, bit0_mode, bit1_mode, bit2_mode = input_modes
+    if 1 in input_modes:
+        return  # skip delay for now
+    irq_en = 0
+    acc_en = 0
+    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code)
+    for reg, mode in zip(
+        (_op.rega, _op.regb, _op.regd, _op.rege, _op.regf),
+        input_modes
+    ):
+        reg(mode)
+    cfg_d = bit2_mode << 28 | \
+            bit1_mode << 26 | \
+            bit0_mode << 24 | \
+            data1_mode << 18 | \
+            data0_mode << 16 | \
+            flag_sel << 12 | \
+            irq_en << 10 | \
+            acc_en << 9 | \
+            signed << 6 | \
+            _op.opcode
+
+    strategy = random
+    n = 16
+    width = 16
+    N = 1 << width
+    tests = random(_op, n, OrderedDict([
+        ("data0", lambda : randint(0, N - 1) if not signed else randint(- N // 2, N // 2 - 1)),
+        ("data1", lambda : randint(0, N - 1) if not signed else randint(- N // 2, N // 2 - 1)),
+        ("bit0", lambda : randint(0, 1)),
+        ("bit1", lambda : randint(0, 1)),
+        ("bit2", lambda : randint(0, 1))
+    ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
+
+    body = bodysource(tests)
+    test = testsource(tests)
+
+    build_directory = "build_{}".format(worker_id)
+    if not os.path.exists(build_directory):
+        os.makedirs(build_directory)
+    compile_harness(f'{build_directory}/sim_test_pe_input_modes_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
+
+    run_verilator_test('test_pe_unq1', f'sim_test_pe_input_modes_{strategy.__name__}', 'test_pe_unq1', build_directory)
 
 def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     # op = random_op

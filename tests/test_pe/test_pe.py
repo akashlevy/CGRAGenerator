@@ -236,7 +236,7 @@ def test_input_modes(signed, worker_id, input_modes):
         return  # skip delay for now
     irq_en = 0
     acc_en = 0
-    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code)
+    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
     for reg, mode in zip(
         (_op.rega, _op.regb, _op.regd, _op.rege, _op.regf),
         input_modes
@@ -286,7 +286,7 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     data0_mode = 0x2  # BYPASS
     irq_en = 0
     acc_en = 0
-    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code)
+    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
     cfg_d = bit2_mode << 28 | \
             bit1_mode << 26 | \
             bit0_mode << 24 | \
@@ -331,7 +331,7 @@ def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, wor
     data0_mode = 0x2  # BYPASS
     lut_code = 0x0
     acc_en = 0
-    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1)
+    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1).signed(signed)
     cfg_d = bit2_mode << 28 | \
             bit1_mode << 26 | \
             bit0_mode << 24 | \

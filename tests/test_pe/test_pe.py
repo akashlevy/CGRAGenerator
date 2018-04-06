@@ -182,8 +182,9 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
 
     run_verilator_test('test_pe_unq1', f'sim_test_pe_{op}_{strategy.__name__}', 'test_pe_unq1', build_directory)
 
-def test_lut(strategy, signed, lut_code, worker_id, random_op):
-    op = random_op
+def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
+    # op = random_op
+    op = choice(ops)
     flag_sel = 0xE  # Lut output
     bit2_mode = 0x2  # BYPASS
     bit1_mode = 0x2  # BYPASS

@@ -55,19 +55,33 @@ def bodysource(tests):
         top->eval();
         printf({input_printf_string});
 {output_string}
+        step(top);
     }}
 '''.format(input_printf_string=input_printf_string, output_string=output_string)
 
-def harness(top_name, opcode, tests):
+def harness(top_name, opcode, tests, has_clk=False):
 
     test = testsource(tests)
     body = bodysource(tests)
+    step_body = ""
+    if has_clk:
+        step_body = """
+    top->clk = 0;
+    top->eval();
+    top->clk = 1;
+    top->eval();
+"""
     return '''\
 #include "V{top_name}.h"
 #include "verilated.h"
 #include <cassert>
 #include <iostream>
 #include <printf.h>
+
+void step(V{top_name}* top) {{
+    {step_body}
+}}
+
 
 int main(int argc, char **argv, char **env) {{
     Verilated::commandArgs(argc, argv);
@@ -82,7 +96,7 @@ int main(int argc, char **argv, char **env) {{
     delete top;
     std::cout << "Success" << std::endl;
     exit(0);
-}}'''.format(test=test,body=body,top_name=top_name,op=opcode&0x1ff)
+}}'''.format(test=test,body=body,top_name=top_name,op=opcode&0x1ff,step_body=step_body)
 
 
 def compile(name, top_name, opcode, tests):

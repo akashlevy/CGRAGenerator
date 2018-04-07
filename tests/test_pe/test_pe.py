@@ -199,7 +199,9 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
             ("bit0", range(0, 2)),
             ("bit1", range(0, 2)),
             ("bit2", range(0, 2)),
-        ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
+        ]), lambda result: (test_output("res", result[0]),
+                            test_output("res_p", result[1]),
+                            test_output("irq", 1 if result[2] else 0)))
     elif strategy is random:
         n = 16
         width = 16
@@ -210,7 +212,9 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
             ("bit0", lambda : randint(0, 1)),
             ("bit1", lambda : randint(0, 1)),
             ("bit2", lambda : randint(0, 1))
-        ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
+        ]), lambda result: (test_output("res", result[0]),
+                            test_output("res_p", result[1]),
+                            test_output("irq", 1 if result[2] else 0)))
 
     body = bodysource(tests)
     test = testsource(tests)
@@ -263,7 +267,9 @@ def test_input_modes(signed, worker_id, input_modes):
         ("bit0", lambda : randint(0, 1)),
         ("bit1", lambda : randint(0, 1)),
         ("bit2", lambda : randint(0, 1))
-    ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
+    ]), lambda result: (test_output("res", result[0]),
+                        test_output("res_p", result[1]),
+                        test_output("irq", 1 if result[2] else 0)))
 
     body = bodysource(tests)
     test = testsource(tests)
@@ -307,7 +313,9 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
             ("bit0", range(0, 2)),
             ("bit1", range(0, 2)),
             ("bit2", range(0, 2)),
-        ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
+        ]), lambda result: (test_output("res", result[0]),
+                            test_output("res_p", result[1]),
+                            test_output("irq", 1 if result[2] else 0)))
     elif strategy is random:
         return # We just test the LUT completely
 

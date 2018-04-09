@@ -373,6 +373,6 @@ def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, wor
     build_directory = "build_{}".format(worker_id)
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
-    compile_harness(f'{build_directory}/sim_test_pe_lut_{strategy.__name__}.cpp', test, body, lut_code, cfg_d, debug_trig, debug_trig_p)
+    compile_harness(f'{build_directory}/sim_test_pe_irq_{strategy.__name__}.cpp', test, body, irq_code, cfg_d, debug_trig, debug_trig_p)
 
-    run_verilator_test('test_pe_unq1', f'sim_test_pe_lut_{strategy.__name__}', 'test_pe_unq1', build_directory)
+    run_verilator_test('test_pe_unq1', f'sim_test_pe_irq_{strategy.__name__}', 'test_pe_unq1', build_directory)

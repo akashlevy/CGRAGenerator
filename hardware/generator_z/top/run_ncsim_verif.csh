@@ -22,7 +22,7 @@ Genesis2.pl -parse -generate -top test_top -hierarchy top.xml -input\
   ncsim_verif/test.svp \
   ncsim_verif/JTAGDriver.svp \
   ncsim_verif/clocker.svp \
-  top.vp \
+  top.svp \
   \
   ../sb/sb.vp \
   ../cb/cb.vp \

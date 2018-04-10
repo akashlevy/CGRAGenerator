@@ -29,7 +29,7 @@ fi
 
 
 Genesis2.pl -parse -generate -top top -hierarchy top.xml -input\
-  top.vp \
+  top.svp \
   \
   ../sb/sb.vp \
   ../cb/cb.vp \

@@ -339,8 +339,11 @@ reset_in,
 // VERILATOR_PORT7
 // VERILATOR_PORT8
 // -------------------------------------
+// TEMPORARY STUFF TO PERFORM TOP LEVEL VERIF WITHOUT JTAG
 config_addr_in,
 config_data_in,
+config_op_in,
+config_data_jtag_in,
 tdi,
 tdo,
 tms,
@@ -352,6 +355,8 @@ trst_n
 //;print INFO "<CGRA>\n";
   input [31:0] config_addr_in;
   input [31:0] config_data_in;
+  output [31:0] config_data_jtag_in; //Use this to get read_data
+  input config_op_in;
   input clk_in;
   input reset_in;
   input tdi;
@@ -385,6 +390,11 @@ trst_n
 
 //; ###################################################################################
 
+//DECOUPLE JTAG AND GC
+//; my $jtag_obj = generate("jtag", "jtag_controller", SYSCLK_CFG_BUS_WIDTH => 32, SYSCLK_CFG_ADDR_WIDTH => 32, SYSCLK_CFG_OPCODE_WIDTH =>5);
+//; my $jtag_ifc_path = $self -> define_param(IFC => $jtag_obj -> get_param('IFC'));
+//; my $jtag_ifc = clone($jtag_ifc_path, 'jtag_ifc');
+
 wire [31:0] config_addr;
 wire [31:0] config_data;
 wire clk;
@@ -396,35 +406,72 @@ wire [31:0] read_data_pe;
 wire [31:0] read_data_global;
 wire [31:0] read_data_memory;
 wire [3:0] stall;
+wire [4:0] op;
+wire [31:0] config_data_jtag_out;
+wire [31:0] config_addr_jtag_out;
+//wire [31:0] config_data_jtag_in;
+wire sys_clk_activated;
 //; my $global_controller_obj = generate("global_controller", "global_controller");
-//; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
+//; ########### my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $jtag_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
     `$global_controller_obj->instantiate()` 
     (
       .clk_in(clk_in),
-      .clk_out(),//clk),
+      .clk_out(clk),
       .reset_in(reset_in),
-      .reset_out(),//reset),
-      .config_addr_out(),//config_addr),
+      .reset_out(reset),
+      .config_addr_out(config_addr),
       .config_data_in(read_data),
-      .config_data_out(),//config_data),
+      .config_data_out(config_data),
+      .tck(tck),
+    /* REMOVE JTAG SIGNALS
       .tdi(tdi),
       .tdo(tdo),
       .tms(tms),
-      .tck(tck),
-      .trst_n(trst_n),
+      .trst_n(trst_n), */
 //; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
       .analog_r`$i`(),
 //; }
       .cgra_stalled(stall),
       .read(config_read),
-      .write()//config_write)
+      .write(config_write),
+      //ADD config_data and addr to/from JTAG
+      .op(op),
+      .config_addr_jtag_out(config_addr_jtag_out),
+      .config_data_jtag_out(config_data_jtag_out),
+      .config_data_jtag_in(config_data_jtag_in),
+      .sys_clk_activated(sys_clk_activated)
     );
+
+`$jtag_ifc -> instantiate` (.Clk(clk), .Reset(reset_in));
+`$jtag_obj -> instantiate` (.ifc(`$jtag_ifc->iname()`),
+			    .sys_clk_activated(sys_clk_activated),
+			    .bsr_tdi(),
+			    .bsr_sample(),
+			    .bsr_intest(),
+			    .bsr_extest(),
+			    .bsr_update_en(),
+			    .bsr_capture_en(),
+		 	    .bsr_shift_dr(),
+			    .bsr_tdo()
+			    );
+
+//Connect signals to jtag_ifc ports
+      assign `$jtag_ifc->iname()`.tck=tck;
+      assign `$jtag_ifc->iname()`.tdi=tdi;
+      assign `$jtag_ifc->iname()`.tms=tms;
+      assign `$jtag_ifc->iname()`.trst_n=trst_n;
+      assign `$jtag_ifc->iname()`.config_data_from_gc=config_data_jtag_in; 
+      assign tdo = `$jtag_ifc->iname()`.tdo;
+      assign config_data_jtag_out = `$jtag_ifc->iname()`.config_data_to_gc;
+      assign config_addr_jtag_out = `$jtag_ifc->iname()`.config_addr_to_gc;
+      assign op = `$jtag_ifc->iname()`.config_op_to_gc;
+
     //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC
-    assign config_addr = config_addr_in;
+    /*assign config_addr = config_addr_in;
     assign config_data = config_data_in;
     assign clk = clk_in;
     assign reset = reset_in;
-    assign config_write = 1;
+    assign config_write = 1;*/
 
 // FIXME Note there are LOTS of unused wires being created below!
 // FIXME I assume they will be hooked up to something eventually

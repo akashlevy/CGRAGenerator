@@ -2,9 +2,6 @@
 //; my $cfg_bus_width = parameter(NAME => 'cfg_bus_width', VAL => 32, DOC => 'Width of config_data');
 //; my $cfg_addr_width = parameter(NAME => 'cfg_addr_width', VAL => 32, DOC => 'Width of config_addr');
 //; my $cfg_op_width = parameter(NAME => 'cfg_op_width', VAL => 5, DOC => 'Width of config_op');
-//; my $jtag_obj = generate("jtag", "jtag_controller", SYSCLK_CFG_BUS_WIDTH => $cfg_bus_width, SYSCLK_CFG_ADDR_WIDTH => $cfg_addr_width, SYSCLK_CFG_OPCODE_WIDTH =>$cfg_op_width);
-//; my $jtag_ifc_path = $self -> define_param(IFC => $jtag_obj -> get_param('IFC'));
-//; my $jtag_ifc = clone($jtag_ifc_path, 'jtag_ifc');
 //; my $num_analog_regs = parameter(Name => 'num_analog_regs', val => 16, Doc => "Number of analog registers and analog_regfile");
 module `mname` (
 clk_in, reset_in,
@@ -19,19 +16,27 @@ reset_out,
 cgra_stalled,
 read,
 write,
+tck, //STILL NEED TCK
+/* COMMENT THESE OUT TO DECOUPLE JTAG FROM GC
 tdi,
 tdo,
 tms,
-tck,
-trst_n
+trst_n */
+//NOW ADD ADDR, DATA, AND OP AS INPUTS FROM JTAG MODULE
+config_addr_jtag_out, //input from jtag
+config_data_jtag_out, //input from jtag
+op, 		      //input from jtag
+config_data_jtag_in,   //output TO jtag
+sys_clk_activated     //output TO jtag
 );
-  
+
   input  tck;
   input  clk_in;
   input  reset_in;
+/* REMOVE JTAG SIGNALS  
   input  tdi;
   input  tms;
-  input  trst_n;
+  input  trst_n; */
   input [`$cfg_bus_width-1`:0] config_data_in;
 
   output reg read;
@@ -41,48 +46,24 @@ trst_n
   output reg clk_out;
   output reg reset_out;
   output reg [3:0] cgra_stalled;
-  output tdo;
+  //output tdo;
   
   //value of each register in analog regfile
 //; for (my $i = 0; $i < $num_analog_regs; $i++){
   output [`$cfg_bus_width-1`:0]  analog_r`$i`;
 //; }
 	
-
-  wire [`$cfg_addr_width-1`:0] config_addr_jtag_out;
-  wire [`$cfg_bus_width-1`:0] config_data_jtag_out;
-  wire [`$cfg_op_width-1`:0] op;
-  reg [`$cfg_bus_width-1`:0] config_data_jtag_in;
+//CONNECTIONS TO JTAG MODULE
+  input [`$cfg_addr_width-1`:0] config_addr_jtag_out;
+  input [`$cfg_bus_width-1`:0] config_data_jtag_out;
+  input [`$cfg_op_width-1`:0] op;
+  output reg [`$cfg_bus_width-1`:0] config_data_jtag_in;
+  output reg sys_clk_activated;
   reg clk;
   reg clk_domain;
-  reg sys_clk_activated;
   //Extra flops to cross clock boundary
   reg sys_clk_act_sync_1;
   reg sys_clk_act_sync_2;
-  //separate op out from address field
-`$jtag_ifc -> instantiate` (.Clk(clk), .Reset(reset_in));
-`$jtag_obj -> instantiate` (.ifc(`$jtag_ifc->iname()`),
-			    .sys_clk_activated(sys_clk_activated),
-			    .bsr_tdi(),
-			    .bsr_sample(),
-			    .bsr_intest(),
-			    .bsr_extest(),
-			    .bsr_update_en(),
-			    .bsr_capture_en(),
-		 	    .bsr_shift_dr(),
-			    .bsr_tdo()
-			    );
-
-//Connect signals to jtag_ifc ports
-      assign `$jtag_ifc->iname()`.tck=tck;
-      assign `$jtag_ifc->iname()`.tdi=tdi;
-      assign `$jtag_ifc->iname()`.tms=tms;
-      assign `$jtag_ifc->iname()`.trst_n=trst_n;
-      assign `$jtag_ifc->iname()`.config_data_from_gc=config_data_jtag_in; 
-      assign tdo = `$jtag_ifc->iname()`.tdo;
-      assign config_data_jtag_out = `$jtag_ifc->iname()`.config_data_to_gc;
-      assign config_addr_jtag_out = `$jtag_ifc->iname()`.config_addr_to_gc;
-      assign op = `$jtag_ifc->iname()`.config_op_to_gc;
 
 
 // Internal signals to/from analog registers

@@ -50,6 +50,6 @@ $RTL_FOLDER/test_pe_unq1.sv \
 $RTL_FOLDER/test_shifter_unq1.sv \
 $RTL_FOLDER/test_top.sv \
 $RTL_FOLDER/test_unq1.sv \
-$RTL_FOLDER/top.v \
+$RTL_FOLDER/top.sv \
 $SYNOPSYS/dw/sim_ver/DW_tap.v \
 $RTL_FOLDER/sram_512w_16b.v 

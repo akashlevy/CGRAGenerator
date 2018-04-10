@@ -436,8 +436,8 @@ wire sys_clk_activated;
       .write(config_write),
       //ADD config_data and addr to/from JTAG
       .op(op),
-      .config_addr_jtag_out(config_addr_jtag_out),
-      .config_data_jtag_out(config_data_jtag_out),
+      .config_addr_jtag_out(config_addr_in), //config_addr_jtag_out), TAKING THESE FROM TOP LEVEL TO BYPASS JTAG
+      .config_data_jtag_out(config_data_in), //config_data_jtag_out),
       .config_data_jtag_in(config_data_jtag_in),
       .sys_clk_activated(sys_clk_activated)
     );

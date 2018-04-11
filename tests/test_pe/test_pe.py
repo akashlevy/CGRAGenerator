@@ -236,8 +236,6 @@ def test_input_modes(signed, worker_id, input_modes):
             flag_sel = randint(0, 15)
     print(f"flag_sel={flag_sel}")
     data0_mode, data1_mode, bit0_mode, bit1_mode, bit2_mode = input_modes
-    if 1 in input_modes:
-        return  # skip delay for now
     irq_en = 0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
@@ -269,7 +267,8 @@ def test_input_modes(signed, worker_id, input_modes):
         ("bit2", lambda : randint(0, 1))
     ]), lambda result: (test_output("res", result[0]),
                         test_output("res_p", result[1]),
-                        test_output("irq", 1 if result[2] else 0)))
+                        test_output("irq", 1 if result[2] else 0)),
+        with_clk=True)
 
     body = bodysource(tests)
     test = testsource(tests)

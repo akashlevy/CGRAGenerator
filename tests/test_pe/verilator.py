@@ -55,7 +55,6 @@ def bodysource(tests):
         top->eval();
         printf({input_printf_string});
 {output_string}
-        step(top);
     }}
 '''.format(input_printf_string=input_printf_string, output_string=output_string)
 

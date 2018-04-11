@@ -208,7 +208,7 @@ for k in connections:
 
     parse = re.search('(.*).wdata', k[1])
     if parse:
-        k1 = re.search('(.*).wdata', k[1]).group(1)
+        k1 = parse.group(1)
         if DBG: print "# FOO found wdata node", k1
         fifo_depth = int(instances[k1]['modargs']['depth'][1])
         if DBG: print "# FOO found fifo depth", fifo_depth
@@ -216,6 +216,30 @@ for k in connections:
         fdcomment = ' # fifo_depth %d' % fifo_depth
     else:
         fdcomment = ''
+
+    # Insert a lut_load_value comment
+    # Node will have name like "bitnot_156_lut_bitPE.bit.out"
+    # mapper json:
+    #   "bitand_153_151_154_lut_bitPE":{
+    #     "modargs":{
+    # "bit0_mode":["String","BYPASS"], "bit0_value":["Bool",false], 
+    # "bit1_mode":["String","BYPASS"], "bit1_value":["Bool",false], 
+    # "bit2_mode":["String","BYPASS"], "bit2_value":["Bool",false], 
+    # "lut_value":[["BitVector",8],"8'h88"]}
+    #   },
+
+    parse = re.search('(.*_lut_bitPE).bit.out', k[0])
+    if parse:
+        # k1 = re.search('(.*).wdata', k[1]).group(1)
+        k1 = parse.group(1)
+        if DBG: print "# FOO found lut", k1
+        lut_value  =     instances[k1]['modargs']['lut_value'][1]
+        if DBG: print "# FOO found LUT value", lut_value
+        assert lut_value[0:3] == "8'h"
+        fdcomment = ' # lut_value 0x%s' % lut_value[3:]
+    else:
+        fdcomment = ''
+        
 
     # Turn "PE_U70.data.out, PE_U8.data.in.1" into "PE_U70, PE_U8"
     from_node = u0

@@ -4,7 +4,7 @@
 set path = (. $path)
 
 # Can use this to extend time on travis
-# ./my_travis_wait.csh 60 &
+./my_travis_wait.csh 15 &
 
 set VERBOSE
 
@@ -329,10 +329,10 @@ endif
 
 
 unset io_hack
-grep -i ffffffff $config > /tmp/tmp && set io_hack
+grep -i ffffffff $config > /tmp/tmp$$ && set io_hack
 if ($?io_hack) then
   echo 'ERROR Config file $config appears to be trying to use the old I/O hack:'
-  cat /tmp/tmp; /bin/rm /tmp/tmp
+  cat /tmp/tmp$$; /bin/rm /tmp/tmp$$
   echo 'ERROR We no longer support I/O hacks, please use I/O pads instead'
   echo
   exit 13
@@ -767,3 +767,6 @@ NOTE: If you want to clean up after yourself you'll want to do this:
 
 eof
 endif
+echo "killing background printing"
+kill -9 %1
+

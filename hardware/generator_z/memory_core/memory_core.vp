@@ -240,7 +240,7 @@ always @(*) begin
 
 `$lb->instantiate()`
 (
-.clk(gclk),
+.clk(gclk & wen_in),
 .reset(reset),
 .flush(flush),
 .data_in(data_in_int),

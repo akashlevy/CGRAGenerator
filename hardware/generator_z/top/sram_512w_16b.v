@@ -37,7 +37,9 @@ module sram_512w_16b (Q, CLK, CEN, WEN, A, D, EMA, EMAW, EMAS, TEN, BEN, RET1N, 
       if (| {EMA, EMAW, EMAS, TEN, BEN, RET1N, STOV}) begin
          if (CEN == 1'b0) begin                  // ACTIVE LOW!!
             Q <= data_array[A];
-            if (WEN == 1'b0) data_array[A] <= D;  // ACTIVE LOW!!
+            if (WEN == 1'b0) begin
+              data_array[A] <= D;  // ACTIVE LOW!!
+            end
          end
       end
    end

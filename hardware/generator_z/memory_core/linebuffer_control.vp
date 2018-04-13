@@ -130,7 +130,10 @@ end
 
 assign move_last_pixel_from_sr_to_sr = (read_state_d2==2'd1) && (read_state_d1==2'd0) && (input_sr_count==2'd1) && (((num_words_read+1'b1)==depth)) ; 
 assign output_sr_data_in = (input_sr_ren_w1==1'b1)?data_to_mem:data_from_mem;
-assign wen_to_mem = input_sr_ren_w2;
+// Note that the control signals to memory are only high when the fsm is *not*
+// paused. In this way, we clock gate the memory on fsm_en too, through the chip
+// enable signal derived in memory_core.
+assign wen_to_mem = fsm_en & input_sr_ren_w2;
 assign depth_even = ((depth>>1)<<1);
 
 always @(posedge clk or posedge reset) begin
@@ -160,7 +163,10 @@ end
 
 assign warp_addr = ((depth + almost_count) >> 1) - `$dwidth`'d1;
 assign total_word_count = num_words_mem + input_sr_count;
-assign ren_to_mem = (phase==1'b0) & (read_state==2'd1);
+// Note that the control signals to memory are only high when the fsm is *not*
+// paused. In this way, we clock gate the memory on fsm_en too, through the chip
+// enable signal derived in memory_core.
+assign ren_to_mem = fsm_en & (phase==1'b0) & (read_state==2'd1);
 
 always @(posedge clk or posedge reset) begin
   if (reset==1'b1) begin

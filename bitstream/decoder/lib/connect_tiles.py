@@ -271,7 +271,9 @@ def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
 def find_cornerconn(end1,begin2,DBG=0):
     '''Connect end1 to begin2 in same tile'''
 
-    (tileno1, dir1, side1, track1) = parsewire(end1)
+    (tileno1, dir1, side1, track1) = cgra_info.parse_canon(end1)
+    assert track1 != -1, "WHOOPS cannot find a track number for", end1
+
     (tileno2, dir2, side2, track2) = parsewire(begin2)
     (half1, half2) = (side1/4,side2/4) # Note '/' div only works for pos ints!!!?
     if half1 == half2:
@@ -281,7 +283,7 @@ def find_cornerconn(end1,begin2,DBG=0):
         # Cannot connect top and bottom halves directly e.g. in_s6 -> out_s3
         # corner: ['T69_in_s6t0 -> T69_out_s3t0'] must change to
         # corner: ['T69_in_s6t0 -> T69_out_s7t0', 'T69_in_s1t0 -> T69_out_s3t0']
-        if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary"
+        if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary" % (side1,side2)
         if side1 < 4:
             if DBG>1: print "# Going from top to bottom half"
             mid1 = 'T%d_out_s1t%d' % (tileno1, track1)

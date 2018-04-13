@@ -690,6 +690,7 @@ def find_mux(tile, src, snk, DBG=0):
                     if DBG: print '690 found snk', mux.attrib['snk']
                     for msrc in mux.iter('src'):
                         owsrc = msrc.text
+                        if DBG: print '690 found src', owsrc
                         if src == owsrc:
                             return get_encoding(tile,bb,mux,msrc,DBG-1)
 
@@ -1274,21 +1275,8 @@ def connect_within_tile(tileno, src, snk, DBG):
     return True or False according to whether src can connect to snk
     also, return the bit pattern for connecting them.
     '''
-
-
-    # BOOKMARK
-    # Return (addr,data,regaddr,regdata)
-    # (addr,data) for the connection
-    # (regaddr,regdata) for registering the sink (if applicable)
-
     # FIXME DO WE STILL NEED SEARCH_MUXES()??
     # #     rlist = search_muxes(fan_dir, tile, port, DBG-1)
-
-    # BOOKMARK
-    if snk == 'T41_bit0':
-        print 'HEYHEY'
-        DBG=9
-
 
     tile = get_tile(tileno)
     assert tile != -1, '404 tile not found'
@@ -1299,6 +1287,9 @@ def connect_within_tile(tileno, src, snk, DBG):
     if DBG: print('# looking to connect (canon) src "%s" and snk "%s"' % (src, snk))
     if DBG: print('# looking to connect (cgra)  src "%s" and snk "%s"' % (src_cgra, snk_cgra))
     if DBG: print('# ')
+
+    if snk[-1] == 'b' and src[-1] != 'b':
+        assert False, "OOPS SOOOOO looks like we tried to connect bit and non-bit wires3"
 
     # FIXME maybe canon2cgra(0 should be done in find_mux()...
     parms = find_mux(tile, src_cgra, snk_cgra, DBG)

@@ -13,6 +13,7 @@ module `mname()`(
 clk,
 reset,
 flush,
+fsm_en,
 data_in,
 wen,
 data_out,
@@ -32,6 +33,7 @@ ren_to_mem
 input clk;
 input reset;
 input flush;
+input fsm_en;
 input [`$dwidth - 1`:0] data_in;
 input wen;
 input stall_read;
@@ -89,6 +91,7 @@ wire output_sr_data_avail;
 .clk(clk),
 .reset(reset),
 .flush(flush),
+.fsm_en(fsm_en),
 .data_in(data_in),
 .wen(wen),
 .data_out(data_to_mem),
@@ -103,6 +106,7 @@ wire output_sr_data_avail;
 .clk(clk),
 .reset(reset),
 .flush(flush),
+.fsm_en(fsm_en),
 .data_in(output_sr_data_in),
 .wen_w1(output_sr_wen_w1),
 .wen_w2(output_sr_wen_w2),
@@ -119,7 +123,7 @@ always @(posedge clk or posedge reset) begin
   else if (flush==1'b1) begin
     phase <= 1'b0;
   end 
-  else begin
+  else if (fsm_en==1'b1) begin
     phase <= ~phase;
   end
 end
@@ -138,7 +142,7 @@ always @(posedge clk or posedge reset) begin
     input_sr_ren_w1 <= 1'b0;
     input_sr_ren_w2 <= 1'b0;
   end 
-  else begin
+  else if (fsm_en==1'b1) begin
     input_sr_ren_w2 <= 1'b0;
     input_sr_ren_w1 <= 1'b0;
     if (phase==1'b0) begin // phase=1=WRITE to mem;1=READ from mem
@@ -169,7 +173,7 @@ always @(posedge clk or posedge reset) begin
     read_addr <= `$dwidth`'d0;
     write_addr <= `$dwidth`'d0;
   end 
-  else begin
+  else if (fsm_en==1'b1) begin
     if (phase==1'b1) begin 
       if (input_sr_ren_w2 == 1'b1) begin
         if (write_addr>=warp_addr) begin
@@ -207,7 +211,7 @@ always @(posedge clk or posedge reset) begin
     delay_outputs <= 1'b0;
     warp <= 1'b0;
   end 
-  else begin
+  else if (fsm_en==1'b1) begin
     if (phase==1'b0) begin
       warp <= 1'b0;
       if ((read_state == 2'd0) && (stall_read==1'b0) && (stall_read_int==1'b0)) begin //00 = not reading
@@ -246,7 +250,7 @@ always @(posedge clk or posedge reset) begin
     output_sr_wen_w2 <= 1'b0;
     output_sr_ren <= 1'b0;
   end
-  else begin
+  else if (fsm_en==1'b1) begin
     output_sr_wen_w1 <= 1'b0;
     output_sr_wen_w2 <= 1'b0;
     output_sr_ren <= 1'b0;
@@ -265,14 +269,16 @@ always @(posedge clk or posedge reset) begin
 end
 
 always @(posedge clk) begin
-  prev_stall_read <= (stall_read || stall_read_int);
-  read_state_d1 <= read_state;
-  read_state_d2 <= read_state_d1;
-  read_state_d3 <= read_state_d2;
-  valid_d1 <= valid_d0;
-  data_out_d1 <= data_out_d0;
-  almost_full <= (total_word_count>=depth);
-  almost_empty  <= (total_word_count<=almost_count);
+  if (fsm_en==1'b1) begin
+    prev_stall_read <= (stall_read || stall_read_int);
+    read_state_d1 <= read_state;
+    read_state_d2 <= read_state_d1;
+    read_state_d3 <= read_state_d2;
+    valid_d1 <= valid_d0;
+    data_out_d1 <= data_out_d0;
+    almost_full <= (total_word_count>=depth);
+    almost_empty  <= (total_word_count<=almost_count);
+  end
 end
 
 assign data_out = (delay_outputs==1'b1)?data_out_d1:data_out_d0;

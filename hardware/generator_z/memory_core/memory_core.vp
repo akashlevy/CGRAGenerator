@@ -240,7 +240,7 @@ always @(*) begin
 
 `$lb->instantiate()`
 (
-.clk(gclk & wen_in),
+.clk(gclk),
 .reset(reset),
 .flush(flush),
 .data_in(data_in_int),
@@ -286,7 +286,7 @@ always @(*) begin
 (
 .data_out(mem_data_out0),
 .data_in(mem_data_in0),
-.clk(gclk_sram & wen_in),
+.clk(gclk_sram),
 .cen(mem_cen0),
 .wen(mem_wen0),
 .addr(mem_addr[`$awidth - 2`:0])
@@ -297,7 +297,7 @@ always @(*) begin
 (
 .data_out(mem_data_out1),
 .data_in(mem_data_in1),
-.clk(gclk_sram & wen_in),
+.clk(gclk_sram),
 .cen(mem_cen1),
 .wen(mem_wen1),
 .addr(mem_addr[`$awidth - 2`:0])

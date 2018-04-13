@@ -272,7 +272,7 @@ def find_cornerconn(end1,begin2,DBG=0):
     '''Connect end1 to begin2 in same tile'''
 
     (tileno1, dir1, side1, track1) = cgra_info.parse_canon(end1)
-    assert track1 != -1, "WHOOPS cannot find a track number for", end1
+    assert track1 != -1, "WHOOPS cannot find a track number for %s" % end1
 
     (tileno2, dir2, side2, track2) = parsewire(begin2)
     (half1, half2) = (side1/4,side2/4) # Note '/' div only works for pos ints!!!?

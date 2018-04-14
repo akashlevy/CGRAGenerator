@@ -75,6 +75,8 @@ wire gclk;
 wire wen_in_int;
 wire mem_cen0;
 wire mem_cen1;
+reg mem_cen0_int;
+reg mem_cen1_int;
 
 wire lb_valid_out;
 wire fifo_valid_out;
@@ -155,6 +157,8 @@ end
 
 always @(*) begin
   if(config_en_sram != 4'b0) begin
+      mem_cen0_int = 1'b1;
+      mem_cen1_int = 1'b1;
       mem_wen0 = (config_write & (config_en_sram[0] | config_en_sram[1]));
       mem_ren0 = (config_read & (config_en_sram[0] | config_en_sram[1]));
       mem_wen1 = (config_write & (config_en_sram[2] | config_en_sram[3]));
@@ -168,6 +172,8 @@ always @(*) begin
   else begin
   case (mode)
     2'd0: begin
+      mem_cen0_int = wen_in_int;
+      mem_cen1_int = wen_in_int;
       mem_wen0 = lb_wen;
       mem_ren0 = lb_ren;
       mem_wen1 = lb_wen;
@@ -180,6 +186,8 @@ always @(*) begin
       almost_empty = lb_almost_empty;
     end
     2'd1: begin
+      mem_cen0_int = 1'b1;
+      mem_cen1_int = 1'b1;
       mem_wen0 = fifo_wen;
       mem_ren0 = fifo_ren;
       mem_wen1 = fifo_wen;
@@ -192,6 +200,8 @@ always @(*) begin
       almost_empty = fifo_almost_empty;
     end
     2'd2: begin
+      mem_cen0_int = 1'b1;
+      mem_cen1_int = 1'b1;
       mem_wen0 = (~addr_in[`$awidth - 1`] & wen_in_int);
       mem_ren0 = ren_in;
       mem_wen1 = (addr_in[`$awidth - 1`] & wen_in_int);
@@ -205,6 +215,8 @@ always @(*) begin
       almost_empty = 1'b0; 
     end
     default: begin
+      mem_cen0_int = 1'b1;
+      mem_cen1_int = 1'b1;
       mem_wen0 = 1'b0; 
       mem_ren0 = 1'b0;
       mem_wen1 = 1'b0; 
@@ -225,8 +237,8 @@ always @(posedge gclk) begin
   sram_sel <= addr_in[`$awidth - 1`];
 end
 
-assign mem_cen0 = mem_wen0 | mem_ren0;
-assign mem_cen1 = mem_wen1 | mem_ren1;
+assign mem_cen0 = mem_cen0_int & (mem_wen0 | mem_ren0);
+assign mem_cen1 = mem_cen1_int & (mem_wen1 | mem_ren1);
 
 
 //; my $lb = generate('linebuffer_control', 'linebuffer_control', dwidth => $dwidth, ddepth => $ddepth );

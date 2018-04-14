@@ -181,7 +181,7 @@ always @(*) begin
       mem_addr = lb_addr;
       {mem_data_in1,mem_data_in0} = lb_mem_data_out;
       data_out = lb_out; 
-      valid_out = lb_valid_out & wen_in;
+      valid_out = lb_valid_out & wen_in_int;
       almost_full = lb_almost_full;
       almost_empty = lb_almost_empty;
     end

@@ -86,8 +86,8 @@ FF000017 0002000B
 000D0018 00000005
 # data[(3, 0)] : @ tile (2, 5) connect wire 5 (out_0_BUS1_S2_T0) to wen
 
-00000019 0000000F
-# # data[(7, 0)] : lut_value = 15
+00000019 000000FF
+# # data[(7, 0)] : lut_value = 255
 
 F3000019 00000000
 # data[(0, 0)] : init `bit0` reg with const `0`
@@ -100,9 +100,9 @@ F5000019 00000000
 
 FF000019 0000000E
 # data[(5, 0)] : alu_op = lut ; 0xE
-# data[(25, 24)] : bit0: REG_CONST ; 0x0
-# data[(27, 26)] : bit1: REG_CONST ; 0x0
-# data[(29, 28)] : bit2: REG_CONST ; 0x0
+# data[(25, 26)]: bit1: REG_CONST
+# data[(27, 28)]: bit1: REG_CONST
+# data[(29, 30)]: bit2: REG_CONST
 
 00080019 00000400
 # data[(11, 10)] : @ tile (2, 6) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S1_T0
@@ -267,8 +267,8 @@ FF000038 0002000B
 000D0039 00000005
 # data[(3, 0)] : @ tile (4, 5) connect wire 5 (out_0_BUS1_S2_T0) to wen
 
-0000003A 0000000F
-# # data[(7, 0)] : lut_value = 15
+0000003A 000000FF
+# # data[(7, 0)] : lut_value = 255
 
 F300003A 00000000
 # data[(0, 0)] : init `bit0` reg with const `0`
@@ -281,9 +281,9 @@ F500003A 00000000
 
 FF00003A 0000000E
 # data[(5, 0)] : alu_op = lut ; 0xE
-# data[(25, 24)] : bit0: REG_CONST ; 0x0
-# data[(27, 26)] : bit1: REG_CONST ; 0x0
-# data[(29, 28)] : bit2: REG_CONST ; 0x0
+# data[(25, 26)]: bit1: REG_CONST
+# data[(27, 28)]: bit1: REG_CONST
+# data[(29, 30)]: bit2: REG_CONST
 
 0008003A 00000401
 # data[(1, 0)] : @ tile (4, 6) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0

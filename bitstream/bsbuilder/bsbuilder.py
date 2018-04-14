@@ -99,6 +99,7 @@ opb = {}
 # T4_mul(wire,const15_15)    # mul_47515_476_PE
 # T8_add(wire,wire)          # add_457_476_477_PE
 # T10_mul(reg,const13_13$1)  # mul_48313_484_PE
+# T21_ule(wire,const50__148) # ule_148_147_149_PE
 # 
 # T0_in_s2t0 -> T0_out_s0t0 (r)
 # T1_in_s2t0 -> T1_out_s0t0
@@ -174,24 +175,29 @@ def main():
         # mul(wire,const15_15)
         # add(wire,wire) 
         # mul(reg,const13_13$1)
-        if bs_op(tileno,line,DBG-1):
+        if bs_op(tileno,line, max(0,DBG-1)):
             if DBG: print ''
             continue
+        elif DBG: print '# > Not an op'
+
 
         # lutF(wire,0,0)
-        if bs_lut(tileno,line,DBG-1):
+        if bs_lut(tileno,line, max(0,DBG-1)):
             if DBG: print ''
             continue
+        elif DBG: print '# > Not a lut'
 
         # T3_mem_64    # mem_1 fifo_depth=64 => 'mem_64'
         # T17_mem_64   # mem_2 fifo_depth=64 => 'mem_64'
-        if bs_mem(tileno,line,DBG-1):
+        if bs_mem(tileno,line, DBG-1):
             if DBG: print ''
             continue
+        elif DBG: print '# > Not a mem'
 
         if bs_connection(tileno, line, DBG-1):
             if DBG: print ''
             continue
+        elif DBG: print '# > Not a connection'
 
         err_msg = "\n\n# %s\n" % orig_line\
                   + "I don't know what this is: '%s'\n\n" % line
@@ -485,42 +491,6 @@ def parse_tile_decl(line):
         else: return False
 
 
-
-
-
-
-
-
-
-
-
-# def parse_op(line,tilestr):
-#         # "op=mul" or "op MUL"
-#         (op) = myparse(line, "\s*op\W+(\w+)")
-#         if op:
-#             tileno = int(tilestr,16)
-#             # FF000001 0000800B
-#             # # data[(4, 0)] : op = mul
-#             # # data[(13, 13)] : read from reg `b`
-#             # # data[(15, 15)] : read from wire `a`
-#             # print "# Found op '%s'" % op
-#             
-#             # An op needs operands.  Default is "wire" for both
-#             # operands 'a' and 'b' unless/until something overrides
-#             if not opa[tileno]: set_opa(tileno, 'wire')
-#             if not opb[tileno]: set_opb(tileno, 'wire')
-# 
-#             # Sample comment:
-#             # 00020007 00000005 # data=5 => op=mul
-# 
-# 
-#             # FIXME should probably be "op_reg + op_feat + tilestr" instead
-#             addr = "FF00" + tilestr
-#             data = op_data[op]
-#             addbs(addr, data, line)
-#             return True
-#         else: return False
-        
 def parse_opa(line, tilestr):
         # "in_s3=>a" or "in_s3 -> a" or "in_s3 => wire a" or "in_s3 => reg a"
         # or "out_s3 => reg a"
@@ -660,46 +630,6 @@ def emit_bitstream():
         print ""
 
         
-# We don't do this no more (i think)
-# def insert_operands(addr, DBG=1):
-#     # If addr indicates an op, then merge in operands a, b
-#     (is_op, tilestr) = myparse(addr, "(....)(....)")
-#     if is_op == "FF00":
-#         tileno = int(tilestr,16)
-#         wra = opa[tileno]+'_a' # 'wire_a' or 'reg_a'
-#         wrb = opb[tileno]+'_b' # 'wire_b' or 'reg_b'
-#         bitstream[addr].append(op_data[wra])
-#         bitstream[addr].append(op_data[wrb])
-#         if DBG:
-#             print "# Found a op.  Adding operands to merge-list..."
-# 
-#             print "# opa = %7s = %s" % (wra, op_data[wra])
-#             print "# opb = %7s = %s" % (wrb, op_data[wrb])
-#             print "# " + addr, bitstream[addr]
-#             print ""
-
-
-
-
-
-# <sb feature_address='5' bus='BUS16'>
-#     <sel_width>2</sel_width>
-#     <mux snk='out_BUS16_S0_T0' reg='1' configh='1' configl='0' configr='40'>
-#       <src sel='0'>in_BUS16_S1_T0</src>
-#       <src sel='1'>in_BUS16_S2_T0</src>
-#       <src sel='2'>in_BUS16_S3_T0</src>
-#       <src sel='3'>pe_out_res</src>
-
-
-            #             print wire
-            #             print tmp
-            #             sys.exit(0)
-
-#             addr = "FF00" + tilestr
-#             data = op_data['wire_a']
-#             addbs(addr,data)
-
-
 def set_opa(tileno, wr):
     DBG=0
     # print "# Setting a input to default 'wire'"
@@ -711,8 +641,6 @@ def set_opb(tileno, wr):
     # print "# Setting a input to default 'wire'"
     opb[tileno] = wr;
     if DBG: print "# opb[%04X] = %s" % (tileno, opb[tileno])
-
-
 
 
 # % grep localparam $top/../pe_new/pe/rtl/test_pe_comp.svp | grep _OP
@@ -735,6 +663,7 @@ def set_opb(tileno, wr):
 # localparam PE_CNTR_OP    = 6'h18;
 # localparam PE_DIV_OP     = 6'h19;
 
+# FIXME I guess these should all come from cgra_info.txt maybe
 op_data = {} # dictionary
 # op_data['add']   = 0x00000000
 # op_data['mul']   = 0x0000000B
@@ -751,6 +680,18 @@ op_data['mul']     = 0x0000000B
 op_data['or']      = 0x00000012
 op_data['and']     = 0x00000013
 op_data['xor']     = 0x00000014
+
+op_data['lut']   = 0x0000000E # ?? right ??
+
+
+
+# Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
+op_data['uge']     = op_data['gte']
+op_data['ule']     = op_data['lte']
+op_data['max']     = op_data['gte']
+op_data['min']     = op_data['lte']
+op_data['umax']     = op_data['gte']
+op_data['umin']     = op_data['lte']
 
 
 # A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
@@ -816,6 +757,7 @@ def bs_op(tileno, line, DBG=0):
     # mul(wire,const15_15)
     # add(wire,wire) 
     # mul(reg,const13_13$1)
+    # ule(wire,const50__148)
 
     # OUT (../examples/bw1000.bsa):
     # FF000001 0003 000B
@@ -831,7 +773,9 @@ def bs_op(tileno, line, DBG=0):
     op2    = parse.group(3)+"_b"
 
     if DBG>1: print '# tile%02d  %s %s %s' % (tileno,opname,op1,op2)
-    if opname not in op_data: return False
+    if opname not in op_data:
+        if DBG>1: print '# > Not an op (line 843)'
+        return False
 
     # If op is a const, returns 'const_a' or 'const_b'
     op1 = bs_const(tileno, op1, 'op1')
@@ -883,42 +827,51 @@ def bs_lut(tileno, line, DBG=0):
     # data[(27, 26)] : bit1: REG_CONST ; 0x0
     # data[(29, 28)] : bit2: REG_CONST ; 0x0
 
-    parse = re.search('lut([0-9a-fA-F])\s*\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)', line)
-    if not parse: return False
+    parse = re.search('lut([0-9a-fA-F][0-9a-fA-F])\s*\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)', line)
+    if not parse:
+        if DBG>1: print '# > Not a lut (line 831)'
+        return False
 
     # print 'hey found a lut'
 
-    lutval = parse.group(1)       # 'F'
+    lutval = parse.group(1)       # 'FF'
     bit0   = parse.group(2)       # 'const0'
     bit1   = parse.group(2)       # 'const0'
     bit2   = parse.group(2)       # 'const0'
 
-    # op1    = parse.group(2)+"_a"  # 'reg_a' or 'wire_a' or 'const19_19$1_a' or '0'
-    # op2    = parse.group(3)+"_b"
-
-    assert (bit0,bit1,bit2) == ('const0','const0','const0'), \
-           'Sorry!  For now the only choices are (0,0,0)'
-
-    # load lut
+    # load lut reg with lut value
     lutval = int(lutval,16)
     addr = "0000%04X" % tileno; data = lutval
     comment = "# data[(7, 0)] : lut_value = %d" % lutval
     addbs(addr, data, comment)
 
-    # bit0
-    addr = "F300%04X" % tileno; data = 0
-    comment = "data[(0, 0)] : init `bit0` reg with const `0`"
-    addbs(addr, data, comment)
+    # operands
+    op0 = bit0[0:5] + '_0' # E.g. 'wire_0', 'reg_0', or 'const_0'
+    op1 = bit0[0:5] + '_1' # E.g. 'wire_1', 'reg_1', or 'const_1'
+    op2 = bit0[0:5] + '_2' # E.g. 'wire_2', 'reg_2', or 'const_2'
 
-    # bit1
-    addr = "F400%04X" % tileno; data = 0
-    comment = "data[(0, 0)] : init `bit1` reg with const `0`"
-    addbs(addr, data, comment)
+    # If const, build the constant load sequences e.g.
+    # F3000099 00000013
+    # data[(0, 0)] : init `bit0` reg with const `19`"
+    if bit0[0:5] == 'const': lut_const(0, bit0, tileno)
+    if bit1[0:5] == 'const': lut_const(1, bit1, tileno)
+    if bit2[0:5] == 'const': lut_const(2, bit2, tileno)
 
-    # bit0
-    addr = "F500%04X" % tileno; data = 0
-    comment = "data[(0, 0)] : init `bit2` reg with const `0`"
-    addbs(addr, data, comment)
+    assert (bit0,bit1,bit2) == ('const0','const0','const0'), \
+           'Sorry!  For now the only choices are (0,0,0)'
+
+    assert op0=='reg_0' or op0=='wire_0' or op0=='const_0', op0
+    assert op1=='reg_1' or op1=='wire_1' or op1=='const_1', op1
+    assert op2=='reg_2' or op2=='wire_2' or op2=='const_2', op2
+
+    opname = 'lut'
+    data = op_data[opname] | op_data[op0] | op_data[op1] | op_data[op2] 
+    # TODO check opname is correct above and op_data etc.
+
+    # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
+    addr = "FF00%04X" % tileno
+    
+    assert opname == 'lut'
 
     # FF00TTTT 0000000E
     # data[(5, 0)] : alu_op = lut ; 0xE
@@ -926,15 +879,34 @@ def bs_lut(tileno, line, DBG=0):
     # data[(27, 26)] : bit1: REG_CONST ; 0x0
     # data[(29, 28)] : bit2: REG_CONST ; 0x0
 
-    addr = 0xFF000000 | int(tileno); data = 0xE
     comment = [
-        'data[(5, 0)] : alu_op = lut ; 0xE',
-        'data[(25, 24)] : bit0: REG_CONST ; 0x0',
-        'data[(27, 26)] : bit1: REG_CONST ; 0x0',
-        'data[(29, 28)] : bit2: REG_CONST ; 0x0']
+        "data[(5, 0)] : alu_op = lut ; 0xE",
+        "data[(25, 26)]: bit1: %s" % regtranslate(op0),
+        "data[(27, 28)]: bit1: %s" % regtranslate(op1),
+        "data[(29, 30)]: bit2: %s" % regtranslate(op2),
+        ]
     addbs(addr, data, comment)
 
     return True
+
+
+def lut_const(bitno, kstring, tileno):
+    # E.g. to load bit0=0x13 in tile 0x99 want: 'F3000099 00000013'
+
+    parse = re.search('const(\d+)', kstring)
+    if not parse:
+        assert False, 'Huh, %s does not look like a valid constant string' % kstring
+    k = int(parse.group(1))
+
+    # (bit0,bit1,bit2) = regs (F3,F4,F5) respectively
+    regno = 0xF3 + bitno
+
+    # addr = "F300%04X" % tileno; data = 0
+    addr = (regno<<24) | tileno; data = 0
+
+    comment = "data[(0, 0)] : init `bit%d` reg with const `%d`" % (bitno, k)
+    addbs(addr, data, comment)
+
 
 
 def regtranslate(op):

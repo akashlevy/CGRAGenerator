@@ -13,7 +13,7 @@ T23_mul(wire,const7__338)  # mul_337_338_339_PE
 T41_add(wire,wire)         # add_341_345_346_PE
 
 # LUT tiles for wen_lut's [25]
-T25_lutF(const0,const0,const0)
+T25_lutFF(const0,const0,const0)
 
 # MEM tiles
 T24_mem_10   # mem_1 fifo_depth=10

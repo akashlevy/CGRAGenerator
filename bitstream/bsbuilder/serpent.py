@@ -558,6 +558,17 @@ def print_oplist(DBG=0):
         elif is_pe(sname):
             addmul = sname[0:3] # 'add' or 'mul'
 
+
+
+            # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; its a uge :o
+            if re.search(r'^ult.*_uge_PE$', sname): addmul = 'uge'
+
+            # ...I assume the converse will also be true...?
+            if re.search(r'^ugt.*_ule_PE$', sname): addmul = 'ule'
+
+
+
+
             if (src.input0 == False) or (src.input1 == False):
                 print('');
                 nodes[sname].show()
@@ -579,7 +590,7 @@ def print_oplist(DBG=0):
 
     # FIXME should be separate print_wenlist()
     print "# LUT tiles for wen_lut's", WEN_LUT_LIST
-    for i in WEN_LUT_LIST: print "T%d_lutF(const0,const0,const0)" % i
+    for i in WEN_LUT_LIST: print "T%d_lutFF(const0,const0,const0)" % i
     print ''
 
 def print_memlist():

@@ -1195,73 +1195,99 @@ def canon2cgra(name, DBG=0):
 
 
 
-# FIXME split into multiple funcs maybe
-# - fix it to read also in_0_... DONE
+# FIXME should return buswidth 1 or 16, yes?
+def parse_cgra_simple_wire(w, DBG):
+    top_or_bottom = -1
+    parse = re.search('(in|out)_BUS(1|16)_S(\d+)_T(\d+)', w)
+    assert parse != False
+
+    dir = parse.group(1)
+    # buswidth = group(2)
+    side = getnum(parse.group(3))
+    track = getnum(parse.group(4))
+
+    rval = (dir,top_or_bottom,side,track)
+    if DBG: print rval
+    return rval
+
+
+# Crazy memtile wire non-ST
+def parse_cgra_memwire(w, DBG):
+    if DBG: print '           # OH NO found non-ST wire name "%s"' % w
+    parse = re.search('^(in|out)_([01])_BUS(1|16)_(\d+)_(\d+)', w)
+
+    dir = parse.group(1)
+    top_or_bottom  = parse.group(2)
+    # buswidth = group(3)
+    side  = getnum(parse.group(4))
+    track = getnum(parse.group(5))
+
+    # w2 = "%s_%s_BUS16_S%s_T%s" % (dir,top_or_bottom,side,track)
+    if top_or_bottom == '0':
+        top_or_bottom = 'top'
+    else:
+        top_or_bottom = 'bottom'; side = side + 4
+    rval = (dir,top_or_bottom,side,track)
+    if DBG: print rval
+    return rval
+
+# Crazy memtile wire ST
+def parse_cgra_memwireST(w, DBG):
+    if DBG: print '           # OH NO found ST wire name "%s"' % w
+    parse = re.search('^(in|out)_([01])_BUS(1|16)_S(\d+)_T(\d+)', w)
+
+    dir = parse.group(1)
+    # buswidth = group(3)
+    top_or_bottom  = parse.group(2)
+    side  = getnum(parse.group(4))
+    track = getnum(parse.group(5))
+
+    # w2 = "%s_%s_BUS16_%s_%s" % (dir,top_or_bottom,side,track)
+    if top_or_bottom=='0': top_or_bottom = 'top'
+    else:
+        top_or_bottom = 'bottom'
+        side = side + 4
+    rval = (dir,top_or_bottom,side,track)
+    if DBG: print rval
+    return rval
+
+# Crazy memtile wire sb_wire
+def parse_cgra_sbwire(w, DBG):
+    if DBG: print '           # OH NO found stupid sb_wire "%s"' % w
+    parse = re.search('sb_wire_(in|out)_1_BUS(1|16)_(\d+)_(\d+)', w)
+    dir = parse.group(1)
+    top_or_bottom  = 'bottom'
+    side  = getnum(parse.group(3))+4
+    track = getnum(parse.group(4))
+    # w2 = "%s_%s_BUS16_S%s_T%s" % (dir,top_or_bottom,side,track)
+    # if top_or_bottom=='0': top_or_bottom = 'top'
+    # else      : top_or_bottom = 'bottom'
+    rval = (dir,top_or_bottom,side,track)
+    if DBG: print rval
+    return rval
+
+
 def parse_cgra_wirename(w, DBG=0):
-    (dir,tb,side,track) = (-1,-1,-1,-1)
+    (dir,top_or_bottom,side,track) = (-1,-1,-1,-1)
     # rval = (-1,-1,-1)
 
-    assert not re.search('_BUS1_', w),\
-           'Oops cannot handle single-bit wires (yet)'
+    # assert not re.search('_BUS1_', w), 'Oops cannot handle single-bit wires (yet)'
         
     # Look for most common case first, howbowda
-    parse = re.search('(in|out)_BUS16_S(\d+)_T(\d+)', w)
-    if (parse):
-        print 'parsed'
-        (dir,side,track) = (parse.group(1), getnum(parse.group(2)), getnum(parse.group(3)))
-        rval = (dir,tb,side,track)
-        if DBG: print rval
-        return rval
+    if re.search('(in|out)_BUS(1|16)_S(\d+)_T(\d+)', w):
+        return parse_cgra_simple_wire(w, DBG)
 
     # Crazy memtile wire non-ST
-    parse = re.search('^(in|out)_([01])_BUS16_(\d+)_(\d+)', w)
-    if parse:
-        if DBG: print '           # OH NO found non-ST wire name "%s"' % w
-        dir = parse.group(1)
-        tb  = parse.group(2)
-        side  = getnum(parse.group(3))
-        track = getnum(parse.group(4))
-        # w2 = "%s_%s_BUS16_S%s_T%s" % (dir,tb,side,track)
-        if tb=='0': tb = 'top'
-        else:
-            tb = 'bottom'
-            side = side + 4
-        rval = (dir,tb,side,track)
-        if DBG: print rval
-        return rval
-
-    # Crazy memtile wire sb_wire
-    parse = re.search('sb_wire_(in|out)_1_BUS16_(\d+)_(\d+)', w)
-    if parse:
-        if DBG: print '           # OH NO found stupid sb_wire "%s"' % w
-        dir = parse.group(1)
-        tb  = 'bottom'
-        side  = getnum(parse.group(2))+4
-        track = getnum(parse.group(3))
-        # w2 = "%s_%s_BUS16_S%s_T%s" % (dir,tb,side,track)
-        # if tb=='0': tb = 'top'
-        # else      : tb = 'bottom'
-        rval = (dir,tb,side,track)
-        if DBG: print rval
-        return rval
-
+    if re.search('^(in|out)_([01])_BUS(1|16)_(\d+)_(\d+)', w):
+        return parse_cgra_memwire(w, DBG)
 
     # Crazy memtile wire ST
-    parse = re.search('^(in|out)_([01])_BUS16_S(\d+)_T(\d+)', w)
-    if parse:
-        if DBG: print '           # OH NO found ST wire name "%s"' % w
-        dir = parse.group(1)
-        tb  = parse.group(2)
-        side  = getnum(parse.group(3))
-        track = getnum(parse.group(4))
-        # w2 = "%s_%s_BUS16_%s_%s" % (dir,tb,side,track)
-        if tb=='0': tb = 'top'
-        else:
-            tb = 'bottom'
-            side = side + 4
-        rval = (dir,tb,side,track)
-        if DBG: print rval
-        return rval
+    if re.search('^(in|out)_([01])_BUS(1|16)_S(\d+)_T(\d+)', w):
+        return parse_cgra_memwireST(w, DBG)
+
+    # Crazy memtile wire sb_wire
+    if re.search('sb_wire_(in|out)_1_BUS(1|16)_(\d+)_(\d+)', w):
+        return parse_cgra_sbwire(w, DBG)
 
     # Not a wire; maybe it's e.g. 'data1'
     # print 'out', rval

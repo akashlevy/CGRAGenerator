@@ -368,7 +368,7 @@ def bs_connection(tileno, line, DBG=0):
     # see reg_field_bug_hack() for deets
     if (lhs == 'in_s0t0_b0') and (rhs == 'out_s2t0_b0'):
         return reg_field_bug_hack(t)
-
+    #DBG=9
     # Connect lhs to rhs
     Tlhs = "T%d_%s" % (tileno,lhs)
     Trhs = "T%d_%s" % (tileno,rhs)
@@ -380,18 +380,23 @@ def bs_connection(tileno, line, DBG=0):
         tile = cgra_info.get_tile(tileno)
         cgra_info.find_mux(tile, src_cgra, snk_cgra, DBG=1)
         sys.exit(-1)
-    (addr,data,ra,rd,comm,rcomm) = cwt
+
+    (laddr,ldata, haddr,hdata, raddr,rdata,   comm, rcomm) = cwt
 
     # print 'sel %08X %08X' % (addr,data)
     # print '# ', comm, '\n'
-    addbs(addr, data, comm)
+    addbs(laddr, ldata, comm)
+
+    if (laddr != haddr):
+        if DBG: print("397 ok here we go with the overlapped bitrange")
+        addbs(haddr, hdata, comm)
 
     # process reg if one exists
     # (note registered ops are taken care of elsewheres)
     if reg=='r' and not rhs[0:2]=='op':
         # print 'reg %08X %08X' % (ra,rd)
         # print '# ', rcomm, '\n'
-        addbs(ra, rd, rcomm)
+        addbs(raddr, rdata, rcomm)
 
     return True
 
@@ -857,8 +862,8 @@ def bs_lut(tileno, line, DBG=0):
     if bit1[0:5] == 'const': lut_const(1, bit1, tileno)
     if bit2[0:5] == 'const': lut_const(2, bit2, tileno)
 
-    assert (bit0,bit1,bit2) == ('const0','const0','const0'), \
-           'Sorry!  For now the only choices are (0,0,0)'
+#     assert (bit0,bit1,bit2) == ('const0','const0','const0'), \
+#            'Sorry!  For now the only choices are (0,0,0)'
 
     assert op0=='reg_0' or op0=='wire_0' or op0=='const_0', op0
     assert op1=='reg_1' or op1=='wire_1' or op1=='const_1', op1

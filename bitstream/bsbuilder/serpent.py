@@ -959,8 +959,8 @@ class Node:
             print "OOPS SOOOOO looks like we tried to connect bit and non-bit wires4"
             assert False
 
-        print "     Cannot connect '%s' to '%s' directly.  BUT" % (a,b)
-        print "     maybe can connect through intermediary?"
+        print("     Cannot connect '%s' to '%s' directly.  BUT" % (a,b))
+        print("     maybe can connect through intermediary?")
         # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
         # FIXME too many intermediaries?
         pwhere(469)
@@ -978,7 +978,7 @@ class Node:
         # It only works when dest is op1 or op2 or mem_in, i think
 
         # FIXME too many intermediaries?
-        if not re.search('(op1|op2|mem_in)', b):
+        if not re.search('(op[12]|bit[012]|mem_in)', b):
             print "     Nope wrong kind of wire for intermediary..."
 
             # Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly.  BUT

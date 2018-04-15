@@ -774,40 +774,56 @@ def encode_parms(parms, DBG=0):
     fa       = parms['fa'] # feature_address
     sel      = parms['sel']
     sw       = parms['sw'] # sel_width
-    configh  = parms['configh']
     configl  = parms['configl']
+    configh  = parms['configh']
     configr  = parms['configr']
 
     if configh == -1: configh=0
     if configl == -1: configl=0
     if configr == -1: configr=0
 
-    # First encode the select field
-    regh = configh/32
-    regl = configl/32
-    assert regh==regl, 'select field crossed reg boundary!'
-
-    addr = '%02X%02X%04X' % (regh, fa, tileno)
-    addr = getnum(addr,16)
-    if DBG: print 'select address is %08X' % addr
-
+    # ?? not sure what this is all about ??
+    # some kinda sanity check i guess?
     # mask = (1<< (1+configh-configl)) - 1
     mask = (1 << sw) - 1
     if DBG: print 'select mask is    0x%X' % mask
     assert sel < 2**sw, 'select exceeds mask size!'
 
-    data = sel << (configl%32)
-    if DBG: print 'select data is    %08X\n' % data
+    regl = configl/32
+    laddr = '%02X%02X%04X' % (regl, fa, tileno)
+    laddr = int(laddr, 16)
+    ldata = (sel << (configl%32)) & 0xffffffff
+    if DBG: print('select address is %08X' % getnum(laddr))
+    if DBG: print('select data is    %08X\n' % ldata)
 
+    # Need extra reg if select field crosses reg boundaries
+    regh = configh/32
+    if regh != regl:
+        haddr = '%02X%02X%04X' % (regh, fa, tileno)
+        haddr = int(haddr, 16)
+        hdata = (sel >> (configh-31))
+        assert haddr != laddr
+        if DBG: print('ovfw address is %08X' % getnum(haddr))
+        if DBG: print('ovfw data is    %08X\n' % hdata)
+        if DBG:
+            print('select field crossed reg boundary! but thats okay')
+            msg = '  configl %s\n' % parms['configl'] + \
+                  '  configh %s\n' % parms['configh'] + \
+                  '\n'
+            print(msg)
+    else:
+        (haddr,hdata) = (laddr,ldata)
+
+    # Separate encoding for register bit
     regr = configr/32
     raddr = '%02X%02X%04X' % (regr, fa, tileno)
     raddr = getnum(raddr,16)
     if DBG: print 'reg address is %08X' % raddr
 
     rdata = 1 << (configr%32)
-    if DBG: print 'reg data is    %08X\n' % data
+    if DBG: print 'reg data is    %08X\n' % rdata
 
-    return (addr,data,raddr,rdata)
+    return (laddr,ldata, haddr,hdata, raddr,rdata)
 
 
 def gen_comment_conn(configh,configl,tileno,sel,src,snk):
@@ -956,6 +972,7 @@ def parse_canon(w):
     # Examples
     # "T0_in_s0t0" returns (0, 'in', 0, 0)
     # "T3_mem_out" returns (3, 'mem_out', -1, -1)
+    # also works for single-bit wires i guess e.g. 'T0_in_s0t0b'
     (tileno,w) = parse_resource(w)
 
     parse = re.search('(in|out)_s(\d+)t(\d+)', w)
@@ -964,6 +981,31 @@ def parse_canon(w):
     (dir,side,track) = (
         parse.group(1), parse.group(2), parse.group(3))
     return (getnum(tileno),dir,int(side),int(track))
+
+
+def get_bus_width_canon(wirename):
+    (tileno, w) = parse_resource(wirename)
+
+    # One-bit wirenames
+    for r in (
+        r'^bit[012]$',
+        r'^(in|out)_s(\d+)t(\d*)b$',
+        r'^mem_(in|out)$',
+        r'^wen$',
+        r'^pe_outb$',
+        r'^pe_out_b0$' # (deprecated) FIXME emit warning maybe
+        ):
+        if re.search(r, w): return 1
+        
+    # 16-bit wirenames
+    for r in (
+        r'^op[12]$',
+        r'^(in|out)_s(\d+)t(\d*)[^b]$',
+        r'^pe_out$'
+        ):
+        if re.search(r, w): return 16
+    
+    assert False, 'what izzit this thing "%s"?' % wirename
 
 
 def test_canon2global():
@@ -1296,9 +1338,13 @@ def connect_within_tile(tileno, src, snk, DBG):
 
     if parms == False: return False
     else:
-        ep = encode_parms(parms, DBG)
+        configl  = parms['configl']
+        configh  = parms['configh']
 
-        # Stupid comment
+        if configl == -1: configl=0
+        if configh == -1: configh=0
+
+        # Stupid comment for configh, configr
         # data[(21, 20)] : @ tile (2, 2) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
         c = gen_comment_conn(
             parms['configh'],
@@ -1308,14 +1354,23 @@ def connect_within_tile(tileno, src, snk, DBG):
             canon2cgra(src),
             canon2cgra(snk))
 
-        # Stupid comment
+        # Stupid comment for configr
         # data[(14, 14)] : @ tile (4, 0) latch output wire out_BUS16_S1_T1
         cr = gen_comment_latch(
             parms['configr'],
             tileno,
             canon2cgra(snk))
 
-        return ep + (c,cr)
+        # encode_parms() returns (addr_l,data_l,addr_h,data_h,addr_r,data_r)
+        # (laddr,ldata)  = h/l encoding
+        # (haddr,hdata) = h/l encoding in overflow reg (if h/l crosses reg boundary)
+        # (raddr,rdata) = encoding for reg, possibly in overflow reg
+
+        (laddr,ldata, haddr,hdata, raddr,rdata) = encode_parms(parms, DBG)
+
+        # Wrap it all up, send it all back.
+        return (laddr,ldata, haddr,hdata, raddr,rdata) + (c,cr)
+
 
 
 #     ################################################################

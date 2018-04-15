@@ -972,6 +972,7 @@ def parse_canon(w):
     # Examples
     # "T0_in_s0t0" returns (0, 'in', 0, 0)
     # "T3_mem_out" returns (3, 'mem_out', -1, -1)
+    # also works for single-bit wires i guess e.g. 'T0_in_s0t0b'
     (tileno,w) = parse_resource(w)
 
     parse = re.search('(in|out)_s(\d+)t(\d+)', w)
@@ -980,6 +981,31 @@ def parse_canon(w):
     (dir,side,track) = (
         parse.group(1), parse.group(2), parse.group(3))
     return (getnum(tileno),dir,int(side),int(track))
+
+
+def get_bus_width_canon(wirename):
+    (tileno, w) = parse_resource(wirename)
+
+    # One-bit wirenames
+    for r in (
+        r'^bit[012]$',
+        r'^(in|out)_s(\d+)t(\d*)b$',
+        r'^mem_(in|out)$',
+        r'^wen$',
+        r'^pe_outb$',
+        r'^pe_out_b0$' # (deprecated) FIXME emit warning maybe
+        ):
+        if re.search(r, w): return 1
+        
+    # 16-bit wirenames
+    for r in (
+        r'^op[12]$',
+        r'^(in|out)_s(\d+)t(\d*)[^b]$',
+        r'^pe_out$'
+        ):
+        if re.search(r, w): return 16
+    
+    assert False, 'what izzit this thing "%s"?' % wirename
 
 
 def test_canon2global():

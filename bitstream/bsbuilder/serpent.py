@@ -781,12 +781,10 @@ class Node:
         if DBG>2: pwhere(386)
         if DBG>2: print "Looking for '%s' in %s" % (r, self.net)
 
-        allresources = resources[tileno].bus + resources[tileno].bit
-
         # E.g. resources[T] = ['in_s0t0', 'in_s0t1', ...
         # Can't use a register unless we're specifically looking for a register
         if rname in REGISTERS:
-            assert rname not in allresources,\
+            assert rname not in resources[tileno],\
                    "'%s' is a register: should not be in resources list!"
             # But it CAN be in the net list maybe...?
             print "'%s' not avail to '%s' b/c its a register" % (r, self.name)
@@ -801,8 +799,8 @@ class Node:
             return True
 
         if DBG>2: print "is_avail: looking for '%s' in tile %d resources %s" \
-              % (rname, tileno, allresources)
-        if rname in allresources:
+              % (rname, tileno, resources[tileno])
+        if rname in resources[tileno]:
             # print "       %-11s is in free list for tile %d" % (rname, tileno)
             return True
 
@@ -1238,43 +1236,46 @@ def initialize_routes():
 #     # print tiles[0]
 
 
-class Resource:
+def build_resource_list(tileno, suffix, DBG=0):
 
-    def __init__(self, tileno):
-        self.bus = self.build_resource_list(tileno, '')  # BUS16
-        self.bit = self.build_resource_list(tileno, 'b') # BUS1
+    i = tileno
+    resources = []
+    for dir in ['in','out']:
+        # for side in range(4):
+        nsides = 4
+        if  is_mem_tile(i): nsides = 8
+        for side in range(nsides):
+            for track in range(5):
+                port = "T%d_%s_s%dt%d%s" % (i, dir,side,track,suffix)
+                resources.append(port)
+
+    # Tile-specific resources
+    pfx = 'T' + str(i) + '_'
+    if suffix == '':
+        # BUS16 resources
+        if  is_mem_tile(i):
+            resources.extend([pfx+'mem_in',pfx+'mem_out'])
+        elif is_pe_tile(i):
+            resources.extend([pfx+'op1',pfx+'op2',pfx+'pe_out'])
+    else:
+        # BUS1 resources
+        if  is_mem_tile(i):
+            resources.extend([pfx+'wen'])
+        elif is_pe_tile(i):
+            # Note bit[012] maps to in[012] repsectively
+            resources.extend([pfx+'bit0',pfx+'bit1',pfx+'bit2',pfx+'pe_outb'])
+    return resources
 
 
-    def build_resource_list(self, tileno, suffix, DBG=0):
-
-        i = tileno
-        resources = []
-        for dir in ['in','out']:
-            # for side in range(4):
-            nsides = 4
-            if  is_mem_tile(i): nsides = 8
-            for side in range(nsides):
-                for track in range(5):
-                    port = "T%d_%s_s%dt%d%s" % (i, dir,side,track,suffix)
-                    resources.append(port)
-
-        # Tile-specific resources
-        pfx = 'T' + str(i) + '_'
-        if suffix == '':
-            # BUS16 resources
-            if  is_mem_tile(i):
-                resources.extend([pfx+'mem_in',pfx+'mem_out'])
-            elif is_pe_tile(i):
-                resources.extend([pfx+'op1',pfx+'op2',pfx+'pe_out'])
-        else:
-            # BUS1 resources
-            if  is_mem_tile(i):
-                resources.extend([pfx+'wen'])
-            elif is_pe_tile(i):
-                # Note bit[012] maps to in[012] repsectively
-                resources.extend([pfx+'bit0',pfx+'bit1',pfx+'bit2',pfx+'pe_outb'])
-
-        return resources
+def show_resources(tileno):
+    print('['),
+    i = 0
+    for s in resources[tileno]:
+        if re.search('(t0)|(op1)|(bit0)|(mem_in)|(wen)', s): print ''
+        print('%-14s' % s),
+        i = i + 1
+    if (i%4 == 0): print ''
+    print(']')
 
 
 def init_tile_resources(DBG=0):
@@ -1283,20 +1284,24 @@ def init_tile_resources(DBG=0):
 
     ntiles = cgra_info.ntiles()
     resources = range(ntiles)
-    for i in range(ntiles):
-        # resources[i] = build_resource_list(i, DBG)
+    printed_pe = False; printed_mem = False
+    for tileno in range(ntiles):
+        valid = is_pe_tile(tileno) or is_mem_tile(tileno)
+        if not valid: continue
 
-        # resources[i] = Resource(i).bus
-        resources[i] = Resource(i)
+        resources_bus = build_resource_list(tileno, '')  # BUS16
+        resources_bit = build_resource_list(tileno, 'b') # BUS1
+        resources[tileno] = resources_bus + resources_bit
 
+        if (not printed_pe) and is_pe_tile(tileno):
+            print 'PE: ', ; show_resources(tileno)
+            printed_pe = True
 
+        if (not printed_mem) and is_mem_tile(tileno):
+            print 'MEM:', ; show_resources(tileno)
+            printed_mem = True
 
     if DBG: print "Initialized %d tiles" % ntiles
-    print ''
-    print 'PE: ', resources[0].bus
-    print ''
-    print 'MEM:', resources[3].bus
-    print ''
 
 
 # def build_resource_list(tileno, DBG=0):
@@ -1824,7 +1829,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
     global INPUT_OCCUPIED
     if sname=='INPUT' \
        and is_pe(dname) \
-       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO].bus)\
+       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO])\
        and not INPUT_OCCUPIED:
         place_pe_in_input_tile(dname)
         INPUT_OCCUPIED = True
@@ -1833,7 +1838,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
        # and ('T0_pe_out' in resources[INPUT_TILENO])\
     if sname=='INPUT' \
        and is_folded_reg(dname) \
-       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO].bus)\
+       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO])\
        and not INPUT_OCCUPIED:
         place_folded_reg_in_input_tile(dname)
         # assert False, "TODO put reg-pe folded pair in INPUT tile :("
@@ -2012,9 +2017,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         print ''
         
         print "# 4. Remove path resources from the free list"
-        unfree_resources(path,DBG=9)
-        #         assert False, 'hey hows that'
-        #         print resources[1]
+        unfree_resources(path,DBG)
 
         print ''
         pwhere(1198)
@@ -2190,10 +2193,11 @@ def sqw(w): return squote(w, -13)
 
 def unfree_resources(path,DBG=0):
     '''Remove all path resources from free list(s)'''
+    if (DBG>1): print("Unfree all resources in path:\n%s" % path)
     for r in CT.allports(path):
         (tileno,x) = CT.parse_resource(r)
-        if (r in resources[tileno].bus):
-            resources[tileno].bus.remove(r)
+        if (r in resources[tileno]):
+            resources[tileno].remove(r)
             if DBG: print "     %s removed from tile %d free list" \
                % (sqw(r), tileno)
             # print "  Before: %s" % resources[tileno]
@@ -2760,7 +2764,7 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
               % (endpoint, dstport)
 
         global ENDPOINT_MUST_BE_FREE
-        if ENDPOINT_MUST_BE_FREE and (dstport not in resources[dtileno].bus):
+        if ENDPOINT_MUST_BE_FREE and (dstport not in resources[dtileno]):
             print "     - OOP its being used by someone else, try another one\n"
             continue
 
@@ -2971,7 +2975,7 @@ def test_connect():
     print rval
 
     print 'TEST: can find double-connection from  in_s1t1 to op1 in tile 4?'
-    print resources[0].bus
+    print resources[0]
     rval = nodes['INPUT'].connect('in_s1t1', 'op1', T=0, DBG=9)
     print rval
 

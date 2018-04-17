@@ -64,6 +64,7 @@ module lb_tb ();
 		repeat(3)@ (posedge clk);
 		flush = 0;
 		repeat(40) @ (negedge clk);
+		#1
 		clk_en = 0;
 		repeat(5) @ (negedge clk);
 		config_en_sram = 4'b1;
@@ -73,6 +74,7 @@ module lb_tb ();
 		config_read = 0;
 		config_en_sram = 0;
 		repeat(5) @ (negedge clk);
+		#1
 		clk_en = 1;
 	end
 	always begin
@@ -82,8 +84,8 @@ module lb_tb ();
 	always @ (posedge clk) begin
 		if(startup) begin
 			i = i+1;
-			//wen_in = (i < 15) || (i > 20 && i < 40) || (i > 45);
-			wen_in = $urandom_range(1,0);
+			wen_in = (i < 15) || (i > 20 && i < 40) || (i > 45);
+			//wen_in = $urandom_range(1,0);
 			if( wen_in == 1 && i>1)
 				data_in = data_in + 1;
 		end

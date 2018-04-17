@@ -224,7 +224,7 @@ read_data
   end
 //;   my $bus_width = $bus_width_hash { $gen_mem_for_busname };
 //;  #ankitan
-//;  # wire [`$bus_width-1`:0] rdata;
+     wire [`$bus_width-1`:0] rdata;
 //;  if($USE_SHIFT_REG) {
        wire [`$bus_width-1`:0] rdata_core;
 //;}

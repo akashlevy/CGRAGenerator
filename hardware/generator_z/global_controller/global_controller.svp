@@ -153,7 +153,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   logic [`$cfg_bus_width-1`:0] TST;
   logic [`$cfg_bus_width-1`:0] counter;
   logic [`$cfg_bus_width-1`:0] rd_delay_reg;
-  logic [5:0] clk_switch_counter;
+  logic [4:0] clk_switch_counter;
   always_comb begin
     	clk_domain = (sys_clk_activated) ? clk_in : tck;//Are we running the GC/CGRA on sys clk or test clk?
 	all_stalled_tck = delay_sel[1] ? all_stalled_tck_fall : all_stalled_tck_rise;
@@ -165,7 +165,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   //Clock switch counter block (Always on test_clk)
   always @ (posedge tck or posedge reset_in) begin
 	if (reset_in==1) begin
-		clk_switch_counter <= `$cfg_bus_width`'d20;
+		clk_switch_counter <= 5'd20;
 		sys_clk_activated <= 0;
 		all_stalled_tck_rise <= 0;
 	end
@@ -298,7 +298,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 			end			
 			advance_clk: begin
 				if (config_data_jtag_out > 0) begin
-					if (cgra_stalled & config_addr_jtag_out[3:0]) begin
+					if (|(cgra_stalled & config_addr_jtag_out[3:0])) begin
 						counter <= config_data_jtag_out-1;
 						state <= advancing_clk;	
 						stall_restore <= cgra_stalled;
@@ -311,12 +311,6 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 				write <= 0;
 				analog_wr_en <= 0;
 			end
-			/*resume_clk: begin //REMOVE THIS
-				cgra_stalled <= 0;
-				read <= 0;
-				write <= 0;
-				analog_wr_en <= 0;
-			end */
 			sys_clk_on: begin
 				clk_switch_request <= 1;
 				read <= 0;
@@ -324,7 +318,8 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 				analog_wr_en <= 0;
 			end
 			wr_rd_delay_reg: begin
-				rd_delay_reg <= config_data_jtag_out;
+				//Prevent underflow by setting this to 1 if the input data is 0.
+				rd_delay_reg <= (config_data_jtag_out > 0) ? config_data_jtag_out : 1;
 				read <= 0;
 				write <= 0;
 				analog_wr_en <= 0;

@@ -184,21 +184,8 @@ def ignoble_node(n):
     else:
         return False
 
-if DBG:
-    print "CONNECTIONS"
-    print connections
-
-if DBG: print "CONNECTIONS"
-for k in connections:
-    # print k
-    if DBG: print "# %s , %s" % (k[0], k[1])
-
-    # FIXME hacky hack wacky wack - ignore connections to cg_en, ren, wcgw?
-    if ignoble_node(k[1]): continue
-
-    u0 = uniquify(k[0])
-    u1 = uniquify(k[1])
-
+# FIXME find_depth() and find_lut_value() are quite similar, no?
+def find_depth(nodename):
     # "lb_p4_clamped_stencil_update_stream$mem_1$cgramem":{
     #   "genref":"cgralib.Mem",
     #   "genargs":{"depth":["Int",1024], "width":["Int",16]},
@@ -206,16 +193,66 @@ for k in connections:
     # Insert a fifo_depth comment
     # (for some reason, node name has a '.wdata' on the end)
 
-    parse = re.search('(.*).wdata', k[1])
-    if parse:
-        k1 = re.search('(.*).wdata', k[1]).group(1)
-        if DBG: print "# FOO found wdata node", k1
-        fifo_depth = int(instances[k1]['modargs']['depth'][1])
-        if DBG: print "# FOO found fifo depth", fifo_depth
-        assert fifo_depth > 1 and fifo_depth <= 1024
-        fdcomment = ' # fifo_depth %d' % fifo_depth
+    parse = re.search('(.*).wdata', nodename)
+    if not parse: assert False
+
+    k1 = parse.group(1)
+    if DBG: print "# FOO found wdata node", k1
+    fifo_depth = int(instances[k1]['modargs']['depth'][1])
+    if DBG: print "# FOO found fifo depth", fifo_depth
+    assert fifo_depth > 1 and fifo_depth <= 1024
+    annotation = ' # fifo_depth %d' % fifo_depth
+    return annotation
+
+
+def find_lut_value(nodename):
+    # Insert a lut_load_value comment
+    # Node will have name like "bitnot_156_lut_bitPE"
+    # mapper json:
+    #   "bitand_153_151_154_lut_bitPE":{
+    #     "modargs":{
+    # "bit0_mode":["String","BYPASS"], "bit0_value":["Bool",false], 
+    # "bit1_mode":["String","BYPASS"], "bit1_value":["Bool",false], 
+    # "bit2_mode":["String","BYPASS"], "bit2_value":["Bool",false], 
+    # "lut_value":[["BitVector",8],"8'h88"]}
+    #   },
+
+    if DBG: print "# FOO found lut", nodename
+    lut_value  =     instances[nodename]['modargs']['lut_value'][1]
+    if DBG: print "# FOO found LUT value", lut_value
+    assert lut_value[0:3] == "8'h"
+    annotation = ' # lut_value 0x%s' % lut_value[3:]
+    return annotation
+
+##############################################################################
+if DBG:
+    print "CONNECTIONS"
+    print connections
+
+if DBG: print "CONNECTIONS"
+for k in connections:
+    if DBG: print "# %s , %s" % (k[0], k[1])
+
+#     # FIXME temporary bug: onebit_bool generates OUTPUT on lhs
+#     # FIXME shouldn't have to do it anyway, see to/from below
+#     if k[0] == "io1_out_0_0.in":
+#         k[0] = k[1]
+#         k[1] = "io1_out_0_0.in"
+#         if DBG: print "# Oops no that's backwards.  Rearranged:"
+#         if DBG: print "# %s , %s" % (k[0], k[1])
+
+    # FIXME hacky hack wacky wack - ignore connections to cg_en, ren, wcgw?
+    if ignoble_node(k[1]): continue
+
+    u0 = uniquify(k[0])
+    u1 = uniquify(k[1])
+
+    # E.g. "# fifo_depth 10"
+    if re.search('(.*).wdata', k[1]):
+        annotation = find_depth(k[1])
+
     else:
-        fdcomment = ''
+        annotation = ''
 
     # Turn "PE_U70.data.out, PE_U8.data.in.1" into "PE_U70, PE_U8"
     from_node = u0
@@ -235,8 +272,12 @@ for k in connections:
 
     # print "  %s" % instances[innode]['modargs']
 
+    # E.g. "# lut_value 0x88"
+    if re.search('(.*_lut_bitPE)$', from_node):
+        annotation = find_lut_value(from_node)
+
     # print '    "%s" -> "%s";' % (from_node, to_node)
-    print '    "%s" -> "%s";%s' % (from_node, to_node, fdcomment)
+    print '    "%s" -> "%s";%s' % (from_node, to_node, annotation)
 
     if DBG: print ""
 

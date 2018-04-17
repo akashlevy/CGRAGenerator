@@ -2,19 +2,19 @@ digraph Diagram {
   node [shape=box]; # Comment
     "const0_0" -> "add_340_343_344_PE";
     "const3_3" -> "mul_3423_343_PE";
-    "const5_5" -> "mul_3465_347_PE";
-    "const7_7" -> "mul_3507_351_PE";
-    "add_340_351_352_PE" -> "OUTPUT";
+    "const5_5" -> "mul_3475_348_PE";
+    "const7_7" -> "mul_3527_353_PE";
+    "add_350_353_354_PE" -> "OUTPUT";
     "INPUT" -> "mem_1"; # fifo_depth 10
-    "INPUT" -> "mul_3507_351_PE";
+    "INPUT" -> "mul_3527_353_PE";
     "mem_1" -> "mem_2"; # fifo_depth 10
-    "mem_1" -> "mul_3465_347_PE";
+    "mem_1" -> "mul_3475_348_PE";
     "wen_lut" -> "mem_1";
     "mem_2" -> "mul_3423_343_PE";
     "wen_lut" -> "mem_2";
-    "add_340_343_344_PE" -> "add_340_347_348_PE";
-    "add_340_347_348_PE" -> "add_340_351_352_PE";
+    "add_340_343_344_PE" -> "add_345_348_349_PE";
+    "add_345_348_349_PE" -> "add_350_353_354_PE";
     "mul_3423_343_PE" -> "add_340_343_344_PE";
-    "mul_3465_347_PE" -> "add_340_347_348_PE";
-    "mul_3507_351_PE" -> "add_340_351_352_PE";
+    "mul_3475_348_PE" -> "add_345_348_349_PE";
+    "mul_3527_353_PE" -> "add_350_353_354_PE";
 }

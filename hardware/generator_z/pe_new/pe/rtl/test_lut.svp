@@ -48,7 +48,7 @@ generate
 //;} else {
     assign res[ggg] = lut[{op_b_in[ggg], op_a_in[ggg]}];
 //;}
-    assign read_data = lut;
+    assign read_data = {`32-(2**$lut_inps)`'b0, lut};
   end
 endgenerate
 

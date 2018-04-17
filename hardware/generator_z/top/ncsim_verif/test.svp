@@ -145,7 +145,7 @@ program automatic `mname`(
 	 
 	 @(posedge ifc.Clk);
 	 jtag_config_trans.data_in = 32'd124;
-	 jtag_config_trans.addr = 32'h00040024;
+	 jtag_config_trans.addr = 32'h00000015;
 	 jtag_config_trans.done = 0;
 	 jtag_config_trans.op = write;
 	 jdrv.Send(jtag_config_trans);
@@ -154,7 +154,8 @@ program automatic `mname`(
  
 	 @(posedge ifc.Clk);
 	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'h16;
+	 jtag_config_trans.addr = 32'h00000015;
+	 //jtag_config_trans.addr = 32'h16;
 	 jtag_config_trans.done = 0;
 	 jtag_config_trans.op = read;
 	 jtag_config_trans.data_out = 0;

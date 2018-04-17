@@ -1303,6 +1303,7 @@ def cgra2canon(name, tileno=-1, DBG=0):
     in_2_BUS16_S1_T2 =>   in_s5t2   
     sb_wire_in_1_S3_T2 => in_s1t2
     sb_wire_out_1_S3_T2=> out_s7t2
+    in_BUS1_S1_T2 =>     in_s1t2b     (if tileno = -1)
     '''
     if DBG: print "converting", name
     (dir,tb,side,track) = parse_cgra_wirename(name)
@@ -1326,6 +1327,9 @@ def cgra2canon(name, tileno=-1, DBG=0):
 
     if tileno != -1:
         newname = 'T%d_%s' % (tileno, newname)
+
+    # Little hacky wack; buswidth should come from parse_cgra_wirename probably
+    if name.find('BUS1_') >= 0: newname = newname + 'b'
 
     if DBG: print 'from_cgra: new name is', newname
     if DBG: print ''

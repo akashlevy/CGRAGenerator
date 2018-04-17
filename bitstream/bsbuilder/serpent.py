@@ -1002,13 +1002,12 @@ class Node:
         # areach = FO # from just up there
         # areach = cgra_info.fan_out(to_cgra(a), T, DBG=9)
         areach = cgra_info.fan_out(aprime, T, DBG-1)
-        print "'%s'/'%s' can areach %s" % (a,aprime,areach)
+        print "'%s'/'%s' can a-reach %s" % (a,aprime,areach)
 
         b_cgra = to_cgra(b, DBG-1)
         # breach = cgra_info.reachable(bprime, T, DBG=1)
         breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
-        print "'%s'/'%s' can breached by %s" % (b,bprime,breach)
-
+        print "'%s'/'%s' can be b-reached by %s" % (b,bprime,breach)
 
         middle = False
         for p in areach:
@@ -1018,11 +1017,12 @@ class Node:
                 middle = p
                 break
 
-            #         if not middle: assert False
         if middle:
+            middle_canon = cgra_info.cgra2canon(middle, T)
+
             print "Found double connection QUICKLY."
-            p1 = '%s -> %s' % (a, from_cgra(middle, T))
-            p2 = '%s -> %s' % (from_cgra(middle, T), b)
+            p1 = '%s -> %s' % (a, middle_canon)
+            p2 = '%s -> %s' % (middle_canon, b)
             pmiddle = [p1,p2]
 
             print "Found double connection.  What a day!"
@@ -1070,11 +1070,13 @@ def to_cgra(name, DBG=0):
     # Valid names include "T0_in_s0t0","T3_mem_out"
     return cgra_info.canon2cgra(name, DBG)
 
-def from_cgra(name, tileno, DBG=0):
-    return cgra_info.cgra2canon(name, tileno, DBG)
+# FIXME oh poots just DELETEME
+# def from_cgra(name, tileno, DBG=0):
+#     return cgra_info.cgra2canon(name, tileno, DBG)
 
-def parse_cgra_wirename(w, DBG=0):
-    return cgra_info.parse_cgra_wirename(w, DBG)
+# FIXME oh poots just DELETEME
+# def parse_cgra_wirename(w, DBG=0):
+#     return cgra_info.parse_cgra_wirename(w, DBG)
 
 # List of output ports being used as registers
 REGISTERS = []

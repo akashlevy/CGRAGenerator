@@ -143,8 +143,6 @@ def worker_id(request):
 def test_op(strategy, op, flag_sel, signed, worker_id):
     if flag_sel == 0xE:
         return  # Skip lut, tested separately
-    if op == "abs" and not signed:
-        return  # Skip abs in unsigned mode
     if flag_sel in [0x4, 0x5, 0x6, 0x7, 0xA, 0xB, 0xC, 0xD] and not signed:  # Flag modes with N, V are signed only
         return
     lut_code = 0x00

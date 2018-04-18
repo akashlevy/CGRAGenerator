@@ -83,8 +83,6 @@ def test_op(op, strategy):
     run_ncsim_test(op, a.opcode, tests, strategy)
 
 def test_signed_op(signed_op, signed, strategy):
-    if signed_op == "abs" and not signed:
-        return  # abs undefined in unsigned mode
     a = getattr(pe, signed_op)(signed)
 
     tests = get_tests(a, strategy, signed)

@@ -87,8 +87,8 @@ def test_op(op, strategy):
     opcode = a.opcode
     if op == 'abs':
         opcode |= 1 << 6
-    compile(f'test_{op}_{strategy.__name__}', 'test_pe_comp_unq1', opcode , tests)
-    run_verilator_test('test_pe_comp_unq1', f'sim_test_{op}_{strategy.__name__}', 'test_pe_comp_unq1')
+    compile('harness', 'test_pe_comp_unq1', opcode , tests)
+    run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
     run_ncsim_test(op, a.opcode, tests, strategy)
 
 def test_signed_op(signed_op, signed, strategy):
@@ -96,8 +96,8 @@ def test_signed_op(signed_op, signed, strategy):
 
     tests = get_tests(a, strategy, signed)
 
-    compile(f'test_{signed_op}_{strategy.__name__}', 'test_pe_comp_unq1', a.opcode | signed << 6, tests)
-    run_verilator_test('test_pe_comp_unq1', f'sim_test_{signed_op}_{strategy.__name__}', 'test_pe_comp_unq1')
+    compile('harness', 'test_pe_comp_unq1', a.opcode | signed << 6, tests)
+    run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
     run_ncsim_test(signed_op, a.opcode | signed << 6, tests, strategy)
 
 def test_comparison_op(comparison_op, signed, strategy):

@@ -222,9 +222,9 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
     build_directory = "build_{}".format(worker_id)
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
-    compile_harness(f'{build_directory}/sim_test_pe_{op}_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
+    compile_harness(f'{build_directory}/harness.cpp', test, body, lut_code, cfg_d)
 
-    run_verilator_test('test_pe_unq1', f'sim_test_pe_{op}_{strategy.__name__}', 'test_pe_unq1', build_directory)
+    run_verilator_test('test_pe_unq1', 'harness', 'test_pe_unq1', build_directory)
 
 def test_input_modes(signed, worker_id, input_modes):
     op = "add"
@@ -276,9 +276,9 @@ def test_input_modes(signed, worker_id, input_modes):
     build_directory = "build_{}".format(worker_id)
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
-    compile_harness(f'{build_directory}/sim_test_pe_input_modes_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
+    compile_harness(f'{build_directory}/harness.cpp', test, body, lut_code, cfg_d)
 
-    run_verilator_test('test_pe_unq1', f'sim_test_pe_input_modes_{strategy.__name__}', 'test_pe_unq1', build_directory)
+    run_verilator_test('test_pe_unq1', f'harness', 'test_pe_unq1', build_directory)
 
 def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     # op = random_op
@@ -325,9 +325,9 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     build_directory = "build_{}".format(worker_id)
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
-    compile_harness(f'{build_directory}/sim_test_pe_lut_{strategy.__name__}.cpp', test, body, lut_code, cfg_d)
+    compile_harness(f'{build_directory}/harness.cpp', test, body, lut_code, cfg_d)
 
-    run_verilator_test('test_pe_unq1', f'sim_test_pe_lut_{strategy.__name__}', 'test_pe_unq1', build_directory)
+    run_verilator_test('test_pe_unq1', 'harness', 'test_pe_unq1', build_directory)
 
 def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, worker_id):
     op = "add"
@@ -373,6 +373,6 @@ def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, wor
     build_directory = "build_{}".format(worker_id)
     if not os.path.exists(build_directory):
         os.makedirs(build_directory)
-    compile_harness(f'{build_directory}/sim_test_pe_irq_{strategy.__name__}.cpp', test, body, lut_code, cfg_d, debug_trig, debug_trig_p)
+    compile_harness(f'{build_directory}/harness.cpp', test, body, lut_code, cfg_d, debug_trig, debug_trig_p)
 
-    run_verilator_test('test_pe_unq1', f'sim_test_pe_irq_{strategy.__name__}', 'test_pe_unq1', build_directory)
+    run_verilator_test('test_pe_unq1', 'harness', 'test_pe_unq1', build_directory)

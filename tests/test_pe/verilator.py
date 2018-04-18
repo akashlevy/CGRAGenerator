@@ -111,11 +111,12 @@ def run_verilator_test(verilog_file_name, driver_name, top_module, build_dir="bu
     (_, filename, _, _, _, _) = inspect.getouterframes(inspect.currentframe())[1]
     file_path = os.path.dirname(filename)
     build_dir = os.path.join(file_path, build_dir)
-    # print("========== BEGIN: Using verilator to generate test files =====")
-    assert not subprocess.call('verilator -I../rtl -Wno-fatal --cc {} --exe {}.cpp --top-module {}'.format(verilog_file_name, driver_name, top_module), cwd=build_dir, shell=True)
-    # print("========== DONE:  Using verilator to generate test files =====")
+    if not os.path.isfile(os.path.join(build_dir, "obj_dir", f"V{top_module}.mk")):
+        # print("========== BEGIN: Using verilator to generate test files =====")
+        assert not subprocess.call('verilator -I../rtl -Wno-fatal --cc {} --exe {}.cpp --top-module {}'.format(verilog_file_name, driver_name, top_module), cwd=build_dir, shell=True)
+        # print("========== DONE:  Using verilator to generate test files =====")
     # print("========== BEGIN: Compiling verilator test ===================")
-    assert not subprocess.call('make --silent -C obj_dir -j -f V{0}.mk V{0} -B'.format(top_module), cwd=build_dir, shell=True)
+    assert not subprocess.call('make --silent -C obj_dir -j -f V{0}.mk V{0}'.format(top_module), cwd=build_dir, shell=True)
     # print("========== DONE:  Compiling verilator test ===================")
     # print("========== BEGIN: Running verilator test =====================")
     assert not subprocess.call('./obj_dir/V{}'.format(top_module), cwd=build_dir, shell=True)

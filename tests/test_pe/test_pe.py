@@ -166,29 +166,13 @@ def worker_id(request):
 def test_op(strategy, op, flag_sel, signed, worker_id):
     if flag_sel == 0xE:
         return  # Skip lut, tested separately
-    bit2_mode = 0x2  # BYPASS
-    bit1_mode = 0x2  # BYPASS
-    bit0_mode = 0x2  # BYPASS
-    data1_mode = 0x2  # BYPASS
-    data0_mode = 0x2  # BYPASS
-    irq_en = 0
-    acc_en = 0
     if op == "abs" and not signed:  # Skip abs in unsigned mode
         return
     if flag_sel in [0x4, 0x5, 0x6, 0x7, 0xA, 0xB, 0xC, 0xD] and not signed:  # Flag modes with N, V are signed only
         return
     lut_code = 0x00
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
-    cfg_d = bit2_mode << 28 | \
-            bit1_mode << 26 | \
-            bit0_mode << 24 | \
-            data1_mode << 18 | \
-            data0_mode << 16 | \
-            flag_sel << 12 | \
-            irq_en << 10 | \
-            acc_en << 9 | \
-            signed << 6 | \
-            _op.opcode
+    cfg_d = _op.opcode
 
     if strategy is complete:
         width = 4
@@ -244,16 +228,7 @@ def test_input_modes(signed, worker_id, input_modes):
         input_modes
     ):
         reg(mode)
-    cfg_d = bit2_mode << 28 | \
-            bit1_mode << 26 | \
-            bit0_mode << 24 | \
-            data1_mode << 18 | \
-            data0_mode << 16 | \
-            flag_sel << 12 | \
-            irq_en << 10 | \
-            acc_en << 9 | \
-            signed << 6 | \
-            _op.opcode
+    cfg_d = _op.opcode
 
     strategy = random
     n = 16
@@ -293,16 +268,17 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     irq_en = 0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
-    cfg_d = bit2_mode << 28 | \
-            bit1_mode << 26 | \
-            bit0_mode << 24 | \
-            data1_mode << 18 | \
-            data0_mode << 16 | \
-            flag_sel << 12 | \
-            irq_en << 10 | \
-            acc_en << 9 | \
-            signed << 6 | \
-            _op.opcode
+    cfg_d = _op.opcode
+    # cfg_d = bit2_mode << 28 | \
+    #         bit1_mode << 26 | \
+    #         bit0_mode << 24 | \
+    #         data1_mode << 18 | \
+    #         data0_mode << 16 | \
+    #         flag_sel << 12 | \
+    #         irq_en << 10 | \
+    #         acc_en << 9 | \
+    #         signed << 6 | \
+    #         _op.opcode
 
     if strategy is complete:
         width = 4
@@ -340,17 +316,7 @@ def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, wor
     lut_code = 0x0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1).signed(signed)
-    cfg_d = bit2_mode << 28 | \
-            bit1_mode << 26 | \
-            bit0_mode << 24 | \
-            data1_mode << 18 | \
-            data0_mode << 16 | \
-            flag_sel << 12 | \
-            irq_en_1 << 11 | \
-            irq_en_0 << 10 | \
-            acc_en << 9 | \
-            signed << 6 | \
-            _op.opcode
+    cfg_d = _op.opcode
 
     if strategy is complete:
         width = 4

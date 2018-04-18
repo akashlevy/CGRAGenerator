@@ -56,8 +56,8 @@ def get_tests(pe, strategy, signed=False):
         width = 4
         N = 1 << width
         tests = complete(pe._alu, OrderedDict([
-            ("op_a", range(0, N) if not signed else range(- N // 2, N // 2)),
-            ("op_b", range(0, N) if not signed else range(- N // 2, N // 2)),
+            ("op_a", range(0, N - 1) if not signed else range(- N // 2, N // 2)),
+            ("op_b", range(0, N - 1) if not signed else range(- N // 2, N // 2)),
             ("op_d_p", range(0, 2))
         ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
     elif strategy is random:
@@ -65,8 +65,8 @@ def get_tests(pe, strategy, signed=False):
         width = 16
         N = 1 << width
         tests = random(pe._alu, n, OrderedDict([
-            ("op_a", lambda : randint(0, N) if not signed else randint(- N // 2, N // 2 - 1)),
-            ("op_b", lambda : randint(0, N) if not signed else randint(- N // 2, N // 2 - 1)),
+            ("op_a", lambda : randint(0, N - 1) if not signed else randint(- N // 2, N // 2 - 1)),
+            ("op_b", lambda : randint(0, N - 1) if not signed else randint(- N // 2, N // 2 - 1)),
             ("op_d_p", lambda : randint(0, 1))
         ]), lambda result: (test_output("res", result[0]), test_output("res_p", result[1])))
     else:

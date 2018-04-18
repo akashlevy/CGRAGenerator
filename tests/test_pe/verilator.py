@@ -98,10 +98,10 @@ int main(int argc, char **argv, char **env) {{
 }}'''.format(test=test,body=body,top_name=top_name,op=opcode&0x1ff,step_body=step_body)
 
 
-def compile(name, top_name, opcode, tests):
+def compile(harness_name, top_name, opcode, tests):
     # print("========== BEGIN: Compiling verilator test harness ===========")
     verilatorcpp = harness(top_name, opcode, tests)
-    with open('build/sim_'+name+'.cpp', "w") as f:
+    with open('build/'+harness_name+'.cpp', "w") as f:
         f.write(verilatorcpp)
     # print("========== DONE:  Compiling verilator test harness ===========")
 

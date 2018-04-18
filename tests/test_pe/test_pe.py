@@ -6,36 +6,15 @@ from random import randint, choice
 import pytest
 import os
 import itertools
+import inspect
 
-
-ops  = ['or_', 'and_', 'xor']
-ops += ['lshr', 'lshl']
-ops += ['add', 'sub']
-ops += ['mul0', 'mul1', 'mul2']
-ops += ['abs']
-ops += ['sel']
-
-comparison_ops = ['ge', 'le']
-
-signed_ops = ['min', 'max', 'le', 'ge']
-
-# def bodysource(tests, opcode, flag_sel, lut_code):
-#     return f'''
-#     for(int i = 0; i < {len(tests)}; i++) {{
-#         unsigned int* test = tests[i];
-#         top->data0 = test[0];
-#         top->data1 = test[1];
-#         top->bit0 = test[2];
-#         top->bit1 = test[3];
-#         top->bit2 = test[4];
-#         top->eval();
-#         printf("[lut_code=%x, opcode=%x, flag_sel=%x, Test Iteration %d] Inputs: data0=%x, data1=%x, bit0=%x, bit1=%x, bit2=%x\\n", {lut_code}, {opcode}, {flag_sel}, i, test[0], test[1], test[2], test[3], test[4]);
-#         printf("    expected_res=%x, actual_res=%x\\n", test[5], top->res);
-#         printf("    expected_res_p=%x, actual_res_p=%x\\n", test[6], top->res_p);
-#         assert(top->res == test[5]);
-#         assert(top->res_p == test[6]);
-#     }}
-# '''
+ops, signed_ops = [], []
+for name, op in inspect.getmembers(pe, inspect.isfunction):
+    signature = inspect.signature(op)
+    if "signed" in signature.parameters:
+        signed_ops.append(name)
+    else:
+        ops.append(name)
 
 
 def compile_harness(name, test, body, lut_code, cfg_d, debug_trig=0, debug_trig_p=0):
@@ -127,8 +106,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("signed", [True, False])
     if 'const_value' in metafunc.fixturenames:
         metafunc.parametrize("const_value", range(16))
-    if 'comparison_op' in metafunc.fixturenames:
-        metafunc.parametrize("comparison_op", comparison_ops)
     if 'signed' in metafunc.fixturenames:
         metafunc.parametrize("signed", [True, False])
     if 'strategy' in metafunc.fixturenames:
@@ -166,8 +143,6 @@ def worker_id(request):
 def test_op(strategy, op, flag_sel, signed, worker_id):
     if flag_sel == 0xE:
         return  # Skip lut, tested separately
-    if op == "abs" and not signed:  # Skip abs in unsigned mode
-        return
     if flag_sel in [0x4, 0x5, 0x6, 0x7, 0xA, 0xB, 0xC, 0xD] and not signed:  # Flag modes with N, V are signed only
         return
     lut_code = 0x00
@@ -269,16 +244,6 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
     cfg_d = _op.opcode
-    # cfg_d = bit2_mode << 28 | \
-    #         bit1_mode << 26 | \
-    #         bit0_mode << 24 | \
-    #         data1_mode << 18 | \
-    #         data0_mode << 16 | \
-    #         flag_sel << 12 | \
-    #         irq_en << 10 | \
-    #         acc_en << 9 | \
-    #         signed << 6 | \
-    #         _op.opcode
 
     if strategy is complete:
         width = 4
@@ -308,11 +273,6 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
 def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, worker_id):
     op = "add"
     flag_sel = 0x0  # Z
-    bit2_mode = 0x2  # BYPASS
-    bit1_mode = 0x2  # BYPASS
-    bit0_mode = 0x2  # BYPASS
-    data1_mode = 0x2  # BYPASS
-    data0_mode = 0x2  # BYPASS
     lut_code = 0x0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1).signed(signed)

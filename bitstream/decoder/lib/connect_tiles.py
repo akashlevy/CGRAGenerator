@@ -271,8 +271,12 @@ def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
 def find_cornerconn(end1,begin2,DBG=0):
     '''Connect end1 to begin2 in same tile'''
 
-    (tileno1, dir1, side1, track1) = parsewire(end1)
-    (tileno2, dir2, side2, track2) = parsewire(begin2)
+    (tileno1, dir1, side1, track1) = cgra_info.parse_canon(end1)
+    assert (track1 >=0) and (side1 >= 0), "WHOOPS '%s' does not look like a wire..." % end1
+
+    (tileno2, dir2, side2, track2) = cgra_info.parse_canon(begin2)
+    assert (track2 >=0) and (side2 >= 0), "WHOOPS '%s' does not look like a wire..." % begin2
+
     (half1, half2) = (side1/4,side2/4) # Note '/' div only works for pos ints!!!?
     if half1 == half2:
         cornerconn = ["%s -> %s" % (end1,begin2)]
@@ -281,7 +285,7 @@ def find_cornerconn(end1,begin2,DBG=0):
         # Cannot connect top and bottom halves directly e.g. in_s6 -> out_s3
         # corner: ['T69_in_s6t0 -> T69_out_s3t0'] must change to
         # corner: ['T69_in_s6t0 -> T69_out_s7t0', 'T69_in_s1t0 -> T69_out_s3t0']
-        if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary"
+        if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary" % (side1,side2)
         if side1 < 4:
             if DBG>1: print "# Going from top to bottom half"
             mid1 = 'T%d_out_s1t%d' % (tileno1, track1)
@@ -296,6 +300,10 @@ def find_cornerconn(end1,begin2,DBG=0):
 
     if DBG>1: print "# corner:", cornerconn
     if DBG: print "# "
+
+    # This will assert error if path buswidths are inconsistent
+    check_bus_consistency(cornerconn)
+
     return cornerconn
 
 
@@ -459,6 +467,17 @@ def printpath(begin,path,end):
     return
 
 
+# Given a path ['T41_in_s0t0b -> T41_out_s1t0', 'T41_in_s7t0 -> T41_bit1']
+# Check to see that all path connections have the same bus width
+def check_bus_consistency(path):
+    # allports() gives us a list of all the ports in the path
+    plist = allports(path)
+    bus_width = cgra_info.get_bus_width_canon(plist[0])
+    for p in plist[1:]:
+        assert bus_width == cgra_info.get_bus_width_canon(p),\
+               'Inconsistent path %s' % path
+
+
 def parse_connection(c):
     match = re.search('(\S+)\s*[-][>]\s*(\S+)', c)
     inwire = match.group(1)
@@ -474,14 +493,6 @@ def parse_resource(r):
     return cgra_info.parse_resource(r)
 
 
-def parsewire(w):
-    '''wire MUST have embedded tileno e.g. "T0_in_s0t0"'''
-    # Examples
-    # "T0_in_s0t0" returns (0, 'in', 0, 0)
-    # "T3_mem_out" returns (3, 'mem_out', -1, -1)
-    return cgra_info.parse_canon(w)
-
-
 # lifted from bsview.py
 def find_neighbor(w, DBG=9):
     '''E.g. find_neighbor_wire("T4_in_s1t1") => ("T5_out_s3t1")'''
@@ -494,12 +505,9 @@ def find_neighbor(w, DBG=9):
         if (tileno == tilefoo) and (w in wfoo):
             DBG=1; print "\nWant match for tile %d wire '%s'" % (tileno,w)
 
-    #     # find_neighbor_wire(4,"in_s1t1") => (5, "out_s3t1")
-
     # find_neighbor_wire("T4_in_s1t1") => ("T5_out_s3t1")
     # 
-    # parse = re.search("(in|out)([01])*_s([0-9]+)t([0-9]+)", w)
-    (tileno, dir, side, track) = parsewire(w)
+    (tileno, dir, side, track) = cgra_info.parse_canon(w)
 
     # Only works for 'out' wires (HA!)
     assert dir == 'out'

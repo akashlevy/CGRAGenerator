@@ -34,5 +34,5 @@ T34_in_s2t0 -> T34_out_s0t0
 T35_in_s2t0 -> T35_out_s0t0
 T36_in_s2t0 -> T36_out_s0t0
 
-# INPUT  tile 21 (2,2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
-# OUTPUT tile 36 (2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0
+# INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
+# OUTPUT tile  36 ( 2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0

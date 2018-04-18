@@ -78,24 +78,15 @@ def test_op(op, strategy):
 
     tests = get_tests(a, strategy)
 
-    compile('harness', 'test_pe_comp_unq1', a.opcode , tests)
+    compile('harness', 'test_pe_comp_unq1', a.instruction , tests)
     run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
-    run_ncsim_test(op, a.opcode, tests, strategy)
+    run_ncsim_test(op, a.instruction, tests, strategy)
 
 def test_signed_op(signed_op, signed, strategy):
     a = getattr(pe, signed_op)(signed)
 
     tests = get_tests(a, strategy, signed)
 
-    compile('harness', 'test_pe_comp_unq1', a.opcode, tests)
+    compile('harness', 'test_pe_comp_unq1', a.instruction, tests)
     run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
-    run_ncsim_test(signed_op, a.opcode, tests, strategy)
-
-# @pytest.mark.skip
-# def test_const(const_value, strategy):
-#     a = pe.const(const_value)
-# 
-#     tests = strategy(a, 4, 16)
-# 
-#     compile(f'test_const_{strategy.__name__}', 'test_pe_comp_unq1', a.opcode, tests)
-#     run_verilator_test('test_pe_comp_unq1', f'sim_test_const_{strategy.__name__}', 'test_pe_comp_unq1')
+    run_ncsim_test(signed_op, a.instruction, tests, strategy)

@@ -147,7 +147,7 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
         return
     lut_code = 0x00
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
-    cfg_d = _op.opcode
+    cfg_d = _op.instruction
 
     if strategy is complete:
         width = 4
@@ -203,7 +203,7 @@ def test_input_modes(signed, worker_id, input_modes):
         input_modes
     ):
         reg(mode)
-    cfg_d = _op.opcode
+    cfg_d = _op.instruction
 
     strategy = random
     n = 16
@@ -243,7 +243,7 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     irq_en = 0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
-    cfg_d = _op.opcode
+    cfg_d = _op.instruction
 
     if strategy is complete:
         width = 4
@@ -276,7 +276,7 @@ def test_irq(strategy, irq_en_0, irq_en_1, debug_trig, debug_trig_p, signed, wor
     lut_code = 0x0
     acc_en = 0
     _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).irq_en(irq_en_0, irq_en_1).signed(signed)
-    cfg_d = _op.opcode
+    cfg_d = _op.instruction
 
     if strategy is complete:
         width = 4

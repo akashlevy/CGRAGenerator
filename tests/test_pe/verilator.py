@@ -95,7 +95,7 @@ int main(int argc, char **argv, char **env) {{
     delete top;
     std::cout << "Success" << std::endl;
     exit(0);
-}}'''.format(test=test,body=body,top_name=top_name,op=opcode&0x1ff,step_body=step_body)
+}}'''.format(test=test,body=body,top_name=top_name,op=opcode&0xff,step_body=step_body)
 
 
 def compile(harness_name, top_name, opcode, tests):

@@ -8,6 +8,7 @@ import delegator
 import os
 from random import randint
 from collections import OrderedDict
+import inspect
 
 def run_ncsim_test(op, opcode, tests, strategy):
     return
@@ -23,18 +24,14 @@ irun -top test_pe_comp_unq1_tb -timescale 1ns/1ps -l irun.log -access +rwc -noti
     assert not result.return_code, result.out + "\n" + result.err
     assert "Failed!" not in result.out, result.out + "\n" + result.err
 
-ops  = ['or_', 'and_', 'xor']
-# ops += ['inv']
-ops += ['lshr', 'lshl']
-# ops += ['ashr']
-ops += ['add', 'sub']
-ops += ['mul0', 'mul1', 'mul2']
-ops += ['abs']
-ops += ['sel']
+ops, signed_ops = [], []
+for name, op in inspect.getmembers(pe, inspect.isfunction):
+    signature = inspect.signature(op)
+    if "signed" in signature.parameters:
+        signed_ops.append(name)
+    else:
+        ops.append(name)
 
-comparison_ops = ['ge', 'le']
-
-signed_ops = ['min', 'max', 'le', 'ge']
 def pytest_generate_tests(metafunc):
     if 'op' in metafunc.fixturenames:
         metafunc.parametrize("op", ops)
@@ -43,9 +40,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("signed", [True, False])
     if 'const_value' in metafunc.fixturenames:
         metafunc.parametrize("const_value", range(16))
-    if 'comparison_op' in metafunc.fixturenames:
-        metafunc.parametrize("comparison_op", comparison_ops)
-        metafunc.parametrize("signed", [True, False])
     if 'strategy' in metafunc.fixturenames:
         metafunc.parametrize("strategy", [complete, random])
 
@@ -84,10 +78,7 @@ def test_op(op, strategy):
 
     tests = get_tests(a, strategy)
 
-    opcode = a.opcode
-    if op == 'abs':
-        opcode |= 1 << 6
-    compile('harness', 'test_pe_comp_unq1', opcode , tests)
+    compile('harness', 'test_pe_comp_unq1', a.opcode , tests)
     run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
     run_ncsim_test(op, a.opcode, tests, strategy)
 
@@ -96,18 +87,9 @@ def test_signed_op(signed_op, signed, strategy):
 
     tests = get_tests(a, strategy, signed)
 
-    compile('harness', 'test_pe_comp_unq1', a.opcode | signed << 6, tests)
+    compile('harness', 'test_pe_comp_unq1', a.opcode, tests)
     run_verilator_test('test_pe_comp_unq1', 'harness', 'test_pe_comp_unq1')
-    run_ncsim_test(signed_op, a.opcode | signed << 6, tests, strategy)
-
-def test_comparison_op(comparison_op, signed, strategy):
-    a = getattr(pe, comparison_op)(signed)
-
-    tests = get_tests(a, strategy)
-
-    compile(f'test_{comparison_op}_{strategy.__name__}', 'test_pe_comp_unq1', a.opcode | signed << 6, tests)
-    run_verilator_test('test_pe_comp_unq1', f'sim_test_{comparison_op}_{strategy.__name__}', 'test_pe_comp_unq1')
-    run_ncsim_test(comparison_op, a.opcode | signed << 6, tests, strategy)
+    run_ncsim_test(signed_op, a.opcode, tests, strategy)
 
 # @pytest.mark.skip
 # def test_const(const_value, strategy):

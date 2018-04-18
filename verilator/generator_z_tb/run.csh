@@ -110,7 +110,10 @@ if ($#argv == 1) then
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)""
+    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)"
+    echo "        -nobuild # no genesis, no verilator build"
+    echo "        -nogen   # no genesis"
+    echo "        -gen     # genesis"
     echo
     echo "Defaults:"
     echo "    $0 top_tb.cpp \"
@@ -769,6 +772,11 @@ NOTE: If you want to clean up after yourself you'll want to do this:
 
 eof
 endif
-echo "killing background printing"
-kill -9 %1
+
+DIE:
+  jobs
+  echo "killing 'mytravis' background output"
+  kill -9 %1
+  sleep 10
+  jobs
 

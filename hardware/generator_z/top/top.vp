@@ -3,7 +3,8 @@
 //; #//
 //; #//////////////////////////////////////////////////////////////////
 //; use POSIX;
-
+//; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
+//; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
@@ -339,8 +340,10 @@ reset_in,
 // VERILATOR_PORT7
 // VERILATOR_PORT8
 // -------------------------------------
+//; if($connect_GC==0){
 config_addr_in,
 config_data_in,
+//;}
 tdi,
 tdo,
 tms,
@@ -350,8 +353,10 @@ trst_n
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
 //;print INFO "<CGRA>\n";
+//; if($connect_GC==0){
   input [31:0] config_addr_in;
   input [31:0] config_data_in;
+//; }
   input clk_in;
   input reset_in;
   input tdi;
@@ -401,12 +406,15 @@ wire [3:0] stall;
     `$global_controller_obj->instantiate()` 
     (
       .clk_in(clk_in),
-      .clk_out(),//clk),
       .reset_in(reset_in),
-      .reset_out(),//reset),
-      .config_addr_out(),//config_addr),
+//; if($connect_GC == 1) {
+      .clk_out(clk),
+      .reset_out(reset),
+      .config_addr_out(config_addr),
+      .config_data_out(config_data),
+      .write(config_write),
+//; }
       .config_data_in(read_data),
-      .config_data_out(),//config_data),
       .tdi(tdi),
       .tdo(tdo),
       .tms(tms),
@@ -416,15 +424,16 @@ wire [3:0] stall;
       .analog_r`$i`(),
 //; }
       .cgra_stalled(stall),
-      .read(config_read),
-      .write()//config_write)
+      .read(config_read)
     );
+//; if($connect_GC == 0) {
     //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC
     assign config_addr = config_addr_in;
     assign config_data = config_data_in;
     assign clk = clk_in;
     assign reset = reset_in;
     assign config_write = 1;
+//; }
 
 // FIXME Note there are LOTS of unused wires being created below!
 // FIXME I assume they will be hooked up to something eventually

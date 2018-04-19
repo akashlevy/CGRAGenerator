@@ -700,7 +700,7 @@ logic res_lut;
 //;    $lut_c_inp     = "op_c".$c_in_slice;
 //; }
 
-    logic [`2**$lut_inps-1`:0] read_data_lut;
+    logic [31:0] read_data_lut;
 `$lut->mname()` #(.DataWidth(1)) `$lut->iname()`
 (
   .cfg_clk  (clk),

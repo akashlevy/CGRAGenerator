@@ -13,7 +13,8 @@
 //; # the IO_count and basic_block_repeat_* variables below.
 //; # my $grid_size = "8x8";
 //; # my $grid_size = "64x64";
-//; my $grid_size = "16x16";
+//; #my $grid_size = "16x16";
+//; my $grid_size ="48x48";
 //; #
 //; # for IOs
 //; # <number of bits> <number of bits> <number of bits> <number of bits>
@@ -32,6 +33,7 @@
 //; if ($grid_size == "8x8")   { @IO_count = qw(8 8 8 8); }
 //; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
+//; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
 //; #
 //; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
 //; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
@@ -56,6 +58,7 @@
 //; if ($grid_size == "8x8")   { $basic_block_repeat_x =  2; $basic_block_repeat_y =  4; }
 //; if ($grid_size == "64x64") { $basic_block_repeat_x = 16; $basic_block_repeat_y = 32; }
 //; if ($grid_size == "16x16") { $basic_block_repeat_x =  4; $basic_block_repeat_y = 8; }
+//; if ($grid_size == "48x48") { $basic_block_repeat_x = 12; $basic_block_repeat_y = 24; }
 //; #
 //; #
 //; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
@@ -1071,8 +1074,8 @@ wire [31:0] analog_r`$i`;
 //;           my $child_type = $gst_hash_old{ $child_key };
 //;           my $child_addr = $gst_hash_old{ "${child_key}_addr" };
 //;           my $child_addr_hex = sprintf("%X",$child_addr);
-//;   if($incr*2 == $cgra_grid_width-4) {
-      .gin_u_`$i`(stall[`$i`]),
+//;   if($incr*2 >= $cgra_grid_width-4) {
+      .gin_u_`$i`(stall[`$i`] | global_wire_l2h_`$incr`_`$new_key`),
 //;   }
 //;   else {
       .gin_u_`$i`(global_wire_h2l_`($incr*2)`_`$i`_`(int(floor((${next_w}-2)/2))+2)`_`(int(floor((${next_h}-2)/2))+2)`), 

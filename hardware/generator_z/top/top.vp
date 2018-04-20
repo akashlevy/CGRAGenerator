@@ -444,7 +444,7 @@ wire [31:0] read_data_io1bit;
 wire [3:0] stall;
 //; my $global_controller_obj = generate("global_controller", "global_controller");
 //; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
-wire analog_r`$i`;
+wire [31:0] analog_r`$i`;
 //; }
 //; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
     `$global_controller_obj->instantiate()` 
@@ -480,7 +480,7 @@ wire analog_r`$i`;
 //; }
   mdll_top mdll_top 
   (
-    .ext_cli(ext_cki),  // (+) cmos clock   . (reference clock   .)
+    .ext_cki(ext_cki),  // (+) cmos clock   . (reference clock   .)
     .ext_ckib(ext_ckib), // (-) cmos clock   . (reference clock   .)
     .ext_frefp(ext_frefp), // (+) low-swing clock   . (reference clock   .)
     .ext_frefn(ext_frefn), // (-) low-swing clock   . (reference clock   .)
@@ -490,7 +490,7 @@ wire analog_r`$i`;
     .ext_frefn_jm(ext_frefn_jm), // (-) low-swing clock   . (reference clock   .) (jitter measurement)
     .clk_ext_in(clk_ext_in),       // external clock for aux osc (valid when aux_sel = 1)
   
-    .ref_sel(analog_r[4]),          // select reference clock   .s ('1': ext_cki(b)), '0': ext_frefp(n))
+    .ref_sel(analog_r0[4]),          // select reference clock   .s ('1': ext_cki(b)), '0': ext_frefp(n))
     .reset(analog_r0[3]),  // reset for isynth (act Hi)
     .rstb(analog_r0[2]), // reset for main osc (act Lo)
     .en_inj(analog_r0[1]), // enable injection (act Hi)
@@ -508,7 +508,7 @@ wire analog_r`$i`;
     .aux_tune(analog_r2[4:0]), // aux osc frequency control
  
     .ndiv(analog_r3[5:4]), // feedback divider control
-    .ndiv_ref(analog_r3[3:0]),  // divider ratio of fref
+    .ndiv_fref(analog_r3[3:0]),  // divider ratio of fref
   
     .gain_ratio(analog_r4[5:4]), // gain control in LF
     .gain_ctrl(analog_r4[3:0]),  // gain control in LF

@@ -109,7 +109,7 @@ wire fref_dcdl_out;
 // set_dont_touch { icore irefbuf irefbuf_jm}
 // synopsys dc_script_end
 
-
+/* COMMENT OUT ALL INNER MODULES. JUST WANT SHELL HERE
 // clock bufer for reference clock inputs (structural)
 ref_buf irefbuf( .vip(ext_frefp), .vin(ext_frefn), .cki(ext_cki), .ckib(ext_ckib), .outp(frefp_buf), .outn(frefn_buf), .ref_sel(ref_sel) );
 
@@ -161,6 +161,7 @@ mdll_synth isynth (
 	.fout_div_pad(fout_div_pad),
 	.fref_off_pad(fref_off_pad),
 	.ffeed_pad(ffeed_pad) );
+*/
 
 endmodule
 

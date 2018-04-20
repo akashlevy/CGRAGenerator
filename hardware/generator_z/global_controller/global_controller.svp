@@ -358,7 +358,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 				read <= 0;
 				write <= 0;
 				analog_wr_en <= 0;
-				config_data_jtag_in <= sys_clk_activated;
+				config_data_jtag_in <= {31'b0, sys_clk_activated};
 			end
 			switch_clk: begin
 				if(config_data_jtag_out[0] != clk_switch_request) begin

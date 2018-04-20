@@ -719,7 +719,7 @@ endmodule
 //;        print TILEINFO "$param_value";
 //;      }
 //;    }
-//;    print TILEINFO "    </sram>\n"
+//;    print TILEINFO "    </linebuf>\n"
 //;  }
 //;
 //; #End of TILEINFO loop

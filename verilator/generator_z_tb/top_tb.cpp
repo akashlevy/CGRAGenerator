@@ -37,6 +37,8 @@ int main(int argc, char **argv, char **env) {
     // Run simulation for NCLOCKS clock periods (default = 40)
     int NCLOCKS = 40;
 
+    Verilated::debug(1);
+
     printf("\n\nHi there!  I am the simulatory thingy.\n");
     fflush(stdout);
 

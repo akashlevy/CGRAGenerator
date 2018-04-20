@@ -61,7 +61,7 @@ input [`$dwidth - 1`:0] addr_in;
 input flush;
 output reg [31:0] read_data;
 output reg [31:0] read_data_sram;
-output reg [31:0] read_data_linebuf;
+output [31:0] read_data_linebuf;
 output chain_valid_out;
 output [`$dwidth - 1`:0] chain_out;
 output reg valid_out;
@@ -283,6 +283,8 @@ always @(*) begin
 .flush(flush),
 .fsm_en(wen_in_int),
 .config_en(config_en_linebuf),
+.config_addr(config_addr),
+.config_data(config_data),
 .data_in(data_in_int),
 .wen(wen_in_int),
 .data_out(lb_out),

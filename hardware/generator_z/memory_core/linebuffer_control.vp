@@ -30,7 +30,6 @@ wen_to_mem,
 ren_to_mem,
 read_data,
 config_en,
-config_write,
 config_addr,
 config_data
 );
@@ -46,7 +45,6 @@ input [3:0] almost_count;
 input [`$dwidth*2 - 1`:0] data_from_mem;
 input [12:0] depth;
 input config_en;
-input config_write;
 input [31:0] config_addr;
 input [31:0] config_data;
 
@@ -185,7 +183,7 @@ always @(posedge clk or posedge reset) begin
   end
   //We can alter the read and write addresses in the line buffer
   else if (config_en==1'b1) begin
-    case(config_addr[31:24)
+    case(config_addr[31:24])
       8'd0: read_addr <= config_data[15:0];
       8'd1: write_addr <= config_data[15:0];
     endcase 	

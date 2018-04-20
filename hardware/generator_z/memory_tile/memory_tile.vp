@@ -143,12 +143,12 @@ read_data
   reg config_en_sb_`$row`_`$bus`;
   always @(*) begin
     if (reset) begin
-       config_en_sb_`$row`_`$bus` <= 1'b0;
+       config_en_sb_`$row`_`$bus` = 1'b0;
     end else begin
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
-         config_en_sb_`$row`_`$bus` <= 1'b1;
+         config_en_sb_`$row`_`$bus` = 1'b1;
        end else begin
-         config_en_sb_`$row`_`$bus` <= 1'b0;
+         config_en_sb_`$row`_`$bus` = 1'b0;
        end
     end
   end
@@ -161,12 +161,12 @@ read_data
   reg config_en_mem;
   always @(*) begin
     if (reset) begin
-       config_en_mem <= 1'b0;
+       config_en_mem = 1'b0;
     end else begin
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
-         config_en_mem <= 1'b1;
+         config_en_mem = 1'b1;
        end else begin
-         config_en_mem <= 1'b0;
+         config_en_mem = 1'b0;
        end
     end
   end
@@ -187,10 +187,10 @@ read_data
     else begin
        //NEED TO REVISE THIS. CONFIG_WRITE ALONE NOT SUFFICIENT
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`) && (config_read | config_write)) begin
-         config_en_sram[`$i`] <= 1'b1;
+         config_en_sram[`$i`] = 1'b1;
        end 
        else begin
-         config_en_sram[`$i`] <= 1'b0;
+         config_en_sram[`$i`] = 1'b0;
        end
     end
   end

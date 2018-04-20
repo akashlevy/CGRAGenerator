@@ -83,6 +83,15 @@ if ($#argv == 2) set tracefile = $2
   verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     >& $tmpdir/verilator.out
+# 
+#   # To track down nonconvergence, use this instead
+#   set echo
+#   verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
+#     --profile-cfuncs \
+#     -y $vdir $vfiles --top-module $top \
+#     >& $tmpdir/verilator.out
+#   unset echo
+
 
   set verilator_exit_status = $status
 
@@ -126,6 +135,16 @@ if ($#argv == 2) set tracefile = $2
     -j -C obj_dir/ -f $vtop.mk $vtop \
     >& $tmpdir/make_vtop.log \
     || set ERROR
+# 
+#   # To track down nonconvergence, use this instead
+#   set echo
+#   make \
+#     OPT=-DVL_DEBUG \
+#     -j -C obj_dir/ -f $vtop.mk $vtop \
+#     >& $tmpdir/make_vtop.log \
+#     || set ERROR
+#   unset echo
+
 
   if ($?ERROR) then
     cat $tmpdir/make_vtop.log; exit 13

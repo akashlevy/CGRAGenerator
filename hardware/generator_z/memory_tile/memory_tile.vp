@@ -126,7 +126,7 @@ read_data
   input config_read;
   input config_write;
   output reg [31:0] read_data;
-  //wire ___genesis_wire_`$global_signal_count`_`${bus_config}`_`${all_segments_for_all_tiles}`_`${gen_mem_for_busname}`_`${control_busname}`_`${ddepth}`_`${sides}`_`${feedthrough_outputs}`_`${registered_outputs}`_`${is_bidi}`_`${sb_fs}`_`${cb_connections}`_`${mem_tile_height}`;
+  wire ___genesis_wire_`$global_signal_count`_`${bus_config}`_`${all_segments_for_all_tiles}`_`${gen_mem_for_busname}`_`${control_busname}`_`${ddepth}`_`${sides}`_`${feedthrough_outputs}`_`${registered_outputs}`_`${is_bidi}`_`${sb_fs}`_`${cb_connections}`_`${mem_tile_height}`;
 //  wire clk;
   wire cg_en;
   wire clk_en;

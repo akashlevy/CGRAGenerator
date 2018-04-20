@@ -27,7 +27,12 @@ addr_to_mem,
 data_to_mem,
 data_from_mem,
 wen_to_mem,
-ren_to_mem
+ren_to_mem,
+read_data,
+config_en,
+config_write,
+config_addr,
+config_data
 );
 
 input clk;
@@ -40,6 +45,10 @@ input stall_read;
 input [3:0] almost_count;
 input [`$dwidth*2 - 1`:0] data_from_mem;
 input [12:0] depth;
+input config_en;
+input config_write;
+input [31:0] config_addr;
+input [31:0] config_data;
 
 output valid;
 output wen_to_mem;
@@ -49,6 +58,7 @@ output [`$dwidth*2 - 1`:0] data_to_mem;
 output reg [`$dwidth - 1`:0] addr_to_mem;
 output reg almost_full;
 output reg almost_empty;
+output reg [31:0] read_data;
 
 reg phase;
 reg input_sr_ren_w1;
@@ -172,6 +182,13 @@ always @(posedge clk or posedge reset) begin
     num_words_mem <= `$dwidth`'d0;
     read_addr <= `$dwidth`'d0;
     write_addr <= `$dwidth`'d0;
+  end
+  //We can alter the read and write addresses in the line buffer
+  else if (config_en==1'b1) begin
+    case(config_addr[31:24)
+      8'd0: read_addr <= config_data[15:0];
+      8'd1: write_addr <= config_data[15:0];
+    endcase 	
   end 
   else if (fsm_en==1'b1) begin
     if (phase==1'b1) begin 
@@ -291,6 +308,14 @@ always @(*) begin
   end else begin
     addr_to_mem = write_addr;
   end
+end
+
+  //We can read the read and write addresses in the line buffer
+always @(*) begin
+  case(config_addr[31:24])
+    32'd0: read_data = {16'b0,read_addr};
+    32'd1: read_data = {16'b0,write_addr};
+  endcase
 end
 
 endmodule

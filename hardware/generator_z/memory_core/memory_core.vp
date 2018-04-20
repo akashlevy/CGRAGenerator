@@ -23,6 +23,7 @@ config_read,
 config_write,
 config_en,
 config_en_sram,
+config_en_linebuf,
 data_in,
 data_out,
 wen_in,
@@ -37,6 +38,7 @@ almost_empty,
 addr_in,
 read_data,
 read_data_sram,
+read_data_linebuf,
 flush
 );
 
@@ -45,6 +47,7 @@ input clk_en;
 input reset;
 input config_en;
 input [3:0] config_en_sram;
+input config_en_linebuf;
 input wen_in;
 input ren_in;
 input chain_wen_in;
@@ -58,6 +61,7 @@ input [`$dwidth - 1`:0] addr_in;
 input flush;
 output reg [31:0] read_data;
 output reg [31:0] read_data_sram;
+output reg [31:0] read_data_linebuf;
 output chain_valid_out;
 output [`$dwidth - 1`:0] chain_out;
 output reg valid_out;
@@ -278,6 +282,7 @@ always @(*) begin
 .reset(reset),
 .flush(flush),
 .fsm_en(wen_in_int),
+.config_en(config_en_linebuf),
 .data_in(data_in_int),
 .wen(wen_in_int),
 .data_out(lb_out),
@@ -291,7 +296,8 @@ always @(*) begin
 .data_to_mem(lb_mem_data_out),
 .data_from_mem({mem_data_out1_with_snap,mem_data_out0_with_snap}),
 .wen_to_mem(lb_wen),
-.ren_to_mem(lb_ren)
+.ren_to_mem(lb_ren),
+.read_data(read_data_linebuf)
 );
 
 `$fifo->instantiate()`

@@ -185,7 +185,6 @@ read_data
       config_en_sram[`$i`] = 1'b0;
     end
     else begin
-       //NEED TO REVISE THIS. CONFIG_WRITE ALONE NOT SUFFICIENT
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`) && (config_read | config_write)) begin
          config_en_sram[`$i`] = 1'b1;
        end 
@@ -199,6 +198,23 @@ read_data
 //;       address => $intra_tile_addr
 //;     };
 //; }
+
+//;$intra_tile_addr++;
+  reg config_en_linebuf;
+  always @(*) begin
+    if (reset) begin
+       config_en_linebuf = 1'b0;
+    end else begin
+       if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
+         config_en_linebuf = 1'b1;
+       end else begin
+         config_en_linebuf = 1'b0;
+       end
+    end
+  end
+//;	$tile_info_hash->{ "linebuf" } ={
+//;	  address => $intra_tile_addr
+//;	};
 
 //; ##
 //; ## global out signal
@@ -540,6 +556,7 @@ wire [31:0] read_data_sram;
       .config_write(config_write),
       .config_en(config_en_mem),
       .config_en_sram(config_en_sram),
+      .config_en_linebuf(config_en_linebuf),
       .data_in(wdata),
        //; if($USE_SHIFT_REG==0) {
       .data_out(rdata), 
@@ -685,6 +702,17 @@ endmodule
 //;################### SRAMs
 //;  if ($feature=~m/sram/) {
 //;    print TILEINFO "    <sram feature_address='$value->{'address'}'>\n";
+//;    foreach my $param_name (sort keys %$value) {
+//;      my $param_value = $value->{$param_name};
+//;      if ($param_name!~m/address/) {
+//;        print TILEINFO "$param_value";
+//;      }
+//;    }
+//;    print TILEINFO "    </sram>\n"
+//;  }
+//;################### LineBuffers
+//;  if ($feature=~m/linebuf/) {
+//;    print TILEINFO "    <linebuf feature_address='$value->{'address'}'>\n";
 //;    foreach my $param_name (sort keys %$value) {
 //;      my $param_value = $value->{$param_name};
 //;      if ($param_name!~m/address/) {

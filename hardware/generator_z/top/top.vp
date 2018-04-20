@@ -400,6 +400,7 @@ wire [31:0] read_data;
 wire [31:0] read_data_pe;
 wire [31:0] read_data_global;
 wire [31:0] read_data_memory;
+wire [31:0] read_data_io1bit;
 wire [3:0] stall;
 //; my $global_controller_obj = generate("global_controller", "global_controller");
 //; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");

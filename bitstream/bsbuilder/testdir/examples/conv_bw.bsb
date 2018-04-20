@@ -34,8 +34,8 @@ T87_mul(reg,const13_13)    # mul_504_505_506_PE
 T90_add(wire,wire)         # add_472_476_477_PE
 
 # LUT tiles for wen_lut's [25, 58]
-T25_lutF(const0,const0,const0)
-T58_lutF(const0,const0,const0)
+T25_lutFF(const0,const0,const0)
+T58_lutFF(const0,const0,const0)
 
 # MEM tiles
 T24_mem_64   # mem_1 fifo_depth=64
@@ -252,5 +252,5 @@ T75_out_s2t0 -> T75_op1
 # reg_2_2::mul_468_469_470_PE
 # T76_op1 (r) 
 
-# INPUT  tile 21 (2,2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
-# OUTPUT tile 36 (2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0
+# INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
+# OUTPUT tile  36 ( 2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0

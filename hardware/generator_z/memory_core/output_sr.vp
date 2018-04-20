@@ -13,6 +13,7 @@ module `mname`(
 clk,
 reset,
 flush,
+fsm_en,
 data_in,
 wen_w1,
 wen_w2,
@@ -25,6 +26,7 @@ valid
   input clk;
   input reset;
   input flush;
+  input fsm_en;
   input [`$dwidth*2 - 1`:0] data_in;
   input wen_w2;
   input wen_w1;
@@ -42,10 +44,12 @@ valid
    // assert only wen_w2 or wen_w1 at a time.
    // asserting both is an error
    `$backtick`xassert((wen_w2&wen_w1)==1'b1 , "both wen_w2 and wen_w1 are asserted" )
-   if (wen_w2==1'b1) begin
-     data_sr <= {data_sr[`$dwidth - 1`:0],data_in};
-   end else if (wen_w1==1'b1) begin
-     data_sr <= {data_sr[`$dwidth*2 - 1`:0],data_in[`$dwidth - 1`:0]};
+   if (fsm_en==1'b1) begin
+     if (wen_w2==1'b1) begin
+       data_sr <= {data_sr[`$dwidth - 1`:0],data_in};
+     end else if (wen_w1==1'b1) begin
+       data_sr <= {data_sr[`$dwidth*2 - 1`:0],data_in[`$dwidth - 1`:0]};
+     end
    end
   end
 
@@ -56,7 +60,7 @@ valid
     else if (flush==1'b1) begin
       count <= 2'd0;
     end 
-	else begin
+	else if (fsm_en==1'b1) begin
       if (((wen_w1==1'b0) && (wen_w2==1'b0)) && ren==1'b1) begin
         count <= count - 2'd1;
         `$backtick`xassert(count == 2'd0, "popping 1 pixel from output sr when count = 0")

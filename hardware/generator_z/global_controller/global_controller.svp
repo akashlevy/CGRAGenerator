@@ -101,7 +101,8 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   parameter read_stall = `$cfg_op_width`'d12;
   parameter advance_clk = `$cfg_op_width`'d13;
   //parameter resume_clk = `$cfg_op_width`'d14;
-  parameter sys_clk_on = `$cfg_op_width`'d15;
+  parameter read_clk_domain = `$cfg_op_width`'d14;
+  parameter switch_clk = `$cfg_op_width`'d15;
   parameter wr_rd_delay_reg = `$cfg_op_width`'d16;
   parameter rd_rd_delay_reg = `$cfg_op_width`'d17;
   parameter wr_delay_sel_reg = `$cfg_op_width`'d18;
@@ -109,12 +110,12 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   parameter wr_analog_reg = `$cfg_op_width`'d20;
   parameter rd_analog_reg = `$cfg_op_width`'d21;
   //STATES FOR IGNORING INCOMING INSTRUCTIONS
-  parameter ready = 2'd0;
-  parameter reading = 2'd1;
-  parameter resetting = 2'd2;
-  parameter advancing_clk = 2'd3;
-
-  reg [1:0] state;
+  parameter ready = 3'd0;
+  parameter reading = 3'd1;
+  parameter resetting = 3'd2;
+  parameter advancing_clk = 3'd3;
+  parameter switching_clk = 3'd4;
+  reg [3:0] state;
   //USED to remember old stall signal when advancing clk
   reg [3:0] stall_restore;
  
@@ -131,10 +132,18 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   logic [1:0] delay_sel;
 
   logic clk_switch_request;
+  //clk_switch_request has to cross clk domains. We'll need sync FFs
+  //for crossing from CLK -> TCK
+  logic clk_switch_request_sync_1_tck;
+  logic clk_switch_request_sync_2_tck;
+  //for crossing from CLK -> SYS_CLK
+  logic clk_switch_request_sync_1_sys;
+  logic clk_switch_request_sync_2_sys;
+  
   logic [`$cfg_bus_width-1`:0] TST;
   logic [`$cfg_bus_width-1`:0] counter;
   logic [`$cfg_bus_width-1`:0] rd_delay_reg;
-  logic [5:0] clk_switch_counter;
+  logic [4:0] clk_switch_counter_tck;
   always_comb begin
     	clk_domain = (sys_clk_activated) ? clk_in : tck;//Are we running the GC/CGRA on sys clk or test clk?
 	all_stalled_tck = delay_sel[1] ? all_stalled_tck_fall : all_stalled_tck_rise;
@@ -146,18 +155,24 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   //Clock switch counter block (Always on test_clk)
   always @ (posedge tck or posedge reset_in) begin
 	if (reset_in==1) begin
-		clk_switch_counter <= `$cfg_bus_width`'d20;
+		clk_switch_counter_tck <= 5'h1F;
 		sys_clk_activated <= 0;
 		all_stalled_tck_rise <= 0;
 	end
-	else if ((clk_switch_counter > 0) & (clk_switch_request == 1)) begin
+	else if ((clk_switch_request_sync_2_tck != sys_clk_activated) & (clk_switch_counter_tck > 0)) begin
 		all_stalled_tck_rise <= 1;//Deactivate clk to rest of GC
-		clk_switch_counter <= clk_switch_counter - 1;	
+		clk_switch_counter_tck <= clk_switch_counter_tck - 1;	
 	end
-	else if (!sys_clk_activated & clk_switch_counter <= 0 ) begin
-		sys_clk_activated <= 1;
+	else if ((clk_switch_request_sync_2_tck != sys_clk_activated) & clk_switch_counter_tck <= 0 ) begin
+		sys_clk_activated <= clk_switch_request;
+		clk_switch_counter_tck <= clk_switch_counter_tck-1;
+	end
+	else if ((clk_switch_request_sync_2_tck == 0) && (sys_clk_activated == 0)) begin
+		all_stalled_tck_rise <= 0;
 	end	
   end
+	
+
   //FALLING EDGE TCK. In case we need to delay the clock gating signal by an extra half cycle
   always @ (negedge tck or posedge reset_in) begin
 	if (reset_in==1)
@@ -166,7 +181,8 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 		all_stalled_tck_fall <= all_stalled_tck_rise;
   end
   
-  //IMPLEMENT SYNC FLOPS TO CROSS CLK BOUNDARY
+  //IMPLEMENT 2 SYNC FLOPS TO CROSS CLK BOUNDARY (SLOW->FAST)
+  //SYNC FLOPS FOR SYS_CLK_ACT
   always @ (posedge clk_in or posedge reset_in) begin
 	if(reset_in==1) begin
 		sys_clk_act_sync_1 <= 0;
@@ -177,13 +193,40 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 		sys_clk_act_sync_2 <= sys_clk_act_sync_1;
 	end
   end  
+  //2 SYNC FLOPS FOR CLK_SWITCH_REQUEST (CLK->SLOW)
+  always @ (posedge tck or posedge reset_in) begin
+	if(reset_in==1) begin
+		clk_switch_request_sync_1_tck <= 0;
+		clk_switch_request_sync_2_tck <= 0;
+	end
+	else begin
+		clk_switch_request_sync_1_tck <= clk_switch_request;
+		clk_switch_request_sync_2_tck <= clk_switch_request_sync_1_tck;
+	end	
+  end
+  //2 SYNC FLOPS FOR CLK_SWITCH_REQUEST (CLK->FAST)
+  always @ (posedge clk_in or posedge reset_in) begin
+	if(reset_in==1) begin
+		clk_switch_request_sync_1_sys <= 0;
+		clk_switch_request_sync_2_sys <= 0;
+	end
+	else begin
+		clk_switch_request_sync_1_sys <= clk_switch_request;
+		clk_switch_request_sync_2_sys <= clk_switch_request_sync_1_sys;
+	end	
+  end
+
 
   always @ (posedge clk_in or posedge reset_in) begin 
 	if (reset_in==1) begin
 		all_stalled_sys_rise <= 1;
 	end
-	else if (sys_clk_act_sync_2 == 1)
+	else if (sys_clk_act_sync_2 != clk_switch_request_sync_2_sys) begin
+		all_stalled_sys_rise <= 1;
+	end
+	else if ((sys_clk_act_sync_2 == 1) && (clk_switch_request_sync_2_sys == 1)) begin
 		all_stalled_sys_rise <= 0;
+	end
   end
 
   //FALLING EDGE SYS CLK. In case we need to delay the clock gating signal by an extra half cycle
@@ -279,7 +322,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 			end			
 			advance_clk: begin
 				if (config_data_jtag_out > 0) begin
-					if (cgra_stalled & config_addr_jtag_out[3:0]) begin
+					if (|(cgra_stalled & config_addr_jtag_out[3:0])) begin
 						counter <= config_data_jtag_out-1;
 						state <= advancing_clk;	
 						stall_restore <= cgra_stalled;
@@ -292,8 +335,18 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 				write <= 0;
 				analog_wr_en <= 0;
 			end
-			sys_clk_on: begin
-				clk_switch_request <= 1;
+			read_clk_domain: begin
+				read <= 0;
+				write <= 0;
+				analog_wr_en <= 0;
+				config_data_jtag_in <= sys_clk_activated;
+			end
+			switch_clk: begin
+				if(config_data_jtag_out[0] != clk_switch_request) begin
+					clk_switch_request <= config_data_jtag_out[0];
+					state <= switching_clk;
+					counter <= `$cfg_bus_width`'d20; 
+				end
 				read <= 0;
 				write <= 0;
 				analog_wr_en <= 0;
@@ -358,10 +411,11 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 			end
 			else begin
 				state <= ready;
-				if (state == reading) 
+				if (state == reading) begin 
 					config_data_jtag_in <= config_data_in;
 					read <= 0;
-				if (state == advancing_clk)
+				end
+				else if (state == advancing_clk)
 					cgra_stalled <= stall_restore;
 			end
 		end    	

@@ -48,7 +48,7 @@ MEM_TEMPLATE='''
   T24_mem_out -> T24_out_s0t0
   #
   # mem in T24, wen_lut in adjoining tile T25
-  T25_lutF(const0,const0,const0)
+  T25_lutFF(const0,const0,const0)
   T25_pe_out_b0 -> T25_out_s2t0_b0
   T24_in_s0t0_b0 -> T24_out_s2t0_b0
   T24_out_s2t0_b0 -> T24_wen

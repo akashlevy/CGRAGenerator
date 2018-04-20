@@ -65,9 +65,9 @@ output reg almost_full;
 output reg almost_empty;
 output reg [`$dwidth - 1`:0] data_out;
 
-wire  [2:0] mode;
-wire  [2:0] tile_en;
-wire [13:0] depth;
+wire  [1:0] mode;
+wire  tile_en;
+wire [12:0] depth;
 wire  [3:0] almost_count;
 wire        enable_chain;
 

@@ -134,7 +134,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
   parameter resetting = 3'd2;
   parameter advancing_clk = 3'd3;
   parameter switching_clk = 3'd4;
-  reg [3:0] state;
+  reg [2:0] state;
   //USED to remember old stall signal when advancing clk
   reg [3:0] stall_restore;
  

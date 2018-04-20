@@ -348,7 +348,26 @@ tdi,
 tdo,
 tms,
 tck,
-trst_n
+trst_n,
+//PORTS FOR ANALOG BLOCK
+ext_cki,
+ext_ckib,
+ext_frefp,
+ext_frefn,
+ext_cki_jm,
+ext_ckib_jm,
+ext_frefp_jm,
+ext_frefn_jm,
+clk_ext_in,
+aux_div_pad,
+fout_div_pad,
+fref_off_pad,
+ffeed_pad,
+frefp_out_jm,
+frefn_out_jm,
+mdllout_pad,
+jm_out,
+lf_out
 );
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
@@ -364,6 +383,27 @@ trst_n
   input tck;
   input trst_n;
   output tdo;
+  //PADS FOR ANALOG BLOCK
+  input ext_cki;  // (+) cmos clock input (reference clock input)
+  input ext_ckib; // (-) cmos clock input (reference clock input)
+  input ext_frefp; // (+) low-swing clock input (reference clock input)
+  input ext_frefn; // (-) low-swing clock input (reference clock input)
+  input ext_cki_jm;  // (+) cmos clock input (reference clock input) (jitter measurement)
+  input ext_ckib_jm; // (-) cmos clock input (reference clock input) (jitter measurement)
+  input ext_frefp_jm; // (+) low-swing clock input (reference clock input) (jitter measurement)
+  input ext_frefn_jm; // (-) low-swing clock input (reference clock input) (jitter measurement)
+  input clk_ext_in;       // external clock for aux osc (valid when aux_sel = 1)
+  output aux_div_pad;     // aux osc output for monitoring purpose
+  output fout_div_pad;    // divided clock of fref for monitoring purpose
+  output fref_off_pad;    // fref for monitoring purpose
+  output ffeed_pad;       // 
+  
+  output frefp_out_jm;    // (+) frefp for off-chip phase adjustment
+  output frefn_out_jm;    // (-) frefp for off-chip phase adjustment
+
+  output [3:0] mdllout_pad; // 4-phase MDLL outputs
+  output [19:0] jm_out;   // number of 1's in jitter measurement
+  output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
    // --------------------------------------
    // PLACEHOLDERS FOR VERILATOR INPUT WIRES
    // --------------------------------------
@@ -403,6 +443,9 @@ wire [31:0] read_data_memory;
 wire [31:0] read_data_io1bit;
 wire [3:0] stall;
 //; my $global_controller_obj = generate("global_controller", "global_controller");
+//; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
+wire analog_r`$i`;
+//; }
 //; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
     `$global_controller_obj->instantiate()` 
     (
@@ -422,7 +465,7 @@ wire [3:0] stall;
       .tck(tck),
       .trst_n(trst_n),
 //; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
-      .analog_r`$i`(),
+      .analog_r`$i`(analog_r`$i`),
 //; }
       .cgra_stalled(stall),
       .read(config_read)
@@ -435,6 +478,84 @@ wire [3:0] stall;
     assign reset = reset_in;
     assign config_write = 1;
 //; }
+  mdll_top mdll_top 
+  (
+    .ext_cli(ext_cki),  // (+) cmos clock   . (reference clock   .)
+    .ext_ckib(ext_ckib), // (-) cmos clock   . (reference clock   .)
+    .ext_frefp(ext_frefp), // (+) low-swing clock   . (reference clock   .)
+    .ext_frefn(ext_frefn), // (-) low-swing clock   . (reference clock   .)
+    .ext_cki_jm(ext_cki_jm),  // (+) cmos clock   . (reference clock   .) (jitter measurement)
+    .ext_ckib_jm(ext_ckib_jm), // (-) cmos clock   . (reference clock   .) (jitter measurement)
+    .ext_frefp_jm(ext_frefp_jm), // (+) low-swing clock   . (reference clock   .) (jitter measurement)
+    .ext_frefn_jm(ext_frefn_jm), // (-) low-swing clock   . (reference clock   .) (jitter measurement)
+    .clk_ext_in(clk_ext_in),       // external clock for aux osc (valid when aux_sel = 1)
+  
+    .ref_sel(analog_r[4]),          // select reference clock   .s ('1': ext_cki(b)), '0': ext_frefp(n))
+    .reset(analog_r0[3]),  // reset for isynth (act Hi)
+    .rstb(analog_r0[2]), // reset for main osc (act Lo)
+    .en_inj(analog_r0[1]), // enable injection (act Hi)
+    .en_osc(analog_r0[0]),   // enable main oscillator (act Hi)
+
+    .sel_bb_in(analog_r1[3]),        // select clock source for BB control ('1': ), '0': )
+    .en_ext_tune(analog_r1[2]),  // initizlize mtune externally (act Hi)
+    .bypass_dcdl(analog_r1[1]), // bypass coarse tune (act Hi)
+    .loop_sel(analog_r1[0]), // select loop algorithm ('1': BB), '0': TDC)
+
+    .aux_sel(analog_r2[10]),  // select auxilliary osc source ('1': ext_clk_in), '0': internal osc)
+    .en_aux(analog_r2[9]), // enable aux osc (act Hi)
+    .aux_div(analog_r2[8]),  // divider aux osc by 2 (act Hi)
+    .ndiv_aux(analog_r2[7:5]),   // divider ratio of aux 
+    .aux_tune(analog_r2[4:0]), // aux osc frequency control
+ 
+    .ndiv(analog_r3[5:4]), // feedback divider control
+    .ndiv_ref(analog_r3[3:0]),  // divider ratio of fref
+  
+    .gain_ratio(analog_r4[5:4]), // gain control in LF
+    .gain_ctrl(analog_r4[3:0]),  // gain control in LF
+  
+  
+    .ctune0(analog_r5[3:0]),  // ctune control   . for main osc cell 0
+  
+    .ctune1(analog_r6[3:0]),  // ctune control   . for main osc cell 1
+  
+    .ext_mtune(analog_r7[6:0]),  // external mtune (see en_ext_tune)
+  
+    .m_str(analog_r8[2:0]),  // control driving strength of fine delay cell
+  
+  
+    .en_dith(analog_r9[6:5]),  // enable dithering
+    .dith_sel(analog_r9[4]),       // select dithering scheme ('1': PRS ), '0': DSM)
+    .en_dsm_lsb_dith(analog_r9[3]),  // use PRS in DSM dithering (act Hi)
+    .ndiv_fout(analog_r9[2:0]),  // divider ratio of fout (for generating dithering clock)
+  
+    .bypass_retimer(analog_r10[5]),   // disable retimer (act Hi)
+    .sel_ph(analog_r10[4:3]),     // select phase for retimer
+    .dith_retime(analog_r10[2:0]),  // control dithering retiming point
+  
+    .bypass_bb(analog_r11[5]),        // disable offset control in BB loop (act Hi)
+    .bypass_tdc(analog_r11[4]),       // disable offset control in TDC loop (act Hi)
+    .add_off(analog_r11[3:0]),      // offset delay control
+  
+    .en_jm(analog_r12[7]),    // enable jitter measurement
+    .ref_sel_jm(analog_r12[6]),       // select jitter measurement clock   .s ('1': ext_cki(b)_jm), '0': ext_frefp(n)_jm)
+    .ncycle_jm(analog_r12[5:0]),  // run n cycles of fref to measure jitter
+
+    .mdll_reserved(analog_r13),    // reserved   . register
+
+    .aux_div_pad(aux_div_pad),     // aux osc output for monitoring purpose
+    .fout_div_pad(fout_div_pad),    // divided clock of fref for monitoring purpose
+    .fref_off_pad(fref_off_pad),    // fref for monitoring purpose
+    .ffeed_pad(ffeed_pad),       // 
+  
+    .frefp_out_jm(frefp_out_jm),    // (+) frefp for off-chip phase adjustment
+    .frefn_out_jm(frefn_out_jm),    // (-) frefp for off-chip phase adjustment
+
+    .mdllout_pad(mdllout_pad), // 4-phase MDLL outputs
+    .jm_out(jm_out),   // number of 1's in jitter measurement
+    .lf_out(lf_out)    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
+  );
+//INSTANTIATE ANALOG BLOCK
+
 
 // FIXME Note there are LOTS of unused wires being created below!
 // FIXME I assume they will be hooked up to something eventually

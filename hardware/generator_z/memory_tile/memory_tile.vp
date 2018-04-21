@@ -143,12 +143,12 @@ read_data
   reg config_en_sb_`$row`_`$bus`;
   always @(*) begin
     if (reset) begin
-       config_en_sb_`$row`_`$bus` <= 1'b0;
+       config_en_sb_`$row`_`$bus` = 1'b0;
     end else begin
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
-         config_en_sb_`$row`_`$bus` <= 1'b1;
+         config_en_sb_`$row`_`$bus` = 1'b1;
        end else begin
-         config_en_sb_`$row`_`$bus` <= 1'b0;
+         config_en_sb_`$row`_`$bus` = 1'b0;
        end
     end
   end
@@ -161,12 +161,12 @@ read_data
   reg config_en_mem;
   always @(*) begin
     if (reset) begin
-       config_en_mem <= 1'b0;
+       config_en_mem = 1'b0;
     end else begin
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
-         config_en_mem <= 1'b1;
+         config_en_mem = 1'b1;
        end else begin
-         config_en_mem <= 1'b0;
+         config_en_mem = 1'b0;
        end
     end
   end
@@ -185,12 +185,11 @@ read_data
       config_en_sram[`$i`] = 1'b0;
     end
     else begin
-       //NEED TO REVISE THIS. CONFIG_WRITE ALONE NOT SUFFICIENT
        if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`) && (config_read | config_write)) begin
-         config_en_sram[`$i`] <= 1'b1;
+         config_en_sram[`$i`] = 1'b1;
        end 
        else begin
-         config_en_sram[`$i`] <= 1'b0;
+         config_en_sram[`$i`] = 1'b0;
        end
     end
   end
@@ -199,6 +198,23 @@ read_data
 //;       address => $intra_tile_addr
 //;     };
 //; }
+
+//;$intra_tile_addr++;
+  reg config_en_linebuf;
+  always @(*) begin
+    if (reset) begin
+       config_en_linebuf = 1'b0;
+    end else begin
+       if ((config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd`$intra_tile_addr`)&&config_write) begin
+         config_en_linebuf = 1'b1;
+       end else begin
+         config_en_linebuf = 1'b0;
+       end
+    end
+  end
+//;	$tile_info_hash->{ "linebuf" } ={
+//;	  address => $intra_tile_addr
+//;	};
 
 //; ##
 //; ## global out signal
@@ -224,7 +240,7 @@ read_data
   end
 //;   my $bus_width = $bus_width_hash { $gen_mem_for_busname };
 //;  #ankitan
-//;  # wire [`$bus_width-1`:0] rdata;
+     wire [`$bus_width-1`:0] rdata;
 //;  if($USE_SHIFT_REG) {
        wire [`$bus_width-1`:0] rdata_core;
 //;}
@@ -528,6 +544,7 @@ wire [31:0] read_data_sb_`$row`_`$bus`;
 
 wire [31:0] read_data_mem;
 wire [31:0] read_data_sram;
+wire [31:0] read_data_linebuf;
   `$mem_core->instantiate()`
   (
       .clk_in(clk_in),
@@ -540,6 +557,7 @@ wire [31:0] read_data_sram;
       .config_write(config_write),
       .config_en(config_en_mem),
       .config_en_sram(config_en_sram),
+      .config_en_linebuf(config_en_linebuf),
       .data_in(wdata),
        //; if($USE_SHIFT_REG==0) {
       .data_out(rdata), 
@@ -558,7 +576,8 @@ wire [31:0] read_data_sram;
       .almost_full(almost_full),
       .almost_empty(almost_empty),
       .read_data(read_data_mem),
-      .read_data_sram(read_data_sram)
+      .read_data_sram(read_data_sram),
+      .read_data_linebuf(read_data_linebuf)
    );
 
 
@@ -692,6 +711,17 @@ endmodule
 //;      }
 //;    }
 //;    print TILEINFO "    </sram>\n"
+//;  }
+//;################### LineBuffers
+//;  if ($feature=~m/linebuf/) {
+//;    print TILEINFO "    <linebuf feature_address='$value->{'address'}'>\n";
+//;    foreach my $param_name (sort keys %$value) {
+//;      my $param_value = $value->{$param_name};
+//;      if ($param_name!~m/address/) {
+//;        print TILEINFO "$param_value";
+//;      }
+//;    }
+//;    print TILEINFO "    </linebuf>\n"
 //;  }
 //;
 //; #End of TILEINFO loop

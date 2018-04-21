@@ -4,6 +4,7 @@ rm -rf INCA_libs irun.*
 irun -top test_top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
 -input \
 $RTL_FOLDER/../ncsim_verif/cmd.tcl \
+$RTL_FOLDER/../mdll_top.sv \
 $RTL_FOLDER/cb_unq1.v  \
 $RTL_FOLDER/cb_unq2.v \
 $RTL_FOLDER/cfg_and_dbg_unq1.sv \

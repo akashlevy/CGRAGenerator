@@ -1,27 +1,37 @@
 from random import randint
-from itertools import product
+import itertools
+from collections import OrderedDict, namedtuple
 
 __all__ = ['random', 'complete']
 
-def random(func, n, width):
-    max = 1 << width
+test_input = namedtuple('test_input', ['name', 'value'])
+test_output = namedtuple('test_output', ['name', 'value'])
+
+def random(func, n, args, outputs, with_clk=False):
     tests = []
     for i in range(n):
-        x = randint(0,max)
-        y = randint(0,max)
-        test = [x, y]
-        result = func(*test)
-        test.append(result[0])
-        tests.append(test)
+        _args = OrderedDict([(k, v()) for k, v in args.items()])
+        if with_clk:
+            for clk in [0, 1]:
+                _args_copy = OrderedDict(_args)
+                _args_copy["clk"] = clk
+                # _args_copy["clk_en"] = randint(0, 1)
+                _args_copy["clk_en"] = 1
+                result = func(**_args_copy)
+                test = [test_input(k, v) for k, v in _args_copy.items()] + list(outputs(result))
+                tests.append(test)
+        else:
+            result = func(**_args)
+            test = [test_input(k, v) for k, v in _args.items()] + list(outputs(result))
+            tests.append(test)
     return tests
 
-def complete(func, n, width):
-    max = 1 << width
+def complete(func, args, outputs):
     tests = []
-    for i in range(n):
-        for j in range(n):
-            test = [i, j]
-            result = func(*test)
-            test.append(result[0])
-            tests.append(test)
+    keys = [k for k in args.keys()]
+    for arg_vals in itertools.product(*(value for value in args.values())):
+        _args = OrderedDict([(k, v) for k, v in zip(keys, arg_vals)])
+        result = func(**_args)
+        test = [test_input(k, v) for k, v in _args.items()] + list(outputs(result))
+        tests.append(test)
     return tests

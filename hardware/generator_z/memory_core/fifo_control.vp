@@ -37,7 +37,7 @@ input wen;
 input stall_read;
 input [3:0] almost_count;
 input [`$dwidth*2 - 1`:0] data_from_mem;
-input [13:0] depth;
+input [12:0] depth;
 
 output valid;
 output wen_to_mem;
@@ -80,6 +80,9 @@ wire [`$dwidth - 1`:0] data_out_d0;
 wire valid_d0;
 wire [`$dwidth - 1`:0] depth_even;
 wire stall_read_int;
+wire fsm_en;
+
+assign fsm_en = 1'b1;
 
 //; my $inp_sr = generate('input_sr', 'input_sr', dwidth => $dwidth);
 //; my $out_sr = generate('output_sr', 'output_sr', dwidth => $dwidth);
@@ -90,6 +93,7 @@ wire stall_read_int;
 .flush(flush),
 .data_in(data_in),
 .wen(wen),
+.fsm_en(fsm_en),
 .data_out(data_to_mem),
 .avail_w1(input_sr_a1),
 .avail_w2(input_sr_a2),
@@ -105,6 +109,7 @@ wire stall_read_int;
 .data_in(output_sr_data_in),
 .wen_w1(output_sr_wen_w1),
 .wen_w2(output_sr_wen_w2),
+.fsm_en(fsm_en),
 .data_out(data_out_d0),
 .avail(output_sr_data_avail),
 .ren(output_sr_ren),
@@ -200,7 +205,7 @@ always @(posedge clk or posedge reset) begin
     delay_outputs <= 1'b0;
     warp <= 1'b0;
   end
-  if (flush==1'b1) begin
+  else if (flush==1'b1) begin
     read_state <= 2'd0;
     num_words_read <= `$dwidth`'d0;
     delay_outputs <= 1'b0;

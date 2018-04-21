@@ -434,6 +434,8 @@ if ($?SKIP_RUNCSH_BUILD) then
   echo "OOPS MAYBE NOT; FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
 endif
 
+  #PUT THE ANALOG BLOCK IN
+  cp ../../hardware/generator_z/top/mdll_top.sv $vdir/mdll_top.sv
 
   # (Temporary (I hope)) SRAM hack(s)
 

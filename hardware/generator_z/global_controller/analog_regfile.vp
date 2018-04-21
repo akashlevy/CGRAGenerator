@@ -11,6 +11,7 @@ module `mname` (
 addr,
 data_in,
 wr_en,
+jm_out,
 //; for(my $i = 0; $i < $num_regs; $i++){
 r`$i`,
 //;}
@@ -21,6 +22,7 @@ reset
 input clk;
 input reset;
 input wr_en;
+input [19:0] jm_out;
 input [`$addr_width-1`:0] addr;
 input [`$data_width-1`:0] data_in;
 //; for(my $i = 0; $i < $num_regs; $i++){
@@ -33,15 +35,17 @@ always @ (posedge clk or posedge reset) begin
 		r`$i` <= `$data_width`'b0;
 //; }
 	end //if reset
-	else if(wr_en == 1) begin
-		case(addr)
-//; for(my $i=0; $i < $num_regs; $i++){
-			`$addr_width`'d`$i`: begin
-				r`$i` <= data_in;
-			end
+	else begin
+	r`$num_regs-1` <= {12'b0,jm_out};
+		if(wr_en == 1) begin
+			case(addr)
+//; for(my $i=0; $i < $num_regs-1; $i++){
+				`$addr_width`'d`$i`: begin
+					r`$i` <= data_in;
+				end
 //; }
-		endcase
-
+			endcase
+		end
 	end //else	
 end //always
 

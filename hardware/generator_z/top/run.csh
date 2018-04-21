@@ -93,7 +93,9 @@ echo HACKWARNING Using custom stub instead of proprietary DW_tap
 echo HACKWARNING Using custom stub instead of proprietary DW_tap
 echo HACKWARNING Using custom stub instead of proprietary DW_tap
 echo cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
+echo cp  mdll_top.sv genesis_verif/mdll_top.sv
 cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
+cp mdll_top.sv genesis_verif/mdll_top.sv
 ls -l ../jtag/Template/src/digital/DW_tap.v.stub
 ls -l genesis_verif/DW_tap.v
 echo

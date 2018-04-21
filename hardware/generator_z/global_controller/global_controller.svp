@@ -5,7 +5,7 @@
 //; my $jtag_obj = generate("jtag", "jtag_controller", SYSCLK_CFG_BUS_WIDTH => $cfg_bus_width, SYSCLK_CFG_ADDR_WIDTH => $cfg_addr_width, SYSCLK_CFG_OPCODE_WIDTH =>$cfg_op_width);
 //; my $jtag_ifc_path = $self -> define_param(IFC => $jtag_obj -> get_param('IFC'));
 //; my $jtag_ifc = clone($jtag_ifc_path, 'jtag_ifc');
-//; my $num_analog_regs = parameter(Name => 'num_analog_regs', val => 16, Doc => "Number of analog registers and analog_regfile");
+//; my $num_analog_regs = parameter(Name => 'num_analog_regs', val => 15, Doc => "Number of analog registers and analog_regfile");
 module `mname` (
 clk_in, reset_in,
 //; for (my $i = 0; $i < $num_analog_regs; $i++){
@@ -23,7 +23,9 @@ tdi,
 tdo,
 tms,
 tck,
-trst_n
+trst_n,
+//FROM ANALOG
+jm_out
 );
   
   input  tck;
@@ -32,6 +34,7 @@ trst_n
   input  tdi;
   input  tms;
   input  trst_n;
+  input jm_out [19:0]
   input [`$cfg_bus_width-1`:0] config_data_in;
 
   output reg read;
@@ -97,6 +100,7 @@ reg [`$cfg_addr_width-1`:0] analog_addr;
 	.addr(analog_addr),
 //; for(my $i = 0; $i < $analog_regfile -> get_param('num_regs'); $i++) {
 	.r`$i`(analog_r`$i`),
+	.jm_out(jm_out),
 //; }	
 	.clk(clk),
 	.reset(reset_out)

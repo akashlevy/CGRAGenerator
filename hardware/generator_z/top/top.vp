@@ -369,7 +369,6 @@ ffeed_pad,
 frefp_out_jm,
 frefn_out_jm,
 mdllout_pad,
-jm_out,
 lf_out
 );
 
@@ -405,7 +404,7 @@ lf_out
   output frefn_out_jm;    // (-) frefp for off-chip phase adjustment
 
   output [3:0] mdllout_pad; // 4-phase MDLL outputs
-  output [19:0] jm_out;   // number of 1's in jitter measurement
+  wire [19:0] jm_out;   // number of 1's in jitter measurement
   output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
    // --------------------------------------
    // PLACEHOLDERS FOR VERILATOR INPUT WIRES
@@ -471,7 +470,8 @@ wire [31:0] analog_r`$i`;
       .analog_r`$i`(analog_r`$i`),
 //; }
       .cgra_stalled(stall),
-      .read(config_read)
+      .read(config_read),
+      .jm_out(jm_out)
     );
 //; if($connect_GC == 0) {
     //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC

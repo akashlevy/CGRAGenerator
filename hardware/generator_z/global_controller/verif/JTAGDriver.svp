@@ -183,7 +183,7 @@ endclass: `mname`
 
 	 // read or write changes the order of data vs op
 	 // for reads, first send instructions then get data
-	 if (cur_trans.op == read | cur_trans.op == rd_TST | cur_trans.op == rd_rd_delay_reg | cur_trans.op == rd_delay_sel_reg | cur_trans.op == wr_A050 | cur_trans.op == read_stall | cur_trans.op == read_clk_domain) begin
+	 if (cur_trans.op == read | cur_trans.op == rd_TST | cur_trans.op == rd_rd_delay_reg | cur_trans.op == rd_delay_sel_reg | cur_trans.op == wr_A050 | cur_trans.op == read_stall | cur_trans.op == read_clk_domain | cur_trans.op == rd_analog_reg) begin
 	    // send instruction
 	    ShiftIR(sc_cfg_inst, jtag_inst_width);
 	    ShiftDR(cur_trans.op, sc_op_width);

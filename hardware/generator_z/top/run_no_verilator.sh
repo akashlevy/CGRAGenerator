@@ -2,6 +2,12 @@
 
 # run script with NO VERILATOR HACKS
 
+echo ERROR this script should fail unless/until sram and tap stubs are fixed
+echo ERROR and maybe some other things too
+echo ERROR If/when you fix these, you can comment out this error block
+exit 13
+
+
 # @Caleb: For providing registers on all outputs of all SBs, do-
 # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
 # export CGRA_GEN_ALL_REG=1  (sh syntax)

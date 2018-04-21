@@ -13,8 +13,8 @@
 //; # the IO_count and basic_block_repeat_* variables below.
 //; # my $grid_size = "8x8";
 //; # my $grid_size = "64x64";
-//; #my $grid_size = "16x16";
-//; my $grid_size ="48x48";
+//; my $grid_size = "16x16";
+//; #my $grid_size ="48x48";
 //; #
 //; # for IOs
 //; # <number of bits> <number of bits> <number of bits> <number of bits>
@@ -1074,7 +1074,7 @@ wire [31:0] analog_r`$i`;
 //;           my $child_type = $gst_hash_old{ $child_key };
 //;           my $child_addr = $gst_hash_old{ "${child_key}_addr" };
 //;           my $child_addr_hex = sprintf("%X",$child_addr);
-//;   if($incr*2 >= $cgra_grid_width-4) {
+//;   if(($incr*2 >= $cgra_grid_width-4) or (($grid_size eq "48x48") and ($incr*2==32))) {
       .gin_u_`$i`(stall[`$i`] | global_wire_l2h_`$incr`_`$new_key`),
 //;   }
 //;   else {

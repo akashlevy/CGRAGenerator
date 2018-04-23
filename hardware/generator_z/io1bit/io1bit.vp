@@ -70,7 +70,7 @@ read_data
 
   always @(*) begin
     if (config_read&&(config_addr[15:0]==tile_id)&&(config_addr[23:16]==8'd0)) begin
-      read_data = {io_bit, out_bus}; 
+      read_data = {out_bus, io_bit}; 
     end
     else begin
       read_data = 'h0;

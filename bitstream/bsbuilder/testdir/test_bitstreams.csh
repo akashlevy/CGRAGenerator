@@ -4,6 +4,8 @@ if ("$1" == "--help") then
   echo 'test_bitstreams.csh tmpdir'
   echo 'test_bitstreams.csh tmpdir pointwise'
   echo 'test_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw'
+  echo 'test_bitstreams.csh -trace tmpdir'
+  echo 'test_bitstreams.csh -nobuild tmpdir'
   exit
 endif
 
@@ -13,6 +15,12 @@ if ("$1" == "-nobuild") then
   shift
 endif
 
+unset TRACE
+if ("$1" == "-trace") then
+  set TRACE
+  set buildswitch = '-build'
+  shift
+endif
 
 if (! -d $1) then
   echo 'Where are the test.bsa input files?'
@@ -52,21 +60,23 @@ set v =  $gen/verilator/generator_z_tb
 
 if (-e $tmpdir/test_results.log) rm $tmpdir/test_results.log
 
-unset TRACE
 foreach b ($bmarks)
   echo "------------------------------------------------------------------------"
   echo "TESTING $b"
 
   set bsa   = $tmpdir/$b.bsa
   set input = $scriptpath/examples/${b}_input.raw
-  set delay = `grep ${b}.correct $0:t | sed 's/.*DELAY=\(.*\)/\1/'`
+  set delay = `grep ${b}.correct $0:t | sed 's/.*DELAY=\(.*\)/\1/' || echo 0,0`
 
   # Note this output name is 'magic' and directs run.csh to do things :(
   # Maybe (FIXME)
   set out = $tmpdir/${b}_CGRA_out.raw
 
   set tswitch = ''
-  if ($?TRACE) set tswitch = "-trace $b.vcd"
+  if ($?TRACE) then
+    echo TRACETRACE
+    set tswitch = "-trace $b.vcd"
+  endif
 
 
    # NO MORE HACKMEM!

@@ -110,7 +110,10 @@ if ($#argv == 1) then
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)""
+    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)"
+    echo "        -nobuild # no genesis, no verilator build"
+    echo "        -nogen   # no genesis"
+    echo "        -gen     # genesis"
     echo
     echo "Defaults:"
     echo "    $0 top_tb.cpp \"
@@ -259,7 +262,7 @@ while ($#argv)
       if (`expr "$1" : "-"`) then
         echo "ERROR: Unknown switch '$1'"
         exec $0 --help
-        exit -1
+        set EXIT13; goto DIE
       endif
       set testbench = "$1";
   endsw
@@ -274,7 +277,7 @@ if (! -e "$testbench") then
   foreach f (*tb*.cpp)
     echo "  $0 $f"
   end
-  exit -1
+  set EXIT13; goto DIE
 endif
 
 
@@ -370,7 +373,8 @@ else
   # echo "run.csh: Building CGRA because you asked for it with '-gen'..."
   echo "run.csh: Building CGRA because it's the default..."
   if ($?VERBOSE) echo "run.csh: ../../bin/generate.csh $VSWITCH"
-  ../../bin/generate.csh $VSWITCH || exit -1
+  ../../bin/generate.csh $VSWITCH || set EXIT13
+  if ($?EXIT13) goto DIE
 endif
 
 ##############################################################################
@@ -691,9 +695,9 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   set qf2         = (cat)
 
 
-  # FIXME note the '|| exit -1" below is USELESS
+  # FIXME note the '|| EXIT13" below is USELESS (why?)
   if ($?VERBOSE) set echo
-    obj_dir/$vtop \
+  obj_dir/$vtop \
       -config $config \
       -input $input \
       $out \
@@ -702,8 +706,10 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
       $nclocks \
       | tee $tmpdir/run.log.$$ \
       | $quietfilter:q | $qf2:q \
-      || exit -1
+      || set EXIT13
   unset echo >& /dev/null
+  if ($?EXIT13) goto DIE
+
   echo -n " TIME NOW: "; date
 
   unset FAIL
@@ -716,7 +722,8 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   if ($?input) then
     echo
-    ls -l $tmpdir/$iroot.raw $output
+    ls -l $input $output
+
 
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
@@ -738,8 +745,9 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     endif
 
     echo
-    set cmd = "od -t x1 $tmpdir/$iroot.raw"
-    set cmd = "od -t u1 $tmpdir/$iroot.raw"
+    set cmd = "od -t x1 $input"
+    set cmd = "od -t u1 $input"
+
   # echo $cmd; $cmd | head
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
 
@@ -749,8 +757,10 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
   endif
 
-
-  if ($?FAIL) exit -1
+  if ($?FAIL) then
+    set EXIT13
+    goto DIE
+  endif
 
 # Tell how to clean up (not necessary for travis VM of course)
 # if (`hostname` == "kiwi") then
@@ -769,6 +779,13 @@ NOTE: If you want to clean up after yourself you'll want to do this:
 
 eof
 endif
-echo "killing background printing"
-kill -9 %1
 
+# Need this to kill background job(s)
+DIE:
+  echo Time...to die.
+  jobs
+  echo "killing 'mytravis' background output"
+  kill -9 %1
+  sleep 10
+  jobs
+  if ($?EXIT13) exit 13

@@ -289,7 +289,7 @@ always @(*) begin
 .data_in(data_in_int),
 .wen(wen_in_int),
 .data_out(lb_out),
-.stall_read(ren_in),
+.stall_read(1'b0),
 .valid(lb_valid_out),
 .almost_full(lb_almost_full),
 .almost_empty(lb_almost_empty),

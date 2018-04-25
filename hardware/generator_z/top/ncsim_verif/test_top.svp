@@ -37,7 +37,7 @@
 //; my $IDCODE = $self->define_param(IDCODE => 1);
 //; my $num_tracks = parameter(Name=>'num_tracks', Val=>16, Min=>1,Step=>1,Doc=>'Number of tracks per side in CGRA');
 //; my $config_data_width = parameter(Name=>'config_data_width',Val=>32, Min=>1, Step =>1, Doc=>'Width of config data buses');
-//; my $config_addr_width = parameter(Name=>'config_addr_width',Val=>29, Min=>1, Step =>1, Doc=>'Width of config addr bus');
+//; my $config_addr_width = parameter(Name=>'config_addr_width',Val=>32, Min=>1, Step =>1, Doc=>'Width of config addr bus');
 //; my $config_op_width = parameter(Name=>'config_op_width',Val=>3,Min=>1,Step=>1,Doc=>'Width of config op field');
 /*******************************************************************************
  * Module top:

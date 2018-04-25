@@ -283,7 +283,7 @@ program automatic `mname`(
      write_config(tile_id,feature,register, data_in);
      read_config(tile_id,feature,register);
      if(jtag_config_trans.data_out != data_in) begin
-       $display("ERROR in tile %x, feature %x, register %x. Data written: %data_in. Data read: %x.", tile_id,
+       $display("ERROR in tile %x, feature %x, register %x. Data written: %x. Data read: %x.", tile_id,
                  feature, register,data_in,jtag_config_trans.data_out);
      end
      end

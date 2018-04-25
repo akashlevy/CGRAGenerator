@@ -260,6 +260,34 @@ program automatic `mname`(
 	 
       end
    endtask // run_test
+   task write_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register,input logic [31:0] data_in);
+     begin
+     jtag_config_trans.op = write;
+     jtag_config_trans.addr = {register,feature,tile_id};
+     jtag_config_trans.data_in = data_in;
+     jtag_config_trans.done = 0;
+     jdrv.Send(jtag_config_trans);
+     end
+   endtask //write_config
+   task read_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register);
+     begin
+     jtag_config_trans.op = read;
+     jtag_config_trans.addr = {register,feature,tile_id};
+     jtag_config_trans.data_out = 0;
+     jtag_config_trans.done = 0;
+     jdrv.Send(jtag_config_trans);
+     end
+   endtask //read_config
+   task check_address(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, input logic [31:0] data_in);
+     begin
+     write_config(tile_id,feature,register, data_in);
+     read_config(tile_id,feature,register);
+     if(jtag_config_trans.data_out != data_in) begin
+       $display("ERROR in tile %x, feature %x, register %x. Data written: %data_in. Data read: %x.", tile_id,
+                 feature, register,data_in,jtag_config_trans.data_out);
+     end
+     end
+   endtask
 
 
 

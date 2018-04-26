@@ -46,9 +46,11 @@ program automatic `mname`(
    int 				 config_file;
    int				 input_file;
    int 				 io1bit_IDs;
-   int				 io16bit_IDs;
    int				 pe_IDs;
    int				 mem_IDs;
+   int 				 io1bit_ID_arr[3000];
+   int 				 pe_ID_arr[3000];
+   int 				 mem_ID_arr[3000];
    shortint			 id;
    int				 status;
    int				 i;
@@ -60,7 +62,7 @@ program automatic `mname`(
    //; my $jtag_drvr_obj = generate_base('JTAGDriver', 'jdrv');
    `$jtag_drvr_obj->instantiate`;
    jtag_regfile_trans_t jtag_config_trans;       
-   logic [10:0][7:0] pe_features = {8'h00,8'hE0,8'hE1,8'hF0,8'hF1,8'hF3,8'hF4,8'hF5,8'hFF};
+   logic [8:0][7:0] pe_regs= {8'h00,8'hE0,8'hE1,8'hF0,8'hF1,8'hF3,8'hF4,8'hF5,8'hFF};
    task run_test;
       begin
 	 jdrv.ReadID(jtag_config_trans);
@@ -70,15 +72,46 @@ program automatic `mname`(
 	 jtag_config_trans.addr = 32'h0;
 	 jtag_config_trans.data_out = 32'h1;
 	 //CHECK EVERY ADDRESS IN EACH TILE TYPE
-	 /*GC_op(write_stall,32'hF,32'h0);
-	 $display("STALL");*/
+	 GC_op(write_stall,32'hF,32'h0);
+	 $display("STALL");
+	 $display("START ALL FEATURE TEST FOR EACH TILE TYPE");
+	 //io1bit tile
+	 status = $fscanf(io1bit_IDs,"%x", id);
+	 io1bit_ID_arr[0] = id;
+	 write_config(id,8'h0,8'h0,32'h1);
+	 //Now do mem_tile
+	 status = $fscanf(mem_IDs,"%x", id);
+	 mem_ID_arr[0] = id;
+	 for(int feat=0; feat<mem_num_features; feat++) begin
+		if(feat==10)
+			write_config(id,feat,8'h0,(id+feat)%4);
+		else
+			write_config(id,feat,8'h0,(id+feat));
+         end
+	 status = $fscanf(pe_IDs,"%x", id);
+	 pe_ID_arr[0] = id;
+	 for(int feat=0; feat<pe_num_features; feat++) begin
+		if(feat==0) begin
+			for(int r=0;r<9;r++) begin
+				if(pe_regs[r]=='hF3 | pe_regs[r]=='hF4 | pe_regs[r]=='hE1) begin
+					write_config(id,feat,pe_regs[r],32'h1);
+				end
+				else	
+					write_config(id,feat,pe_regs[r],r);
+			end
+		end
+		else if(feat==10)
+			write_config(id,feat,8'h0,1);
+		else if(feat!=1)
+			write_config(id,feat,8'h0,(id+feat));
+         end
 	 $display("START ALL FEATURE TEST FOR EACH TILE TYPE");
 	 $display("TESTING IO1BIT TILE");
-	 status = $fscanf(io1bit_IDs,"%x", id);
+	 id = io1bit_ID_arr[0];
 	 check_address(id,8'h0,8'h0,32'h1);
 	 //Now do mem_tile
 	 $display("TESTING MEM TILE");
-	 status = $fscanf(mem_IDs,"%x", id);
+	 id = mem_ID_arr[0];
 	 for(int feat=0; feat<mem_num_features; feat++) begin
 		if(feat==10)
 			check_address(id,feat,8'h0,(id+feat)%4);
@@ -86,20 +119,19 @@ program automatic `mname`(
 			check_address(id,feat,8'h0,(id+feat));
          end
 	 $display("TESTING PE TILE");
-	 status = $fscanf(pe_IDs,"%x", id);
+	 id = pe_ID_arr[0];
 	 for(int feat=0; feat<pe_num_features; feat++) begin
 		if(feat==0) begin
-			for(int r=0;r<11;r++) begin
-				if(pe_features[r]=='hF3 | pe_features[r]=='hF4 | pe_features[r]=='hE1) begin
-					check_address(id,feat,pe_features[r],32'h1);
-					check_address(id,feat,pe_features[r],32'h0);
+			for(int r=0;r<9;r++) begin
+				if(pe_regs[r]=='hF3 | pe_regs[r]=='hF4 | pe_regs[r]=='hE1) begin
+					check_address(id,feat,pe_regs[r],32'h1);
 				end
 				else	
-					check_address(id,feat,pe_features[r],r);
+					check_address(id,feat,pe_regs[r],r);
 			end
 		end
 		else if(feat==10)
-			check_address(id,feat,8'h0,(id+feat)%4);
+			check_address(id,feat,8'h0,1);
 		else if(feat!=1)
 			check_address(id,feat,8'h0,(id+feat));
          end
@@ -179,8 +211,8 @@ program automatic `mname`(
    endtask //read_config
    task check_address(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, input logic [31:0] data_in);
      begin
-     @(posedge ifc.Clk);
-     write_config(tile_id,feature,register, data_in);
+     //@(posedge ifc.Clk);
+     //write_config(tile_id,feature,register, data_in);
      @(posedge ifc.Clk);
      read_config(tile_id,feature,register);
      if(jtag_config_trans.data_out != data_in) begin
@@ -225,10 +257,6 @@ program automatic `mname`(
       if(!io1bit_IDs)
 	$display("ERROR: Could not open io1bit_ID file");
       
-      io16bit_IDs = $fopen("io16bit_IDs.txt","r");
-      if(!io16bit_IDs)
-	$display("ERROR: Could not open io16bit_ID file");
-
       pe_IDs = $fopen("pe_IDs.txt","r");
       if(!pe_IDs)
 	$display("ERROR: Could not open pe_ID file");

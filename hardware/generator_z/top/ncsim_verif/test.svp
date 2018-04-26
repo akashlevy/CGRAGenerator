@@ -20,7 +20,7 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
+//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
 //; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
 //; my $config_bs = parameter(NAME => 'config_bs', val => 'conv_2_1.bs', DOC => "Bitstream to configure CGRA");
 //; my $input_file = parameter(NAME => 'input', val => '../../../verilator/generator_z_tb/io/conv_bw_in.png', DOC => "Input image to use for test");
@@ -52,11 +52,11 @@ program automatic `mname`(
       begin
 	 jdrv.ReadID(jtag_config_trans);
 	//Begin CGRA configuration
- 	 
 	 // initialization of structs:
 	 jtag_config_trans.domain = sc_domain;
 	 jtag_config_trans.addr = 32'h0;
 	 jtag_config_trans.data_out = 32'h1;
+	 check_address(16'h2,8'h0,8'h0,32'h1);
 //; if($use_bs==0){
 	 //Read contents of a mem config register
 	 @(posedge ifc.Clk);
@@ -280,11 +280,14 @@ program automatic `mname`(
      jtag_config_trans.data_out = 0;
      jtag_config_trans.done = 0;
      jdrv.Send(jtag_config_trans);
+     jtag_config_trans = jdrv.GetResult();
      end
    endtask //read_config
    task check_address(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, input logic [31:0] data_in);
      begin
+     @(posedge ifc.Clk);
      write_config(tile_id,feature,register, data_in);
+     @(posedge ifc.Clk);
      read_config(tile_id,feature,register);
      if(jtag_config_trans.data_out != data_in) begin
        $display("ERROR in tile %x, feature %x, register %x. Data written: %x. Data read: %x.", tile_id,

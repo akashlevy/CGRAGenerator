@@ -20,7 +20,7 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
+//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
 //; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
 //; my $config_bs = parameter(NAME => 'config_bs', val => 'conv_2_1.bs', DOC => "Bitstream to configure CGRA");
 //; my $input_file = parameter(NAME => 'input', val => '../../../verilator/generator_z_tb/io/conv_bw_in.png', DOC => "Input image to use for test");
@@ -32,7 +32,10 @@ program automatic `mname`(
 	inout logic [`$num_tracks-1`:0] pads_S2,
 	inout logic [`$num_tracks-1`:0] pads_S3
 );
-   
+   parameter io1bit_num_features=1;
+   parameter io16bit_num_features=1;
+   parameter mem_num_features=17;
+   parameter pe_num_features=11;
    // some variables to control the test
    //int                           seed;
    //int                           rnd0;
@@ -42,15 +45,22 @@ program automatic `mname`(
    int 				 fd;
    int 				 config_file;
    int				 input_file;
+   int 				 io1bit_IDs;
+   int				 io16bit_IDs;
+   int				 pe_IDs;
+   int				 mem_IDs;
+   shortint			 id;
    int				 status;
    int				 i;
+   int 				 flag;
    logic [31:0]			 config_data;
    logic [31:0]			 config_addr;
    logic [7:0]			 pads_in_char;
    // Instantiate a jtag driver
    //; my $jtag_drvr_obj = generate_base('JTAGDriver', 'jdrv');
    `$jtag_drvr_obj->instantiate`;
-   jtag_regfile_trans_t jtag_config_trans;      
+   jtag_regfile_trans_t jtag_config_trans;       
+   logic [10:0][7:0] pe_features = {8'h00,8'hE0,8'hE1,8'hF0,8'hF1,8'hF3,8'hF4,8'hF5,8'hFF};
    task run_test;
       begin
 	 jdrv.ReadID(jtag_config_trans);
@@ -59,171 +69,45 @@ program automatic `mname`(
 	 jtag_config_trans.domain = sc_domain;
 	 jtag_config_trans.addr = 32'h0;
 	 jtag_config_trans.data_out = 32'h1;
-	 check_address(16'h2,8'h0,8'h0,32'h1);
-//; if($use_bs==0){
-	 //Read contents of a mem config register
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = {8'h0,8'h4,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 4 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
+	 //CHECK EVERY ADDRESS IN EACH TILE TYPE
+	 /*GC_op(write_stall,32'hF,32'h0);
+	 $display("STALL");*/
+	 $display("START ALL FEATURE TEST FOR EACH TILE TYPE");
+	 $display("TESTING IO1BIT TILE");
+	 status = $fscanf(io1bit_IDs,"%x", id);
+	 check_address(id,8'h0,8'h0,32'h1);
+	 //Now do mem_tile
+	 $display("TESTING MEM TILE");
+	 status = $fscanf(mem_IDs,"%x", id);
+	 for(int feat=0; feat<mem_num_features; feat++) begin
+		if(feat==10)
+			check_address(id,feat,8'h0,(id+feat)%4);
+		else
+			check_address(id,feat,8'h0,(id+feat));
+         end
+	 $display("TESTING PE TILE");
+	 status = $fscanf(pe_IDs,"%x", id);
+	 for(int feat=0; feat<pe_num_features; feat++) begin
+		if(feat==0) begin
+			for(int r=0;r<11;r++) begin
+				if(pe_features[r]=='hF3 | pe_features[r]=='hF4 | pe_features[r]=='hE1) begin
+					check_address(id,feat,pe_features[r],32'h1);
+					check_address(id,feat,pe_features[r],32'h0);
+				end
+				else	
+					check_address(id,feat,pe_features[r],r);
+			end
+		end
+		else if(feat==10)
+			check_address(id,feat,8'h0,(id+feat)%4);
+		else if(feat!=1)
+			check_address(id,feat,8'h0,(id+feat));
+         end
+	 $display("ALL FEATURE TESTING COMPLETE");
 	 
-	 //Write contents back but also enable the tile (bit 2)
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = {jtag_config_trans.data_out[31:3],1'b1,jtag_config_trans.data_out[1:0]};
-	 jtag_config_trans.addr = {8'h0,8'h4,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 1 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd987;
-	 jtag_config_trans.addr = {8'hAB,8'h5,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 1 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = {8'hAB,8'h5,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 4 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write_stall;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 1 (STALL):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 	
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd123;
-	 jtag_config_trans.addr = {8'h14,8'h5,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 1 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = {8'h14,8'h5,16'h18};
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 4 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd25;
-	 jtag_config_trans.addr = 32'h16;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 1 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd48;
-	 jtag_config_trans.addr = 32'hF000008B;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 2 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd124;
-	 jtag_config_trans.addr = 32'h00040024;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = write;
-	 jdrv.Send(jtag_config_trans);
-	 $fdisplay(fd, "%t: %m: Trans 3 (Write):  Address to GC=%x, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
- 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'h16;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 4 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'hF000008B;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 5 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'h00040024;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 6 (Read):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'h16;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 7 (Read again):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'hF000008B;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 8 (Read again):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	 
-	 @(posedge ifc.Clk);
-	 jtag_config_trans.data_in = 32'd0;
-	 jtag_config_trans.addr = 32'h00040024;
-	 jtag_config_trans.done = 0;
-	 jtag_config_trans.op = read;
-	 jtag_config_trans.data_out = 0;
-	 jdrv.Send(jtag_config_trans);
-	 jtag_config_trans = jdrv.GetResult();
-	 $fdisplay(fd, "%t: %m: Trans 9 (Read Again):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-//; }
-//; else {
+	 	 
+
+//; if($use_bs==1) {
 	 @(posedge ifc.Clk);
 	 jtag_config_trans.op = write_stall;
 	 jtag_config_trans.data_in = 32'hF;
@@ -266,7 +150,8 @@ program automatic `mname`(
 //; else {
 	 for(int j=0; j<40; j++) begin
 		@(posedge ifc.Clk);
-		in = $urandom_range(65535,0);
+		//in = $urandom_range(65535,0);
+                in = 0;
 		for(i=0; i<`$num_tracks`; i++)
 			S2_in[`$num_tracks-1`-i] = in[i];	
 	 end
@@ -304,7 +189,18 @@ program automatic `mname`(
      end
      end
    endtask
-
+   task GC_op(input regfile_op_t op, logic[31:0] data_in, logic[31:0] addr);
+     begin
+     @(posedge ifc.Clk);
+     jtag_config_trans.op = op;
+     jtag_config_trans.addr = addr;
+     jtag_config_trans.data_in = data_in;
+     jtag_config_trans.data_out = 0;
+     jtag_config_trans.done = 0;
+     jdrv.Send(jtag_config_trans);
+     jtag_config_trans = jdrv.GetResult();
+     end
+   endtask 
 
 
    /****************************************************************************
@@ -324,6 +220,23 @@ program automatic `mname`(
       if(!input_file)
 	$display("ERROR: Could not open `$input_file`");
 //; }
+
+      io1bit_IDs = $fopen("io1bit_IDs.txt","r");
+      if(!io1bit_IDs)
+	$display("ERROR: Could not open io1bit_ID file");
+      
+      io16bit_IDs = $fopen("io16bit_IDs.txt","r");
+      if(!io16bit_IDs)
+	$display("ERROR: Could not open io16bit_ID file");
+
+      pe_IDs = $fopen("pe_IDs.txt","r");
+      if(!pe_IDs)
+	$display("ERROR: Could not open pe_ID file");
+      
+      mem_IDs = $fopen("memory_IDs.txt","r");
+      if(!mem_IDs)
+	$display("ERROR: Could not open mem_ID file");
+
       $display("%t:\t*************************START*****************************",$time);
       @(negedge ifc.Reset);
       repeat (10) @(posedge ifc.Clk);

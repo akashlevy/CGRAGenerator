@@ -861,9 +861,10 @@ class Node:
             elif re.search('bit2', input): self.bit2 = input
 
             else:
+                # Face it dude some tiles (INPUT, io1_out) have wires for inputs
                 assert not is_pe(self.name), input
                 self.input0 = input
-        
+
         # If dest exists and says 'bitPE.in' then it has buswidth 1 instead of default 16
         # dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
         if (len(self.dests) > 0) and re.search('bitPE.in[0-9]$', self.dests[0]): buswidth = 1
@@ -1389,10 +1390,14 @@ def dstports(name,tile,DBG=0):
 
     if is_mem(name):  p = [T('mem_in')]
     elif is_pe(name):
-        # p = [T('op1'),T('op2')]
-        p = []
-        if getnode(name).input0 == False: p.append(T('op1'))
-        if getnode(name).input1 == False: p.append(T('op2'))
+        if is_commutative(name):
+            p = []
+            # FIXME note currently no mechanism for commutative bit ops e.g. AND, OR
+            if getnode(name).input0 == False: p.append(T('op1'))
+            if getnode(name).input1 == False: p.append(T('op2'))
+            # e.g. p = [T('op1'),T('op2')]
+        else:
+            p = [find_outport(tile, name)]
 
     elif is_regop(name): p = [T(getnode(name).input0)]
 
@@ -2240,19 +2245,45 @@ def place_pe_in_input_tile(dname):
 
     assert getnode('INPUT').tileno == INPUT_TILE
 
+    # Assumes: INPUT dest is a 16-bit pe operand op1 or op2
     # E.g. if dname = "mul_347_348_349_PE.in0",
     # connect to op1 in node "mul_347_348_349_PE"
     parse = re.search('\.in([0-9])$', dname)
     if (parse):
         which_in = int(parse.group(1));
-        input = 'op%d' % (which_in + 1)
-        getnode(dname).place(INPUT_TILE, input=input, output=INPUT_TILE_PE_OUT)
+        op = 'op%d' % (which_in + 1)
+        getnode(dname).place(INPUT_TILE, input=op, output=INPUT_TILE_PE_OUT)
     else:
         assert False, 'oof what now'
 
-    # INPUT_WIRE_T = 'T0_in_s2t0'
-    # add_route(sname, dname, INPUT_TILE, 'T0_in_s2t0', 'choose_op')
-    add_route(sname, dname, INPUT_TILE, INPUT_WIRE_T, 'choose_op')
+
+    # add_route(sname, dname, INPUT_TILE, INPUT_WIRE_T, 'choose_op')
+    # Above assumes can conect input wire to chosen op e.g.
+    # 'T21_in_s2t0 -> T21_op2'
+    # BUT NO can connect to op1 but not op2 directly
+    # how do we check?
+
+    sname = 'INPUT'
+    p1 = INPUT_WIRE_T
+    p2 = "T%d_%s" % (INPUT_TILE, op)
+    path = getnode('INPUT').connect(p1,p2,DBG=DBG)
+    if not path:
+        if DBG>1: print 'oops no route from p1 to p2'
+
+    print "# 2. Add the connection to src node's src->dst route list"
+    getnode('INPUT').route[dname] = path
+    if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
+       (path, sname, dname)
+    # getnode(sname).routed[dname] = True
+    if DBG: print "#   Now node['%s'].route['%s'] = %s" % \
+       (sname,dname,getnode(sname).route[dname])
+    pwhere(2281)
+    print ""
+
+    # getnode('INPUT').show()
+
+
+
     if DBG: print "# Route '%s -> %s' is now complete for INPUT" % (sname,dname)
 
     # Hm! Hm! There's a special case to consider.
@@ -2757,7 +2788,8 @@ def is_commutative(nodename):
 def find_outport(tileno, nodename):
     '''
     Given tile number e.g. 22 and nodename e.g. "sub_305_313_314_PE.in1"
-    return appropriate port e.g. T22_op2.
+    or "bitmux_157_157_149_lut_bitPE.in0/in1/in2"
+    return appropriate port e.g. T22_op2 or T22_bit1
     If nodename has no appropriate port, assume node is not a pe and return false
     '''
     # .*bitPE.in[012] maps to bit[012];
@@ -2765,11 +2797,24 @@ def find_outport(tileno, nodename):
     parse = re.search(r'bitPE.in(\d)', nodename)
     if parse:
         only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        bitnum = int(parse.group(1))
+        if   (bitnum==0): assert getnode(nodename).bit0 == False
+        elif (bitnum==1): assert getnode(nodename).bit1 == False
+        elif (bitnum==2): assert getnode(nodename).bit2 == False
+
         return only_dest
     parse = re.search(r'PE.in(\d)', nodename)
     if parse:
-        portnum = int(parse.group(1)) + 1
-        only_dest = 'T%d_op%s' % (tileno, portnum)
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        portnum = int(parse.group(1))
+        if   (portnum==0): assert getnode(nodename).input0 == False
+        elif (portnum==1): assert getnode(nodename).input1 == False
+
+        opnum = portnum + 1
+        only_dest = 'T%d_op%s' % (tileno, opnum)
         return only_dest
 
     # Not a pe op i guess
@@ -2796,33 +2841,9 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
     #
     # Unless it's commutative op (may regret this someday)
 
-    outport = find_outport(dtileno, dname)
-    if outport != False:
-        # PE op
-        if not is_commutative(dname):
-            # Non-commutative
-            if DBG: print "   Oop non-commutative operation must honor input order"
-            if DBG: print "   Must use dest '%s' for node '%s'" % (only_dest, dname)
-            assert only_dest in dplist
-            dplist = [only_dest]
-
-    #     # NOPE this (below) does not help at all :(
-    #     # If endpoint is on side 0 or 3, choose op2 preferentially over op1 and vice versa
-    #     dplist = sort_dplist(endpoint,dplist)
-
-
-    # E.g. bitmux_157_157_149_lut_bitPE.in0 or in1 or in2
-    parse = re.search(r'bitPE.in([0-9])$', dname)
-    if parse:
-        dport = 'T%d_bit%s' % (dtileno,parse.group(1))
-        dplist = [dport]
-        if DBG:
-            print '''
-            NOPE. WRONG.
-            Found single-bit input; must connect to "%s" ONLY
-            ''' % dport
-            print "   In-ports avail to dest node '%s': %s" % (dname,dplist)
-            print "   Take each one in turn"
+#     # NOPE this (below) does not help at all :(
+#     # If endpoint is on side 0 or 3, choose op2 preferentially over op1 and vice versa
+#     dplist = sort_dplist(endpoint,dplist)
 
     # FIXME this whole dplist only works for commutative operations.  Right?
     # Should not be doing this anyway, there are better ways maybe.
@@ -2838,18 +2859,7 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
             continue
 
         cend = can_connect_end(snode, endpoint, dstport,DBG)
-# 
-# I think this is fixed 3/2018
-#         try:
-#             cend = can_connect_end(snode, endpoint, dstport,DBG)
-#         except:
-#             print "     Hm apparently not."
-#             cend = False
-#             assert not re.search('op', dstport), "TRY HARDER"
-#             # FIXME e.g. instead of
-#             # "Cannot connect path endpoint 'T40_in_s3t0' to dest port 'T40_op1'"
-#             # should try s3t0 -> s2t0, out_s2t0 -> op1
-# 
+
         if cend: return cend
         else:
             print "  Cannot connect path endpoint '%s' to dest port '%s'" \

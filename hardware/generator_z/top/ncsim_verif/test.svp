@@ -20,7 +20,7 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
+//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
 //; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
 //; my $config_bs = parameter(NAME => 'config_bs', val => 'conv_2_1.bs', DOC => "Bitstream to configure CGRA");
 //; my $input_file = parameter(NAME => 'input', val => '../../../verilator/generator_z_tb/io/conv_bw_in.png', DOC => "Input image to use for test");
@@ -36,6 +36,9 @@ program automatic `mname`(
    // some variables to control the test
    //int                           seed;
    //int                           rnd0;
+   logic [`$num_tracks-1`:0] in;
+   logic [`$num_tracks-1`:0] S2_in;
+   assign pads_S2 = S2_in;  
    int 				 fd;
    int 				 config_file;
    int				 input_file;
@@ -260,8 +263,14 @@ program automatic `mname`(
 			pads_S2[15-i] = pads_in_char[i];	
 	 end
 //; }
-
-	 
+//; else {
+	 for(int j=0; j<40; j++) begin
+		@(posedge ifc.Clk);
+		in = $urandom_range(65535,0);
+		for(i=0; i<`$num_tracks`; i++)
+			S2_in[`$num_tracks-1`-i] = in[i];	
+	 end
+//; }
       end
    endtask // run_test
    task write_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register,input logic [31:0] data_in);

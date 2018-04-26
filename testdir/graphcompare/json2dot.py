@@ -40,76 +40,62 @@ if DBG:
         try:    print "%-12s %s" % (k, instances[k]['modargs'])
         except: print "%-12s %s" % (k, "N/A")
 
-def uniquify(nodename):
-    '''Turn e.g. "PE_U70.data.out, PE_U8.data.in.1" into "PE_U70, PE_U8"'''
+def simplify(nodename):
+    '''E.g.
+    "bitmux_157_lut_bitPE.bit.in.1" => "bitmux_157_lut_bitPE.in1"
+    "PE_U8.data.in.1" => "PE_U8.in1"
+    "PE_U70.data.out" => "PE_U70"
+    '''
 
-    # Preserve bitPE-in info e.g.
     # "bitmux_157_lut_bitPE.bit.in.1" => "bitmux_157_lut_bitPE.in1"
     parse = re.search('([^.]*)\.bit\.in\.([0-9])', nodename)
     if parse:
-        return '%s.in%s' % (parse.group(1), parse.group(2))
+        rval = '%s.in%s' % (parse.group(1), parse.group(2))
+        # Things will break later if this does not conform
+        assert rval.find('bitPE.in') >= 0
+        return rval
 
+    # "PE_U8.data.in.1" => "PE_U8.in1"
+    parse = re.search('([^.]*)\.data\.in\.([0-9])', nodename)
+    if parse:
+        rval = '%s.in%s' % (parse.group(1), parse.group(2))
+        return rval
 
-    # Huh really more of a UN-uniquify isn't it
+    # "PE_U70.data.out" => "PE_U70"
     parse = re.search('([^.]*)[.]', nodename)
     if parse: nodename = parse.group(1)
 
-    # Now turn e.g.
-    #    "add_335_343_344_PE" -> "add_335_343_344"
-
-    # Sample PE node:
-    #   "add_335_343_344_PE":{
-    #     "genref":"cgralib.PE",
-    #     "genargs":{"numbitports":["Int",3], "numdataports":["Int",2], "op_kind":["String","alu"], "width":["Int",16]},
-    #     "modargs":{"alu_op":["String","add"], "data0_mode":["String","BYPASS"], "data0_value":[["BitVector",16],0], "data1_mode":["String","BYPASS"], "data1_value":[["BitVector",16],0]}
-    #   },
-
-    #    "add_335_343_344_PE" -> "add_335_343_344"
+    # if it's a _PE thing, leave it alone I guess
     parse = re.search("(.*)_PE", nodename)
-    if parse:
-        orig = nodename
-        # print "FOO", ; print nodename
-        # print "FOO", ; print instances[nodename]
-        nodename = "%s_PE" % parse.group(1)
-
-        # Wait...this did nothing.  Right?
-        assert orig == nodename
-
-        return nodename
+    if parse: return nodename
     
+#     # Sample PE node:
+#     #   "add_335_343_344_PE":{
+#     #     "genref":"cgralib.PE",
+#     #     "genargs":{"numbitports":["Int",3], "numdataports":["Int",2], "op_kind":["String","alu"], "width":["Int",16]},
+#     #     "modargs":{"alu_op":["String","add"], "data0_mode":["String","BYPASS"], "data0_value":[["BitVector",16],0], "data1_mode":["String","BYPASS"], "data1_value":[["BitVector",16],0]}
+#     #   },
+
 #     # Sample const node:
 #     #           "const7__338":{
 #     #             "genref":"coreir.const",
 #     #             "genargs":{"width":["Int",16]},
 #     #             "modargs":{"value":[["BitVector",16],7]}
 #     #           },
-# 
-#     parse = re.search("^const", nodename)
-#     if parse:
-#         # print "FOO", ; print nodename
-#         # print "FOO", ; print instances[nodename]
-# 
-#         # nodename = "const%s" % (instances[nodename]['modargs']['value'][1])
-#         # NOPE!  Need unique const nodes e.g. trouble if 'const7_334'
-#         # and 'const7_448' both collapse to 'const7' :(
-# 
-#         return nodename
 
-
-    # Memory nodes
-    #     "lb_p4_clamped_stencil_update_stream$mem_1$cgramem" => "mem_1"
-
+    # Memory nodes:
+    # "lb_p4_clamped_stencil_update_stream$mem_1$cgramem" => "mem_1"
     parse = re.search("^lb.*[$](mem_\d+)[$]cgramem", nodename)
     if parse:
         nodename = parse.group(1)
         return nodename
 
+    # Memory nodes:
     # "lb_p4_clamped_stencil_update_stream_wen_lut_bitPE" => "wen_lut"
     parse = re.search("wen_lut", nodename)
     if parse:
         nodename = 'wen_lut'
         return nodename
-
 
     # Inputs and outputs BEFORE:
     #   io16in_U0 -> PE_U48_mul
@@ -127,8 +113,8 @@ def uniquify(nodename):
     parse = re.search("^io16in_", nodename)
     if parse: return "INPUT"
 
-
     return nodename
+
 
 def to_or_from(nodename):
 
@@ -244,8 +230,8 @@ for k in connections:
     # FIXME hacky hack wacky wack - ignore connections to cg_en, ren, wcgw?
     if ignoble_node(k[1]): continue
 
-    u0 = uniquify(k[0])
-    u1 = uniquify(k[1])
+    u0 = simplify(k[0])
+    u1 = simplify(k[1])
 
     # E.g. "# fifo_depth 10"
     if re.search('(.*).wdata', k[1]):

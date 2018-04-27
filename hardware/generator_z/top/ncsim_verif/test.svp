@@ -36,6 +36,15 @@ program automatic `mname`(
    parameter io16bit_num_features=1;
    parameter mem_num_features=17;
    parameter pe_num_features=11;
+   parameter low_sram_feature=5;
+   parameter high_sram_feature=8;
+   parameter gout_sel_feature = 10;
+   parameter mem_low_sb_unq3_feature=0;
+   parameter mem_high_sb_unq3_feature=1;
+   parameter mem_low_sb_unq1_feature = 2;
+   parameter mem_high_sb_unq1_feature = 3;
+   parameter pe_low_sb_feature = 8;
+   parameter pe_high_sb_feature = 9;
    // some variables to control the test
    //int                           seed;
    //int                           rnd0;
@@ -48,12 +57,12 @@ program automatic `mname`(
    int 				 io1bit_IDs;
    int				 pe_IDs;
    int				 mem_IDs;
-   int 				 io1bit_ID_arr[3000];
-   int 				 pe_ID_arr[3000];
-   int 				 mem_ID_arr[3000];
+   logic [31:0]			 addr_array[3999:0];
+   logic [31:0]			 data_array[3999:0];
    shortint			 id;
    int				 status;
    int				 i;
+   int				 config_count=0;
    int 				 flag;
    logic [31:0]			 config_data;
    logic [31:0]			 config_addr;
@@ -77,65 +86,76 @@ program automatic `mname`(
 	 $display("START ALL FEATURE TEST FOR EACH TILE TYPE");
 	 //io1bit tile
 	 status = $fscanf(io1bit_IDs,"%x", id);
-	 io1bit_ID_arr[0] = id;
 	 write_config(id,8'h0,8'h0,32'h1);
 	 //Now do mem_tile
 	 status = $fscanf(mem_IDs,"%x", id);
-	 mem_ID_arr[0] = id;
 	 for(int feat=0; feat<mem_num_features; feat++) begin
-		if(feat==10)
+		//TEST EVERY SRAM ADDRESS
+		if ((feat>=low_sram_feature) && (feat<=high_sram_feature))begin
+			for(int addr = 0;addr<256;addr++)
+				write_config(id,feat,addr,(feat-low_sram_feature+addr));
+		end
+		//TEST ALL SB REGISTERS
+		else if((feat>=mem_low_sb_unq3_feature) && (feat<=mem_high_sb_unq3_feature))begin
+			for(int addr = 0;addr<4;addr++)
+				write_config(id,feat,addr,(id+feat-mem_low_sb_unq3_feature+addr));
+		end
+		else if((feat>=mem_low_sb_unq1_feature) && (feat<=mem_high_sb_unq1_feature))begin
+			for(int addr = 0;addr<3;addr++)
+				write_config(id,feat,addr,(id+feat-mem_low_sb_unq1_feature+addr));
+		end
+		else if(feat==gout_sel_feature)
 			write_config(id,feat,8'h0,(id+feat)%4);
 		else
 			write_config(id,feat,8'h0,(id+feat));
          end
 	 status = $fscanf(pe_IDs,"%x", id);
-	 pe_ID_arr[0] = id;
 	 for(int feat=0; feat<pe_num_features; feat++) begin
 		if(feat==0) begin
 			for(int r=0;r<9;r++) begin
-				if(pe_regs[r]=='hF3 | pe_regs[r]=='hF4 | pe_regs[r]=='hE1) begin
+				if(pe_regs[r]=='hF3 | pe_regs[r]=='hF4 | pe_regs[r]=='hE1)
 					write_config(id,feat,pe_regs[r],32'h1);
-				end
 				else	
 					write_config(id,feat,pe_regs[r],r);
 			end
+		end
+		else if((feat>=pe_low_sb_feature) && (feat<=pe_high_sb_feature)) begin
+			for(int addr = 0; addr < 3; addr++)
+				write_config(id,feat,addr,(id+feat-pe_low_sb_feature+addr));
 		end
 		else if(feat==10)
 			write_config(id,feat,8'h0,1);
 		else if(feat!=1)
 			write_config(id,feat,8'h0,(id+feat));
          end
-	 $display("START ALL FEATURE TEST FOR EACH TILE TYPE");
-	 $display("TESTING IO1BIT TILE");
-	 id = io1bit_ID_arr[0];
-	 check_address(id,8'h0,8'h0,32'h1);
-	 //Now do mem_tile
-	 $display("TESTING MEM TILE");
-	 id = mem_ID_arr[0];
-	 for(int feat=0; feat<mem_num_features; feat++) begin
-		if(feat==10)
-			check_address(id,feat,8'h0,(id+feat)%4);
-		else
-			check_address(id,feat,8'h0,(id+feat));
-         end
-	 $display("TESTING PE TILE");
-	 id = pe_ID_arr[0];
-	 for(int feat=0; feat<pe_num_features; feat++) begin
-		if(feat==0) begin
-			for(int r=0;r<9;r++) begin
-				if(pe_regs[r]=='hF3 | pe_regs[r]=='hF4 | pe_regs[r]=='hE1) begin
-					check_address(id,feat,pe_regs[r],32'h1);
-				end
-				else	
-					check_address(id,feat,pe_regs[r],r);
-			end
-		end
-		else if(feat==10)
-			check_address(id,feat,8'h0,1);
-		else if(feat!=1)
-			check_address(id,feat,8'h0,(id+feat));
-         end
+	 
+ 
+	 for(int i=0;i<config_count;i++)
+		check_address(addr_array[i],data_array[i]);
 	 $display("ALL FEATURE TESTING COMPLETE");
+	 $display("\nBEGIN ALL TILE TESTING");
+	 config_count = 0;
+	 $display("\nWRITE TO FEATURE 0 IN ALL IO1BIT TILES");
+	 status = 2;
+	 while(status==2) begin 
+	 	status = $fscanf(io1bit_IDs,"%x",id);
+	 	write_config(id,8'h0,8'h0,32'h3);
+	 end
+	 $display("\nWRITE TO FEATURE 0 IN ALL MEM TILES");
+	 status = 2;
+	 while(status==2) begin
+		status = $fscanf(mem_IDs, "%x",id);
+		write_config(id,8'h0,8'h0,$urandom_range(10000000,1));
+	 end
+	 $display("\nWRITE TO FEATURE 2 IN ALL PE TILES");
+	 status = 2;
+	 while(status==2) begin
+		status = $fscanf(pe_IDs,"%x",id);
+		write_config(id,8'h2,8'h0,$urandom_range(10000000,1));
+	 end
+	 $display("\nREADING ALL CONFIG BACK");
+	 for(int i=0;i<config_count;i++)
+		check_address(addr_array[i],data_array[i]);
 	 
 	 	 
 
@@ -196,6 +216,9 @@ program automatic `mname`(
      jtag_config_trans.addr = {register,feature,tile_id};
      jtag_config_trans.data_in = data_in;
      jtag_config_trans.done = 0;
+     addr_array[config_count] = jtag_config_trans.addr;
+     data_array[config_count] = jtag_config_trans.data_in;
+     config_count++;
      jdrv.Send(jtag_config_trans);
      end
    endtask //write_config
@@ -209,15 +232,15 @@ program automatic `mname`(
      jtag_config_trans = jdrv.GetResult();
      end
    endtask //read_config
-   task check_address(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, input logic [31:0] data_in);
+   task check_address(input logic [31:0] address, input logic [31:0] data_in);
      begin
      //@(posedge ifc.Clk);
      //write_config(tile_id,feature,register, data_in);
      @(posedge ifc.Clk);
-     read_config(tile_id,feature,register);
+     read_config(address[15:0],address[23:16],address[31:24]);
      if(jtag_config_trans.data_out != data_in) begin
-       $display("ERROR in tile %x, feature %x, register %x. Data written: %x. Data read: %x.", tile_id,
-                 feature, register,data_in,jtag_config_trans.data_out);
+       $display("ERROR in tile %x, feature %x, register %x. Data written: %x. Data read: %x.", address[15:0],
+                 address[23:16], address[31:24],data_in,jtag_config_trans.data_out);
      end
      end
    endtask

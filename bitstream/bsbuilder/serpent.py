@@ -91,9 +91,9 @@ def find_input_tile():
             return i
 
 
-OUTPUT_TILENO = 0x24
+OUTPUT_TILENO = 0x24         # First PE tile in NW corner
+OUTPUT_TILENO_onebit = 0x108 # First PE tile in SW corner
 
-OUTPUT_TILENO_onebit = 0x105
 # Should be the tile ABOVE io1bit tile that is the LSB in first group on side 1 (bottom) e.g.
 #      <tile type='io1bit' tile_addr='0x125' row='19' col='17' ... name='pad_S1_T15'>
 #        <io_bit>0</io_bit><!-- LSB=0 -->
@@ -867,7 +867,7 @@ class Node:
 
         # If dest exists and says 'bitPE.in' then it has buswidth 1 instead of default 16
         # dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
-        if (len(self.dests) > 0) and re.search('bitPE.in[0-9]$', self.dests[0]): buswidth = 1
+        if (len(self.dests) > 0) and is_bitnode(self.dests[0]): buswidth = 1
         else: buswidth = 16
 
         # if (self.buswidth == 1) and (output[-3:] == "out"):
@@ -1339,8 +1339,9 @@ def init_tile_resources(DBG=0):
 def is_pe_tile(tileno):  return cgra_info.mem_or_pe(tileno) == 'pe'
 def is_mem_tile(tileno): return cgra_info.mem_or_pe(tileno) == 'mem'
 def is_bitnode(nodename):
-    # E.g. 'bitmux_157_157_149_lut_bitPE.in0'
-    if re.search('bitPE\.in', nodename): return True
+    # E.g. 'bitmux_157_157_149_lut_bitPE.in0' or 'io1_out_0_0'
+    if   nodename.find('bitPE.in') >= 0: return True
+    elif nodename.find('io1')      == 0: return True # e.g. 'io1_out_0_0'
     else: return False
 
 def initialize_node_INPUT():
@@ -1402,17 +1403,15 @@ def dstports(name,tile,DBG=0):
     elif is_regop(name): p = [T(getnode(name).input0)]
 
     elif name == 'io1_out_0_0':
-        if DBG: pwhere(1395, "One-bit output can only go out on side 6 (bottom)")
-
         if is_mem_tile(tile): out_side = 6
         else:                 out_side = 2
-        ntracks = 5
+        if DBG: pwhere(1395, "One-bit output can only go out on side %s (bottom)" % out_side)
 
         p = []
+        ntracks = 5
         for track in range(ntracks):
-            outport = "T%d_out_s%dt%d" % (tile, out_side, track)
+            outport = "T%d_out_s%dt%db" % (tile, out_side, track)
             p.append(outport)
-
     else:
         # 'name' is a register, I guess;
         # so return names of all outports in the tile
@@ -1426,11 +1425,11 @@ def dstports(name,tile,DBG=0):
 
     # if DBG: print 'found destination ports', p
     return sorted(p)
+
 # Return pe input that contains the register
 # e.g. regpe_input('reg_2_3') = 'op1' (unplaced regpe) or
 # or   regpe_input('reg_2_3') = 'T6_op1' (placed regpe)
 def regpe_input(name): return getnode(name).input0
-
 
 
 def test_dstports():
@@ -2569,14 +2568,16 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
     which = 'pvh'
     for path in [pvh,phv]:
 
-        # E.g. 'bitmux_157_157_149_lut_bitPE.in0', 'T21_out_s1t0'
-        # SHOULD BE 'T21_out_s1t0b'
-        if is_bitnode('bitPE\.in') and not re.search('b$', pvh[0]):
-            print("")
-            print('Trying to reach "%s" via "%s"' % (dname, pvh[0]))
-            print('Should use BUS1 path "%sb" instead' % pvh[0])
-            print("")
-            assert False
+# Whatever this is/was I think it doesn't/didn't work 4/26/2018
+#         # E.g. 'bitmux_157_157_149_lut_bitPE.in0', 'T21_out_s1t0'
+#         # SHOULD BE 'T21_out_s1t0b'
+#         # if is_bitnode('bitPE\.in') and not re.search('b$', pvh[0]): ????
+#         if is_bitnode(dname) and not re.search('b$', pvh[0]):
+#             print("")
+#             print('Trying to reach "%s" via "%s"' % (dname, pvh[0]))
+#             print('Should use BUS1 path "%sb" instead' % pvh[0])
+#             print("")
+#             assert False
 
         if DBG: pwhere(1325,
                        "Evaluating %s path %s" % (which,path)); which = 'phv'

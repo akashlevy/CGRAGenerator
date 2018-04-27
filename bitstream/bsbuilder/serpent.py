@@ -1033,6 +1033,12 @@ class Node:
         if middle:
             middle_canon = cgra_info.cgra2canon(middle, T)
 
+            # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
+            if not self.is_avail(middle_canon):
+                if DBG: print "Oops middle node is occupied; we will have to try again"
+                # assert self.is_avail(middle_canon)
+                return False
+
             print "Found double connection QUICKLY."
             p1 = '%s -> %s' % (a, middle_canon)
             p2 = '%s -> %s' % (middle_canon, b)
@@ -2567,21 +2573,13 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
 
     which = 'pvh'
     for path in [pvh,phv]:
-
-# Whatever this is/was I think it doesn't/didn't work 4/26/2018
-#         # E.g. 'bitmux_157_157_149_lut_bitPE.in0', 'T21_out_s1t0'
-#         # SHOULD BE 'T21_out_s1t0b'
-#         # if is_bitnode('bitPE\.in') and not re.search('b$', pvh[0]): ????
-#         if is_bitnode(dname) and not re.search('b$', pvh[0]):
-#             print("")
-#             print('Trying to reach "%s" via "%s"' % (dname, pvh[0]))
-#             print('Should use BUS1 path "%sb" instead' % pvh[0])
-#             print("")
-#             assert False
-
         if DBG: pwhere(1325,
                        "Evaluating %s path %s" % (which,path)); which = 'phv'
         
+        # FIXME this is sooo bad; should never have built the wrong path in the first place
+        # If BUS1 path, Change default (BUS16) wires to 'b' (BUS1) wires
+        if is_bitnode(dname): fix_path(path, dname, DBG)
+
         final_path = eval_path(path, snode, dname, dtileno, DBG)
         if final_path:
             # FIXME For now, use first path found
@@ -2594,6 +2592,10 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
             break 
 
         # choose a path in paths
+
+    # assert False, 'no path---thats bad right?'
+    # No this is fine; later the callee will check to see if path exists or not
+    return False
 
 
 # FIXME WHY ISN'T ALL THIS CONNECT STUFF IN THE
@@ -2626,9 +2628,6 @@ def eval_path(path, snode, dname, dtileno, DBG=0):
     # see if path is valid
     stileno = snode.tileno
     sname   = snode.name
-
-    # If BUS1 path, Change default (BUS16) wires to 'b' (BUS1) wires
-    if is_bitnode(dname): fix_path(path, dname, DBG)
 
     # part 1 verify the tile-to-tile path
     # Check every port on the path for availability to snode
@@ -2766,14 +2765,11 @@ def connect_beginpoint(snode, beginpoint, buswidth, DBG=0):
     for p in plist:
         print "     Can '%s' connect to beginpoint '%s'?" % (p, beginpoint)
 
-        # Who's the diiot?  I'm the diiot.
-        # cbegin = can_connect_begin(snode, snode.input0, beginpoint, DBG)
         cbegin = can_connect_begin(snode, snode.output, beginpoint, DBG)
-
         if cbegin: return cbegin
         else:
             print "  Cannot connect '%s' to beginpoint '%s'?" % (p, beginpoint)
-            print "  Try next port in the list?"
+            print "  Try next port in the list (2793)?"
 
     return False
 
@@ -2865,7 +2861,7 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
         else:
             print "  Cannot connect path endpoint '%s' to dest port '%s'" \
                   % (endpoint, dstport)
-            print "  Try next port in the list?"
+            print "  Try next port in the list (2885)?"
 
     return False
 
@@ -2897,60 +2893,48 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
 
 
 def can_connect_begin(snode,src,begin,DBG=0):
-    cbegin = can_connect(snode,src,begin,DBG)
-    if cbegin:
+
+    if DBG>1: print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
+       % (src,begin,snode.name,where(2908))
+
+    cbegin = snode.connect(src,begin,DBG=DBG)
+    if not cbegin:
+        if DBG>1: print 'oops no route from p1 to p2'
+        # (will return False below, yes?)
+    else:
         print '   Ready to connect beginpoint %s (%s)' % (cbegin, where(1509))
         print ''
     return cbegin
 
 def can_connect_end(snode, end,dstport,DBG=0):
 
-    if is_bitnode(dstport):
-        print '''
-        Found single-bit input; what now?
+#     if is_bitnode(dstport):
+#         print '''
+#         Found single-bit input; what now?
+# 
+#         '''
+#         # assert False
 
-        '''
-        # assert False
+    # cend = can_connect(snode, end,dstport,DBG)
+    if DBG>1: print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
+       % (end,dstport,snode.name,where(2933))
 
+    cend = snode.connect(end,dstport,DBG=DBG)
+    if not cend:
+        if DBG>1: print 'oops no route from p1 to p2'
+        # (will return False below, yes?)
 
-    cend = can_connect(snode, end,dstport,DBG)
-
-    # BOOKMARK
-    if is_bitnode(dstport):
-        print """
-        Found single-bit input; wha' hoppen'?
-
-        """
-        assert False
-
-
-
-
+#     if is_bitnode(dstport):
+#         print """
+#         Found single-bit input; wha' hoppen'?
+# 
+#         """
+#         assert False
 
     if cend:
         print '   Ready to connect endpoint %s (%s)' % (cend, where(1516))
         print ''
     return cend
-
-def can_connect(snode, p1, p2, DBG=0):
-    # Can we connect ports p1 to p2 as part of 'snode' net?
-    if DBG>1: print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
-       % (p1,p2,snode.name,where(1536))
-    c = snode.connect(p1,p2,DBG=DBG)
-    if not c:
-        if DBG>1: print 'oops no route from p1 to p2'
-# 
-# Pretty sure we don't need this no mo
-# 
-#         # FIXME e.g. instead of
-#         # "Cannot connect path endpoint 'T40_in_s3t0' to dest port 'T40_op1'"
-#         # should try s3t0 -> s2t0, out_s2t0 -> op1
-#         assert not re.search('op', p2, "TRY HARDER 0")
-# 
-        return False
-    return c
-
-
 
 
 # def randomly_place(dname, DBG=0):

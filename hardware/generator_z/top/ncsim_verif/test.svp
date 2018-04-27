@@ -136,27 +136,27 @@ program automatic `mname`(
 	 $display("\nBEGIN ALL TILE TESTING");
 	 config_count = 0;
 	 $display("\nWRITE TO FEATURE 0 IN ALL IO1BIT TILES");
-	 status = 2;
-	 while(status==2) begin 
-	 	status = $fscanf(io1bit_IDs,"%x",id);
+	 status = $fscanf(io1bit_IDs,"%x",id);
+	 while(status==1) begin 
 	 	write_config(id,8'h0,8'h0,32'h3);
+	 	status = $fscanf(io1bit_IDs,"%x",id);
 	 end
 	 $display("\nWRITE TO FEATURE 0 IN ALL MEM TILES");
-	 status = 2;
-	 while(status==2) begin
-		status = $fscanf(mem_IDs, "%x",id);
+	 status = $fscanf(mem_IDs, "%x",id);
+	 while(status==1) begin
 		write_config(id,8'h0,8'h0,$urandom_range(10000000,1));
+		status = $fscanf(mem_IDs, "%x",id);
 	 end
 	 $display("\nWRITE TO FEATURE 2 IN ALL PE TILES");
-	 status = 2;
-	 while(status==2) begin
-		status = $fscanf(pe_IDs,"%x",id);
+	 status = $fscanf(pe_IDs,"%x",id);
+	 while(status==1) begin
 		write_config(id,8'h2,8'h0,$urandom_range(10000000,1));
+		status = $fscanf(pe_IDs,"%x",id);
 	 end
 	 $display("\nREADING ALL CONFIG BACK");
 	 for(int i=0;i<config_count;i++)
 		check_address(addr_array[i],data_array[i]);
-	 
+	 $display("\nREAD CONFIG BACK FROM ALL %d TILES",config_count); 
 	 	 
 
 //; if($use_bs==1) {
@@ -165,15 +165,15 @@ program automatic `mname`(
 	 jtag_config_trans.data_in = 32'hF;
 	 jdrv.Send(jtag_config_trans);
 	 $display("STALL");
-	 status = 2;
+	 status = $fscanf(config_file,"%x %x", config_addr,config_data);
 	 while( status==2 ) begin
 		@(posedge ifc.Clk);
-		status = $fscanf(config_file,"%x %x", config_addr,config_data);
 		$display("%x %x",config_addr,config_data);
 		jtag_config_trans.data_in = config_data;
 		jtag_config_trans.addr = config_addr;
 		jtag_config_trans.op = write;
 		jdrv.Send(jtag_config_trans);
+		status = $fscanf(config_file,"%x %x", config_addr,config_data);
 	 end
 	 //SWITCH TO FAST CLK
 	 $display("Finished Configuration!");

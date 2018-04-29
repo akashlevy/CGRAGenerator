@@ -20,11 +20,13 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
-//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
-//; my $config_bs = parameter(NAME => 'config_bs', val => 'conv_2_1.bs', DOC => "Bitstream to configure CGRA");
-//; my $input_file = parameter(NAME => 'input', val => '../../../verilator/generator_z_tb/io/conv_bw_in.png', DOC => "Input image to use for test");
-
+//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
+//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 1);
+//; my $config_bs = parameter(NAME => 'config_bs', val => '../ncsim_verif/pointwise_pnr_bitstream', DOC => "Bitstream to configure CGRA");
+//; my $input_file = parameter(NAME => 'input', val => '../ncsim_verif/pointwise_input.raw', DOC => "Input image to use for test");
+//; my $halide_out_file = parameter(NAME => 'halide_out', val => '../ncsim_verif/pointwise_halide_out.raw', DOC => "Output image to test against");
+//; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
+//; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
 program automatic `mname`(
 	interface ifc,//JTAG Interface
 	inout logic [`$num_tracks-1`:0] pads_S0,
@@ -49,11 +51,16 @@ program automatic `mname`(
    //int                           seed;
    //int                           rnd0;
    logic [`$num_tracks-1`:0] in;
+   logic [`$num_tracks-1`:0] out;
+   logic [`$num_tracks-1`:0] gold_out;
+   logic [`$num_tracks-1`:0] S1_in;
    logic [`$num_tracks-1`:0] S2_in;
-   assign pads_S2 = S2_in;  
+   assign pads_S1 = S1_in;  
    int 				 fd;
    int 				 config_file;
    int				 input_file;
+   int				 output_file;
+   int				 halide_out;
    int 				 io1bit_IDs;
    int				 pe_IDs;
    int				 mem_IDs;
@@ -66,7 +73,7 @@ program automatic `mname`(
    int 				 flag;
    logic [31:0]			 config_data;
    logic [31:0]			 config_addr;
-   logic [7:0]			 pads_in_char;
+   logic [15:0]			 pads_in;
    // Instantiate a jtag driver
    //; my $jtag_drvr_obj = generate_base('JTAGDriver', 'jdrv');
    `$jtag_drvr_obj->instantiate`;
@@ -80,6 +87,7 @@ program automatic `mname`(
 	 jtag_config_trans.domain = sc_domain;
 	 jtag_config_trans.addr = 32'h0;
 	 jtag_config_trans.data_out = 32'h1;
+//;	if($do_config_test == 1) {
 	 //CHECK EVERY ADDRESS IN EACH TILE TYPE
 	 GC_op(write_stall,32'hF,32'h0);
 	 $display("STALL");
@@ -157,7 +165,19 @@ program automatic `mname`(
 	 for(int i=0;i<config_count;i++)
 		check_address(addr_array[i],data_array[i]);
 	 $display("\nREAD CONFIG BACK FROM ALL %d TILES",config_count); 
-	 	 
+//; }
+//; if($do_gc_op_test){
+	$display("TESTING ALL GC OPS");
+	$display("\nTESTING wr_A050");
+	GC_op(wr_A050,0'h0,0'h0);
+	if(jtag_config_trans.data_out!=32'hA050)
+		$display("FAIL: Data out != 0xA050");
+	else
+		$display("PASS");
+
+	$display("\nTEST R/W TO TST REG");
+	GC_op(wr_TST,32'hABCD,32'h0);		
+//; }
 
 //; if($use_bs==1) {
 	 @(posedge ifc.Clk);
@@ -190,19 +210,30 @@ program automatic `mname`(
 //; }
 //; if($use_input_file == 1){
 	 //NOW WE CAN APPLY THE INPUTS TO THE PADS
-	 while( !$feof(input_file) )being
+	 in[8:0] = $fgetc(input_file);
+	 while( in[8:0] != 9'h1FF )begin
 		@(posedge ifc.Clk);
-		pads_in_char = $fgetc(input_file);
-		pads_S2[7:0] =8'b0;
+		S1_in[7:0] = 'h0;
 		//REVERSE THE BITS
 		for(i=0; i<8; i++)
-			pads_S2[15-i] = pads_in_char[i];	
+			S1_in[15-i] = in[i];
+		@(posedge ifc.Clk);
+		for(i=0; i<8; i++)
+			out[i] = pads_S3[15-i];
+		$fwrite(output_file,"%x",out[7:0]);
+		gold_out[7:0] = $fgetc(halide_out);
+		if(out[7:0]!=gold_out[7:0]) begin
+			$display("ERROR: Input: %x, CGRA out: %x, Halide out %x",in[7:0],out[7:0],gold_out[7:0]);
+			$fwrite(fd, "ERROR: ");
+		end
+		$fwrite(fd,"Input: %x, CGRA out: %x   Halide out: %x\n",in[7:0],out[7:0],gold_out[7:0]);
+	 	in[8:0] = $fgetc(input_file);
 	 end
 //; }
 //; else {
 	 for(int j=0; j<40; j++) begin
 		@(posedge ifc.Clk);
-		//in = $urandom_range(65535,0);
+		in = $urandom_range(65535,0);
                 in = 0;
 		for(i=0; i<`$num_tracks`; i++)
 			S2_in[`$num_tracks-1`-i] = in[i];	
@@ -274,6 +305,10 @@ program automatic `mname`(
       input_file = $fopen("`$input_file`","r");
       if(!input_file)
 	$display("ERROR: Could not open `$input_file`");
+      halide_out = $fopen("`$halide_out_file`","r");
+      if(!halide_out)
+	$display("ERROR: Could not open `$halide_out_file`");
+      output_file = $fopen("CGRA_out.raw","w");
 //; }
 
       io1bit_IDs = $fopen("io1bit_IDs.txt","r");

@@ -82,7 +82,7 @@ if ($#argv == 2) set tracefile = $2
   verilator -V
   echo
 
-  verilator -V $opt $myswitches -Wall $myswitches --cc --exe $testbench \
+  verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     >& $tmpdir/verilator.out
 # 

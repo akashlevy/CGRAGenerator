@@ -123,7 +123,7 @@ int main(int argc, char **argv, char **env) {
     if (outbit_filename != NULL) {
         printf("  - Found filename for onebit output '%s'\n", output_filename);
         printf("  - '%s' will contain output from pad '%s'\n", output_filename, outbit_padname);
-        if (! strcmp(outbit_padname, "s1t0")) {
+        if (strcmp(outbit_padname, "s1t0") != 0) {
             printf("\n\nERROR haha for now can only output from pad 's1t0' sorry!\n\n");
             exit(13);
         }

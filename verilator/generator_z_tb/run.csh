@@ -3,9 +3,6 @@
 # Can't believe I have to do this...
 set path = (. $path)
 
-# Can use this to extend time on travis
-./my_travis_wait.csh 15 &
-
 set VERBOSE
 
 # Build a tmp space for intermediate files
@@ -95,10 +92,13 @@ set input     = io/conv_bw_in.png
 if ("$branch" == "sixteen") set input = io/input_10x10_1to100.png
 
 
-set output    = $tmpdir/output.raw
-set nclocks   = "1M"
+set nclocks = "1M"
+set outpad  = 's1t0'
+set output  = $tmpdir/output.raw
+set out1    = $tmpdir/onebit.raw
 unset tracefile
 
+echo foo $argv
 if ($#argv == 1) then
   if ("$argv[1]" == '--help') then
     echo "Usage:"
@@ -107,6 +107,7 @@ if ($#argv == 1) then
     echo "        -config <config_filename.bs>"
     echo "        -input   <input_filename.png>"
     echo "        -output <output_filename.raw>"
+    echo "        -out1 s1t0 <1bitout_filename>",
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
@@ -121,17 +122,16 @@ if ($#argv == 1) then
     echo "       -config  $config \"
     echo "       -input   $input  \"
     echo "       -output  $output \"
-    echo "        -delay $DELAY"
+    echo "       -out1    $outpad $out1 \"
+    echo "       -delay   $DELAY"
     if ($?tracefile) then
       echo "       -trace $tracefile \"
     endif
-    echo "       -nclocks  $nclocks                                          \"
+    echo "       -nclocks $nclocks"
     echo
     exit 0
   endif
 endif
-
-
 
 # NO don't cleanup might want this later (for -nobuild)...
 # # CLEANUP
@@ -143,12 +143,12 @@ endif
 # I can't find anything else that does it :(
 
 
-# NEVER BE HACKMEM!
-unset HACKMEM
-echo "NO MORE HACKMEM 03/2018"
-echo "NO MORE HACKMEM 03/2018"
-echo "NO MORE HACKMEM 03/2018"
-echo
+# # NEVER BE HACKMEM!
+# unset HACKMEM
+# echo "NO MORE HACKMEM 03/2018"
+# echo "NO MORE HACKMEM 03/2018"
+# echo "NO MORE HACKMEM 03/2018"
+# echo
 
 while ($#argv)
   # echo "Found switch '$1'"
@@ -157,24 +157,8 @@ while ($#argv)
     case '-hackmem':
       echo 'ERROR (run.csh) "-hackmem" no longer allowed (1803)' ; exit 13
 
-      set HACKMEM = 1
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo
-      breaksw
-
     case '-no_hackmem':
       echo 'ERROR (run.csh) "-no_hackmem" no longer allowed (1803)' ; exit 13
-
-#       unset HACKMEM
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo
-
-      breaksw
-
 
     case '-clean':
       exit 0;
@@ -237,6 +221,11 @@ while ($#argv)
     case -output:
       set output = "$2"; shift; breaksw
 
+    case -out1:
+      set outpad = $2; shift;
+      set out1   = $2; shift;
+      breaksw;
+
     case -delay:
       set DELAY = "$2"; shift; breaksw
 
@@ -260,7 +249,9 @@ while ($#argv)
 
     default:
       if (`expr "$1" : "-"`) then
+        echo ""
         echo "ERROR: Unknown switch '$1'"
+        echo ""
         exec $0 --help
         set EXIT13; goto DIE
       endif
@@ -286,17 +277,18 @@ if (1) then
   # Backslashes line up better when printed...
   echo "Running with the following switches:"
   echo "$0 top_tb.cpp \"
-  if (! $?BUILD) echo "   -nobuild                    \"
-  echo "   $GENERATE                    \"
-  echo "   -config   $config   \"
-  #echo "   -io       $iofile   \"
-  echo "   -input    $input  \"
-  echo "   -output   $output    \"
-  echo "   -delay   $DELAY    \"
+  if (! $?BUILD) echo "   -nobuild \"
+  echo "   $GENERATE \"
+  echo "   -config $config \"
+  #echo "   -io    $iofile \"
+  echo "   -input  $input \"
+  echo "   -output $output \"
+  echo "   -out1   $outpad $out1 \"
+  echo "   -delay  $DELAY \"
   if ($?tracefile) then
-    echo "   -trace $tracefile \"
+    echo "   -trace   $tracefile \"
   endif
-  echo "   -nclocks  $nclocks                 \"
+  echo "   -nclocks $nclocks"
 endif
 
 if (! -e $config) then
@@ -304,9 +296,8 @@ if (! -e $config) then
   exit 13
 endif
 
-
-
-
+unset ONEBIT
+if (${config:t:r} == 'onebit_bool') set ONEBIT
 
 # if (`expr "$config" : ".*lbuf.*"`) then
 #   if (! $?HACKMEM) then
@@ -317,31 +308,18 @@ endif
 #   endif
 # endif
 
+# unset io_hack
+# grep -i ffffffff $config > /tmp/tmp$$ && set io_hack
+# if ($?io_hack) then
+#   echo 'ERROR Config file $config appears to be trying to use the old I/O hack:'
+#   cat /tmp/tmp$$; /bin/rm /tmp/tmp$$
+#   echo 'ERROR We no longer support I/O hacks, please use I/O pads instead'
+#   echo
+#   exit 13
+# endif
 
-if (`expr "$config" : ".*lbuf.*"`) then
-  if ($?HACKMEM) then
-    echo
-    echo "run.csh: ERROR '$config' looks like an lbuf config file"
-    echo "run.csh: ERROR should NO LONGER be using hackmem flag, yes?"
-    exit 13
-  endif
-endif
-
-
-
-
-
-unset io_hack
-grep -i ffffffff $config > /tmp/tmp$$ && set io_hack
-if ($?io_hack) then
-  echo 'ERROR Config file $config appears to be trying to use the old I/O hack:'
-  cat /tmp/tmp$$; /bin/rm /tmp/tmp$$
-  echo 'ERROR We no longer support I/O hacks, please use I/O pads instead'
-  echo
-  exit 13
-endif
-
-
+# Can use this to extend time on travis
+./my_travis_wait.csh 15 &
 
 # Turn nclocks into an integer.
 set nclocks = `echo $nclocks | sed 's/,//g' | sed 's/K/000/' | sed 's/M/000000/'`
@@ -397,8 +375,21 @@ set config_io = $tmpdir/${croot}io
 set path = ($path .)
 
 # Clean up config file for verilator use
-grep -v '#' $config | grep . > $tmpdir/tmpconfig
-set config = $tmpdir/tmpconfig
+grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
+set config = $tmpdir/${config:t:r}.bs
+
+# Here's some terrible hackiness
+if ($?ONEBIT) then
+  echo ''
+  echo 'HACK WARNING found onebit_bool config'
+  echo 'HACK WARNING found onebit_bool config'
+  echo 'HACK WARNING found onebit_bool config'
+  echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+  echo ""
+  bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+  set config = $tmpdir/${config:t:r}_reordered.bs
+endif
+
 
 if ($?VERBOSE) then
   echo
@@ -663,8 +654,20 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   # This is ugly.  -nobuild skips config-file processing so redo here.
   if (! $?BUILD) then
     # Clean up config file for verilator use
-    grep -v '#' $config | grep . > $tmpdir/tmpconfig
-    set config = $tmpdir/tmpconfig
+    grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
+    set config = $tmpdir/${config:t:r}.bs
+
+    # Here's some terrible hackiness
+    if ($?ONEBIT) then
+      echo ''
+      echo 'HACK WARNING found onebit_bool config'
+      echo 'HACK WARNING found onebit_bool config'
+      echo 'HACK WARNING found onebit_bool config'
+      echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+      echo ""
+      bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+      set config = $tmpdir/${config:t:r}_reordered.bs
+    endif
   endif
 
   # Quick check of goodness in config file (again)
@@ -687,7 +690,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   echo
   echo "run.csh: TIME NOW: `date`"
-  echo "run.csh: $vtop -output $output:t"
+  echo "run.csh: $vtop -output $output:t -out1 $outpad $out1:t"
 
   # OOPS big parrot won't work in travis if output gets filtered...
   # Must have the printf every 10K cycles
@@ -701,6 +704,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
       -config $config \
       -input $input \
       $out \
+      -out1 $outpad $out1 \
       $delay \
       $trace \
       $nclocks \
@@ -724,7 +728,6 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     echo
     ls -l $input $output
 
-
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
 
@@ -745,15 +748,12 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     endif
 
     echo
-    set cmd = "od -t x1 $input"
     set cmd = "od -t u1 $input"
-
-  # echo $cmd; $cmd | head
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
 
     echo
+    if ($?ONEBIT) set output = $out1
     set cmd = "od -t u1 $output"
-  # echo $cmd; $cmd | head
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
   endif
 

@@ -1,0 +1,2834 @@
+######################################################
+# serpent.py: Read cgra info
+Using config file '/nobackup/steveri/github/CGRAGenerator/hardware/generator_z/top/cgra_info.txt'
+
+I think  input tile is T21
+I think  input wire is T21_in_s2t0
+I think output wire is T21_pe_out
+I think output tile is T36
+######################################################
+# serpent.py: Initialize the packer
+# Grid is maybe 20x20
+# here's the grid!
+# 
+#     x   x    2   3   4   5   6   7   8   9   a   b   c   d   e   f  10  11  x   x  
+#     x   x   12  x   x   x   x   x   x   x   x   x   x   x   x   x   x   x   x   x  
+#     13  14  15  16  17  18  19  1a  1b  1c  1d  1e  1f  20  21  22  23  24  25  26 
+#     27  x   28  29  2a  18  2b  2c  2d  1c  2e  2f  30  20  31  32  33  24  x   34 
+#     35  x   36  37  38  39  3a  3b  3c  3d  3e  3f  40  41  42  43  44  45  x   46 
+#     47  x   48  49  4a  39  4b  4c  4d  3d  4e  4f  50  41  51  52  53  45  x   54 
+#     55  x   56  57  58  59  5a  5b  5c  5d  5e  5f  60  61  62  63  64  65  x   66 
+#     67  x   68  69  6a  59  6b  6c  6d  5d  6e  6f  70  61  71  72  73  65  x   74 
+#     75  x   76  77  78  79  7a  7b  7c  7d  7e  7f  80  81  82  83  84  85  x   86 
+#     87  x   88  89  8a  79  8b  8c  8d  7d  8e  8f  90  81  91  92  93  85  x   94 
+#     95  x   96  97  98  99  9a  9b  9c  9d  9e  9f  a0  a1  a2  a3  a4  a5  x   a6 
+#     a7  x   a8  a9  aa  99  ab  ac  ad  9d  ae  af  b0  a1  b1  b2  b3  a5  x   b4 
+#     b5  x   b6  b7  b8  b9  ba  bb  bc  bd  be  bf  c0  c1  c2  c3  c4  c5  x   c6 
+#     c7  x   c8  c9  ca  b9  cb  cc  cd  bd  ce  cf  d0  c1  d1  d2  d3  c5  x   d4 
+#     d5  x   d6  d7  d8  d9  da  db  dc  dd  de  df  e0  e1  e2  e3  e4  e5  x   e6 
+#     e7  x   e8  e9  ea  d9  eb  ec  ed  dd  ee  ef  f0  e1  f1  f2  f3  e5  x   f4 
+#     f5  x   f6  f7  f8  f9  fa  fb  fc  fd  fe  ff 100 101 102 103 104 105  x  106 
+#    107  x  108 109 10a  f9 10b 10c 10d  fd 10e 10f 110 101 111 112 113 105  x  114 
+#     x   x  115  x   x   x   x   x   x   x   x   x   x   x   x   x   x   x   x   x  
+#     x   x  116 117 118 119 11a 11b 11c 11d 11e 11f 120 121 122 123 124 125  x   x  
+
+######################################################
+# serpent.py: Read input, initialize node and tile data structures
+PE:  [ 
+T21_in_s0t0    T21_in_s0t1    T21_in_s0t2    T21_in_s0t3    T21_in_s0t4    
+T21_in_s1t0    T21_in_s1t1    T21_in_s1t2    T21_in_s1t3    T21_in_s1t4    
+T21_in_s2t0    T21_in_s2t1    T21_in_s2t2    T21_in_s2t3    T21_in_s2t4    
+T21_in_s3t0    T21_in_s3t1    T21_in_s3t2    T21_in_s3t3    T21_in_s3t4    
+T21_out_s0t0   T21_out_s0t1   T21_out_s0t2   T21_out_s0t3   T21_out_s0t4   
+T21_out_s1t0   T21_out_s1t1   T21_out_s1t2   T21_out_s1t3   T21_out_s1t4   
+T21_out_s2t0   T21_out_s2t1   T21_out_s2t2   T21_out_s2t3   T21_out_s2t4   
+T21_out_s3t0   T21_out_s3t1   T21_out_s3t2   T21_out_s3t3   T21_out_s3t4   
+T21_op1        T21_op2        T21_pe_out     
+T21_in_s0t0b   T21_in_s0t1b   T21_in_s0t2b   T21_in_s0t3b   T21_in_s0t4b   
+T21_in_s1t0b   T21_in_s1t1b   T21_in_s1t2b   T21_in_s1t3b   T21_in_s1t4b   
+T21_in_s2t0b   T21_in_s2t1b   T21_in_s2t2b   T21_in_s2t3b   T21_in_s2t4b   
+T21_in_s3t0b   T21_in_s3t1b   T21_in_s3t2b   T21_in_s3t3b   T21_in_s3t4b   
+T21_out_s0t0b  T21_out_s0t1b  T21_out_s0t2b  T21_out_s0t3b  T21_out_s0t4b  
+T21_out_s1t0b  T21_out_s1t1b  T21_out_s1t2b  T21_out_s1t3b  T21_out_s1t4b  
+T21_out_s2t0b  T21_out_s2t1b  T21_out_s2t2b  T21_out_s2t3b  T21_out_s2t4b  
+T21_out_s3t0b  T21_out_s3t1b  T21_out_s3t2b  T21_out_s3t3b  T21_out_s3t4b  
+T21_bit0       T21_bit1       T21_bit2       T21_pe_outb    ]
+MEM: [ 
+T24_in_s0t0    T24_in_s0t1    T24_in_s0t2    T24_in_s0t3    T24_in_s0t4    
+T24_in_s1t0    T24_in_s1t1    T24_in_s1t2    T24_in_s1t3    T24_in_s1t4    
+T24_in_s2t0    T24_in_s2t1    T24_in_s2t2    T24_in_s2t3    T24_in_s2t4    
+T24_in_s3t0    T24_in_s3t1    T24_in_s3t2    T24_in_s3t3    T24_in_s3t4    
+T24_in_s4t0    T24_in_s4t1    T24_in_s4t2    T24_in_s4t3    T24_in_s4t4    
+T24_in_s5t0    T24_in_s5t1    T24_in_s5t2    T24_in_s5t3    T24_in_s5t4    
+T24_in_s6t0    T24_in_s6t1    T24_in_s6t2    T24_in_s6t3    T24_in_s6t4    
+T24_in_s7t0    T24_in_s7t1    T24_in_s7t2    T24_in_s7t3    T24_in_s7t4    
+T24_out_s0t0   T24_out_s0t1   T24_out_s0t2   T24_out_s0t3   T24_out_s0t4   
+T24_out_s1t0   T24_out_s1t1   T24_out_s1t2   T24_out_s1t3   T24_out_s1t4   
+T24_out_s2t0   T24_out_s2t1   T24_out_s2t2   T24_out_s2t3   T24_out_s2t4   
+T24_out_s3t0   T24_out_s3t1   T24_out_s3t2   T24_out_s3t3   T24_out_s3t4   
+T24_out_s4t0   T24_out_s4t1   T24_out_s4t2   T24_out_s4t3   T24_out_s4t4   
+T24_out_s5t0   T24_out_s5t1   T24_out_s5t2   T24_out_s5t3   T24_out_s5t4   
+T24_out_s6t0   T24_out_s6t1   T24_out_s6t2   T24_out_s6t3   T24_out_s6t4   
+T24_out_s7t0   T24_out_s7t1   T24_out_s7t2   T24_out_s7t3   T24_out_s7t4   
+T24_mem_in     T24_mem_out    
+T24_in_s0t0b   T24_in_s0t1b   T24_in_s0t2b   T24_in_s0t3b   T24_in_s0t4b   
+T24_in_s1t0b   T24_in_s1t1b   T24_in_s1t2b   T24_in_s1t3b   T24_in_s1t4b   
+T24_in_s2t0b   T24_in_s2t1b   T24_in_s2t2b   T24_in_s2t3b   T24_in_s2t4b   
+T24_in_s3t0b   T24_in_s3t1b   T24_in_s3t2b   T24_in_s3t3b   T24_in_s3t4b   
+T24_in_s4t0b   T24_in_s4t1b   T24_in_s4t2b   T24_in_s4t3b   T24_in_s4t4b   
+T24_in_s5t0b   T24_in_s5t1b   T24_in_s5t2b   T24_in_s5t3b   T24_in_s5t4b   
+T24_in_s6t0b   T24_in_s6t1b   T24_in_s6t2b   T24_in_s6t3b   T24_in_s6t4b   
+T24_in_s7t0b   T24_in_s7t1b   T24_in_s7t2b   T24_in_s7t3b   T24_in_s7t4b   
+T24_out_s0t0b  T24_out_s0t1b  T24_out_s0t2b  T24_out_s0t3b  T24_out_s0t4b  
+T24_out_s1t0b  T24_out_s1t1b  T24_out_s1t2b  T24_out_s1t3b  T24_out_s1t4b  
+T24_out_s2t0b  T24_out_s2t1b  T24_out_s2t2b  T24_out_s2t3b  T24_out_s2t4b  
+T24_out_s3t0b  T24_out_s3t1b  T24_out_s3t2b  T24_out_s3t3b  T24_out_s3t4b  
+T24_out_s4t0b  T24_out_s4t1b  T24_out_s4t2b  T24_out_s4t3b  T24_out_s4t4b  
+T24_out_s5t0b  T24_out_s5t1b  T24_out_s5t2b  T24_out_s5t3b  T24_out_s5t4b  
+T24_out_s6t0b  T24_out_s6t1b  T24_out_s6t2b  T24_out_s6t3b  T24_out_s6t4b  
+T24_out_s7t0b  T24_out_s7t1b  T24_out_s7t2b  T24_out_s7t3b  T24_out_s7t4b  
+T24_wen        ]
+Initialized 453 tiles
+tmpdir/onebit_bool_mapped.dot
+../serpent.py/995: # Could/did not parse input line 'digraph Diagram {'
+../serpent.py/995: # Could/did not parse input line 'node [shape=box]; # Comment'
+../serpent.py/995: # Could/did not parse input line '}'
+
+Found nodes and destinations:
+  INPUT                ['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+  bitand_153_151_154_lut_bitPE ['bitor_154_155_156_lut_bitPE.in0']
+  bitmux_157_157_149_lut_bitPE ['io1_out_0_0']
+  bitnot_156_lut_bitPE ['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  bitor_154_155_156_lut_bitPE ['bitnot_156_lut_bitPE.in0']
+  bitxor_149_151_155_lut_bitPE ['bitor_154_155_156_lut_bitPE.in1']
+  const10__152         ['ult_152_147_153_uge_PE.in0']
+  const20__150         ['ult_147_150_151_uge_PE.in1']
+  const50__148         ['ule_148_147_149_PE.in0']
+  io1_out_0_0          []
+  ule_148_147_149_PE   ['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+  ult_147_150_151_not_lut_bitPE ['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  ult_147_150_151_uge_PE ['ult_147_150_151_not_lut_bitPE.in0']
+  ult_152_147_153_not_lut_bitPE ['bitand_153_151_154_lut_bitPE.in0']
+  ult_152_147_153_uge_PE ['ult_152_147_153_not_lut_bitPE.in0']
+
+
+########################################
+# serpent.py: register folding
+# Process all the reg->pe pairs
+
+######################################################
+# serpent.py: Process remaining nodes, starting with INPUT
+# Processing 'INPUT' dests ['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+#   Processing 'INPUT' dest 'ule_148_147_149_PE.in1'
+# Place input-connected PE 'ule_148_147_149_PE.in1' in INPUT tile
+Connecting 'INPUT' to 'ule_148_147_149_PE.in1'
+     NO
+     Cannot connect 'T21_in_s2t0' to 'T21_op2' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T21_in_s2t0' to 'T21_op2' through an intermediary
+'T21_in_s2t0'/'in_BUS16_S2_T0' can a-reach ['out_BUS16_S0_T0', 'out_BUS16_S1_T0', 'out_BUS16_S3_T0', 'data0']
+'T21_op2'/'data1' can be b-reached by ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+out_BUS16_S0_T0 ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+out_BUS16_S1_T0 ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+WHOOP! There it is: out_BUS16_S1_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS16_S1_T0 ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']' to route from 'INPUT' to 'ule_148_147_149_PE.in1'
+#   Now node['INPUT'].route['ule_148_147_149_PE.in1'] = ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+../serpent.py/2281
+
+# Route 'INPUT -> ule_148_147_149_PE.in1' is now complete for INPUT
+#   1679 Placed 'ule_148_147_149_PE.in1' in tile 21 at location 'False'
+#   Routed ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+#   Now node['INPUT'].net = ['T21_in_s2t0']
+
+#   Processing 'INPUT' dest 'ult_147_150_151_uge_PE.in0'
+#   No route to 'ult_147_150_151_uge_PE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 40
+
+../serpent.py/1289: Want to route from src tile 21 ('INPUT') to dest tile 40 ('ult_147_150_151_uge_PE.in0')
+
+node='INPUT'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='T21_in_s2t0'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_in_s2t0'
+  ----
+  placed= True
+  dests=['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+  route ['ule_148_147_149_PE.in1']     = ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+  route ['ult_147_150_151_uge_PE.in0'] = []
+  route ['ult_152_147_153_uge_PE.in1'] = []
+  net= ['T21_in_s2t0']
+
+../serpent.py/1325: Evaluating pvh path ['T21_out_s1t0', 'T40_in_s3t0']
+YES path from T21 to T40 is available
+
+Can we attach nodes to path endpoints 'T21_out_s1t0' and 'T40_in_s3t0'?
+1. Attach source node 'INPUT' to path beginpoint 'T21_out_s1t0'
+   Ports avail to source node 'INPUT': ['T21_in_s2t0']
+   Take each one in turn
+     Can 'T21_in_s2t0' connect to beginpoint 'T21_out_s1t0'?
+     YES
+   Ready to connect beginpoint ['T21_in_s2t0 -> T21_out_s1t0'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T40_in_s3t0' to dest node 'ult_147_150_151_uge_PE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'ult_147_150_151_uge_PE.in0': ['T40_op1']
+   Take each one in turn
+     Can path endpoint 'T40_in_s3t0' connect to dest port 'T40_op1'?
+     NO
+     Cannot connect 'T40_in_s3t0' to 'T40_op1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T40_in_s3t0' to 'T40_op1' through an intermediary
+'T40_in_s3t0'/'in_BUS16_S3_T0' can a-reach ['out_BUS16_S0_T0', 'out_BUS16_S1_T0', 'out_BUS16_S2_T0']
+'T40_op1'/'data0' can be b-reached by ['in_BUS16_S2_T0', 'in_BUS16_S2_T1', 'in_BUS16_S2_T2', 'in_BUS16_S2_T3', 'in_BUS16_S2_T4', 'out_BUS16_S2_T0', 'out_BUS16_S2_T1', 'out_BUS16_S2_T2', 'out_BUS16_S2_T3', 'out_BUS16_S2_T4']
+out_BUS16_S0_T0 ['in_BUS16_S2_T0', 'in_BUS16_S2_T1', 'in_BUS16_S2_T2', 'in_BUS16_S2_T3', 'in_BUS16_S2_T4', 'out_BUS16_S2_T0', 'out_BUS16_S2_T1', 'out_BUS16_S2_T2', 'out_BUS16_S2_T3', 'out_BUS16_S2_T4']
+out_BUS16_S1_T0 ['in_BUS16_S2_T0', 'in_BUS16_S2_T1', 'in_BUS16_S2_T2', 'in_BUS16_S2_T3', 'in_BUS16_S2_T4', 'out_BUS16_S2_T0', 'out_BUS16_S2_T1', 'out_BUS16_S2_T2', 'out_BUS16_S2_T3', 'out_BUS16_S2_T4']
+out_BUS16_S2_T0 ['in_BUS16_S2_T0', 'in_BUS16_S2_T1', 'in_BUS16_S2_T2', 'in_BUS16_S2_T3', 'in_BUS16_S2_T4', 'out_BUS16_S2_T0', 'out_BUS16_S2_T1', 'out_BUS16_S2_T2', 'out_BUS16_S2_T3', 'out_BUS16_S2_T4']
+WHOOP! There it is: out_BUS16_S2_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS16_S2_T0 ['T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+   Ready to connect endpoint ['T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'INPUT' to 'ult_147_150_151_uge_PE.in0' is: ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 40
+# 1. place dname in dtileno
+placing input "T40_op1" in tile 40
+# 818 Placed 'ult_147_150_151_uge_PE' in tile 40 at location 'T40_op1'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']' to route from 'INPUT' to 'ult_147_150_151_uge_PE.in0'
+#   Now node['INPUT'].route['ult_147_150_151_uge_PE.in0'] = ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'INPUT' net is ['T21_in_s2t0']
+AFTER: 'INPUT' net is ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1']
+
+# 4. Remove path resources from the free list
+     'T21_in_s2t0' removed from tile 21 free list
+     'T21_out_s1t0' removed from tile 21 free list
+     'T40_in_s3t0' removed from tile 40 free list
+     'T40_out_s2t0' removed from tile 40 free list
+     'T40_out_s2t0' not in tile 40 free list
+     'T40_op1'     removed from tile 40 free list
+
+../serpent.py/1198
+HOORAY connected 'INPUT' to 'ult_147_150_151_uge_PE.in0'
+
+node='INPUT'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='T21_in_s2t0'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_in_s2t0'
+  ----
+  placed= True
+  dests=['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+  route ['ule_148_147_149_PE.in1']     = ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+  route ['ult_147_150_151_uge_PE.in0'] = ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+  route ['ult_152_147_153_uge_PE.in1'] = []
+  net= ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1']
+
+
+node='ult_147_150_151_uge_PE'
+  type='idunno'
+  ----
+  tileno= 40
+  input0='T40_op1'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T40_pe_outb'
+  ----
+  placed= True
+  dests=['ult_147_150_151_not_lut_bitPE.in0']
+  route ['ult_147_150_151_not_lut_bitPE.in0'] = []
+  net= ['T40_pe_outb']
+
+
+# Route 'INPUT -> ult_147_150_151_uge_PE.in0' is now complete 1
+#   1679 Placed 'ult_147_150_151_uge_PE.in0' in tile 40 at location 'T40_op1'
+#   Routed ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+#   Now node['INPUT'].net = ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1']
+
+#   Processing 'INPUT' dest 'ult_152_147_153_uge_PE.in1'
+#   No route to 'ult_152_147_153_uge_PE.in1'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 22
+
+../serpent.py/1289: Want to route from src tile 21 ('INPUT') to dest tile 22 ('ult_152_147_153_uge_PE.in1')
+
+node='INPUT'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='T21_in_s2t0'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_in_s2t0'
+  ----
+  placed= True
+  dests=['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+  route ['ule_148_147_149_PE.in1']     = ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+  route ['ult_147_150_151_uge_PE.in0'] = ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+  route ['ult_152_147_153_uge_PE.in1'] = []
+  net= ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1']
+
+../serpent.py/1325: Evaluating pvh path ['T21_out_s0t0', 'T22_in_s2t0']
+YES path from T21 to T22 is available
+
+Can we attach nodes to path endpoints 'T21_out_s0t0' and 'T22_in_s2t0'?
+1. Attach source node 'INPUT' to path beginpoint 'T21_out_s0t0'
+   Ports avail to source node 'INPUT': ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_op1', 'T40_out_s2t0', 'T40_out_s2t0']
+   Take each one in turn
+     Can 'T21_in_s2t0' connect to beginpoint 'T21_out_s0t0'?
+     YES
+   Ready to connect beginpoint ['T21_in_s2t0 -> T21_out_s0t0'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T22_in_s2t0' to dest node 'ult_152_147_153_uge_PE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'ult_152_147_153_uge_PE.in1': ['T22_op2']
+   Take each one in turn
+     Can path endpoint 'T22_in_s2t0' connect to dest port 'T22_op2'?
+     NO
+     Cannot connect 'T22_in_s2t0' to 'T22_op2' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T22_in_s2t0' to 'T22_op2' through an intermediary
+'T22_in_s2t0'/'in_BUS16_S2_T0' can a-reach ['out_BUS16_S0_T0', 'out_BUS16_S1_T0', 'out_BUS16_S3_T0', 'data0']
+'T22_op2'/'data1' can be b-reached by ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+out_BUS16_S0_T0 ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+out_BUS16_S1_T0 ['in_BUS16_S1_T0', 'in_BUS16_S1_T1', 'in_BUS16_S1_T2', 'in_BUS16_S1_T3', 'in_BUS16_S1_T4', 'out_BUS16_S1_T0', 'out_BUS16_S1_T1', 'out_BUS16_S1_T2', 'out_BUS16_S1_T3', 'out_BUS16_S1_T4']
+WHOOP! There it is: out_BUS16_S1_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS16_S1_T0 ['T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']
+   Ready to connect endpoint ['T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'INPUT' to 'ult_152_147_153_uge_PE.in1' is: ['T21_in_s2t0 -> T21_out_s0t0', 'T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 22
+# 1. place dname in dtileno
+placing input "T22_op2" in tile 22
+# 818 Placed 'ult_152_147_153_uge_PE' in tile 22 at location 'T22_op2'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T21_in_s2t0 -> T21_out_s0t0', 'T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']' to route from 'INPUT' to 'ult_152_147_153_uge_PE.in1'
+#   Now node['INPUT'].route['ult_152_147_153_uge_PE.in1'] = ['T21_in_s2t0 -> T21_out_s0t0', 'T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'INPUT' net is ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1']
+AFTER: 'INPUT' net is ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1', 'T21_in_s2t0', 'T21_out_s0t0', 'T22_in_s2t0', 'T22_out_s1t0', 'T22_out_s1t0', 'T22_op2']
+
+# 4. Remove path resources from the free list
+     'T21_in_s2t0' not in tile 21 free list
+     'T21_out_s0t0' removed from tile 21 free list
+     'T22_in_s2t0' removed from tile 22 free list
+     'T22_out_s1t0' removed from tile 22 free list
+     'T22_out_s1t0' not in tile 22 free list
+     'T22_op2'     removed from tile 22 free list
+
+../serpent.py/1198
+HOORAY connected 'INPUT' to 'ult_152_147_153_uge_PE.in1'
+
+node='INPUT'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='T21_in_s2t0'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_in_s2t0'
+  ----
+  placed= True
+  dests=['ule_148_147_149_PE.in1', 'ult_147_150_151_uge_PE.in0', 'ult_152_147_153_uge_PE.in1']
+  route ['ule_148_147_149_PE.in1']     = ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+  route ['ult_147_150_151_uge_PE.in0'] = ['T21_in_s2t0 -> T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s2t0', 'T40_out_s2t0 -> T40_op1']
+  route ['ult_152_147_153_uge_PE.in1'] = ['T21_in_s2t0 -> T21_out_s0t0', 'T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']
+  net= ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1', 'T21_in_s2t0', 'T21_out_s0t0', 'T22_in_s2t0', 'T22_out_s1t0', 'T22_out_s1t0', 'T22_op2']
+
+
+node='ult_152_147_153_uge_PE'
+  type='idunno'
+  ----
+  tileno= 22
+  input0='False'
+  input1='T22_op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T22_pe_outb'
+  ----
+  placed= True
+  dests=['ult_152_147_153_not_lut_bitPE.in0']
+  route ['ult_152_147_153_not_lut_bitPE.in0'] = []
+  net= ['T22_pe_outb']
+
+
+# Route 'INPUT -> ult_152_147_153_uge_PE.in1' is now complete 1
+#   1679 Placed 'ult_152_147_153_uge_PE.in1' in tile 22 at location 'False'
+#   Routed ['T21_in_s2t0 -> T21_out_s0t0', 'T22_in_s2t0 -> T22_out_s1t0', 'T22_out_s1t0 -> T22_op2']
+#   Now node['INPUT'].net = ['T21_in_s2t0', 'T21_in_s2t0', 'T21_out_s1t0', 'T40_in_s3t0', 'T40_out_s2t0', 'T40_out_s2t0', 'T40_op1', 'T21_in_s2t0', 'T21_out_s0t0', 'T22_in_s2t0', 'T22_out_s1t0', 'T22_out_s1t0', 'T22_op2']
+
+#     Processing 'ule_148_147_149_PE' dests ['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+#       Processing 'ule_148_147_149_PE' dest 'bitmux_157_157_149_lut_bitPE.in0'
+#       No route to 'bitmux_157_157_149_lut_bitPE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 41
+
+../serpent.py/1289: Want to route from src tile 21 ('ule_148_147_149_PE') to dest tile 41 ('bitmux_157_157_149_lut_bitPE.in0')
+
+node='ule_148_147_149_PE'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='False'
+  input1='op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+  route ['bitmux_157_157_149_lut_bitPE.in0'] = []
+  route ['bitxor_149_151_155_lut_bitPE.in0'] = []
+  net= ['T21_pe_outb']
+
+../serpent.py/1325: Evaluating pvh path ['T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s0t0', 'T41_in_s2t0']
+Dest "bitmux_157_157_149_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s0t0', 'T41_in_s2t0']
+---
+after: ['T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b']
+YES path from T21 to T41 is available
+
+Can we attach nodes to path endpoints 'T21_out_s1t0b' and 'T41_in_s2t0b'?
+1. Attach source node 'ule_148_147_149_PE' to path beginpoint 'T21_out_s1t0b'
+   Ports avail to source node 'ule_148_147_149_PE': ['T21_pe_outb']
+   Take each one in turn
+     Can 'T21_pe_outb' connect to beginpoint 'T21_out_s1t0b'?
+     YES
+   Ready to connect beginpoint ['T21_pe_outb -> T21_out_s1t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T41_in_s2t0b' to dest node 'bitmux_157_157_149_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'bitmux_157_157_149_lut_bitPE.in0': ['T41_bit0']
+   Take each one in turn
+     Can path endpoint 'T41_in_s2t0b' connect to dest port 'T41_bit0'?
+     YES
+   Ready to connect endpoint ['T41_in_s2t0b -> T41_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ule_148_147_149_PE' to 'bitmux_157_157_149_lut_bitPE.in0' is: ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 41
+# 1. place dname in dtileno
+placing input "T41_bit0" in tile 41
+# 818 Placed 'bitmux_157_157_149_lut_bitPE' in tile 41 at location 'T41_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']' to route from 'ule_148_147_149_PE' to 'bitmux_157_157_149_lut_bitPE.in0'
+#   Now node['ule_148_147_149_PE'].route['bitmux_157_157_149_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ule_148_147_149_PE' net is ['T21_pe_outb']
+AFTER: 'ule_148_147_149_PE' net is ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0']
+
+# 4. Remove path resources from the free list
+     'T21_pe_outb' removed from tile 21 free list
+     'T21_out_s1t0b' removed from tile 21 free list
+     'T40_in_s3t0b' removed from tile 40 free list
+     'T40_out_s0t0b' removed from tile 40 free list
+     'T41_in_s2t0b' removed from tile 41 free list
+     'T41_bit0'    removed from tile 41 free list
+
+../serpent.py/1198
+HOORAY connected 'ule_148_147_149_PE' to 'bitmux_157_157_149_lut_bitPE.in0'
+
+node='ule_148_147_149_PE'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='False'
+  input1='op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+  route ['bitmux_157_157_149_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+  route ['bitxor_149_151_155_lut_bitPE.in0'] = []
+  net= ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0']
+
+
+node='bitmux_157_157_149_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 41
+  input0='False'
+  input1='False'
+  bit0='T41_bit0'
+  bit1='False'
+  bit2='False'
+  output='T41_pe_outb'
+  ----
+  placed= True
+  dests=['io1_out_0_0']
+  route ['io1_out_0_0'] = []
+  net= ['T41_pe_outb']
+  lut_value= 0xca
+
+
+# Route 'ule_148_147_149_PE -> bitmux_157_157_149_lut_bitPE.in0' is now complete 1
+#       1679 Placed 'bitmux_157_157_149_lut_bitPE.in0' in tile 41 at location 'T41_bit0'
+#       Routed ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+#       Now node['ule_148_147_149_PE'].net = ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0']
+
+#       Processing 'ule_148_147_149_PE' dest 'bitxor_149_151_155_lut_bitPE.in0'
+#       No route to 'bitxor_149_151_155_lut_bitPE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 42
+
+../serpent.py/1289: Want to route from src tile 21 ('ule_148_147_149_PE') to dest tile 42 ('bitxor_149_151_155_lut_bitPE.in0')
+
+node='ule_148_147_149_PE'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='False'
+  input1='op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+  route ['bitmux_157_157_149_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+  route ['bitxor_149_151_155_lut_bitPE.in0'] = []
+  net= ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0']
+
+../serpent.py/1325: Evaluating pvh path ['T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s0t0', 'T41_in_s2t0 -> T41_out_s0t0', 'T42_in_s2t0']
+Dest "bitxor_149_151_155_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T21_out_s1t0', 'T40_in_s3t0 -> T40_out_s0t0', 'T41_in_s2t0 -> T41_out_s0t0', 'T42_in_s2t0']
+---
+after: ['T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b']
+YES path from T21 to T42 is available
+
+Can we attach nodes to path endpoints 'T21_out_s1t0b' and 'T42_in_s2t0b'?
+1. Attach source node 'ule_148_147_149_PE' to path beginpoint 'T21_out_s1t0b'
+   Ports avail to source node 'ule_148_147_149_PE': ['T21_out_s1t0b', 'T21_pe_outb', 'T21_pe_outb', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_bit0', 'T41_in_s2t0b']
+   Take each one in turn
+     Can 'T21_out_s1t0b' connect to beginpoint 'T21_out_s1t0b'?
+     YES
+   Ready to connect beginpoint ['T21_pe_outb -> T21_out_s1t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T42_in_s2t0b' to dest node 'bitxor_149_151_155_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'bitxor_149_151_155_lut_bitPE.in0': ['T42_bit0']
+   Take each one in turn
+     Can path endpoint 'T42_in_s2t0b' connect to dest port 'T42_bit0'?
+     YES
+   Ready to connect endpoint ['T42_in_s2t0b -> T42_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ule_148_147_149_PE' to 'bitxor_149_151_155_lut_bitPE.in0' is: ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b -> T42_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 42
+# 1. place dname in dtileno
+placing input "T42_bit0" in tile 42
+# 818 Placed 'bitxor_149_151_155_lut_bitPE' in tile 42 at location 'T42_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b -> T42_bit0']' to route from 'ule_148_147_149_PE' to 'bitxor_149_151_155_lut_bitPE.in0'
+#   Now node['ule_148_147_149_PE'].route['bitxor_149_151_155_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b -> T42_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ule_148_147_149_PE' net is ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0']
+AFTER: 'ule_148_147_149_PE' net is ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_out_s0t0b', 'T42_in_s2t0b', 'T42_bit0']
+
+# 4. Remove path resources from the free list
+     'T21_pe_outb' not in tile 21 free list
+     'T21_out_s1t0b' not in tile 21 free list
+     'T40_in_s3t0b' not in tile 40 free list
+     'T40_out_s0t0b' not in tile 40 free list
+     'T41_in_s2t0b' not in tile 41 free list
+     'T41_out_s0t0b' removed from tile 41 free list
+     'T42_in_s2t0b' removed from tile 42 free list
+     'T42_bit0'    removed from tile 42 free list
+
+../serpent.py/1198
+HOORAY connected 'ule_148_147_149_PE' to 'bitxor_149_151_155_lut_bitPE.in0'
+
+node='ule_148_147_149_PE'
+  type='idunno'
+  ----
+  tileno= 21
+  input0='False'
+  input1='op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T21_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
+  route ['bitmux_157_157_149_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_bit0']
+  route ['bitxor_149_151_155_lut_bitPE.in0'] = ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b -> T42_bit0']
+  net= ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_out_s0t0b', 'T42_in_s2t0b', 'T42_bit0']
+
+
+node='bitxor_149_151_155_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 42
+  input0='False'
+  input1='False'
+  bit0='T42_bit0'
+  bit1='False'
+  bit2='False'
+  output='T42_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in1']
+  route ['bitor_154_155_156_lut_bitPE.in1'] = []
+  net= ['T42_pe_outb']
+  lut_value= 0x66
+
+
+# Route 'ule_148_147_149_PE -> bitxor_149_151_155_lut_bitPE.in0' is now complete 1
+#       1679 Placed 'bitxor_149_151_155_lut_bitPE.in0' in tile 42 at location 'T42_bit0'
+#       Routed ['T21_pe_outb -> T21_out_s1t0b', 'T40_in_s3t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b -> T42_bit0']
+#       Now node['ule_148_147_149_PE'].net = ['T21_pe_outb', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_bit0', 'T21_pe_outb', 'T21_out_s1t0b', 'T40_in_s3t0b', 'T40_out_s0t0b', 'T41_in_s2t0b', 'T41_out_s0t0b', 'T42_in_s2t0b', 'T42_bit0']
+
+is it a io?
+OUTPUT
+False
+#         Processing 'bitmux_157_157_149_lut_bitPE' dests ['io1_out_0_0']
+#           Processing 'bitmux_157_157_149_lut_bitPE' dest 'io1_out_0_0'
+#           No route to 'io1_out_0_0'
+../serpent.py/1657: Connecting to one-bit OUTPUT tile 264
+
+../serpent.py/1289: Want to route from src tile 41 ('bitmux_157_157_149_lut_bitPE') to dest tile 264 ('io1_out_0_0')
+
+node='bitmux_157_157_149_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 41
+  input0='False'
+  input1='False'
+  bit0='T41_bit0'
+  bit1='False'
+  bit2='False'
+  output='T41_pe_outb'
+  ----
+  placed= True
+  dests=['io1_out_0_0']
+  route ['io1_out_0_0'] = []
+  net= ['T41_pe_outb']
+  lut_value= 0xca
+
+../serpent.py/1325: Evaluating pvh path ['T41_out_s1t0', 'T55_in_s3t0 -> T55_out_s1t0', 'T73_in_s3t0 -> T73_out_s1t0', 'T87_in_s3t0 -> T87_out_s1t0', 'T105_in_s3t0 -> T105_out_s1t0', 'T119_in_s3t0 -> T119_out_s1t0', 'T137_in_s3t0 -> T137_out_s1t0', 'T151_in_s3t0 -> T151_out_s1t0', 'T169_in_s3t0 -> T169_out_s1t0', 'T183_in_s3t0 -> T183_out_s1t0', 'T201_in_s3t0 -> T201_out_s1t0', 'T215_in_s3t0 -> T215_out_s1t0', 'T233_in_s3t0 -> T233_out_s1t0', 'T247_in_s3t0 -> T247_out_s1t0', 'T265_in_s3t0 -> T265_out_s2t0', 'T264_in_s0t0']
+Dest "io1_out_0_0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T41_out_s1t0', 'T55_in_s3t0 -> T55_out_s1t0', 'T73_in_s3t0 -> T73_out_s1t0', 'T87_in_s3t0 -> T87_out_s1t0', 'T105_in_s3t0 -> T105_out_s1t0', 'T119_in_s3t0 -> T119_out_s1t0', 'T137_in_s3t0 -> T137_out_s1t0', 'T151_in_s3t0 -> T151_out_s1t0', 'T169_in_s3t0 -> T169_out_s1t0', 'T183_in_s3t0 -> T183_out_s1t0', 'T201_in_s3t0 -> T201_out_s1t0', 'T215_in_s3t0 -> T215_out_s1t0', 'T233_in_s3t0 -> T233_out_s1t0', 'T247_in_s3t0 -> T247_out_s1t0', 'T265_in_s3t0 -> T265_out_s2t0', 'T264_in_s0t0']
+---
+after: ['T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b']
+YES path from T41 to T264 is available
+
+Can we attach nodes to path endpoints 'T41_out_s1t0b' and 'T264_in_s0t0b'?
+1. Attach source node 'bitmux_157_157_149_lut_bitPE' to path beginpoint 'T41_out_s1t0b'
+   Ports avail to source node 'bitmux_157_157_149_lut_bitPE': ['T41_pe_outb']
+   Take each one in turn
+     Can 'T41_pe_outb' connect to beginpoint 'T41_out_s1t0b'?
+     YES
+   Ready to connect beginpoint ['T41_pe_outb -> T41_out_s1t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T264_in_s0t0b' to dest node 'io1_out_0_0' (../serpent.py/1413)
+../serpent.py/1395: One-bit output can only go out on side 2 (bottom)
+   In-ports avail to dest node 'io1_out_0_0': ['T264_out_s2t0b', 'T264_out_s2t1b', 'T264_out_s2t2b', 'T264_out_s2t3b', 'T264_out_s2t4b']
+   Take each one in turn
+     Can path endpoint 'T264_in_s0t0b' connect to dest port 'T264_out_s2t0b'?
+     YES
+   Ready to connect endpoint ['T264_in_s0t0b -> T264_out_s2t0b'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitmux_157_157_149_lut_bitPE' to 'io1_out_0_0' is: ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 264
+# 1. place dname in dtileno
+placing input "T264_out_s2t0b" in tile 264
+# 818 Placed 'io1_out_0_0' in tile 264 at location 'T264_out_s2t0b'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']' to route from 'bitmux_157_157_149_lut_bitPE' to 'io1_out_0_0'
+#   Now node['bitmux_157_157_149_lut_bitPE'].route['io1_out_0_0'] = ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitmux_157_157_149_lut_bitPE' net is ['T41_pe_outb']
+AFTER: 'bitmux_157_157_149_lut_bitPE' net is ['T41_pe_outb', 'T41_pe_outb', 'T41_out_s1t0b', 'T55_in_s3t0b', 'T55_out_s1t0b', 'T73_in_s3t0b', 'T73_out_s1t0b', 'T87_in_s3t0b', 'T87_out_s1t0b', 'T105_in_s3t0b', 'T105_out_s1t0b', 'T119_in_s3t0b', 'T119_out_s1t0b', 'T137_in_s3t0b', 'T137_out_s1t0b', 'T151_in_s3t0b', 'T151_out_s1t0b', 'T169_in_s3t0b', 'T169_out_s1t0b', 'T183_in_s3t0b', 'T183_out_s1t0b', 'T201_in_s3t0b', 'T201_out_s1t0b', 'T215_in_s3t0b', 'T215_out_s1t0b', 'T233_in_s3t0b', 'T233_out_s1t0b', 'T247_in_s3t0b', 'T247_out_s1t0b', 'T265_in_s3t0b', 'T265_out_s2t0b', 'T264_in_s0t0b', 'T264_out_s2t0b']
+
+# 4. Remove path resources from the free list
+     'T41_pe_outb' removed from tile 41 free list
+     'T41_out_s1t0b' removed from tile 41 free list
+     'T55_in_s3t0b' removed from tile 55 free list
+     'T55_out_s1t0b' removed from tile 55 free list
+     'T73_in_s3t0b' removed from tile 73 free list
+     'T73_out_s1t0b' removed from tile 73 free list
+     'T87_in_s3t0b' removed from tile 87 free list
+     'T87_out_s1t0b' removed from tile 87 free list
+     'T105_in_s3t0b' removed from tile 105 free list
+     'T105_out_s1t0b' removed from tile 105 free list
+     'T119_in_s3t0b' removed from tile 119 free list
+     'T119_out_s1t0b' removed from tile 119 free list
+     'T137_in_s3t0b' removed from tile 137 free list
+     'T137_out_s1t0b' removed from tile 137 free list
+     'T151_in_s3t0b' removed from tile 151 free list
+     'T151_out_s1t0b' removed from tile 151 free list
+     'T169_in_s3t0b' removed from tile 169 free list
+     'T169_out_s1t0b' removed from tile 169 free list
+     'T183_in_s3t0b' removed from tile 183 free list
+     'T183_out_s1t0b' removed from tile 183 free list
+     'T201_in_s3t0b' removed from tile 201 free list
+     'T201_out_s1t0b' removed from tile 201 free list
+     'T215_in_s3t0b' removed from tile 215 free list
+     'T215_out_s1t0b' removed from tile 215 free list
+     'T233_in_s3t0b' removed from tile 233 free list
+     'T233_out_s1t0b' removed from tile 233 free list
+     'T247_in_s3t0b' removed from tile 247 free list
+     'T247_out_s1t0b' removed from tile 247 free list
+     'T265_in_s3t0b' removed from tile 265 free list
+     'T265_out_s2t0b' removed from tile 265 free list
+     'T264_in_s0t0b' removed from tile 264 free list
+     'T264_out_s2t0b' removed from tile 264 free list
+
+../serpent.py/1198
+HOORAY connected 'bitmux_157_157_149_lut_bitPE' to 'io1_out_0_0'
+
+node='bitmux_157_157_149_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 41
+  input0='False'
+  input1='False'
+  bit0='T41_bit0'
+  bit1='False'
+  bit2='False'
+  output='T41_pe_outb'
+  ----
+  placed= True
+  dests=['io1_out_0_0']
+  route ['io1_out_0_0'] = ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+  net= ['T41_pe_outb', 'T41_pe_outb', 'T41_out_s1t0b', 'T55_in_s3t0b', 'T55_out_s1t0b', 'T73_in_s3t0b', 'T73_out_s1t0b', 'T87_in_s3t0b', 'T87_out_s1t0b', 'T105_in_s3t0b', 'T105_out_s1t0b', 'T119_in_s3t0b', 'T119_out_s1t0b', 'T137_in_s3t0b', 'T137_out_s1t0b', 'T151_in_s3t0b', 'T151_out_s1t0b', 'T169_in_s3t0b', 'T169_out_s1t0b', 'T183_in_s3t0b', 'T183_out_s1t0b', 'T201_in_s3t0b', 'T201_out_s1t0b', 'T215_in_s3t0b', 'T215_out_s1t0b', 'T233_in_s3t0b', 'T233_out_s1t0b', 'T247_in_s3t0b', 'T247_out_s1t0b', 'T265_in_s3t0b', 'T265_out_s2t0b', 'T264_in_s0t0b', 'T264_out_s2t0b']
+  lut_value= 0xca
+
+
+node='io1_out_0_0'
+  type='idunno'
+  ----
+  tileno= 264
+  input0='T264_out_s2t0b'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T264__out_s5t0'
+  ----
+  placed= True
+  dests=[]
+  net= ['T264__out_s5t0']
+
+
+# Route 'bitmux_157_157_149_lut_bitPE -> io1_out_0_0' is now complete 1
+#           1679 Placed 'io1_out_0_0' in tile 264 at location 'T264_out_s2t0b'
+#           Routed ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+#           Now node['bitmux_157_157_149_lut_bitPE'].net = ['T41_pe_outb', 'T41_pe_outb', 'T41_out_s1t0b', 'T55_in_s3t0b', 'T55_out_s1t0b', 'T73_in_s3t0b', 'T73_out_s1t0b', 'T87_in_s3t0b', 'T87_out_s1t0b', 'T105_in_s3t0b', 'T105_out_s1t0b', 'T119_in_s3t0b', 'T119_out_s1t0b', 'T137_in_s3t0b', 'T137_out_s1t0b', 'T151_in_s3t0b', 'T151_out_s1t0b', 'T169_in_s3t0b', 'T169_out_s1t0b', 'T183_in_s3t0b', 'T183_out_s1t0b', 'T201_in_s3t0b', 'T201_out_s1t0b', 'T215_in_s3t0b', 'T215_out_s1t0b', 'T233_in_s3t0b', 'T233_out_s1t0b', 'T247_in_s3t0b', 'T247_out_s1t0b', 'T265_in_s3t0b', 'T265_out_s2t0b', 'T264_in_s0t0b', 'T264_out_s2t0b']
+
+#               'io1_out_0_0' has no children
+
+#         Processing 'bitxor_149_151_155_lut_bitPE' dests ['bitor_154_155_156_lut_bitPE.in1']
+#           Processing 'bitxor_149_151_155_lut_bitPE' dest 'bitor_154_155_156_lut_bitPE.in1'
+#           No route to 'bitor_154_155_156_lut_bitPE.in1'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 23
+
+../serpent.py/1289: Want to route from src tile 42 ('bitxor_149_151_155_lut_bitPE') to dest tile 23 ('bitor_154_155_156_lut_bitPE.in1')
+
+node='bitxor_149_151_155_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 42
+  input0='False'
+  input1='False'
+  bit0='T42_bit0'
+  bit1='False'
+  bit2='False'
+  output='T42_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in1']
+  route ['bitor_154_155_156_lut_bitPE.in1'] = []
+  net= ['T42_pe_outb']
+  lut_value= 0x66
+
+../serpent.py/1325: Evaluating pvh path ['T42_out_s3t0', 'T23_in_s1t0']
+Dest "bitor_154_155_156_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T42_out_s3t0', 'T23_in_s1t0']
+---
+after: ['T42_out_s3t0b', 'T23_in_s1t0b']
+YES path from T42 to T23 is available
+
+Can we attach nodes to path endpoints 'T42_out_s3t0b' and 'T23_in_s1t0b'?
+1. Attach source node 'bitxor_149_151_155_lut_bitPE' to path beginpoint 'T42_out_s3t0b'
+   Ports avail to source node 'bitxor_149_151_155_lut_bitPE': ['T42_pe_outb']
+   Take each one in turn
+     Can 'T42_pe_outb' connect to beginpoint 'T42_out_s3t0b'?
+     YES
+   Ready to connect beginpoint ['T42_pe_outb -> T42_out_s3t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T23_in_s1t0b' to dest node 'bitor_154_155_156_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitor_154_155_156_lut_bitPE.in1': ['T23_bit1']
+   Take each one in turn
+     Can path endpoint 'T23_in_s1t0b' connect to dest port 'T23_bit1'?
+     YES
+   Ready to connect endpoint ['T23_in_s1t0b -> T23_bit1'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitxor_149_151_155_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in1' is: ['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 23
+# 1. place dname in dtileno
+placing input "T23_bit1" in tile 23
+# 818 Placed 'bitor_154_155_156_lut_bitPE' in tile 23 at location 'T23_bit1'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']' to route from 'bitxor_149_151_155_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in1'
+#   Now node['bitxor_149_151_155_lut_bitPE'].route['bitor_154_155_156_lut_bitPE.in1'] = ['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitxor_149_151_155_lut_bitPE' net is ['T42_pe_outb']
+AFTER: 'bitxor_149_151_155_lut_bitPE' net is ['T42_pe_outb', 'T42_pe_outb', 'T42_out_s3t0b', 'T23_in_s1t0b', 'T23_bit1']
+
+# 4. Remove path resources from the free list
+     'T42_pe_outb' removed from tile 42 free list
+     'T42_out_s3t0b' removed from tile 42 free list
+     'T23_in_s1t0b' removed from tile 23 free list
+     'T23_bit1'    removed from tile 23 free list
+
+../serpent.py/1198
+HOORAY connected 'bitxor_149_151_155_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in1'
+
+node='bitxor_149_151_155_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 42
+  input0='False'
+  input1='False'
+  bit0='T42_bit0'
+  bit1='False'
+  bit2='False'
+  output='T42_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in1']
+  route ['bitor_154_155_156_lut_bitPE.in1'] = ['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']
+  net= ['T42_pe_outb', 'T42_pe_outb', 'T42_out_s3t0b', 'T23_in_s1t0b', 'T23_bit1']
+  lut_value= 0x66
+
+
+node='bitor_154_155_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 23
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T23_bit1'
+  bit2='False'
+  output='T23_pe_outb'
+  ----
+  placed= True
+  dests=['bitnot_156_lut_bitPE.in0']
+  route ['bitnot_156_lut_bitPE.in0'] = []
+  net= ['T23_pe_outb']
+  lut_value= 0xee
+
+
+# Route 'bitxor_149_151_155_lut_bitPE -> bitor_154_155_156_lut_bitPE.in1' is now complete 1
+#           1679 Placed 'bitor_154_155_156_lut_bitPE.in1' in tile 23 at location 'False'
+#           Routed ['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']
+#           Now node['bitxor_149_151_155_lut_bitPE'].net = ['T42_pe_outb', 'T42_pe_outb', 'T42_out_s3t0b', 'T23_in_s1t0b', 'T23_bit1']
+
+#             Processing 'bitor_154_155_156_lut_bitPE' dests ['bitnot_156_lut_bitPE.in0']
+#               Processing 'bitor_154_155_156_lut_bitPE' dest 'bitnot_156_lut_bitPE.in0'
+#               No route to 'bitnot_156_lut_bitPE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 43
+
+../serpent.py/1289: Want to route from src tile 23 ('bitor_154_155_156_lut_bitPE') to dest tile 43 ('bitnot_156_lut_bitPE.in0')
+
+node='bitor_154_155_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 23
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T23_bit1'
+  bit2='False'
+  output='T23_pe_outb'
+  ----
+  placed= True
+  dests=['bitnot_156_lut_bitPE.in0']
+  route ['bitnot_156_lut_bitPE.in0'] = []
+  net= ['T23_pe_outb']
+  lut_value= 0xee
+
+../serpent.py/1325: Evaluating pvh path ['T23_out_s1t0', 'T42_in_s3t0 -> T42_out_s0t0', 'T24_in_s6t0 -> T24_out_s4t0', 'T43_in_s2t0']
+Dest "bitnot_156_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T23_out_s1t0', 'T42_in_s3t0 -> T42_out_s0t0', 'T24_in_s6t0 -> T24_out_s4t0', 'T43_in_s2t0']
+---
+after: ['T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b']
+YES path from T23 to T43 is available
+
+Can we attach nodes to path endpoints 'T23_out_s1t0b' and 'T43_in_s2t0b'?
+1. Attach source node 'bitor_154_155_156_lut_bitPE' to path beginpoint 'T23_out_s1t0b'
+   Ports avail to source node 'bitor_154_155_156_lut_bitPE': ['T23_pe_outb']
+   Take each one in turn
+     Can 'T23_pe_outb' connect to beginpoint 'T23_out_s1t0b'?
+     YES
+   Ready to connect beginpoint ['T23_pe_outb -> T23_out_s1t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T43_in_s2t0b' to dest node 'bitnot_156_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'bitnot_156_lut_bitPE.in0': ['T43_bit0']
+   Take each one in turn
+     Can path endpoint 'T43_in_s2t0b' connect to dest port 'T43_bit0'?
+     YES
+   Ready to connect endpoint ['T43_in_s2t0b -> T43_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitor_154_155_156_lut_bitPE' to 'bitnot_156_lut_bitPE.in0' is: ['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 43
+# 1. place dname in dtileno
+placing input "T43_bit0" in tile 43
+# 818 Placed 'bitnot_156_lut_bitPE' in tile 43 at location 'T43_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']' to route from 'bitor_154_155_156_lut_bitPE' to 'bitnot_156_lut_bitPE.in0'
+#   Now node['bitor_154_155_156_lut_bitPE'].route['bitnot_156_lut_bitPE.in0'] = ['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitor_154_155_156_lut_bitPE' net is ['T23_pe_outb']
+AFTER: 'bitor_154_155_156_lut_bitPE' net is ['T23_pe_outb', 'T23_pe_outb', 'T23_out_s1t0b', 'T42_in_s3t0b', 'T42_out_s0t0b', 'T24_in_s6t0b', 'T24_out_s4t0b', 'T43_in_s2t0b', 'T43_bit0']
+
+# 4. Remove path resources from the free list
+     'T23_pe_outb' removed from tile 23 free list
+     'T23_out_s1t0b' removed from tile 23 free list
+     'T42_in_s3t0b' removed from tile 42 free list
+     'T42_out_s0t0b' removed from tile 42 free list
+     'T24_in_s6t0b' removed from tile 24 free list
+     'T24_out_s4t0b' removed from tile 24 free list
+     'T43_in_s2t0b' removed from tile 43 free list
+     'T43_bit0'    removed from tile 43 free list
+
+../serpent.py/1198
+HOORAY connected 'bitor_154_155_156_lut_bitPE' to 'bitnot_156_lut_bitPE.in0'
+
+node='bitor_154_155_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 23
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T23_bit1'
+  bit2='False'
+  output='T23_pe_outb'
+  ----
+  placed= True
+  dests=['bitnot_156_lut_bitPE.in0']
+  route ['bitnot_156_lut_bitPE.in0'] = ['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']
+  net= ['T23_pe_outb', 'T23_pe_outb', 'T23_out_s1t0b', 'T42_in_s3t0b', 'T42_out_s0t0b', 'T24_in_s6t0b', 'T24_out_s4t0b', 'T43_in_s2t0b', 'T43_bit0']
+  lut_value= 0xee
+
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = []
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = []
+  net= ['T43_pe_outb']
+  lut_value= 0x55
+
+
+# Route 'bitor_154_155_156_lut_bitPE -> bitnot_156_lut_bitPE.in0' is now complete 1
+#               1679 Placed 'bitnot_156_lut_bitPE.in0' in tile 43 at location 'T43_bit0'
+#               Routed ['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']
+#               Now node['bitor_154_155_156_lut_bitPE'].net = ['T23_pe_outb', 'T23_pe_outb', 'T23_out_s1t0b', 'T42_in_s3t0b', 'T42_out_s0t0b', 'T24_in_s6t0b', 'T24_out_s4t0b', 'T43_in_s2t0b', 'T43_bit0']
+
+#                 Processing 'bitnot_156_lut_bitPE' dests ['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+#                   Processing 'bitnot_156_lut_bitPE' dest 'bitmux_157_157_149_lut_bitPE.in1'
+#                   No route to 'bitmux_157_157_149_lut_bitPE.in1'
+Actually it does have a home already, in tile 41
+../serpent.py/1114: Nearest available tile is 41
+
+../serpent.py/1289: Want to route from src tile 43 ('bitnot_156_lut_bitPE') to dest tile 41 ('bitmux_157_157_149_lut_bitPE.in1')
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = []
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = []
+  net= ['T43_pe_outb']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+Dest "bitmux_157_157_149_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+---
+after: ['T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b']
+YES path from T43 to T41 is available
+
+Can we attach nodes to path endpoints 'T43_out_s2t0b' and 'T41_in_s0t0b'?
+1. Attach source node 'bitnot_156_lut_bitPE' to path beginpoint 'T43_out_s2t0b'
+   Ports avail to source node 'bitnot_156_lut_bitPE': ['T43_pe_outb']
+   Take each one in turn
+     Can 'T43_pe_outb' connect to beginpoint 'T43_out_s2t0b'?
+     YES
+   Ready to connect beginpoint ['T43_pe_outb -> T43_out_s2t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T41_in_s0t0b' to dest node 'bitmux_157_157_149_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitmux_157_157_149_lut_bitPE.in1': ['T41_bit1']
+   Take each one in turn
+     Can path endpoint 'T41_in_s0t0b' connect to dest port 'T41_bit1'?
+     NO
+     Cannot connect 'T41_in_s0t0b' to 'T41_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T41_in_s0t0b' to 'T41_bit1' through an intermediary
+'T41_in_s0t0b'/'in_BUS1_S0_T0' can a-reach ['out_BUS1_S1_T0', 'out_BUS1_S2_T0', 'out_BUS1_S3_T0']
+'T41_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T0
+  T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
+Oops middle node is occupied; we will have to try again
+  Cannot connect path endpoint 'T41_in_s0t0b' to dest port 'T41_bit1'
+  Try next port in the list (2885)?
+../serpent.py/2169:   Cannot connect src 'bitnot_156_lut_bitPE' to endpoint 'T43_out_s2t0b'?
+../serpent.py/2133:   Cannot connect dst 'bitmux_157_157_149_lut_bitPE.in1' to endpoint 'T43_out_s2t0b'?
+../serpent.py/1325: Evaluating phv path ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+Dest "bitmux_157_157_149_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+---
+after: ['T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b']
+YES path from T43 to T41 is available
+
+Can we attach nodes to path endpoints 'T43_out_s2t0b' and 'T41_in_s0t0b'?
+1. Attach source node 'bitnot_156_lut_bitPE' to path beginpoint 'T43_out_s2t0b'
+   Ports avail to source node 'bitnot_156_lut_bitPE': ['T43_pe_outb']
+   Take each one in turn
+     Can 'T43_pe_outb' connect to beginpoint 'T43_out_s2t0b'?
+     YES
+   Ready to connect beginpoint ['T43_pe_outb -> T43_out_s2t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T41_in_s0t0b' to dest node 'bitmux_157_157_149_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitmux_157_157_149_lut_bitPE.in1': ['T41_bit1']
+   Take each one in turn
+     Can path endpoint 'T41_in_s0t0b' connect to dest port 'T41_bit1'?
+     NO
+     Cannot connect 'T41_in_s0t0b' to 'T41_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T41_in_s0t0b' to 'T41_bit1' through an intermediary
+'T41_in_s0t0b'/'in_BUS1_S0_T0' can a-reach ['out_BUS1_S1_T0', 'out_BUS1_S2_T0', 'out_BUS1_S3_T0']
+'T41_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T0
+  T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
+Oops middle node is occupied; we will have to try again
+  Cannot connect path endpoint 'T41_in_s0t0b' to dest port 'T41_bit1'
+  Try next port in the list (2885)?
+../serpent.py/2169:   Cannot connect src 'bitnot_156_lut_bitPE' to endpoint 'T43_out_s2t0b'?
+../serpent.py/2133:   Cannot connect dst 'bitmux_157_157_149_lut_bitPE.in1' to endpoint 'T43_out_s2t0b'?
+../serpent.py/1607: could not find path on track 0, try track 1
+../serpent.py/1608: trackrange = [0, 1, 2, 3, 4]
+../serpent.py/1289: Want to route from src tile 43 ('bitnot_156_lut_bitPE') to dest tile 41 ('bitmux_157_157_149_lut_bitPE.in1')
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = []
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = []
+  net= ['T43_pe_outb']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T43_out_s2t1', 'T24_in_s4t1 -> T24_out_s6t1', 'T42_in_s0t1 -> T42_out_s2t1', 'T41_in_s0t1']
+Dest "bitmux_157_157_149_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T43_out_s2t1', 'T24_in_s4t1 -> T24_out_s6t1', 'T42_in_s0t1 -> T42_out_s2t1', 'T41_in_s0t1']
+---
+after: ['T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b']
+YES path from T43 to T41 is available
+
+Can we attach nodes to path endpoints 'T43_out_s2t1b' and 'T41_in_s0t1b'?
+1. Attach source node 'bitnot_156_lut_bitPE' to path beginpoint 'T43_out_s2t1b'
+   Ports avail to source node 'bitnot_156_lut_bitPE': ['T43_pe_outb']
+   Take each one in turn
+     Can 'T43_pe_outb' connect to beginpoint 'T43_out_s2t1b'?
+     YES
+   Ready to connect beginpoint ['T43_pe_outb -> T43_out_s2t1b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T41_in_s0t1b' to dest node 'bitmux_157_157_149_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitmux_157_157_149_lut_bitPE.in1': ['T41_bit1']
+   Take each one in turn
+     Can path endpoint 'T41_in_s0t1b' connect to dest port 'T41_bit1'?
+     NO
+     Cannot connect 'T41_in_s0t1b' to 'T41_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T41_in_s0t1b' to 'T41_bit1' through an intermediary
+'T41_in_s0t1b'/'in_BUS1_S0_T1' can a-reach ['out_BUS1_S1_T1', 'out_BUS1_S2_T1', 'out_BUS1_S3_T1']
+'T41_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T1 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T1
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S1_T1 ['T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+   Ready to connect endpoint ['T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in1' is: ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 41
+# 1. place dname in dtileno
+#   WARNING bitmux_157_157_149_lut_bitPE already placed at False
+#   It's okay, probably an alu with two inputs
+placing input "T41_bit1" in tile 41
+# 818 Placed 'bitmux_157_157_149_lut_bitPE' in tile 41 at location 'T41_bit1'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']' to route from 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in1'
+#   Now node['bitnot_156_lut_bitPE'].route['bitmux_157_157_149_lut_bitPE.in1'] = ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitnot_156_lut_bitPE' net is ['T43_pe_outb']
+AFTER: 'bitnot_156_lut_bitPE' net is ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1']
+
+# 4. Remove path resources from the free list
+     'T43_pe_outb' removed from tile 43 free list
+     'T43_out_s2t1b' removed from tile 43 free list
+     'T24_in_s4t1b' removed from tile 24 free list
+     'T24_out_s6t1b' removed from tile 24 free list
+     'T42_in_s0t1b' removed from tile 42 free list
+     'T42_out_s2t1b' removed from tile 42 free list
+     'T41_in_s0t1b' removed from tile 41 free list
+     'T41_out_s1t1b' removed from tile 41 free list
+     'T41_out_s1t1b' not in tile 41 free list
+     'T41_bit1'    removed from tile 41 free list
+
+../serpent.py/1198
+HOORAY connected 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in1'
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = []
+  net= ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1']
+  lut_value= 0x55
+
+
+node='bitmux_157_157_149_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 41
+  input0='False'
+  input1='False'
+  bit0='T41_bit0'
+  bit1='T41_bit1'
+  bit2='False'
+  output='T41_pe_outb'
+  ----
+  placed= True
+  dests=['io1_out_0_0']
+  route ['io1_out_0_0'] = ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+  net= ['T41_pe_outb', 'T41_pe_outb', 'T41_out_s1t0b', 'T55_in_s3t0b', 'T55_out_s1t0b', 'T73_in_s3t0b', 'T73_out_s1t0b', 'T87_in_s3t0b', 'T87_out_s1t0b', 'T105_in_s3t0b', 'T105_out_s1t0b', 'T119_in_s3t0b', 'T119_out_s1t0b', 'T137_in_s3t0b', 'T137_out_s1t0b', 'T151_in_s3t0b', 'T151_out_s1t0b', 'T169_in_s3t0b', 'T169_out_s1t0b', 'T183_in_s3t0b', 'T183_out_s1t0b', 'T201_in_s3t0b', 'T201_out_s1t0b', 'T215_in_s3t0b', 'T215_out_s1t0b', 'T233_in_s3t0b', 'T233_out_s1t0b', 'T247_in_s3t0b', 'T247_out_s1t0b', 'T265_in_s3t0b', 'T265_out_s2t0b', 'T264_in_s0t0b', 'T264_out_s2t0b', 'T41_pe_outb']
+  lut_value= 0xca
+
+
+# Route 'bitnot_156_lut_bitPE -> bitmux_157_157_149_lut_bitPE.in1' is now complete 1
+#                   ('bitmux_157_157_149_lut_bitPE.in1' was already placed in tile 41)
+#                   Routed ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+#                   Now node['bitnot_156_lut_bitPE'].net = ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1']
+
+#                   Processing 'bitnot_156_lut_bitPE' dest 'bitmux_157_157_149_lut_bitPE.in2'
+#                   No route to 'bitmux_157_157_149_lut_bitPE.in2'
+Actually it does have a home already, in tile 41
+../serpent.py/1114: Nearest available tile is 41
+
+../serpent.py/1289: Want to route from src tile 43 ('bitnot_156_lut_bitPE') to dest tile 41 ('bitmux_157_157_149_lut_bitPE.in2')
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = []
+  net= ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+Dest "bitmux_157_157_149_lut_bitPE.in2" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T43_out_s2t0', 'T24_in_s4t0 -> T24_out_s6t0', 'T42_in_s0t0 -> T42_out_s2t0', 'T41_in_s0t0']
+---
+after: ['T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b']
+YES path from T43 to T41 is available
+
+Can we attach nodes to path endpoints 'T43_out_s2t0b' and 'T41_in_s0t0b'?
+1. Attach source node 'bitnot_156_lut_bitPE' to path beginpoint 'T43_out_s2t0b'
+   Ports avail to source node 'bitnot_156_lut_bitPE': ['T24_in_s4t1b', 'T24_out_s6t1b', 'T41_bit1', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T43_out_s2t1b', 'T43_pe_outb', 'T43_pe_outb']
+   Take each one in turn
+     Can 'T24_in_s4t1b' connect to beginpoint 'T43_out_s2t0b'?
+     YES
+   Ready to connect beginpoint ['T43_pe_outb -> T43_out_s2t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T41_in_s0t0b' to dest node 'bitmux_157_157_149_lut_bitPE.in2' (../serpent.py/1413)
+   In-ports avail to dest node 'bitmux_157_157_149_lut_bitPE.in2': ['T41_bit2']
+   Take each one in turn
+     Can path endpoint 'T41_in_s0t0b' connect to dest port 'T41_bit2'?
+     NO
+     Cannot connect 'T41_in_s0t0b' to 'T41_bit2' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T41_in_s0t0b' to 'T41_bit2' through an intermediary
+'T41_in_s0t0b'/'in_BUS1_S0_T0' can a-reach ['out_BUS1_S1_T0', 'out_BUS1_S2_T0', 'out_BUS1_S3_T0']
+'T41_bit2'/'bit2' can be b-reached by ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S2_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S2_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S2_T0 ['T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']
+   Ready to connect endpoint ['T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in2' is: ['T43_pe_outb -> T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 41
+# 1. place dname in dtileno
+#   WARNING bitmux_157_157_149_lut_bitPE already placed at False
+#   It's okay, probably an alu with two inputs
+placing input "T41_bit2" in tile 41
+# 818 Placed 'bitmux_157_157_149_lut_bitPE' in tile 41 at location 'T41_bit2'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T43_pe_outb -> T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']' to route from 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in2'
+#   Now node['bitnot_156_lut_bitPE'].route['bitmux_157_157_149_lut_bitPE.in2'] = ['T43_pe_outb -> T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitnot_156_lut_bitPE' net is ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1']
+AFTER: 'bitnot_156_lut_bitPE' net is ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1', 'T43_pe_outb', 'T43_out_s2t0b', 'T24_in_s4t0b', 'T24_out_s6t0b', 'T42_in_s0t0b', 'T42_out_s2t0b', 'T41_in_s0t0b', 'T41_out_s2t0b', 'T41_out_s2t0b', 'T41_bit2']
+
+# 4. Remove path resources from the free list
+     'T43_pe_outb' not in tile 43 free list
+     'T43_out_s2t0b' removed from tile 43 free list
+     'T24_in_s4t0b' removed from tile 24 free list
+     'T24_out_s6t0b' removed from tile 24 free list
+     'T42_in_s0t0b' removed from tile 42 free list
+     'T42_out_s2t0b' removed from tile 42 free list
+     'T41_in_s0t0b' removed from tile 41 free list
+     'T41_out_s2t0b' removed from tile 41 free list
+     'T41_out_s2t0b' not in tile 41 free list
+     'T41_bit2'    removed from tile 41 free list
+
+../serpent.py/1198
+HOORAY connected 'bitnot_156_lut_bitPE' to 'bitmux_157_157_149_lut_bitPE.in2'
+
+node='bitnot_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 43
+  input0='False'
+  input1='False'
+  bit0='T43_bit0'
+  bit1='False'
+  bit2='False'
+  output='T43_pe_outb'
+  ----
+  placed= True
+  dests=['bitmux_157_157_149_lut_bitPE.in1', 'bitmux_157_157_149_lut_bitPE.in2']
+  route ['bitmux_157_157_149_lut_bitPE.in1'] = ['T43_pe_outb -> T43_out_s2t1b', 'T24_in_s4t1b -> T24_out_s6t1b', 'T42_in_s0t1b -> T42_out_s2t1b', 'T41_in_s0t1b -> T41_out_s1t1b', 'T41_out_s1t1b -> T41_bit1']
+  route ['bitmux_157_157_149_lut_bitPE.in2'] = ['T43_pe_outb -> T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']
+  net= ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1', 'T43_pe_outb', 'T43_out_s2t0b', 'T24_in_s4t0b', 'T24_out_s6t0b', 'T42_in_s0t0b', 'T42_out_s2t0b', 'T41_in_s0t0b', 'T41_out_s2t0b', 'T41_out_s2t0b', 'T41_bit2']
+  lut_value= 0x55
+
+
+node='bitmux_157_157_149_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 41
+  input0='False'
+  input1='False'
+  bit0='T41_bit0'
+  bit1='T41_bit1'
+  bit2='T41_bit2'
+  output='T41_pe_outb'
+  ----
+  placed= True
+  dests=['io1_out_0_0']
+  route ['io1_out_0_0'] = ['T41_pe_outb -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s1t0b', 'T73_in_s3t0b -> T73_out_s1t0b', 'T87_in_s3t0b -> T87_out_s1t0b', 'T105_in_s3t0b -> T105_out_s1t0b', 'T119_in_s3t0b -> T119_out_s1t0b', 'T137_in_s3t0b -> T137_out_s1t0b', 'T151_in_s3t0b -> T151_out_s1t0b', 'T169_in_s3t0b -> T169_out_s1t0b', 'T183_in_s3t0b -> T183_out_s1t0b', 'T201_in_s3t0b -> T201_out_s1t0b', 'T215_in_s3t0b -> T215_out_s1t0b', 'T233_in_s3t0b -> T233_out_s1t0b', 'T247_in_s3t0b -> T247_out_s1t0b', 'T265_in_s3t0b -> T265_out_s2t0b', 'T264_in_s0t0b -> T264_out_s2t0b']
+  net= ['T41_pe_outb', 'T41_pe_outb', 'T41_out_s1t0b', 'T55_in_s3t0b', 'T55_out_s1t0b', 'T73_in_s3t0b', 'T73_out_s1t0b', 'T87_in_s3t0b', 'T87_out_s1t0b', 'T105_in_s3t0b', 'T105_out_s1t0b', 'T119_in_s3t0b', 'T119_out_s1t0b', 'T137_in_s3t0b', 'T137_out_s1t0b', 'T151_in_s3t0b', 'T151_out_s1t0b', 'T169_in_s3t0b', 'T169_out_s1t0b', 'T183_in_s3t0b', 'T183_out_s1t0b', 'T201_in_s3t0b', 'T201_out_s1t0b', 'T215_in_s3t0b', 'T215_out_s1t0b', 'T233_in_s3t0b', 'T233_out_s1t0b', 'T247_in_s3t0b', 'T247_out_s1t0b', 'T265_in_s3t0b', 'T265_out_s2t0b', 'T264_in_s0t0b', 'T264_out_s2t0b', 'T41_pe_outb', 'T41_pe_outb']
+  lut_value= 0xca
+
+
+# Route 'bitnot_156_lut_bitPE -> bitmux_157_157_149_lut_bitPE.in2' is now complete 1
+#                   ('bitmux_157_157_149_lut_bitPE.in2' was already placed in tile 41)
+#                   Routed ['T43_pe_outb -> T43_out_s2t0b', 'T24_in_s4t0b -> T24_out_s6t0b', 'T42_in_s0t0b -> T42_out_s2t0b', 'T41_in_s0t0b -> T41_out_s2t0b', 'T41_out_s2t0b -> T41_bit2']
+#                   Now node['bitnot_156_lut_bitPE'].net = ['T43_pe_outb', 'T43_pe_outb', 'T43_out_s2t1b', 'T24_in_s4t1b', 'T24_out_s6t1b', 'T42_in_s0t1b', 'T42_out_s2t1b', 'T41_in_s0t1b', 'T41_out_s1t1b', 'T41_out_s1t1b', 'T41_bit1', 'T43_pe_outb', 'T43_out_s2t0b', 'T24_in_s4t0b', 'T24_out_s6t0b', 'T42_in_s0t0b', 'T42_out_s2t0b', 'T41_in_s0t0b', 'T41_out_s2t0b', 'T41_out_s2t0b', 'T41_bit2']
+
+is it a io?
+OUTPUT
+False
+#                     Processing 'bitmux_157_157_149_lut_bitPE' dests ['io1_out_0_0']
+#                       (already processed 'io1_out_0_0')
+is it a io?
+OUTPUT
+False
+#                     Processing 'bitmux_157_157_149_lut_bitPE' dests ['io1_out_0_0']
+#                       (already processed 'io1_out_0_0')
+#     Processing 'ult_147_150_151_uge_PE' dests ['ult_147_150_151_not_lut_bitPE.in0']
+#       Processing 'ult_147_150_151_uge_PE' dest 'ult_147_150_151_not_lut_bitPE.in0'
+#       No route to 'ult_147_150_151_not_lut_bitPE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  7  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 54
+
+../serpent.py/1289: Want to route from src tile 40 ('ult_147_150_151_uge_PE') to dest tile 54 ('ult_147_150_151_not_lut_bitPE.in0')
+
+node='ult_147_150_151_uge_PE'
+  type='idunno'
+  ----
+  tileno= 40
+  input0='T40_op1'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T40_pe_outb'
+  ----
+  placed= True
+  dests=['ult_147_150_151_not_lut_bitPE.in0']
+  route ['ult_147_150_151_not_lut_bitPE.in0'] = []
+  net= ['T40_pe_outb']
+
+../serpent.py/1325: Evaluating pvh path ['T40_out_s1t0', 'T54_in_s3t0']
+Dest "ult_147_150_151_not_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T40_out_s1t0', 'T54_in_s3t0']
+---
+after: ['T40_out_s1t0b', 'T54_in_s3t0b']
+YES path from T40 to T54 is available
+
+Can we attach nodes to path endpoints 'T40_out_s1t0b' and 'T54_in_s3t0b'?
+1. Attach source node 'ult_147_150_151_uge_PE' to path beginpoint 'T40_out_s1t0b'
+   Ports avail to source node 'ult_147_150_151_uge_PE': ['T40_pe_outb']
+   Take each one in turn
+     Can 'T40_pe_outb' connect to beginpoint 'T40_out_s1t0b'?
+     YES
+   Ready to connect beginpoint ['T40_pe_outb -> T40_out_s1t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T54_in_s3t0b' to dest node 'ult_147_150_151_not_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'ult_147_150_151_not_lut_bitPE.in0': ['T54_bit0']
+   Take each one in turn
+     Can path endpoint 'T54_in_s3t0b' connect to dest port 'T54_bit0'?
+     NO
+     Cannot connect 'T54_in_s3t0b' to 'T54_bit0' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T54_in_s3t0b' to 'T54_bit0' through an intermediary
+'T54_in_s3t0b'/'in_BUS1_S3_T0' can a-reach ['out_BUS1_S0_T0', 'out_BUS1_S1_T0', 'out_BUS1_S2_T0']
+'T54_bit0'/'bit0' can be b-reached by ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S0_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S2_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S2_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S2_T0 ['T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']
+   Ready to connect endpoint ['T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ult_147_150_151_uge_PE' to 'ult_147_150_151_not_lut_bitPE.in0' is: ['T40_pe_outb -> T40_out_s1t0b', 'T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 54
+# 1. place dname in dtileno
+placing input "T54_bit0" in tile 54
+# 818 Placed 'ult_147_150_151_not_lut_bitPE' in tile 54 at location 'T54_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T40_pe_outb -> T40_out_s1t0b', 'T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']' to route from 'ult_147_150_151_uge_PE' to 'ult_147_150_151_not_lut_bitPE.in0'
+#   Now node['ult_147_150_151_uge_PE'].route['ult_147_150_151_not_lut_bitPE.in0'] = ['T40_pe_outb -> T40_out_s1t0b', 'T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ult_147_150_151_uge_PE' net is ['T40_pe_outb']
+AFTER: 'ult_147_150_151_uge_PE' net is ['T40_pe_outb', 'T40_pe_outb', 'T40_out_s1t0b', 'T54_in_s3t0b', 'T54_out_s2t0b', 'T54_out_s2t0b', 'T54_bit0']
+
+# 4. Remove path resources from the free list
+     'T40_pe_outb' removed from tile 40 free list
+     'T40_out_s1t0b' removed from tile 40 free list
+     'T54_in_s3t0b' removed from tile 54 free list
+     'T54_out_s2t0b' removed from tile 54 free list
+     'T54_out_s2t0b' not in tile 54 free list
+     'T54_bit0'    removed from tile 54 free list
+
+../serpent.py/1198
+HOORAY connected 'ult_147_150_151_uge_PE' to 'ult_147_150_151_not_lut_bitPE.in0'
+
+node='ult_147_150_151_uge_PE'
+  type='idunno'
+  ----
+  tileno= 40
+  input0='T40_op1'
+  input1='False'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T40_pe_outb'
+  ----
+  placed= True
+  dests=['ult_147_150_151_not_lut_bitPE.in0']
+  route ['ult_147_150_151_not_lut_bitPE.in0'] = ['T40_pe_outb -> T40_out_s1t0b', 'T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']
+  net= ['T40_pe_outb', 'T40_pe_outb', 'T40_out_s1t0b', 'T54_in_s3t0b', 'T54_out_s2t0b', 'T54_out_s2t0b', 'T54_bit0']
+
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = []
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = []
+  net= ['T54_pe_outb']
+  lut_value= 0x55
+
+
+# Route 'ult_147_150_151_uge_PE -> ult_147_150_151_not_lut_bitPE.in0' is now complete 1
+#       1679 Placed 'ult_147_150_151_not_lut_bitPE.in0' in tile 54 at location 'T54_bit0'
+#       Routed ['T40_pe_outb -> T40_out_s1t0b', 'T54_in_s3t0b -> T54_out_s2t0b', 'T54_out_s2t0b -> T54_bit0']
+#       Now node['ult_147_150_151_uge_PE'].net = ['T40_pe_outb', 'T40_pe_outb', 'T40_out_s1t0b', 'T54_in_s3t0b', 'T54_out_s2t0b', 'T54_out_s2t0b', 'T54_bit0']
+
+#         Processing 'ult_147_150_151_not_lut_bitPE' dests ['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+#           Processing 'ult_147_150_151_not_lut_bitPE' dest 'bitand_153_151_154_lut_bitPE.in1'
+#           No route to 'bitand_153_151_154_lut_bitPE.in1'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  7  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  7  8  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 55
+
+../serpent.py/1289: Want to route from src tile 54 ('ult_147_150_151_not_lut_bitPE') to dest tile 55 ('bitand_153_151_154_lut_bitPE.in1')
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = []
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = []
+  net= ['T54_pe_outb']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T54_out_s0t0', 'T55_in_s2t0']
+Dest "bitand_153_151_154_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T54_out_s0t0', 'T55_in_s2t0']
+---
+after: ['T54_out_s0t0b', 'T55_in_s2t0b']
+YES path from T54 to T55 is available
+
+Can we attach nodes to path endpoints 'T54_out_s0t0b' and 'T55_in_s2t0b'?
+1. Attach source node 'ult_147_150_151_not_lut_bitPE' to path beginpoint 'T54_out_s0t0b'
+   Ports avail to source node 'ult_147_150_151_not_lut_bitPE': ['T54_pe_outb']
+   Take each one in turn
+     Can 'T54_pe_outb' connect to beginpoint 'T54_out_s0t0b'?
+     YES
+   Ready to connect beginpoint ['T54_pe_outb -> T54_out_s0t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T55_in_s2t0b' to dest node 'bitand_153_151_154_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitand_153_151_154_lut_bitPE.in1': ['T55_bit1']
+   Take each one in turn
+     Can path endpoint 'T55_in_s2t0b' connect to dest port 'T55_bit1'?
+     NO
+     Cannot connect 'T55_in_s2t0b' to 'T55_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T55_in_s2t0b' to 'T55_bit1' through an intermediary
+'T55_in_s2t0b'/'in_BUS1_S2_T0' can a-reach ['out_BUS1_S0_T0', 'out_BUS1_S1_T0', 'out_BUS1_S3_T0', 'bit0', 'bit2']
+'T55_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S0_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T0
+  T55_out_s1t0b is not available to node 'ult_147_150_151_not_lut_bitPE'
+Oops middle node is occupied; we will have to try again
+  Cannot connect path endpoint 'T55_in_s2t0b' to dest port 'T55_bit1'
+  Try next port in the list (2885)?
+../serpent.py/2169:   Cannot connect src 'ult_147_150_151_not_lut_bitPE' to endpoint 'T54_out_s0t0b'?
+../serpent.py/2133:   Cannot connect dst 'bitand_153_151_154_lut_bitPE.in1' to endpoint 'T54_out_s0t0b'?
+../serpent.py/1325: Evaluating phv path ['T54_out_s0t0', 'T55_in_s2t0']
+Dest "bitand_153_151_154_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T54_out_s0t0', 'T55_in_s2t0']
+---
+after: ['T54_out_s0t0b', 'T55_in_s2t0b']
+YES path from T54 to T55 is available
+
+Can we attach nodes to path endpoints 'T54_out_s0t0b' and 'T55_in_s2t0b'?
+1. Attach source node 'ult_147_150_151_not_lut_bitPE' to path beginpoint 'T54_out_s0t0b'
+   Ports avail to source node 'ult_147_150_151_not_lut_bitPE': ['T54_pe_outb']
+   Take each one in turn
+     Can 'T54_pe_outb' connect to beginpoint 'T54_out_s0t0b'?
+     YES
+   Ready to connect beginpoint ['T54_pe_outb -> T54_out_s0t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T55_in_s2t0b' to dest node 'bitand_153_151_154_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitand_153_151_154_lut_bitPE.in1': ['T55_bit1']
+   Take each one in turn
+     Can path endpoint 'T55_in_s2t0b' connect to dest port 'T55_bit1'?
+     NO
+     Cannot connect 'T55_in_s2t0b' to 'T55_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T55_in_s2t0b' to 'T55_bit1' through an intermediary
+'T55_in_s2t0b'/'in_BUS1_S2_T0' can a-reach ['out_BUS1_S0_T0', 'out_BUS1_S1_T0', 'out_BUS1_S3_T0', 'bit0', 'bit2']
+'T55_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S0_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T0
+  T55_out_s1t0b is not available to node 'ult_147_150_151_not_lut_bitPE'
+Oops middle node is occupied; we will have to try again
+  Cannot connect path endpoint 'T55_in_s2t0b' to dest port 'T55_bit1'
+  Try next port in the list (2885)?
+../serpent.py/2169:   Cannot connect src 'ult_147_150_151_not_lut_bitPE' to endpoint 'T54_out_s0t0b'?
+../serpent.py/2133:   Cannot connect dst 'bitand_153_151_154_lut_bitPE.in1' to endpoint 'T54_out_s0t0b'?
+../serpent.py/1607: could not find path on track 0, try track 1
+../serpent.py/1608: trackrange = [0, 1, 2, 3, 4]
+../serpent.py/1289: Want to route from src tile 54 ('ult_147_150_151_not_lut_bitPE') to dest tile 55 ('bitand_153_151_154_lut_bitPE.in1')
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = []
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = []
+  net= ['T54_pe_outb']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T54_out_s0t1', 'T55_in_s2t1']
+Dest "bitand_153_151_154_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T54_out_s0t1', 'T55_in_s2t1']
+---
+after: ['T54_out_s0t1b', 'T55_in_s2t1b']
+YES path from T54 to T55 is available
+
+Can we attach nodes to path endpoints 'T54_out_s0t1b' and 'T55_in_s2t1b'?
+1. Attach source node 'ult_147_150_151_not_lut_bitPE' to path beginpoint 'T54_out_s0t1b'
+   Ports avail to source node 'ult_147_150_151_not_lut_bitPE': ['T54_pe_outb']
+   Take each one in turn
+     Can 'T54_pe_outb' connect to beginpoint 'T54_out_s0t1b'?
+     YES
+   Ready to connect beginpoint ['T54_pe_outb -> T54_out_s0t1b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T55_in_s2t1b' to dest node 'bitand_153_151_154_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitand_153_151_154_lut_bitPE.in1': ['T55_bit1']
+   Take each one in turn
+     Can path endpoint 'T55_in_s2t1b' connect to dest port 'T55_bit1'?
+     NO
+     Cannot connect 'T55_in_s2t1b' to 'T55_bit1' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T55_in_s2t1b' to 'T55_bit1' through an intermediary
+'T55_in_s2t1b'/'in_BUS1_S2_T1' can a-reach ['out_BUS1_S0_T1', 'out_BUS1_S1_T1', 'out_BUS1_S3_T1', 'bit0', 'bit2']
+'T55_bit1'/'bit1' can be b-reached by ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S0_T1 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T1 ['in_BUS1_S1_T0', 'in_BUS1_S1_T1', 'in_BUS1_S1_T2', 'in_BUS1_S1_T3', 'in_BUS1_S1_T4', 'out_BUS1_S1_T0', 'out_BUS1_S1_T1', 'out_BUS1_S1_T2', 'out_BUS1_S1_T3', 'out_BUS1_S1_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S1_T1
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S1_T1 ['T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+   Ready to connect endpoint ['T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ult_147_150_151_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in1' is: ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 55
+# 1. place dname in dtileno
+placing input "T55_bit1" in tile 55
+# 818 Placed 'bitand_153_151_154_lut_bitPE' in tile 55 at location 'T55_bit1'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']' to route from 'ult_147_150_151_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in1'
+#   Now node['ult_147_150_151_not_lut_bitPE'].route['bitand_153_151_154_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ult_147_150_151_not_lut_bitPE' net is ['T54_pe_outb']
+AFTER: 'ult_147_150_151_not_lut_bitPE' net is ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1']
+
+# 4. Remove path resources from the free list
+     'T54_pe_outb' removed from tile 54 free list
+     'T54_out_s0t1b' removed from tile 54 free list
+     'T55_in_s2t1b' removed from tile 55 free list
+     'T55_out_s1t1b' removed from tile 55 free list
+     'T55_out_s1t1b' not in tile 55 free list
+     'T55_bit1'    removed from tile 55 free list
+
+../serpent.py/1198
+HOORAY connected 'ult_147_150_151_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in1'
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = []
+  net= ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1']
+  lut_value= 0x55
+
+
+node='bitand_153_151_154_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 55
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T55_bit1'
+  bit2='False'
+  output='T55_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in0']
+  route ['bitor_154_155_156_lut_bitPE.in0'] = []
+  net= ['T55_pe_outb']
+  lut_value= 0x88
+
+
+# Route 'ult_147_150_151_not_lut_bitPE -> bitand_153_151_154_lut_bitPE.in1' is now complete 1
+#           1679 Placed 'bitand_153_151_154_lut_bitPE.in1' in tile 55 at location 'False'
+#           Routed ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+#           Now node['ult_147_150_151_not_lut_bitPE'].net = ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1']
+
+#           Processing 'ult_147_150_151_not_lut_bitPE' dest 'bitxor_149_151_155_lut_bitPE.in1'
+#           No route to 'bitxor_149_151_155_lut_bitPE.in1'
+Actually it does have a home already, in tile 42
+../serpent.py/1114: Nearest available tile is 42
+
+../serpent.py/1289: Want to route from src tile 54 ('ult_147_150_151_not_lut_bitPE') to dest tile 42 ('bitxor_149_151_155_lut_bitPE.in1')
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = []
+  net= ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T54_out_s3t0', 'T40_in_s1t0 -> T40_out_s0t0', 'T41_in_s2t0 -> T41_out_s0t0', 'T42_in_s2t0']
+Dest "bitxor_149_151_155_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T54_out_s3t0', 'T40_in_s1t0 -> T40_out_s0t0', 'T41_in_s2t0 -> T41_out_s0t0', 'T42_in_s2t0']
+---
+after: ['T54_out_s3t0b', 'T40_in_s1t0b -> T40_out_s0t0b', 'T41_in_s2t0b -> T41_out_s0t0b', 'T42_in_s2t0b']
+  T40_out_s0t0b is not available to node 'ult_147_150_151_not_lut_bitPE'
+NO path not available
+../serpent.py/1325: Evaluating phv path ['T54_out_s0t0', 'T55_in_s2t0 -> T55_out_s0t0', 'T56_in_s2t0 -> T56_out_s3t0', 'T42_in_s1t0']
+Dest "bitxor_149_151_155_lut_bitPE.in1" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T54_out_s0t0', 'T55_in_s2t0 -> T55_out_s0t0', 'T56_in_s2t0 -> T56_out_s3t0', 'T42_in_s1t0']
+---
+after: ['T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b']
+YES path from T54 to T42 is available
+
+Can we attach nodes to path endpoints 'T54_out_s0t0b' and 'T42_in_s1t0b'?
+1. Attach source node 'ult_147_150_151_not_lut_bitPE' to path beginpoint 'T54_out_s0t0b'
+   Ports avail to source node 'ult_147_150_151_not_lut_bitPE': ['T54_out_s0t1b', 'T54_pe_outb', 'T54_pe_outb', 'T55_bit1', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b']
+   Take each one in turn
+     Can 'T54_out_s0t1b' connect to beginpoint 'T54_out_s0t0b'?
+     YES
+   Ready to connect beginpoint ['T54_pe_outb -> T54_out_s0t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T42_in_s1t0b' to dest node 'bitxor_149_151_155_lut_bitPE.in1' (../serpent.py/1413)
+   In-ports avail to dest node 'bitxor_149_151_155_lut_bitPE.in1': ['T42_bit1']
+   Take each one in turn
+     Can path endpoint 'T42_in_s1t0b' connect to dest port 'T42_bit1'?
+     YES
+   Ready to connect endpoint ['T42_in_s1t0b -> T42_bit1'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ult_147_150_151_not_lut_bitPE' to 'bitxor_149_151_155_lut_bitPE.in1' is: ['T54_pe_outb -> T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b -> T42_bit1']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 42
+# 1. place dname in dtileno
+#   WARNING bitxor_149_151_155_lut_bitPE already placed at False
+#   It's okay, probably an alu with two inputs
+placing input "T42_bit1" in tile 42
+# 818 Placed 'bitxor_149_151_155_lut_bitPE' in tile 42 at location 'T42_bit1'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T54_pe_outb -> T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b -> T42_bit1']' to route from 'ult_147_150_151_not_lut_bitPE' to 'bitxor_149_151_155_lut_bitPE.in1'
+#   Now node['ult_147_150_151_not_lut_bitPE'].route['bitxor_149_151_155_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b -> T42_bit1']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ult_147_150_151_not_lut_bitPE' net is ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1']
+AFTER: 'ult_147_150_151_not_lut_bitPE' net is ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1', 'T54_pe_outb', 'T54_out_s0t0b', 'T55_in_s2t0b', 'T55_out_s0t0b', 'T56_in_s2t0b', 'T56_out_s3t0b', 'T42_in_s1t0b', 'T42_bit1']
+
+# 4. Remove path resources from the free list
+     'T54_pe_outb' not in tile 54 free list
+     'T54_out_s0t0b' removed from tile 54 free list
+     'T55_in_s2t0b' removed from tile 55 free list
+     'T55_out_s0t0b' removed from tile 55 free list
+     'T56_in_s2t0b' removed from tile 56 free list
+     'T56_out_s3t0b' removed from tile 56 free list
+     'T42_in_s1t0b' removed from tile 42 free list
+     'T42_bit1'    removed from tile 42 free list
+
+../serpent.py/1198
+HOORAY connected 'ult_147_150_151_not_lut_bitPE' to 'bitxor_149_151_155_lut_bitPE.in1'
+
+node='ult_147_150_151_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 54
+  input0='False'
+  input1='False'
+  bit0='T54_bit0'
+  bit1='False'
+  bit2='False'
+  output='T54_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in1', 'bitxor_149_151_155_lut_bitPE.in1']
+  route ['bitand_153_151_154_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t1b', 'T55_in_s2t1b -> T55_out_s1t1b', 'T55_out_s1t1b -> T55_bit1']
+  route ['bitxor_149_151_155_lut_bitPE.in1'] = ['T54_pe_outb -> T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b -> T42_bit1']
+  net= ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1', 'T54_pe_outb', 'T54_out_s0t0b', 'T55_in_s2t0b', 'T55_out_s0t0b', 'T56_in_s2t0b', 'T56_out_s3t0b', 'T42_in_s1t0b', 'T42_bit1']
+  lut_value= 0x55
+
+
+node='bitxor_149_151_155_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 42
+  input0='False'
+  input1='False'
+  bit0='T42_bit0'
+  bit1='T42_bit1'
+  bit2='False'
+  output='T42_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in1']
+  route ['bitor_154_155_156_lut_bitPE.in1'] = ['T42_pe_outb -> T42_out_s3t0b', 'T23_in_s1t0b -> T23_bit1']
+  net= ['T42_pe_outb', 'T42_pe_outb', 'T42_out_s3t0b', 'T23_in_s1t0b', 'T23_bit1', 'T42_pe_outb']
+  lut_value= 0x66
+
+
+# Route 'ult_147_150_151_not_lut_bitPE -> bitxor_149_151_155_lut_bitPE.in1' is now complete 1
+#           ('bitxor_149_151_155_lut_bitPE.in1' was already placed in tile 42)
+#           Routed ['T54_pe_outb -> T54_out_s0t0b', 'T55_in_s2t0b -> T55_out_s0t0b', 'T56_in_s2t0b -> T56_out_s3t0b', 'T42_in_s1t0b -> T42_bit1']
+#           Now node['ult_147_150_151_not_lut_bitPE'].net = ['T54_pe_outb', 'T54_pe_outb', 'T54_out_s0t1b', 'T55_in_s2t1b', 'T55_out_s1t1b', 'T55_out_s1t1b', 'T55_bit1', 'T54_pe_outb', 'T54_out_s0t0b', 'T55_in_s2t0b', 'T55_out_s0t0b', 'T56_in_s2t0b', 'T56_out_s3t0b', 'T42_in_s1t0b', 'T42_bit1']
+
+#             Processing 'bitand_153_151_154_lut_bitPE' dests ['bitor_154_155_156_lut_bitPE.in0']
+#               Processing 'bitand_153_151_154_lut_bitPE' dest 'bitor_154_155_156_lut_bitPE.in0'
+#               No route to 'bitor_154_155_156_lut_bitPE.in0'
+Actually it does have a home already, in tile 23
+../serpent.py/1114: Nearest available tile is 23
+
+../serpent.py/1289: Want to route from src tile 55 ('bitand_153_151_154_lut_bitPE') to dest tile 23 ('bitor_154_155_156_lut_bitPE.in0')
+
+node='bitand_153_151_154_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 55
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T55_bit1'
+  bit2='False'
+  output='T55_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in0']
+  route ['bitor_154_155_156_lut_bitPE.in0'] = []
+  net= ['T55_pe_outb']
+  lut_value= 0x88
+
+../serpent.py/1325: Evaluating pvh path ['T55_out_s3t0', 'T41_in_s1t0 -> T41_out_s3t0', 'T22_in_s1t0 -> T22_out_s0t0', 'T23_in_s2t0']
+Dest "bitor_154_155_156_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T55_out_s3t0', 'T41_in_s1t0 -> T41_out_s3t0', 'T22_in_s1t0 -> T22_out_s0t0', 'T23_in_s2t0']
+---
+after: ['T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b']
+YES path from T55 to T23 is available
+
+Can we attach nodes to path endpoints 'T55_out_s3t0b' and 'T23_in_s2t0b'?
+1. Attach source node 'bitand_153_151_154_lut_bitPE' to path beginpoint 'T55_out_s3t0b'
+   Ports avail to source node 'bitand_153_151_154_lut_bitPE': ['T55_pe_outb']
+   Take each one in turn
+     Can 'T55_pe_outb' connect to beginpoint 'T55_out_s3t0b'?
+     YES
+   Ready to connect beginpoint ['T55_pe_outb -> T55_out_s3t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T23_in_s2t0b' to dest node 'bitor_154_155_156_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'bitor_154_155_156_lut_bitPE.in0': ['T23_bit0']
+   Take each one in turn
+     Can path endpoint 'T23_in_s2t0b' connect to dest port 'T23_bit0'?
+     YES
+   Ready to connect endpoint ['T23_in_s2t0b -> T23_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'bitand_153_151_154_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in0' is: ['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 23
+# 1. place dname in dtileno
+#   WARNING bitor_154_155_156_lut_bitPE already placed at False
+#   It's okay, probably an alu with two inputs
+placing input "T23_bit0" in tile 23
+# 818 Placed 'bitor_154_155_156_lut_bitPE' in tile 23 at location 'T23_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']' to route from 'bitand_153_151_154_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in0'
+#   Now node['bitand_153_151_154_lut_bitPE'].route['bitor_154_155_156_lut_bitPE.in0'] = ['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'bitand_153_151_154_lut_bitPE' net is ['T55_pe_outb']
+AFTER: 'bitand_153_151_154_lut_bitPE' net is ['T55_pe_outb', 'T55_pe_outb', 'T55_out_s3t0b', 'T41_in_s1t0b', 'T41_out_s3t0b', 'T22_in_s1t0b', 'T22_out_s0t0b', 'T23_in_s2t0b', 'T23_bit0']
+
+# 4. Remove path resources from the free list
+     'T55_pe_outb' removed from tile 55 free list
+     'T55_out_s3t0b' removed from tile 55 free list
+     'T41_in_s1t0b' removed from tile 41 free list
+     'T41_out_s3t0b' removed from tile 41 free list
+     'T22_in_s1t0b' removed from tile 22 free list
+     'T22_out_s0t0b' removed from tile 22 free list
+     'T23_in_s2t0b' removed from tile 23 free list
+     'T23_bit0'    removed from tile 23 free list
+
+../serpent.py/1198
+HOORAY connected 'bitand_153_151_154_lut_bitPE' to 'bitor_154_155_156_lut_bitPE.in0'
+
+node='bitand_153_151_154_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 55
+  input0='False'
+  input1='False'
+  bit0='False'
+  bit1='T55_bit1'
+  bit2='False'
+  output='T55_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in0']
+  route ['bitor_154_155_156_lut_bitPE.in0'] = ['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']
+  net= ['T55_pe_outb', 'T55_pe_outb', 'T55_out_s3t0b', 'T41_in_s1t0b', 'T41_out_s3t0b', 'T22_in_s1t0b', 'T22_out_s0t0b', 'T23_in_s2t0b', 'T23_bit0']
+  lut_value= 0x88
+
+
+node='bitor_154_155_156_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 23
+  input0='False'
+  input1='False'
+  bit0='T23_bit0'
+  bit1='T23_bit1'
+  bit2='False'
+  output='T23_pe_outb'
+  ----
+  placed= True
+  dests=['bitnot_156_lut_bitPE.in0']
+  route ['bitnot_156_lut_bitPE.in0'] = ['T23_pe_outb -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s0t0b', 'T24_in_s6t0b -> T24_out_s4t0b', 'T43_in_s2t0b -> T43_bit0']
+  net= ['T23_pe_outb', 'T23_pe_outb', 'T23_out_s1t0b', 'T42_in_s3t0b', 'T42_out_s0t0b', 'T24_in_s6t0b', 'T24_out_s4t0b', 'T43_in_s2t0b', 'T43_bit0', 'T23_pe_outb']
+  lut_value= 0xee
+
+
+# Route 'bitand_153_151_154_lut_bitPE -> bitor_154_155_156_lut_bitPE.in0' is now complete 1
+#               ('bitor_154_155_156_lut_bitPE.in0' was already placed in tile 23)
+#               Routed ['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']
+#               Now node['bitand_153_151_154_lut_bitPE'].net = ['T55_pe_outb', 'T55_pe_outb', 'T55_out_s3t0b', 'T41_in_s1t0b', 'T41_out_s3t0b', 'T22_in_s1t0b', 'T22_out_s0t0b', 'T23_in_s2t0b', 'T23_bit0']
+
+#                 Processing 'bitor_154_155_156_lut_bitPE' dests ['bitnot_156_lut_bitPE.in0']
+#                   (already processed 'bitnot_156_lut_bitPE.in0')
+#             Processing 'bitxor_149_151_155_lut_bitPE' dests ['bitor_154_155_156_lut_bitPE.in1']
+#               (already processed 'bitor_154_155_156_lut_bitPE.in1')
+#     Processing 'ult_152_147_153_uge_PE' dests ['ult_152_147_153_not_lut_bitPE.in0']
+#       Processing 'ult_152_147_153_uge_PE' dest 'ult_152_147_153_not_lut_bitPE.in0'
+#       No route to 'ult_152_147_153_not_lut_bitPE.in0'
+
+# order before get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  7  8  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+# order after get_nearest():
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  0  2  5  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  1  3  4  .  6  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  7  8  9  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+#     .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  . 
+
+../serpent.py/1114: Nearest available tile is 56
+
+../serpent.py/1289: Want to route from src tile 22 ('ult_152_147_153_uge_PE') to dest tile 56 ('ult_152_147_153_not_lut_bitPE.in0')
+
+node='ult_152_147_153_uge_PE'
+  type='idunno'
+  ----
+  tileno= 22
+  input0='False'
+  input1='T22_op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T22_pe_outb'
+  ----
+  placed= True
+  dests=['ult_152_147_153_not_lut_bitPE.in0']
+  route ['ult_152_147_153_not_lut_bitPE.in0'] = []
+  net= ['T22_pe_outb']
+
+../serpent.py/1325: Evaluating pvh path ['T22_out_s1t0', 'T41_in_s3t0 -> T41_out_s1t0', 'T55_in_s3t0 -> T55_out_s0t0', 'T56_in_s2t0']
+Dest "ult_152_147_153_not_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T22_out_s1t0', 'T41_in_s3t0 -> T41_out_s1t0', 'T55_in_s3t0 -> T55_out_s0t0', 'T56_in_s2t0']
+---
+after: ['T22_out_s1t0b', 'T41_in_s3t0b -> T41_out_s1t0b', 'T55_in_s3t0b -> T55_out_s0t0b', 'T56_in_s2t0b']
+  T41_out_s1t0b is not available to node 'ult_152_147_153_uge_PE'
+NO path not available
+../serpent.py/1325: Evaluating phv path ['T22_out_s0t0', 'T23_in_s2t0 -> T23_out_s1t0', 'T42_in_s3t0 -> T42_out_s1t0', 'T56_in_s3t0']
+Dest "ult_152_147_153_not_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T22_out_s0t0', 'T23_in_s2t0 -> T23_out_s1t0', 'T42_in_s3t0 -> T42_out_s1t0', 'T56_in_s3t0']
+---
+after: ['T22_out_s0t0b', 'T23_in_s2t0b -> T23_out_s1t0b', 'T42_in_s3t0b -> T42_out_s1t0b', 'T56_in_s3t0b']
+  T22_out_s0t0b is not available to node 'ult_152_147_153_uge_PE'
+NO path not available
+../serpent.py/1607: could not find path on track 0, try track 1
+../serpent.py/1608: trackrange = [0, 1, 2, 3, 4]
+../serpent.py/1289: Want to route from src tile 22 ('ult_152_147_153_uge_PE') to dest tile 56 ('ult_152_147_153_not_lut_bitPE.in0')
+
+node='ult_152_147_153_uge_PE'
+  type='idunno'
+  ----
+  tileno= 22
+  input0='False'
+  input1='T22_op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T22_pe_outb'
+  ----
+  placed= True
+  dests=['ult_152_147_153_not_lut_bitPE.in0']
+  route ['ult_152_147_153_not_lut_bitPE.in0'] = []
+  net= ['T22_pe_outb']
+
+../serpent.py/1325: Evaluating pvh path ['T22_out_s1t1', 'T41_in_s3t1 -> T41_out_s1t1', 'T55_in_s3t1 -> T55_out_s0t1', 'T56_in_s2t1']
+Dest "ult_152_147_153_not_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T22_out_s1t1', 'T41_in_s3t1 -> T41_out_s1t1', 'T55_in_s3t1 -> T55_out_s0t1', 'T56_in_s2t1']
+---
+after: ['T22_out_s1t1b', 'T41_in_s3t1b -> T41_out_s1t1b', 'T55_in_s3t1b -> T55_out_s0t1b', 'T56_in_s2t1b']
+  T41_out_s1t1b is not available to node 'ult_152_147_153_uge_PE'
+NO path not available
+../serpent.py/1325: Evaluating phv path ['T22_out_s0t1', 'T23_in_s2t1 -> T23_out_s1t1', 'T42_in_s3t1 -> T42_out_s1t1', 'T56_in_s3t1']
+Dest "ult_152_147_153_not_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T22_out_s0t1', 'T23_in_s2t1 -> T23_out_s1t1', 'T42_in_s3t1 -> T42_out_s1t1', 'T56_in_s3t1']
+---
+after: ['T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b']
+YES path from T22 to T56 is available
+
+Can we attach nodes to path endpoints 'T22_out_s0t1b' and 'T56_in_s3t1b'?
+1. Attach source node 'ult_152_147_153_uge_PE' to path beginpoint 'T22_out_s0t1b'
+   Ports avail to source node 'ult_152_147_153_uge_PE': ['T22_pe_outb']
+   Take each one in turn
+     Can 'T22_pe_outb' connect to beginpoint 'T22_out_s0t1b'?
+     YES
+   Ready to connect beginpoint ['T22_pe_outb -> T22_out_s0t1b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T56_in_s3t1b' to dest node 'ult_152_147_153_not_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'ult_152_147_153_not_lut_bitPE.in0': ['T56_bit0']
+   Take each one in turn
+     Can path endpoint 'T56_in_s3t1b' connect to dest port 'T56_bit0'?
+     NO
+     Cannot connect 'T56_in_s3t1b' to 'T56_bit0' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T56_in_s3t1b' to 'T56_bit0' through an intermediary
+'T56_in_s3t1b'/'in_BUS1_S3_T1' can a-reach ['out_BUS1_S0_T1', 'out_BUS1_S1_T1', 'out_BUS1_S2_T1']
+'T56_bit0'/'bit0' can be b-reached by ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S0_T1 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T1 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S2_T1 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S2_T1
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S2_T1 ['T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']
+   Ready to connect endpoint ['T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ult_152_147_153_uge_PE' to 'ult_152_147_153_not_lut_bitPE.in0' is: ['T22_pe_outb -> T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 56
+# 1. place dname in dtileno
+placing input "T56_bit0" in tile 56
+# 818 Placed 'ult_152_147_153_not_lut_bitPE' in tile 56 at location 'T56_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T22_pe_outb -> T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']' to route from 'ult_152_147_153_uge_PE' to 'ult_152_147_153_not_lut_bitPE.in0'
+#   Now node['ult_152_147_153_uge_PE'].route['ult_152_147_153_not_lut_bitPE.in0'] = ['T22_pe_outb -> T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ult_152_147_153_uge_PE' net is ['T22_pe_outb']
+AFTER: 'ult_152_147_153_uge_PE' net is ['T22_pe_outb', 'T22_pe_outb', 'T22_out_s0t1b', 'T23_in_s2t1b', 'T23_out_s1t1b', 'T42_in_s3t1b', 'T42_out_s1t1b', 'T56_in_s3t1b', 'T56_out_s2t1b', 'T56_out_s2t1b', 'T56_bit0']
+
+# 4. Remove path resources from the free list
+     'T22_pe_outb' removed from tile 22 free list
+     'T22_out_s0t1b' removed from tile 22 free list
+     'T23_in_s2t1b' removed from tile 23 free list
+     'T23_out_s1t1b' removed from tile 23 free list
+     'T42_in_s3t1b' removed from tile 42 free list
+     'T42_out_s1t1b' removed from tile 42 free list
+     'T56_in_s3t1b' removed from tile 56 free list
+     'T56_out_s2t1b' removed from tile 56 free list
+     'T56_out_s2t1b' not in tile 56 free list
+     'T56_bit0'    removed from tile 56 free list
+
+../serpent.py/1198
+HOORAY connected 'ult_152_147_153_uge_PE' to 'ult_152_147_153_not_lut_bitPE.in0'
+
+node='ult_152_147_153_uge_PE'
+  type='idunno'
+  ----
+  tileno= 22
+  input0='False'
+  input1='T22_op2'
+  bit0='False'
+  bit1='False'
+  bit2='False'
+  output='T22_pe_outb'
+  ----
+  placed= True
+  dests=['ult_152_147_153_not_lut_bitPE.in0']
+  route ['ult_152_147_153_not_lut_bitPE.in0'] = ['T22_pe_outb -> T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']
+  net= ['T22_pe_outb', 'T22_pe_outb', 'T22_out_s0t1b', 'T23_in_s2t1b', 'T23_out_s1t1b', 'T42_in_s3t1b', 'T42_out_s1t1b', 'T56_in_s3t1b', 'T56_out_s2t1b', 'T56_out_s2t1b', 'T56_bit0']
+
+
+node='ult_152_147_153_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 56
+  input0='False'
+  input1='False'
+  bit0='T56_bit0'
+  bit1='False'
+  bit2='False'
+  output='T56_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in0']
+  route ['bitand_153_151_154_lut_bitPE.in0'] = []
+  net= ['T56_pe_outb']
+  lut_value= 0x55
+
+
+# Route 'ult_152_147_153_uge_PE -> ult_152_147_153_not_lut_bitPE.in0' is now complete 1
+#       1679 Placed 'ult_152_147_153_not_lut_bitPE.in0' in tile 56 at location 'T56_bit0'
+#       Routed ['T22_pe_outb -> T22_out_s0t1b', 'T23_in_s2t1b -> T23_out_s1t1b', 'T42_in_s3t1b -> T42_out_s1t1b', 'T56_in_s3t1b -> T56_out_s2t1b', 'T56_out_s2t1b -> T56_bit0']
+#       Now node['ult_152_147_153_uge_PE'].net = ['T22_pe_outb', 'T22_pe_outb', 'T22_out_s0t1b', 'T23_in_s2t1b', 'T23_out_s1t1b', 'T42_in_s3t1b', 'T42_out_s1t1b', 'T56_in_s3t1b', 'T56_out_s2t1b', 'T56_out_s2t1b', 'T56_bit0']
+
+#         Processing 'ult_152_147_153_not_lut_bitPE' dests ['bitand_153_151_154_lut_bitPE.in0']
+#           Processing 'ult_152_147_153_not_lut_bitPE' dest 'bitand_153_151_154_lut_bitPE.in0'
+#           No route to 'bitand_153_151_154_lut_bitPE.in0'
+Actually it does have a home already, in tile 55
+../serpent.py/1114: Nearest available tile is 55
+
+../serpent.py/1289: Want to route from src tile 56 ('ult_152_147_153_not_lut_bitPE') to dest tile 55 ('bitand_153_151_154_lut_bitPE.in0')
+
+node='ult_152_147_153_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 56
+  input0='False'
+  input1='False'
+  bit0='T56_bit0'
+  bit1='False'
+  bit2='False'
+  output='T56_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in0']
+  route ['bitand_153_151_154_lut_bitPE.in0'] = []
+  net= ['T56_pe_outb']
+  lut_value= 0x55
+
+../serpent.py/1325: Evaluating pvh path ['T56_out_s2t0', 'T55_in_s0t0']
+Dest "bitand_153_151_154_lut_bitPE.in0" is a single-bit node, yes?
+Should use BUS1 path, right?
+
+before: ['T56_out_s2t0', 'T55_in_s0t0']
+---
+after: ['T56_out_s2t0b', 'T55_in_s0t0b']
+YES path from T56 to T55 is available
+
+Can we attach nodes to path endpoints 'T56_out_s2t0b' and 'T55_in_s0t0b'?
+1. Attach source node 'ult_152_147_153_not_lut_bitPE' to path beginpoint 'T56_out_s2t0b'
+   Ports avail to source node 'ult_152_147_153_not_lut_bitPE': ['T56_pe_outb']
+   Take each one in turn
+     Can 'T56_pe_outb' connect to beginpoint 'T56_out_s2t0b'?
+     YES
+   Ready to connect beginpoint ['T56_pe_outb -> T56_out_s2t0b'] (../serpent.py/1509)
+
+2. Attach path endpoint 'T55_in_s0t0b' to dest node 'bitand_153_151_154_lut_bitPE.in0' (../serpent.py/1413)
+   In-ports avail to dest node 'bitand_153_151_154_lut_bitPE.in0': ['T55_bit0']
+   Take each one in turn
+     Can path endpoint 'T55_in_s0t0b' connect to dest port 'T55_bit0'?
+     NO
+     Cannot connect 'T55_in_s0t0b' to 'T55_bit0' directly.  BUT
+     maybe can connect through intermediary?
+../serpent.py/469
+maybe can connect 'T55_in_s0t0b' to 'T55_bit0' through an intermediary
+'T55_in_s0t0b'/'in_BUS1_S0_T0' can a-reach ['out_BUS1_S1_T0', 'out_BUS1_S2_T0', 'out_BUS1_S3_T0']
+'T55_bit0'/'bit0' can be b-reached by ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S1_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+out_BUS1_S2_T0 ['in_BUS1_S2_T0', 'in_BUS1_S2_T1', 'in_BUS1_S2_T2', 'in_BUS1_S2_T3', 'in_BUS1_S2_T4', 'out_BUS1_S2_T0', 'out_BUS1_S2_T1', 'out_BUS1_S2_T2', 'out_BUS1_S2_T3', 'out_BUS1_S2_T4', 'gin_0', 'gin_1', 'gin_2', 'gin_3']
+WHOOP! There it is: out_BUS1_S2_T0
+Found double connection QUICKLY.
+Found double connection.  What a day!
+Remember quickfind was out_BUS1_S2_T0 ['T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']
+   Ready to connect endpoint ['T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0'] (../serpent.py/1516)
+
+SUCCESS! Final path from 'ult_152_147_153_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in0' is: ['T56_pe_outb -> T56_out_s2t0b', 'T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']
+
+# Having found the final path,
+# 1. place dname in dtileno
+# 1a. If regsolo, add name to REGISTERS for later
+# 1b. If regop, place (but don't route) assoc. pe
+# 2. Add the connection to src->dst route list
+# 3. add all the path ports to the src net
+# 4. Remove path resources from the free list
+
+999999999 55
+# 1. place dname in dtileno
+#   WARNING bitand_153_151_154_lut_bitPE already placed at False
+#   It's okay, probably an alu with two inputs
+placing input "T55_bit0" in tile 55
+# 818 Placed 'bitand_153_151_154_lut_bitPE' in tile 55 at location 'T55_bit0'
+
+# 2. Add the connection to src node's src->dst route list
+#   Added connection '['T56_pe_outb -> T56_out_s2t0b', 'T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']' to route from 'ult_152_147_153_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in0'
+#   Now node['ult_152_147_153_not_lut_bitPE'].route['bitand_153_151_154_lut_bitPE.in0'] = ['T56_pe_outb -> T56_out_s2t0b', 'T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']
+../serpent.py/1186
+
+# 3. add all the path ports to the src net
+BEFORE: 'ult_152_147_153_not_lut_bitPE' net is ['T56_pe_outb']
+AFTER: 'ult_152_147_153_not_lut_bitPE' net is ['T56_pe_outb', 'T56_pe_outb', 'T56_out_s2t0b', 'T55_in_s0t0b', 'T55_out_s2t0b', 'T55_out_s2t0b', 'T55_bit0']
+
+# 4. Remove path resources from the free list
+     'T56_pe_outb' removed from tile 56 free list
+     'T56_out_s2t0b' removed from tile 56 free list
+     'T55_in_s0t0b' removed from tile 55 free list
+     'T55_out_s2t0b' removed from tile 55 free list
+     'T55_out_s2t0b' not in tile 55 free list
+     'T55_bit0'    removed from tile 55 free list
+
+../serpent.py/1198
+HOORAY connected 'ult_152_147_153_not_lut_bitPE' to 'bitand_153_151_154_lut_bitPE.in0'
+
+node='ult_152_147_153_not_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 56
+  input0='False'
+  input1='False'
+  bit0='T56_bit0'
+  bit1='False'
+  bit2='False'
+  output='T56_pe_outb'
+  ----
+  placed= True
+  dests=['bitand_153_151_154_lut_bitPE.in0']
+  route ['bitand_153_151_154_lut_bitPE.in0'] = ['T56_pe_outb -> T56_out_s2t0b', 'T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']
+  net= ['T56_pe_outb', 'T56_pe_outb', 'T56_out_s2t0b', 'T55_in_s0t0b', 'T55_out_s2t0b', 'T55_out_s2t0b', 'T55_bit0']
+  lut_value= 0x55
+
+
+node='bitand_153_151_154_lut_bitPE'
+  type='idunno'
+  ----
+  tileno= 55
+  input0='False'
+  input1='False'
+  bit0='T55_bit0'
+  bit1='T55_bit1'
+  bit2='False'
+  output='T55_pe_outb'
+  ----
+  placed= True
+  dests=['bitor_154_155_156_lut_bitPE.in0']
+  route ['bitor_154_155_156_lut_bitPE.in0'] = ['T55_pe_outb -> T55_out_s3t0b', 'T41_in_s1t0b -> T41_out_s3t0b', 'T22_in_s1t0b -> T22_out_s0t0b', 'T23_in_s2t0b -> T23_bit0']
+  net= ['T55_pe_outb', 'T55_pe_outb', 'T55_out_s3t0b', 'T41_in_s1t0b', 'T41_out_s3t0b', 'T22_in_s1t0b', 'T22_out_s0t0b', 'T23_in_s2t0b', 'T23_bit0', 'T55_pe_outb']
+  lut_value= 0x88
+
+
+# Route 'ult_152_147_153_not_lut_bitPE -> bitand_153_151_154_lut_bitPE.in0' is now complete 1
+#           ('bitand_153_151_154_lut_bitPE.in0' was already placed in tile 55)
+#           Routed ['T56_pe_outb -> T56_out_s2t0b', 'T55_in_s0t0b -> T55_out_s2t0b', 'T55_out_s2t0b -> T55_bit0']
+#           Now node['ult_152_147_153_not_lut_bitPE'].net = ['T56_pe_outb', 'T56_pe_outb', 'T56_out_s2t0b', 'T55_in_s0t0b', 'T55_out_s2t0b', 'T55_out_s2t0b', 'T55_bit0']
+
+#             Processing 'bitand_153_151_154_lut_bitPE' dests ['bitor_154_155_156_lut_bitPE.in0']
+#               (already processed 'bitor_154_155_156_lut_bitPE.in0')
+########################################
+# serpent.py: constant folding - do this LAST
+#   Folded 'const10__152' into 'ult_152_147_153_uge_PE' as op1
+#   Folded 'const20__150' into 'ult_147_150_151_uge_PE' as op2
+#   Folded 'const50__148' into 'ule_148_147_149_PE' as op1
+# consts should be gone now
+########################################################
+# FINAL OUTPUT see file "tmpdir/onebit_bool.bsb"

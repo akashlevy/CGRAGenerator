@@ -393,6 +393,11 @@ def main(DBG=1):
     sys.exit(0)
     
 
+def want_onebit_output():
+    '''Return True if onebit outputs is wanted'''
+    if 'io1_out_0_0' in nodes: return True
+    else:                      return False
+
 def final_output(DBG=0):
 
     # Redirect stdout to bsb_filename if such exists
@@ -431,6 +436,10 @@ def final_output(DBG=0):
 
     print '# MEM tiles'
     print_memlist()
+
+    # IO
+    print '# IO'
+    if (want_onebit_output): print("Tx116_pad(out,1)\n");
 
     # Routing
     print '# ROUTING'

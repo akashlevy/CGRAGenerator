@@ -123,11 +123,6 @@ def main():
             if DBG: print ""
             continue
 
-
-
-
-
-
         # NOTE in 16x16 grid w/io pads, input can only go to tile 0x15 (T21) in_s2t0
 
         # self.in -> T0_in_s2t0
@@ -156,8 +151,9 @@ def main():
             if DBG: print "#"+line
             continue
 
-        # T4_mul(wire,const15_15)    # mul_47515_476_PE
-        # Remove inline comments
+        # Remove inline comments e.g.
+        # IN:  "T4_mul(wire,const15_15)    # mul_47515_476_PE"
+        # OUT: "T4_mul(wire,const15_15)"
         parse = re.search("^(.*\S)\s*#", line)
         if parse: line = parse.group(1)
 
@@ -171,6 +167,13 @@ def main():
             line = parse.group(2)
             if DBG>2: print '# tile%02d  %s' % (tileno,line)
 
+        # Or maybe it's a hex number as denoted by a little 'x' e.g.
+        # Tx116_pad(out,1)
+        parse = re.search("^Tx([0-9a-fA-f]+)_(.*)", line)
+        if parse:
+            tileno = int(parse.group(1),16)
+            line = parse.group(2)
+            if DBG>2: print '# tile_0x%03x  %s' % (tileno,line)
 
         # mul(wire,const15_15)
         # add(wire,wire) 
@@ -194,10 +197,17 @@ def main():
             continue
         elif DBG: print '# > Not a mem'
 
+        # Tx116_pad(out,1)
+        if bs_io(tileno, line, DBG-1):
+            if DBG: print ''
+            continue
+        elif DBG: print '# > Not a io'
+
         if bs_connection(tileno, line, DBG-1):
             if DBG: print ''
             continue
         elif DBG: print '# > Not a connection'
+
 
         err_msg = "\n\n# %s\n" % orig_line\
                   + "I don't know what this is: '%s'\n\n" % line
@@ -762,6 +772,39 @@ def bs_mem(tileno, line, DBG=0):
     addbs(addr, data, comment)
     return True
 
+
+def bs_io(tileno, line, DBG=0):
+    '''
+    E.g. tileno = 0x116, line = "pad(out,1)" =>
+      00000116 00000003
+      # io1_116
+      # data[(0, 0)] : output  # 0x1
+      # data[(1, 1)] : one-bit # 0x1
+    '''
+    parse = re.search('pad[(](in|out),(1|16)', line)
+    if not parse: return False
+    dir = parse.group(1)
+    wid = parse.group(2)
+
+    if (dir == 'in'):
+        b0 = 0; c0 = 'input ';
+    else:
+        b0 = 1; c0 = 'output';
+
+    if (wid == '16'):
+        b1 = 0; c1 = '16-bit ';
+    else:
+        b1 = 1; c1 = 'one-bit';
+
+    addr = tileno;      # E.g. '00000116' (after addbs() formatting)
+    data = (2*b1 + b0); # E.g. '00000003' (after addbs() formatting)
+
+    comment = [
+        "data[(0, 0)] : %s # 0x%d" % (c0, b0),
+        "data[(1, 1)] : %s # 0x%d" % (c1, b1)
+        ]
+    addbs(addr, data, comment)
+    return True
 
 
 def bs_op(tileno, line, DBG=0):

@@ -79,6 +79,7 @@ if ($#argv == 2) set tracefile = $2
   echo
 
   # verilator --version; g++ --version
+  lsb_release -a
   verilator -V
   echo
 

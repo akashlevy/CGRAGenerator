@@ -438,8 +438,9 @@ def final_output(DBG=0):
     print_memlist()
 
     # IO
-    print '# IO'
-    if (want_onebit_output): print("Tx116_pad(out,1)\n");
+    if want_onebit_output():
+        print '# IO'
+        print("Tx116_pad(out,1)\n");
 
     # Routing
     print '# ROUTING'

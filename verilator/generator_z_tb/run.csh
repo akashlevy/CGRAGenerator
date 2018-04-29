@@ -98,7 +98,6 @@ set output  = $tmpdir/output.raw
 set out1    = $tmpdir/onebit.raw
 unset tracefile
 
-echo foo $argv
 if ($#argv == 1) then
   if ("$argv[1]" == '--help') then
     echo "Usage:"
@@ -319,7 +318,7 @@ if (${config:t:r} == 'onebit_bool') set ONEBIT
 # endif
 
 # Can use this to extend time on travis
-./my_travis_wait.csh 15 &
+if ($?TRAVIS) ./my_travis_wait.csh 15 &
 
 # Turn nclocks into an integer.
 set nclocks = `echo $nclocks | sed 's/,//g' | sed 's/K/000/' | sed 's/M/000000/'`
@@ -752,7 +751,14 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
 
     echo
-    if ($?ONEBIT) set output = $out1
+    if ($?ONEBIT) then
+      echo ONEBIT OUTPUT
+       echo out1 = $out1
+      echo output = $output
+      set output = $out1
+      echo now output = $output
+    endif
+
     set cmd = "od -t u1 $output"
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
   endif
@@ -782,10 +788,12 @@ endif
 
 # Need this to kill background job(s)
 DIE:
-  echo Time...to die.
-  jobs
-  echo "killing 'mytravis' background output"
-  kill -9 %1
-  sleep 10
-  jobs
+  if ($?TRAVIS) then
+    echo Time...to die.
+    jobs
+    echo "killing 'mytravis' background output"
+    kill -9 %1
+    sleep 10
+    jobs
+  endif
   if ($?EXIT13) exit 13

@@ -79,8 +79,10 @@ if ($#argv == 2) set tracefile = $2
   echo
 
   # verilator --version; g++ --version
+  verilator -V
+  echo
 
-  verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
+  verilator -V $opt $myswitches -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     >& $tmpdir/verilator.out
 # 

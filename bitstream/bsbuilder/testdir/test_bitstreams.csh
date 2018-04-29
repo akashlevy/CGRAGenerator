@@ -99,6 +99,8 @@ foreach b ($bmarks)
   ./compare_images.csh $b $out examples/${b}_halide_out.raw\
   | tee -a $tmpdir/test_results.log
 
+  grep FAIL $tmpdir/test_results.log && exit 13
+
 end
 
 grep RESULT $tmpdir/test_results.log

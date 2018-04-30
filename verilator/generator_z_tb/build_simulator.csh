@@ -78,15 +78,17 @@ if ($#argv == 2) set tracefile = $2
     | fold -s | sed '2,$s/^/  /' | sed 's/$/  \\/'
   echo
 
-  # verilator --version; g++ --version
-  lsb_release -a
-  verilator -V
-  echo
+#   # if -v then
+#   # verilator --version; g++ --version
+#   lsb_release -a
+#   verilator -V
+#   echo
+
 
   verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     >& $tmpdir/verilator.out
-# 
+
 #   # To track down nonconvergence, use this instead
 #   set echo
 #   verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \

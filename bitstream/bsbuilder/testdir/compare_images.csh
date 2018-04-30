@@ -7,9 +7,9 @@
 #   gold=examples/pointwise_halide_out.raw
 # compare and verify that they match exactly
 
-set b = $1
-set test = $2
-set gold = $3
+set b = $1    # Benchmark name
+set test = $2 # Test output
+set gold = $3 # Gold output
 
 echo "$test looks like this:"
 set cmd = "od -t u1 $test"

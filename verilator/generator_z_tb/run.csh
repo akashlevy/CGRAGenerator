@@ -437,10 +437,11 @@ endif
   echo '  SRAM hack'
   echo '  SRAM hack'
   echo '  SRAM hack'
-  if ($?CGRA_GEN_USE_MEM) then
+  # ALWAYS BE USING MEMORY
+  # if ($?CGRA_GEN_USE_MEM) then
      cp ./sram_stub.v $vdir/sram_512w_16b.v
      ls -l $vdir/sram*
-  endif
+  # endif
 
 #   # Temporary wen/ren hacks.  
 #   if ($?HACKMEM) then

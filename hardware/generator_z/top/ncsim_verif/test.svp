@@ -22,11 +22,12 @@
 //; my $num_tracks = $self->get_top_param('num_tracks');
 //; my $use_bs = parameter(NAME => 'use_bs', val => 1);
 //; my $use_input_file = parameter(NAME => 'use_input_file', val=> 1);
-//; my $config_bs = parameter(NAME => 'config_bs', val => '../ncsim_verif/pointwise_pnr_bitstream', DOC => "Bitstream to configure CGRA");
-//; my $input_file = parameter(NAME => 'input', val => '../ncsim_verif/pointwise_input.raw', DOC => "Input image to use for test");
-//; my $halide_out_file = parameter(NAME => 'halide_out', val => '../ncsim_verif/pointwise_halide_out.raw', DOC => "Output image to test against");
+//; my $config_bs = parameter(NAME => 'config_bs', val => '/horowitz/users/ajcars/CGRAGenerator/hardware/generator_z/top/ncsim_verif/conv_3_1_pnr_bitstream', DOC => "Bitstream to configure CGRA");
+//; my $input_file = parameter(NAME => 'input', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_3_1/conv_3_1_input.raw', DOC => "Input image to use for test");
+//; my $halide_out_file = parameter(NAME => 'halide_out', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_3_1/conv_3_1_halide_out.raw', DOC => "Output image to test against");
 //; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
 //; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
+//; my $crop = 0;
 program automatic `mname`(
 	interface ifc,//JTAG Interface
 	inout logic [`$num_tracks-1`:0] pads_S0,
@@ -34,6 +35,7 @@ program automatic `mname`(
 	inout logic [`$num_tracks-1`:0] pads_S2,
 	inout logic [`$num_tracks-1`:0] pads_S3
 );
+   parameter io_delay = 20;
    parameter io1bit_num_features=1;
    parameter io16bit_num_features=1;
    parameter mem_num_features=17;
@@ -55,7 +57,7 @@ program automatic `mname`(
    logic [`$num_tracks-1`:0] gold_out;
    logic [`$num_tracks-1`:0] S1_in;
    logic [`$num_tracks-1`:0] S2_in;
-   assign pads_S1 = S1_in;  
+   assign pads_S3 = S1_in;  
    int 				 fd;
    int 				 config_file;
    int				 input_file;
@@ -69,8 +71,10 @@ program automatic `mname`(
    shortint			 id;
    int				 status;
    int				 i;
+   int				 io_delay_count=0;
    int				 config_count=0;
    int 				 flag;
+   int				 out_count=0;
    logic [31:0]			 config_data;
    logic [31:0]			 config_addr;
    logic [15:0]			 pads_in;
@@ -211,24 +215,47 @@ program automatic `mname`(
 //; if($use_input_file == 1){
 	 //NOW WE CAN APPLY THE INPUTS TO THE PADS
 	 in[8:0] = $fgetc(input_file);
+	 gold_out = 0;
+	 out = 0;
 	 while( in[8:0] != 9'h1FF )begin
 		@(posedge ifc.Clk);
 		S1_in[7:0] = 'h0;
 		//REVERSE THE BITS
 		for(i=0; i<8; i++)
-			S1_in[15-i] = in[i];
-		@(posedge ifc.Clk);
-		for(i=0; i<8; i++)
-			out[i] = pads_S3[15-i];
-		$fwrite(output_file,"%x",out[7:0]);
-		gold_out[7:0] = $fgetc(halide_out);
-		if(out[7:0]!=gold_out[7:0]) begin
-			$display("ERROR: Input: %x, CGRA out: %x, Halide out %x",in[7:0],out[7:0],gold_out[7:0]);
-			$fwrite(fd, "ERROR: ");
+			S1_in[15-i] = in[i];	
+		@(negedge ifc.Clk);
+		if(io_delay_count!=io_delay) 
+			io_delay_count++;
+		else begin
+//		if((out_count%10) != 9 && (out_count%64!=62) && (out_count%64!=63)) begin
+			for(i=0; i<8; i++)
+				out[i] = pads_S2[15-i];
+			$fwrite(output_file, "%c", out[7:0]);
+			gold_out[7:0] = $fgetc(halide_out);
+			if(out[7:0]!=gold_out[7:0]) begin
+				$display("ERROR: Input: %d, CGRA out: %d, Halide out %d",in[7:0],out[7:0],gold_out[7:0]);
+				$fwrite(fd, "ERROR: ");
+			end
+//		end
+			out_count++;
 		end
-		$fwrite(fd,"Input: %x, CGRA out: %x   Halide out: %x\n",in[7:0],out[7:0],gold_out[7:0]);
+		$fwrite(fd,"Input: %d, CGRA out: %d   Halide out: %d\n",in[7:0],out[7:0],gold_out[7:0]);
 	 	in[8:0] = $fgetc(input_file);
 	 end
+	/* while (io_delay_count > 0) begin
+		@(negedge ifc.Clk);
+		io_delay_count--;
+		for(i=0; i<8; i++)
+			out[i] = pads_S1[15-i];
+		$fwrite(output_file,"%x",out[7:0]);
+			gold_out[7:0] = $fgetc(halide_out);
+			if(out[7:0]!=gold_out[7:0]) begin
+				$display("ERROR: Input: %d, CGRA out: %d, Halide out %d",in[7:0],out[7:0],gold_out[7:0]);
+				$fwrite(fd, "ERROR: ");
+			end
+		$fwrite(fd,"Input: %d, CGRA out: %d   Halide out: %d\n",in[7:0],out[7:0],gold_out[7:0]);
+		
+	 end*/
 //; }
 //; else {
 	 for(int j=0; j<40; j++) begin

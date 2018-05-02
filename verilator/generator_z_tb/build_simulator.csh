@@ -72,6 +72,10 @@ if ($#argv == 2) set tracefile = $2
 
   set tmpdir = `mktemp -d /tmp/build_verilator.XXX`
 
+  # Final check of sram hack
+  echo
+  ls -l ./sram_stub.v $vdir/sram_512w_16b.v
+
   echo
   echo verilator $opt -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \

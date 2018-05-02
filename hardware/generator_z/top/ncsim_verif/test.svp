@@ -20,7 +20,9 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $config_bs = parameter(NAME => 'config_bs', val => '../../../bitstream/examples/pw2_sixteen.bsa', DOC => "Bitstream to configure CGRA");
+//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
+//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
+//; my $config_bs = parameter(NAME => 'config_bs', val => 'conv_2_1.bs', DOC => "Bitstream to configure CGRA");
 //; my $input_file = parameter(NAME => 'input', val => '../../../verilator/generator_z_tb/io/conv_bw_in.png', DOC => "Input image to use for test");
 
 program automatic `mname`(
@@ -34,6 +36,9 @@ program automatic `mname`(
    // some variables to control the test
    //int                           seed;
    //int                           rnd0;
+   logic [`$num_tracks-1`:0] in;
+   logic [`$num_tracks-1`:0] S2_in;
+   assign pads_S2 = S2_in;  
    int 				 fd;
    int 				 config_file;
    int				 input_file;
@@ -50,12 +55,13 @@ program automatic `mname`(
       begin
 	 jdrv.ReadID(jtag_config_trans);
 	//Begin CGRA configuration
- 	 
 	 // initialization of structs:
 	 jtag_config_trans.domain = sc_domain;
 	 jtag_config_trans.addr = 32'h0;
 	 jtag_config_trans.data_out = 32'h1;
-	 //Read contents of a mem config registeri
+	 check_address(16'h2,8'h0,8'h0,32'h1);
+//; if($use_bs==0){
+	 //Read contents of a mem config register
 	 @(posedge ifc.Clk);
 	 jtag_config_trans.data_in = 32'd0;
 	 jtag_config_trans.addr = {8'h0,8'h4,16'h18};
@@ -216,50 +222,88 @@ program automatic `mname`(
 	 jtag_config_trans = jdrv.GetResult();
 	 $fdisplay(fd, "%t: %m: Trans 9 (Read Again):  Address to GC=%h, Data to GC=%d, Data from GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_config_trans.data_out);
-	//PARAMETRIZE THESE
-	 /*while( !feof(config_file) ) begin
+//; }
+//; else {
+	 @(posedge ifc.Clk);
+	 jtag_config_trans.op = write_stall;
+	 jtag_config_trans.data_in = 32'hF;
+	 jdrv.Send(jtag_config_trans);
+	 $display("STALL");
+	 status = 2;
+	 while( status==2 ) begin
 		@(posedge ifc.Clk);
 		status = $fscanf(config_file,"%x %x", config_addr,config_data);
+		$display("%x %x",config_addr,config_data);
 		jtag_config_trans.data_in = config_data;
-		jtag_config_trans.addr = config_addr[28:0];
-		jtag_config_trans.op = config_addr[31:29];
+		jtag_config_trans.addr = config_addr;
+		jtag_config_trans.op = write;
 		jdrv.Send(jtag_config_trans);
-		pads_S0 = 0;
-		pads_S1 = 0;
-		pads_S2 = 0;
-		pads_S3 = 0;
 	 end
-	
-	 //HERE WE SHOULD PROBABLY SWITCH TO THE FAST CLK. WILL DO LATER
+	 //SWITCH TO FAST CLK
 	 $display("Finished Configuration!");
+	 jtag_config_trans.op = switch_clk;
+	 jtag_config_trans.data_in = 32'h1;
+	 jdrv.Send(jtag_config_trans);
+	 $display("SWITCH TO FAST CLK");
+
+	 //UNSTALL
+	 jtag_config_trans.op = write_stall;
+	 jtag_config_trans.data_in = 32'h0;
+	 jdrv.Send(jtag_config_trans);
+	 $display("UNSTALL");
+//; }
+//; if($use_input_file == 1){
 	 //NOW WE CAN APPLY THE INPUTS TO THE PADS
-	 while( !feof(input_file) )being
+	 while( !$feof(input_file) )being
 		@(posedge ifc.Clk);
 		pads_in_char = $fgetc(input_file);
 		pads_S2[7:0] =8'b0;
 		//REVERSE THE BITS
 		for(i=0; i<8; i++)
 			pads_S2[15-i] = pads_in_char[i];	
-	 end */
-
-	 /*@(posedge ifc.Clk);
-	 jtag_ofst_trans.data_in = 25;
-	 jtag_ofst_trans.done = 0;
-	 jdrv.Send(jtag_ofst_trans);
-	 $fdisplay(fd,"%t: %m: Trans 1 (Write):  Address to GC=%d, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-
-	 @(posedge ifc.Clk);
-	 jtag_rslt_trans.data_out = 0;
-	 jtag_rslt_trans.done = 0;
-	 ifc.config_data_from_gc = 16'd88;
-	 jdrv.Send(jtag_rslt_trans);
-	 jtag_rslt_trans = jdrv.GetResult();
-	 $fdisplay(fd,"%t: %m: Trans 2 (Read):  Address to GC=%d, Data to GC=%d, Data out from GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_rslt_trans.data_out);*/
-	 
+	 end
+//; }
+//; else {
+	 for(int j=0; j<40; j++) begin
+		@(posedge ifc.Clk);
+		in = $urandom_range(65535,0);
+		for(i=0; i<`$num_tracks`; i++)
+			S2_in[`$num_tracks-1`-i] = in[i];	
+	 end
+//; }
       end
    endtask // run_test
+   task write_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register,input logic [31:0] data_in);
+     begin
+     jtag_config_trans.op = write;
+     jtag_config_trans.addr = {register,feature,tile_id};
+     jtag_config_trans.data_in = data_in;
+     jtag_config_trans.done = 0;
+     jdrv.Send(jtag_config_trans);
+     end
+   endtask //write_config
+   task read_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register);
+     begin
+     jtag_config_trans.op = read;
+     jtag_config_trans.addr = {register,feature,tile_id};
+     jtag_config_trans.data_out = 0;
+     jtag_config_trans.done = 0;
+     jdrv.Send(jtag_config_trans);
+     jtag_config_trans = jdrv.GetResult();
+     end
+   endtask //read_config
+   task check_address(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, input logic [31:0] data_in);
+     begin
+     @(posedge ifc.Clk);
+     write_config(tile_id,feature,register, data_in);
+     @(posedge ifc.Clk);
+     read_config(tile_id,feature,register);
+     if(jtag_config_trans.data_out != data_in) begin
+       $display("ERROR in tile %x, feature %x, register %x. Data written: %x. Data read: %x.", tile_id,
+                 feature, register,data_in,jtag_config_trans.data_out);
+     end
+     end
+   endtask
 
 
 
@@ -270,12 +314,16 @@ program automatic `mname`(
       $display("%t:\t********************Loading Arguments***********************",$time);
       init_test;
       fd = $fopen("test.log","w");
-      /*config_file = $fopen("`$config_bs`","r");
+//; if($use_bs == 1) {     
+      config_file = $fopen("`$config_bs`","r");
       if(!config_file)
 	$display("ERROR: Could not open `$config_bs`");	
+//; } 
+//; if($use_input_file == 1){
       input_file = $fopen("`$input_file`","r");
       if(!input_file)
-	$display("ERROR: Could not open `$input_file`");*/
+	$display("ERROR: Could not open `$input_file`");
+//; }
       $display("%t:\t*************************START*****************************",$time);
       @(negedge ifc.Reset);
       repeat (10) @(posedge ifc.Clk);

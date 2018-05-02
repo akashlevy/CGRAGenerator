@@ -3,9 +3,6 @@
 # Can't believe I have to do this...
 set path = (. $path)
 
-# Can use this to extend time on travis
-./my_travis_wait.csh 15 &
-
 set VERBOSE
 
 # Build a tmp space for intermediate files
@@ -95,8 +92,10 @@ set input     = io/conv_bw_in.png
 if ("$branch" == "sixteen") set input = io/input_10x10_1to100.png
 
 
-set output    = $tmpdir/output.raw
-set nclocks   = "1M"
+set nclocks = "1M"
+set outpad  = 's1t0'
+set output  = $tmpdir/output.raw
+set out1    = $tmpdir/onebit.raw
 unset tracefile
 
 if ($#argv == 1) then
@@ -107,10 +106,14 @@ if ($#argv == 1) then
     echo "        -config <config_filename.bs>"
     echo "        -input   <input_filename.png>"
     echo "        -output <output_filename.raw>"
+    echo "        -out1 s1t0 <1bitout_filename>",
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)""
+    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)"
+    echo "        -nobuild # no genesis, no verilator build"
+    echo "        -nogen   # no genesis"
+    echo "        -gen     # genesis"
     echo
     echo "Defaults:"
     echo "    $0 top_tb.cpp \"
@@ -118,17 +121,16 @@ if ($#argv == 1) then
     echo "       -config  $config \"
     echo "       -input   $input  \"
     echo "       -output  $output \"
-    echo "        -delay $DELAY"
+    echo "       -out1    $outpad $out1 \"
+    echo "       -delay   $DELAY"
     if ($?tracefile) then
       echo "       -trace $tracefile \"
     endif
-    echo "       -nclocks  $nclocks                                          \"
+    echo "       -nclocks $nclocks"
     echo
     exit 0
   endif
 endif
-
-
 
 # NO don't cleanup might want this later (for -nobuild)...
 # # CLEANUP
@@ -140,38 +142,9 @@ endif
 # I can't find anything else that does it :(
 
 
-# NEVER BE HACKMEM!
-unset HACKMEM
-echo "NO MORE HACKMEM 03/2018"
-echo "NO MORE HACKMEM 03/2018"
-echo "NO MORE HACKMEM 03/2018"
-echo
-
 while ($#argv)
   # echo "Found switch '$1'"
   switch ("$1")
-
-    case '-hackmem':
-      echo 'ERROR (run.csh) "-hackmem" no longer allowed (1803)' ; exit 13
-
-      set HACKMEM = 1
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo "WARNING USING TEMPORARY TERRIBLE HACKMEM"
-      echo
-      breaksw
-
-    case '-no_hackmem':
-      echo 'ERROR (run.csh) "-no_hackmem" no longer allowed (1803)' ; exit 13
-
-#       unset HACKMEM
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo "WARNING TURNED OFF TEMPORARY TERRIBLE HACKMEM"
-#       echo
-
-      breaksw
-
 
     case '-clean':
       exit 0;
@@ -234,6 +207,11 @@ while ($#argv)
     case -output:
       set output = "$2"; shift; breaksw
 
+    case -out1:
+      set outpad = $2; shift;
+      set out1   = $2; shift;
+      breaksw;
+
     case -delay:
       set DELAY = "$2"; shift; breaksw
 
@@ -257,9 +235,11 @@ while ($#argv)
 
     default:
       if (`expr "$1" : "-"`) then
+        echo ""
         echo "ERROR: Unknown switch '$1'"
+        echo ""
         exec $0 --help
-        exit -1
+        set EXIT13; goto DIE
       endif
       set testbench = "$1";
   endsw
@@ -274,7 +254,7 @@ if (! -e "$testbench") then
   foreach f (*tb*.cpp)
     echo "  $0 $f"
   end
-  exit -1
+  set EXIT13; goto DIE
 endif
 
 
@@ -283,17 +263,18 @@ if (1) then
   # Backslashes line up better when printed...
   echo "Running with the following switches:"
   echo "$0 top_tb.cpp \"
-  if (! $?BUILD) echo "   -nobuild                    \"
-  echo "   $GENERATE                    \"
-  echo "   -config   $config   \"
-  #echo "   -io       $iofile   \"
-  echo "   -input    $input  \"
-  echo "   -output   $output    \"
-  echo "   -delay   $DELAY    \"
+  if (! $?BUILD) echo "   -nobuild \"
+  echo "   $GENERATE \"
+  echo "   -config $config \"
+  #echo "   -io    $iofile \"
+  echo "   -input  $input \"
+  echo "   -output $output \"
+  echo "   -out1   $outpad $out1 \"
+  echo "   -delay  $DELAY \"
   if ($?tracefile) then
-    echo "   -trace $tracefile \"
+    echo "   -trace   $tracefile \"
   endif
-  echo "   -nclocks  $nclocks                 \"
+  echo "   -nclocks $nclocks"
 endif
 
 if (! -e $config) then
@@ -301,44 +282,21 @@ if (! -e $config) then
   exit 13
 endif
 
+unset ONEBIT
+if (${config:t:r} == 'onebit_bool') set ONEBIT
 
-
-
-
-# if (`expr "$config" : ".*lbuf.*"`) then
-#   if (! $?HACKMEM) then
-#     echo
-#     echo "run.csh: ERROR '$config' looks like an lbuf config file"
-#     echo "run.csh: ERROR should be using hackmem flag, yes?"
-#     exit 13
-#   endif
+# unset io_hack
+# grep -i ffffffff $config > /tmp/tmp$$ && set io_hack
+# if ($?io_hack) then
+#   echo 'ERROR Config file $config appears to be trying to use the old I/O hack:'
+#   cat /tmp/tmp$$; /bin/rm /tmp/tmp$$
+#   echo 'ERROR We no longer support I/O hacks, please use I/O pads instead'
+#   echo
+#   exit 13
 # endif
 
-
-if (`expr "$config" : ".*lbuf.*"`) then
-  if ($?HACKMEM) then
-    echo
-    echo "run.csh: ERROR '$config' looks like an lbuf config file"
-    echo "run.csh: ERROR should NO LONGER be using hackmem flag, yes?"
-    exit 13
-  endif
-endif
-
-
-
-
-
-unset io_hack
-grep -i ffffffff $config > /tmp/tmp$$ && set io_hack
-if ($?io_hack) then
-  echo 'ERROR Config file $config appears to be trying to use the old I/O hack:'
-  cat /tmp/tmp$$; /bin/rm /tmp/tmp$$
-  echo 'ERROR We no longer support I/O hacks, please use I/O pads instead'
-  echo
-  exit 13
-endif
-
-
+# Can use this to extend time on travis
+if ($?TRAVIS) ./my_travis_wait.csh 15 &
 
 # Turn nclocks into an integer.
 set nclocks = `echo $nclocks | sed 's/,//g' | sed 's/K/000/' | sed 's/M/000000/'`
@@ -370,7 +328,8 @@ else
   # echo "run.csh: Building CGRA because you asked for it with '-gen'..."
   echo "run.csh: Building CGRA because it's the default..."
   if ($?VERBOSE) echo "run.csh: ../../bin/generate.csh $VSWITCH"
-  ../../bin/generate.csh $VSWITCH || exit -1
+  ../../bin/generate.csh $VSWITCH || set EXIT13
+  if ($?EXIT13) goto DIE
 endif
 
 ##############################################################################
@@ -393,8 +352,21 @@ set config_io = $tmpdir/${croot}io
 set path = ($path .)
 
 # Clean up config file for verilator use
-grep -v '#' $config | grep . > $tmpdir/tmpconfig
-set config = $tmpdir/tmpconfig
+grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
+set config = $tmpdir/${config:t:r}.bs
+
+# Here's some terrible hackiness
+if ($?ONEBIT) then
+  echo ''
+  echo 'HACK WARNING found onebit_bool config'
+  echo 'HACK WARNING found onebit_bool config'
+  echo 'HACK WARNING found onebit_bool config'
+  echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+  echo ""
+  bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+  set config = $tmpdir/${config:t:r}_reordered.bs
+endif
+
 
 if ($?VERBOSE) then
   echo
@@ -443,54 +415,12 @@ endif
   echo '  SRAM hack'
   echo '  SRAM hack'
   echo '  SRAM hack'
-  if ($?CGRA_GEN_USE_MEM) then
+  # ALWAYS BE USING MEMORY
+  # if ($?CGRA_GEN_USE_MEM) then
      cp ./sram_stub.v $vdir/sram_512w_16b.v
      ls -l $vdir/sram*
-  endif
+  # endif
 
-#   # Temporary wen/ren hacks.  
-#   if ($?HACKMEM) then
-#     # In memory_core_unq1.v, change:
-#     #   assign wen_in_int = (`$ENABLE_CHAIN`)?chain_wen_in:xwen;
-#     # To:
-#     #   assign wen_in_int = WENHACK
-# 
-#     unset ERR
-#     egrep '^assign wen_in_int = .*' $vdir/memory_core_unq1.v || set ERR
-#     if ($?ERR) then
-#       echo
-#       echo "run.csh: ERROR looks like WENHACK would FAIL"
-#       exit 13
-#     endif
-# 
-#     # ls -l $vdir
-#     mv $vdir/memory_core_unq1.v $tmpdir/memory_core_unq1.v.orig
-#     cat $tmpdir/memory_core_unq1.v.orig \
-#       | sed 's/^assign wen_in_int = .*/assign wen_in_int = WENHACK;/' \
-#       > $vdir/memory_core_unq1.v
-# 
-#     # old
-#     #  | sed 's/^assign wen = .*/assign wen = WENHACK;/' \
-# 
-# 
-# 
-#     # No longer doing:
-#     #  | sed 's/assign int_ren = .*/assign int_ren = 1;/' \
-#     #  | sed 's/assign int_wen = .*/assign int_wen = 1;/' \
-#     #  | sed 's/assign wen = .*/assign wen = 1;/' \
-# 
-#     echo
-#     echo '------------------------------------------------------------------------'
-#     echo WARNING REWROTE memory_core_unq1.v BECAUSE TEMPORARY TERRIBLE MEMHACK
-#     echo WARNING REWROTE memory_core_unq1.v BECAUSE TEMPORARY TERRIBLE MEMHACK
-#     echo WARNING REWROTE memory_core_unq1.v BECAUSE TEMPORARY TERRIBLE MEMHACK
-#     echo diff $tmpdir/memory_core_unq1.v.orig $vdir/memory_core_unq1.v
-#     diff $tmpdir/memory_core_unq1.v.orig $vdir/memory_core_unq1.v
-#     echo '------------------------------------------------------------------------'
-#     echo
-#     echo
-# 
-#   endif
 
 echo 'Note: No more IO hacks;'
 echo 'pixels must arrive via pad_S2_T[8:15] aka wire_2_1_BUS16_S0_T0'
@@ -512,26 +442,12 @@ endif
 # How about skip verilator build if:
 # 0. Running on travis AND
 # 1. obj_dir/Vtop exists
-# 2. hackmem is in place ==> NO MORE HACKMEM
+
 
 if (! $?TRAVIS_BUILD_DIR) goto BUILD_SIM
 # ELSE
   if (-e obj_dir/Vtop) then
     echo Found existing obj_dir/Vtop
-
-  # NO MORE WENHACK!!!
-  #   set vdir = ../../hardware/generator_z/top/genesis_verif
-  #   if (-e $vdir/memory_core_unq1.v) then 
-  #     echo Found $vdir/memory_core_unq1.v
-  #     unset foundhack
-  #     egrep 'assign.*WENHACK' $vdir/memory_core_unq1.v && set foundhack
-  #     if ($?foundhack) then
-  #       echo Found memhack
-  #       echo Found Vtop and memhack = skipping verilator build
-  #       goto RUN_SIM
-  #     else
-  #       echo No memhack, must rebuild
-  #     endif
 
     echo Found Vtop = skipping verilator build
     goto RUN_SIM
@@ -542,6 +458,15 @@ if (! $?TRAVIS_BUILD_DIR) goto BUILD_SIM
 
 
 BUILD_SIM:
+unset FAIL
+set gv = ../../hardware/generator_z/top/genesis_verif
+cmp ./sram_stub.v $gv/sram_512w_16b.v || set FAIL
+if ($?FAIL) then
+  echo ERROR run.csh 444 Verilator will FAIL b/c somebody forgot to do the sram thing
+  ls -l  ./sram_stub.v $vdir/sram_512w_16b.v
+  exit 13
+endif
+
 if ($?tracefile) then
   echo build_simulator.csh $VSWITCH $testbench $tracefile
   ./build_simulator.csh $VSWITCH $testbench $tracefile || exit 13
@@ -659,8 +584,20 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   # This is ugly.  -nobuild skips config-file processing so redo here.
   if (! $?BUILD) then
     # Clean up config file for verilator use
-    grep -v '#' $config | grep . > $tmpdir/tmpconfig
-    set config = $tmpdir/tmpconfig
+    grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
+    set config = $tmpdir/${config:t:r}.bs
+
+    # Here's some terrible hackiness
+    if ($?ONEBIT) then
+      echo ''
+      echo 'HACK WARNING found onebit_bool config'
+      echo 'HACK WARNING found onebit_bool config'
+      echo 'HACK WARNING found onebit_bool config'
+      echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+      echo ""
+      bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+      set config = $tmpdir/${config:t:r}_reordered.bs
+    endif
   endif
 
   # Quick check of goodness in config file (again)
@@ -683,7 +620,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   echo
   echo "run.csh: TIME NOW: `date`"
-  echo "run.csh: $vtop -output $output:t"
+  echo "run.csh: $vtop -output $output:t -out1 $outpad $out1:t"
 
   # OOPS big parrot won't work in travis if output gets filtered...
   # Must have the printf every 10K cycles
@@ -691,19 +628,22 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   set qf2         = (cat)
 
 
-  # FIXME note the '|| exit -1" below is USELESS
+  # FIXME note the '|| EXIT13" below is USELESS (why?)
   if ($?VERBOSE) set echo
-    obj_dir/$vtop \
+  obj_dir/$vtop \
       -config $config \
       -input $input \
       $out \
+      -out1 $outpad $out1 \
       $delay \
       $trace \
       $nclocks \
       | tee $tmpdir/run.log.$$ \
       | $quietfilter:q | $qf2:q \
-      || exit -1
+      || set EXIT13
   unset echo >& /dev/null
+  if ($?EXIT13) goto DIE
+
   echo -n " TIME NOW: "; date
 
   unset FAIL
@@ -716,7 +656,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   if ($?input) then
     echo
-    ls -l $tmpdir/$iroot.raw $output
+    ls -l $input $output
 
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
@@ -738,19 +678,26 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     endif
 
     echo
-    set cmd = "od -t x1 $tmpdir/$iroot.raw"
-    set cmd = "od -t u1 $tmpdir/$iroot.raw"
-  # echo $cmd; $cmd | head
+    set cmd = "od -t u1 $input"
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
 
     echo
+    if ($?ONEBIT) then
+      echo ONEBIT OUTPUT
+       echo out1 = $out1
+      echo output = $output
+      set output = $out1
+      echo now output = $output
+    endif
+
     set cmd = "od -t u1 $output"
-  # echo $cmd; $cmd | head
     echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
   endif
 
-
-  if ($?FAIL) exit -1
+  if ($?FAIL) then
+    set EXIT13
+    goto DIE
+  endif
 
 # Tell how to clean up (not necessary for travis VM of course)
 # if (`hostname` == "kiwi") then
@@ -769,6 +716,15 @@ NOTE: If you want to clean up after yourself you'll want to do this:
 
 eof
 endif
-echo "killing background printing"
-kill -9 %1
 
+# Need this to kill background job(s)
+DIE:
+  if ($?TRAVIS) then
+    echo Time...to die.
+    jobs
+    echo "killing 'mytravis' background output"
+    kill -9 %1
+    sleep 10
+    jobs
+  endif
+  if ($?EXIT13) exit 13

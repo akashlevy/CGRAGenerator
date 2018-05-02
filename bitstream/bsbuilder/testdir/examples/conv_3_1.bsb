@@ -1,9 +1,9 @@
 
 # CONSTANTS
-# const0_0::add_340_343_344_PE T55_op2
-# const3_3::mul_3423_343_PE T56_op2
-# const5_5::mul_3475_348_PE T23_op2
-# const7_7::mul_3527_353_PE T21_op2
+# const0_0::add_340_343_344_PE.in0 T55_op2
+# const3_3::mul_3423_343_PE.in1 T56_op2
+# const5_5::mul_3475_348_PE.in1 T23_op2
+# const7_7::mul_3527_353_PE.in1 T21_op2
 
 # REGISTERS []
 
@@ -36,15 +36,15 @@ T25_pe_out_b0 -> T25_out_s2t0_b0
 T24_in_s0t0_b0 -> T24_out_s2t0_b0
 T24_out_s2t0_b0 -> T24_wen
 
-# INPUT::mul_3527_353_PE
+# INPUT::mul_3527_353_PE.in0
 T21_in_s2t0 -> T21_op1
 
-# add_340_343_344_PE::add_345_348_349_PE
+# add_340_343_344_PE::add_345_348_349_PE.in0
 T55_pe_out -> T55_out_s3t0
 T41_in_s1t0 -> T41_out_s2t0
 T41_out_s2t0 -> T41_op1
 
-# add_345_348_349_PE::add_350_353_354_PE
+# add_345_348_349_PE::add_350_353_354_PE.in0
 T41_pe_out -> T41_out_s2t1
 T40_in_s0t1 -> T40_out_s2t1
 T40_out_s2t1 -> T40_op1
@@ -78,28 +78,28 @@ T58_pe_out_b0 -> T58_out_s2t0_b0
 T57_in_s0t0_b0 -> T57_out_s2t0_b0
 T57_out_s2t0_b0 -> T57_wen
 
-# mem_1::mul_3475_348_PE
+# mem_1::mul_3475_348_PE.in0
 T24_mem_out -> T24_out_s2t0
 T23_in_s0t0 -> T23_out_s2t0
 T23_out_s2t0 -> T23_op1
 
-# mem_2::mul_3423_343_PE
+# mem_2::mul_3423_343_PE.in0
 T57_mem_out -> T57_out_s2t1
 T56_in_s0t1 -> T56_out_s2t1
 T56_out_s2t1 -> T56_op1
 
-# mul_3423_343_PE::add_340_343_344_PE
+# mul_3423_343_PE::add_340_343_344_PE.in1
 T56_pe_out -> T56_out_s2t0
 T55_in_s0t0 -> T55_out_s2t0
 T55_out_s2t0 -> T55_op1
 
-# mul_3475_348_PE::add_345_348_349_PE
+# mul_3475_348_PE::add_345_348_349_PE.in1
 T23_pe_out -> T23_out_s1t0
 T42_in_s3t0 -> T42_out_s2t0
 T41_in_s0t0 -> T41_out_s1t0
 T41_out_s1t0 -> T41_op2
 
-# mul_3527_353_PE::add_350_353_354_PE
+# mul_3527_353_PE::add_350_353_354_PE.in1
 T21_pe_out -> T21_out_s1t0
 T40_in_s3t0 -> T40_out_s1t0
 T40_out_s1t0 -> T40_op2

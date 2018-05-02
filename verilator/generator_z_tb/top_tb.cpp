@@ -28,14 +28,19 @@ int main(int argc, char **argv, char **env) {
     char  *input_filename = NULL;
     char *output_filename = NULL;
     char  *trace_filename = NULL;
+    char *outbit_filename = NULL; // eg "onebit_bool.raw"
+    char *outbit_padname  = NULL; // eg "s1t0" => pad_S1_T0
 
     char default_trace_filename[128] = "top_tb.vcd";
 
     FILE *input_file = NULL;
     FILE *output_file = NULL;
+    FILE *outbit_file = NULL; // eg "onebit_bool.raw"
 
     // Run simulation for NCLOCKS clock periods (default = 40)
     int NCLOCKS = 40;
+
+    Verilated::debug(1);
 
     printf("\n\nHi there!  I am the simulatory thingy.\n");
     fflush(stdout);
@@ -44,10 +49,6 @@ int main(int argc, char **argv, char **env) {
     // printf("    arg1 is maybe %s\n", argv[1]);  // "-config"
     // printf("    arg2 is maybe %s\n", argv[2]);  // "../../hardware/generator_z/top_tb/tile_config.dat"
     // printf("\n");
-
-//    int do_2x = 1
-//    else if (! strcmp(argv[i], "-no_2x" ))  { do_2x = 0; }
-
 
     int delay_in = 0;  // How long to wait before sending output
     int delay_out = 0; // How long to wait before  ending output
@@ -62,6 +63,11 @@ int main(int argc, char **argv, char **env) {
         if      (! strcmp(argv[i], "-config"))  { config_filename = argv[++i]; }
         else if (! strcmp(argv[i], "-input" ))  { input_filename  = argv[++i]; }
         else if (! strcmp(argv[i], "-output" )) { output_filename = argv[++i]; }
+        else if (! strcmp(argv[i], "-out1" )) {
+            // eg "--out1 s1t0 onebit_bool.raw"
+            outbit_padname  = argv[++i];
+            outbit_filename = argv[++i];
+        }
         else if (! strcmp(argv[i], "-trace" ))  { trace_filename  = argv[++i]; }
         else if (! strcmp(argv[i], "-nclocks")) { 
                 sscanf(argv[++i], "%d", &NCLOCKS);
@@ -70,11 +76,12 @@ int main(int argc, char **argv, char **env) {
             sscanf(argv[++i], "%d,%d", &delay_in, &delay_out);
         }
         else if (! strcmp(argv[i], "--help" )) {
-            fprintf(stderr, "Usage: %s\n%s%s%s%s%s\n",
+            fprintf(stderr, "Usage: %s\n%s%s%s%s%s%s\n",
                     argv[0],
                     "  -config <config_filename>\n",
                     "  -input  <input_filename>\n",
                     "  -output <output_filename>\n",
+                    "  -out1 s1t0 <1bitout_filename>\n",
                     "  [-trace <trace_filename>]\n",
                     "  -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>\n"
                     );
@@ -111,6 +118,20 @@ int main(int argc, char **argv, char **env) {
             fflush(stdout);
             fprintf(stderr,"\n\nERROR: Could not create output file '%s'\n\n", output_filename);
             exit(-1);
+        }
+    }
+    if (outbit_filename != NULL) {
+        printf("  - Found filename for onebit output '%s'\n", outbit_filename);
+        printf("  - '%s' will contain output from pad '%s'\n", outbit_filename, outbit_padname);
+        if (strcmp(outbit_padname, "s1t0") != 0) {
+            printf("\n\nERROR haha for now can only output from pad 's1t0' sorry!\n\n");
+            exit(13);
+        }
+        outbit_file = fopen(outbit_filename, "w");
+        if (outbit_file == NULL) {
+            fflush(stdout);
+            fprintf(stderr,"\n\nERROR: Could not create onebit output file '%s'\n\n", outbit_filename);
+            exit(13);
         }
     }
 
@@ -188,8 +209,9 @@ int main(int argc, char **argv, char **env) {
     unsigned int config_addr;
     unsigned int config_data;
 
-    unsigned int pads_out; // 16-bit output value
     unsigned int pads_in;  // 16-bit  input value
+    unsigned int pads_out; // 16-bit output value
+    unsigned int outbit;   //  1-bit output value
 
     int tile_config_done;
 
@@ -292,8 +314,11 @@ int main(int argc, char **argv, char **env) {
             // FIXME (below) why not "if (!reset && !tile_config_done)" instead?
 
             /////////////////////////////////////////////////////////
-            if (!reset && !clk) { // negedge GOOD
-//            if (!reset && clk) { // posedge BAD
+            // if (!reset &&  clk) { // posedge BAD
+            // if (!reset && !clk) { // negedge GOOD
+            // OOPS should be
+            if (!reset && !clk && !tile_config_done) { // negedge GOOD
+
                 // TILE CONFIGURATION - Change config data "on posedge"
                 // E.g. set config when clk==0, after posedge event processed
 
@@ -320,7 +345,7 @@ int main(int argc, char **argv, char **env) {
             //    // READ INPUT DATA - Change input data "on posedge"
             //    // E.g. set config when clk==1, after posedge event processed
 
-            if (!reset && tile_config_done && !clk) { // negedge
+            if (!reset && !clk && tile_config_done) { // negedge
                 // READ INPUT DATA - Change input data "on negedge"
                 // E.g. set config when clk==0, after negedge event processed
 
@@ -332,6 +357,7 @@ int main(int argc, char **argv, char **env) {
                         printf("\nINFO Simulation ran for %d cycles (349)\n\n", i);
                         if (input_file)       { fclose(input_file ); }
                         if (output_file)      { fclose(output_file); }
+                        if (outbit_file)      { fclose(outbit_file); }
                         if (config_data_file) { fclose(config_data_file); }
                         CLOSETRACE // YES!
                         exit(0);
@@ -457,10 +483,20 @@ int main(int argc, char **argv, char **env) {
             //printf("OUT pad00=%d ", top->pad_S0_T0);
             //printf("pad30=%d\n", top->pad_S3_T0);
 
-
-
-            // if (! printed_something) { printf("\n"); }
+            if (outbit_file != NULL) {
+                if (outbit_padname == NULL) {
+                    printf("\n\nERROR no padname specified on cmd line\n\n");
+                    exit(13);
+                }
+                if (! strcmp(outbit_padname, "s1t0")) {
+                    outbit = top->pad_S1_T0_out;
+                } else { 
+                    printf("\n\nERROR haha for now can only output from pad 's1t0' sorry!\n\n");
+                    exit(13);
+                }
+            }
         } // for (clk)
+
         if (!reset && tile_config_done) {
             nprints++;
 
@@ -490,6 +526,7 @@ int main(int argc, char **argv, char **env) {
             if (initial_delay_so_far == delay_in) {
                 int print_result = (delay_in > 0) && (i < 40);
                 write_output(output_file, pads_in, pads_out, what_i_did, print_result);
+                if (outbit_file) { fputc(outbit, outbit_file); }
             } else {
                 initial_delay_so_far++;
             }
@@ -507,10 +544,9 @@ int main(int argc, char **argv, char **env) {
             if (feof(input_file)) {
                 if (final_delay_so_far == delay_out) {
                     printf("\n\nINFO Simulation ran for %d cycles (453)\n\n", i);
-                    // fclose(input_file);
-                    // if (output_file) { fclose(output_file); }
                     if (input_file)       { fclose(input_file ); }
                     if (output_file)      { fclose(output_file); }
+                    if (outbit_file)      { fclose(outbit_file); }
                     if (config_data_file) { fclose(config_data_file); }
                     CLOSETRACE
                     exit(0);
@@ -527,6 +563,7 @@ int main(int argc, char **argv, char **env) {
         printf("\n\nINFO Simulation ran for %d cycles (459)\n\n", NCLOCKS);
         if (input_file)       { fclose(input_file ); }
         if (output_file)      { fclose(output_file); }
+        if (outbit_file)      { fclose(outbit_file); }
         if (config_data_file) { fclose(config_data_file); }
         CLOSETRACE
         exit(0);
@@ -557,7 +594,3 @@ void write_output(
         }
     } // output_file != NULL
 }
-
-
-
-

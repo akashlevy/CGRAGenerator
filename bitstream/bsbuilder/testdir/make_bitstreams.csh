@@ -9,7 +9,7 @@ endif
 if ("$1" == "--help") then
   echo 'make_bitstreams.csh tmpdir'
   echo 'make_bitstreams.csh tmpdir pointwise'
-  echo 'make_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw'
+  echo 'make_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool'
   exit
 endif
 
@@ -27,8 +27,7 @@ if ($#argv) then
 else 
   # Do benchmarks in order
   set bmarks = (conv_1_2)
-  set bmarks = (pointwise conv_2_1 conv_3_1 conv_bw)
-  set bmarks = (pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw)
+  set bmarks = (pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool)
 endif
 
 set scriptpath = `readlink -f $0`

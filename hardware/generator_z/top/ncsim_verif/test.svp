@@ -20,12 +20,12 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
-//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 1);
-//; my $config_bs = parameter(NAME => 'config_bs', val => '/horowitz/users/ajcars/CGRAGenerator/hardware/generator_z/top/ncsim_verif/conv_3_1_pnr_bitstream', DOC => "Bitstream to configure CGRA");
-//; my $input_file = parameter(NAME => 'input', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_3_1/conv_3_1_input.raw', DOC => "Input image to use for test");
-//; my $halide_out_file = parameter(NAME => 'halide_out', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_3_1/conv_3_1_halide_out.raw', DOC => "Output image to test against");
-//; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
+//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
+//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
+//; my $config_bs = parameter(NAME => 'config_bs', val => '/horowitz/users/ajcars/CGRAGenerator/hardware/generator_z/top/ncsim_verif/conv_bw_pnr_bitstream', DOC => "Bitstream to configure CGRA");
+//; my $input_file = parameter(NAME => 'input', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_bw/conv_bw_input.raw', DOC => "Input image to use for test");
+//; my $halide_out_file = parameter(NAME => 'halide_out', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_bw/conv_bw_halide_out.raw', DOC => "Output image to test against");
+//; my $do_config_test = parameter(NAME => 'do_config_test', val => 1);
 //; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
 //; my $crop = 0;
 program automatic `mname`(
@@ -35,7 +35,7 @@ program automatic `mname`(
 	inout logic [`$num_tracks-1`:0] pads_S2,
 	inout logic [`$num_tracks-1`:0] pads_S3
 );
-   parameter io_delay = 20;
+   parameter io_delay = 130;
    parameter io1bit_num_features=1;
    parameter io16bit_num_features=1;
    parameter mem_num_features=17;
@@ -57,7 +57,7 @@ program automatic `mname`(
    logic [`$num_tracks-1`:0] gold_out;
    logic [`$num_tracks-1`:0] S1_in;
    logic [`$num_tracks-1`:0] S2_in;
-   assign pads_S3 = S1_in;  
+   assign pads_S2 = S1_in;  
    int 				 fd;
    int 				 config_file;
    int				 input_file;
@@ -227,16 +227,16 @@ program automatic `mname`(
 		if(io_delay_count!=io_delay) 
 			io_delay_count++;
 		else begin
-//		if((out_count%10) != 9 && (out_count%64!=62) && (out_count%64!=63)) begin
+		if((out_count%64!=62) && (out_count%64!=63)) begin
 			for(i=0; i<8; i++)
-				out[i] = pads_S2[15-i];
+				out[i] = pads_S3[15-i];
 			$fwrite(output_file, "%c", out[7:0]);
 			gold_out[7:0] = $fgetc(halide_out);
 			if(out[7:0]!=gold_out[7:0]) begin
 				$display("ERROR: Input: %d, CGRA out: %d, Halide out %d",in[7:0],out[7:0],gold_out[7:0]);
 				$fwrite(fd, "ERROR: ");
 			end
-//		end
+		end
 			out_count++;
 		end
 		$fwrite(fd,"Input: %d, CGRA out: %d   Halide out: %d\n",in[7:0],out[7:0],gold_out[7:0]);

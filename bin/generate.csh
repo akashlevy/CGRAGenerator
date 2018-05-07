@@ -57,6 +57,12 @@ endif
 ##############################################################################
 # Run the generator, but first clean up from prior runs.  Die if gen error.
 
+set echo
+# The whole point of this script is to use verilator...right?
+setenv USE_VERILATOR_HACKS "TRUE"
+unset echo
+
+
 # cd hardware/generator_z/top
 cd $CGROOT/hardware/generator_z/top
     if (-e ./genesis_clean.cmd) ./genesis_clean.cmd

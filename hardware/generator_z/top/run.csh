@@ -14,7 +14,7 @@ if [ -d genesis_verif ]; then
   rm -rf genesis_verif
 fi
 
-# SR 3/29
+# SR 3/29/2018
 # If using verilator, change inouts to separate ins and outs (part 1)
 # i.e. use ../io1bit/verilator_hack/io1bit.vp instead of ../io1bit/io1bit.vp
 #
@@ -26,7 +26,6 @@ else
   echo "  Verilator hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
   io1bit=../io1bit/verilator_hack/io1bit.vp;
 fi
-
 
 Genesis2.pl -parse -generate -top top -hierarchy top.xml -input\
   top.vp \
@@ -108,6 +107,19 @@ source remove_genesis_wires.csh
 # If using verilator, change inouts to separate ins and outs (part 2)
 # See 'fix_inouts.csh' code for details
 ./fix_inouts.csh top
+
+
+# SR 4/30/2018
+# If using verilator, replace SRAM w/verilator stub
+if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
+  echo '  VERILATOR HACK: SRAM'
+  echo '  VERILATOR HACK: SRAM'
+  echo '  VERILATOR HACK: SRAM'
+  cp ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
+fi
+
+
+
 
 
 # Fixed now maybe

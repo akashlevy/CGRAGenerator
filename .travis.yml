@@ -31,6 +31,7 @@ script:
   -   make SILENT=TRUE test_unit
   #   make SILENT=TRUE test_serpent_dev
   -   make SILENT=TRUE test_serpent | tee serpent_results.tmp
+  -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
   # - make SILENT=TRUE test_all
   - popd
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp

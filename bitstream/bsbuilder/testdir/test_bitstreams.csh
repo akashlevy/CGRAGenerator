@@ -3,7 +3,7 @@
 if ("$1" == "--help") then
   echo 'test_bitstreams.csh tmpdir'
   echo 'test_bitstreams.csh tmpdir pointwise'
-  echo 'test_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw'
+  echo 'test_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool'
   echo 'test_bitstreams.csh -trace tmpdir'
   echo 'test_bitstreams.csh -nobuild tmpdir'
   exit
@@ -38,8 +38,7 @@ if ($#argv) then
   set bmarks = ($*)
 else 
   # Do them in order
-  set bmarks = (pointwise conv_2_1 conv_3_1 conv_bw)
-  set bmarks = (pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw)
+  set bmarks = (pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool)
 endif
 
 set scriptpath = `readlink -f $0`
@@ -52,11 +51,12 @@ set v =  $gen/verilator/generator_z_tb
 
 
 # DB for delay, extracted below
-#   - make build/pointwise.correct.txt DELAY=0,0   
-#   - make build/conv_1_2.correct.txt  DELAY=1,0   
-#   - make build/conv_2_1.correct.txt  DELAY=10,0  
-#   - make build/conv_3_1.correct.txt  DELAY=20,0  
-#   - make build/conv_bw.correct.txt   DELAY=130,0 
+#   - make build/pointwise.correct.txt   DELAY=0,0   
+#   - make build/conv_1_2.correct.txt    DELAY=1,0   
+#   - make build/conv_2_1.correct.txt    DELAY=10,0  
+#   - make build/conv_3_1.correct.txt    DELAY=20,0  
+#   - make build/conv_bw.correct.txt     DELAY=130,0 
+#   - make build/onebit_bool.correct.txt DELAY=0,0 
 
 if (-e $tmpdir/test_results.log) rm $tmpdir/test_results.log
 
@@ -79,20 +79,27 @@ foreach b ($bmarks)
   endif
 
 
-   # NO MORE HACKMEM!
-   # ./run.csh $tswitch -hackmem -config $bsa -input $input -output $out -delay $delay \
+  set out1 = $tmpdir/${b}_CGRA_out1.raw
+  set out1sw = ""
+  if ($b == onebit_bool) then
+    set out1sw = "-out1 s1t0 $out1"
+  endif
+  
 
 
   setenv SERPENT_HACK
   (\
    cd $v; \
-   ./run.csh $buildswitch $tswitch -config $bsa -input $input -output $out -delay $delay \
+   ./run.csh $buildswitch $tswitch -config $bsa -input $input -output $out $out1sw -delay $delay \
   ) || exit 13
 
 
   echo "FINAL COMPARE FOR SUMMARY"
+  if ($b == onebit_bool) set out = $out1
   ./compare_images.csh $b $out examples/${b}_halide_out.raw\
   | tee -a $tmpdir/test_results.log
+
+  grep FAIL $tmpdir/test_results.log && exit 13
 
 end
 

@@ -38,6 +38,7 @@ if ($#argv == 2) set tracefile = $2
   # build C++ project
 
   set opt = ''
+  set opt = '--debug'
 
 # Hey HEY built a test_pe that maybe has working LUTs for kiwi;
 # new LUT code gets swapped in by top/run.csh

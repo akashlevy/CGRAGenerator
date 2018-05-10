@@ -132,7 +132,7 @@ if ($#argv == 1) then
     echo "       -input   $input  \"
     echo "       -output  $output \"
     echo "       -out1    $outpad $out1 \"
-    echo "       -delay   $DELAY"
+    echo "       -delay   $DELAY \"
     if ($?tracefile) then
       echo "       -trace $tracefile \"
     endif
@@ -668,10 +668,23 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   echo -n " TIME NOW: "; date
 
+
+
   unset FAIL
-  grep FAIL   $tmpdir/run.log.$$ && set FAIL
+
+  # Hm I think this ALWAYS fails if test is not pointwise!!?
+  # grep FAIL   $tmpdir/run.log.$$ && set FAIL
+
   grep %Error $tmpdir/run.log.$$ && set FAIL
 
+
+
+  if ($?FAIL) then
+    echo run.csh 676 oops looks like something bad must have happened
+    cat $tmpdir/run.log.$$
+    # set EXIT13
+    # goto DIE
+  endif
 
   echo
   echo "# Show output vs. input; output should be 2x input for most common testbench"
@@ -706,7 +719,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     echo
     if ($?ONEBIT) then
       echo ONEBIT OUTPUT
-       echo out1 = $out1
+      echo out1 = $out1
       echo output = $output
       set output = $out1
       echo now output = $output
@@ -717,6 +730,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   endif
 
   if ($?FAIL) then
+    echo run.csh 720 oops looks like something bad must have happened
     set EXIT13
     goto DIE
   endif
@@ -743,10 +757,16 @@ endif
 DIE:
   if ($?TRAVIS) then
     echo Time...to die.
-    jobs
-    echo "killing 'my_travis' background output"
-    kill -9 %1 || echo "Nothing to kill maybe; that's okay."
-    sleep 10
-    jobs
+    jobs >& /tmp/joblist-$$
+    if ( "`cat /tmp/joblist-$$`" != '' ) then
+      echo "killing 'my_travis' background job(s)"
+      cat /tmp/joblist-$$
+      kill -9 %1 || echo "Nothing to kill maybe; that's okay."
+      sleep 10
+      jobs
+    endif
   endif
-  if ($?EXIT13) exit 13
+  if ($?EXIT13) then
+    echo oops looks like something bad must have happened
+    exit 13
+  endif

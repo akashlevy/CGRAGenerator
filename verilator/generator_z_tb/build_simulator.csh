@@ -13,15 +13,11 @@ endif
 
 set cmd_line_switches = ()
 while ( `expr "$1" : '-'` == 1 )
-  echo "Found switch '$1'"
+  # echo "Found switch '$1'"
   set cmd_line_switches = ($cmd_line_switches $1)
-  echo $cmd_line_switches
+  # echo $cmd_line_switches
   shift
 end
-
-echo $cmd_line_switches
-
-exit
 
 set testbench = $1
 unset tracefile

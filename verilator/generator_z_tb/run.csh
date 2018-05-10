@@ -142,6 +142,7 @@ endif
 # I can't find anything else that does it :(
 
 
+set VERILATOR_DEBUG = ""
 while ($#argv)
   # echo "Found switch '$1'"
   switch ("$1")
@@ -197,6 +198,11 @@ while ($#argv)
     case '-bitstream':
       set config = "$2"; shift; breaksw
 
+
+    case -delay:
+      set DELAY = "$2"; shift; breaksw
+
+
     case -io:
       echo "WARNING -io no longer supported; this switch will be ignored."
       set iofile = "$2"; shift; breaksw
@@ -211,9 +217,6 @@ while ($#argv)
       set outpad = $2; shift;
       set out1   = $2; shift;
       breaksw;
-
-    case -delay:
-      set DELAY = "$2"; shift; breaksw
 
     case -trace:
       set tracefile = "$2"; shift; breaksw
@@ -232,6 +235,9 @@ while ($#argv)
       unsetenv CGRA_GEN_USE_MEM
       unsetenv CGRA_GEN_ALL_REG
       breaksw
+
+    case --verilator_debug:
+      set VERILATOR_DEBUG = "--debug"; shift; breaksw
 
     default:
       if (`expr "$1" : "-"`) then
@@ -468,11 +474,11 @@ if ($?FAIL) then
 endif
 
 if ($?tracefile) then
-  echo build_simulator.csh $VSWITCH $testbench $tracefile
-  ./build_simulator.csh $VSWITCH $testbench $tracefile || exit 13
+  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile
+  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile || exit 13
 else
-  echo build_simulator.csh $VSWITCH $testbench
-  ./build_simulator.csh $VSWITCH $testbench || exit 13
+  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench
+  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench || exit 13
 endif
 
 
@@ -722,7 +728,7 @@ DIE:
   if ($?TRAVIS) then
     echo Time...to die.
     jobs
-    echo "killing 'mytravis' background output"
+    echo "killing 'my_travis' background output"
     kill -9 %1 || echo "Nothing to kill maybe; that's okay."
     sleep 10
     jobs

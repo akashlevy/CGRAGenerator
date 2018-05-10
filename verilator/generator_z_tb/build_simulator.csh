@@ -11,6 +11,13 @@ if ("$1" == "-q") then
   unset VERBOSE; shift
 endif
 
+set cmd_line_switches = ()
+while ( `expr "$1" : '-'` == 1 )
+  # echo "Found switch '$1'"
+  cmd_line_switches = ($cmd_line_switches $1)
+  shift
+endwhile
+
 set testbench = $1
 unset tracefile
 if ($#argv == 2) set tracefile = $2
@@ -78,7 +85,7 @@ if ($#argv == 2) set tracefile = $2
   ls -l ./sram_stub.v $vdir/sram_512w_16b.v
 
   echo
-  echo verilator $opt -Wall $myswitches --cc --exe $testbench \
+  echo verilator $cmd_line_switches $opt -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     | fold -s | sed '2,$s/^/  /' | sed 's/$/  \\/'
   echo
@@ -90,7 +97,7 @@ if ($#argv == 2) set tracefile = $2
 #   echo
 
 
-  verilator $opt $myswitches -Wall $myswitches --cc --exe $testbench \
+  verilator $cmd_line_switches $opt $myswitches -Wall $myswitches --cc --exe $testbench \
     -y $vdir $vfiles --top-module $top \
     >& $tmpdir/verilator.out
 

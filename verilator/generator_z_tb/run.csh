@@ -55,15 +55,25 @@ rm $tmpdir/tmp
 ########################################################################
 # Detect if running from within travis
 unset TRAVIS
-# Travis branch comes up as 'detached' :(
-#   * (HEAD detached at a220e19)
-#     master
-if (`expr "$branch" : ".*detached"`) then
+
+
+# Did this change!!?
+# # Travis branch comes up as 'detached' :(
+# #   * (HEAD detached at a220e19)
+# #     master
+echo $branch
+
+
+# if (`expr "$branch" : ".*detached"`) then
+if ($?TRAVIS_BUILD_DIR) then
   echo "run.csh: I think we are running from travis"
   set TRAVIS
   set branch = `git branch | grep -v '^*' | awk '{print $1}'`
 endif
 echo "run.csh: I think we are in branch '$branch'"
+
+
+
 
 
 ########################################################################
@@ -237,7 +247,7 @@ while ($#argv)
       breaksw
 
     case --verilator_debug:
-      set VERILATOR_DEBUG = "--debug"; shift; breaksw
+      set VERILATOR_DEBUG = "--debug"; breaksw
 
     default:
       if (`expr "$1" : "-"`) then
@@ -247,6 +257,12 @@ while ($#argv)
         exec $0 --help
         set EXIT13; goto DIE
       endif
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
       set testbench = "$1";
   endsw
   shift;

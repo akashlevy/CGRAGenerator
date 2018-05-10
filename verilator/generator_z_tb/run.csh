@@ -723,7 +723,7 @@ DIE:
     echo Time...to die.
     jobs
     echo "killing 'mytravis' background output"
-    kill -9 %1
+    kill -9 %1 || echo "Nothing to kill maybe; that's okay."
     sleep 10
     jobs
   endif

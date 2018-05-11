@@ -283,7 +283,7 @@ always @(posedge clk or posedge reset) begin
   end
 end
 
-always @(posedge clk) begin
+always @(posedge clk or posedge reset) begin
   if (reset==1'b1) begin
     prev_stall_read <= 0;
     read_state_d1 <= 0;

@@ -55,15 +55,25 @@ rm $tmpdir/tmp
 ########################################################################
 # Detect if running from within travis
 unset TRAVIS
-# Travis branch comes up as 'detached' :(
-#   * (HEAD detached at a220e19)
-#     master
-if (`expr "$branch" : ".*detached"`) then
+
+
+# Did this change!!?
+# # Travis branch comes up as 'detached' :(
+# #   * (HEAD detached at a220e19)
+# #     master
+echo $branch
+
+
+# if (`expr "$branch" : ".*detached"`) then
+if ($?TRAVIS_BUILD_DIR) then
   echo "run.csh: I think we are running from travis"
   set TRAVIS
   set branch = `git branch | grep -v '^*' | awk '{print $1}'`
 endif
 echo "run.csh: I think we are in branch '$branch'"
+
+
+
 
 
 ########################################################################
@@ -122,7 +132,7 @@ if ($#argv == 1) then
     echo "       -input   $input  \"
     echo "       -output  $output \"
     echo "       -out1    $outpad $out1 \"
-    echo "       -delay   $DELAY"
+    echo "       -delay   $DELAY \"
     if ($?tracefile) then
       echo "       -trace $tracefile \"
     endif
@@ -142,6 +152,7 @@ endif
 # I can't find anything else that does it :(
 
 
+set VERILATOR_DEBUG = ""
 while ($#argv)
   # echo "Found switch '$1'"
   switch ("$1")
@@ -197,6 +208,11 @@ while ($#argv)
     case '-bitstream':
       set config = "$2"; shift; breaksw
 
+
+    case -delay:
+      set DELAY = "$2"; shift; breaksw
+
+
     case -io:
       echo "WARNING -io no longer supported; this switch will be ignored."
       set iofile = "$2"; shift; breaksw
@@ -211,9 +227,6 @@ while ($#argv)
       set outpad = $2; shift;
       set out1   = $2; shift;
       breaksw;
-
-    case -delay:
-      set DELAY = "$2"; shift; breaksw
 
     case -trace:
       set tracefile = "$2"; shift; breaksw
@@ -233,6 +246,9 @@ while ($#argv)
       unsetenv CGRA_GEN_ALL_REG
       breaksw
 
+    case --verilator_debug:
+      set VERILATOR_DEBUG = "--debug"; breaksw
+
     default:
       if (`expr "$1" : "-"`) then
         echo ""
@@ -241,6 +257,12 @@ while ($#argv)
         exec $0 --help
         set EXIT13; goto DIE
       endif
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
+      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
       set testbench = "$1";
   endsw
   shift;
@@ -468,11 +490,11 @@ if ($?FAIL) then
 endif
 
 if ($?tracefile) then
-  echo build_simulator.csh $VSWITCH $testbench $tracefile
-  ./build_simulator.csh $VSWITCH $testbench $tracefile || exit 13
+  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile
+  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile || exit 13
 else
-  echo build_simulator.csh $VSWITCH $testbench
-  ./build_simulator.csh $VSWITCH $testbench || exit 13
+  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench
+  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench || exit 13
 endif
 
 
@@ -646,10 +668,23 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
   echo -n " TIME NOW: "; date
 
+
+
   unset FAIL
-  grep FAIL   $tmpdir/run.log.$$ && set FAIL
+
+  # Hm I think this ALWAYS fails if test is not pointwise!!?
+  # grep FAIL   $tmpdir/run.log.$$ && set FAIL
+
   grep %Error $tmpdir/run.log.$$ && set FAIL
 
+
+
+  if ($?FAIL) then
+    echo run.csh 676 oops looks like something bad must have happened
+    cat $tmpdir/run.log.$$
+    # set EXIT13
+    # goto DIE
+  endif
 
   echo
   echo "# Show output vs. input; output should be 2x input for most common testbench"
@@ -684,7 +719,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
     echo
     if ($?ONEBIT) then
       echo ONEBIT OUTPUT
-       echo out1 = $out1
+      echo out1 = $out1
       echo output = $output
       set output = $out1
       echo now output = $output
@@ -695,6 +730,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   endif
 
   if ($?FAIL) then
+    echo run.csh 720 oops looks like something bad must have happened
     set EXIT13
     goto DIE
   endif
@@ -721,10 +757,16 @@ endif
 DIE:
   if ($?TRAVIS) then
     echo Time...to die.
-    jobs
-    echo "killing 'mytravis' background output"
-    kill -9 %1
-    sleep 10
-    jobs
+    jobs >& /tmp/joblist-$$
+    if ( "`cat /tmp/joblist-$$`" != '' ) then
+      echo "killing 'my_travis' background job(s)"
+      cat /tmp/joblist-$$
+      kill -9 %1 || echo "Nothing to kill maybe; that's okay."
+      sleep 10
+      jobs
+    endif
   endif
-  if ($?EXIT13) exit 13
+  if ($?EXIT13) then
+    echo oops looks like something bad must have happened
+    exit 13
+  endif

@@ -199,8 +199,6 @@ while ($#argv)
     case '-rebuild':
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 
-
-
     case '-config':
       set config = "$2"; shift; breaksw
 
@@ -225,6 +223,9 @@ while ($#argv)
       set outpad = $2; shift;
       set out1   = $2; shift;
       breaksw;
+
+    case -delay:
+      set DELAY = "$2"; shift; breaksw
 
     case -trace:
       set tracefile = "$2"; shift; breaksw
@@ -768,3 +769,4 @@ DIE:
     echo oops 768 looks like something bad must have happened
     exit 13
   endif
+  

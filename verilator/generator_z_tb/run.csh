@@ -208,10 +208,8 @@ while ($#argv)
     case '-bitstream':
       set config = "$2"; shift; breaksw
 
-
     case -delay:
       set DELAY = "$2"; shift; breaksw
-
 
     case -io:
       echo "WARNING -io no longer supported; this switch will be ignored."
@@ -767,6 +765,6 @@ DIE:
     endif
   endif
   if ($?EXIT13) then
-    echo oops looks like something bad must have happened
+    echo oops 768 looks like something bad must have happened
     exit 13
   endif

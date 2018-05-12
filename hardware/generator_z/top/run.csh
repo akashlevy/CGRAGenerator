@@ -115,17 +115,7 @@ if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
   echo '  VERILATOR HACK: SRAM'
   echo '  VERILATOR HACK: SRAM'
   echo '  VERILATOR HACK: SRAM'
-  echo '----'
-  ls -l ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
-  echo '----'
-  cp ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
-  echo '----'
-  ls -l ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
-  echo '----'
 fi
-
-
-
 
 
 # Fixed now maybe

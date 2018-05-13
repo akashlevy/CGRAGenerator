@@ -119,9 +119,6 @@ if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
 fi
 
 
-
-
-
 # Fixed now maybe
 # # Must fix e.g.  <depth bith='15' bitl='3'>0</depth>
 # # should be <fifo_depth bith='15' bitl='3'>0</fifo_depth>

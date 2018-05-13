@@ -1,20 +1,8 @@
 <pre>
-To run the generator and build a basic 4x4 PE-tile-only CGRA chip:
-    ./run.csh
+To build the CGRA, cd to this directory and execute "run.csh"
 
 If you get an error "Genesis2.pl: command not found" then run 
 "./setup-genesis2.csh" and follow the directions
-
-To build previous version (should never need):
-    ./run_oldmemtile.csh
-
-To generate 8x8 fabric with memories, do
-    setenv CGRA_GEN_USE_MEM 1
-    ./run.csh
-
-For providing registers on all outputs of all SBs, do
-    setenv CGRA_GEN_ALL_REG 1
-    ./run.csh
 
 To clean up after running the generator, use the "genesis_clean"
 script, which is created every time you execute "run.csh":

@@ -3,12 +3,16 @@
 # SR Yes, I know, the name of this script is "run.csh"
 # but it's written in bash instead of csh :(
 
-
 # @Caleb: For providing registers on all outputs of all SBs, do-
 # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
 # export CGRA_GEN_ALL_REG=1  (sh syntax)
 export CGRA_GEN_ALL_REG=1
 
+if [ ! `command -v Genesis2.pl` ]; then
+  echo 'run.csh: Oops cannot find Genesis2.pl; I will try to fix this for you'
+  echo 'run.csh: source ./setup-genesis2.sh'
+  source ./setup-genesis2.sh
+fi
 
 if [ -d genesis_verif ]; then
   rm -rf genesis_verif

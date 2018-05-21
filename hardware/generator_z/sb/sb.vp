@@ -89,11 +89,29 @@ read_data
   always @(posedge clk or posedge reset) begin
     if (reset==1'b1) begin
 
+   //;# 12/2017 Nikhil changed default to pe_output to avoid loops (note the tilde)
+   //;# config_sb <= ~(`$config_reg_width`'d0);
+   //;#
+   //;# 12/2017 SR changed default so that pe_output is selected AND registers are off
+   //;# Want regs initialized to zero, everything else to 1 e.g. 64'h0000,00FF,FFFF,FFFF
+   //;#   my $mask = sprintf("%016X", 2**$nonreg_bits - 1);
+   //;#   config_sb <= `$config_reg_width`'h`$mask`;
+   //;#
+   //;# SR 5/2018
+   //;# Note perl has insufficient precision to calculate 2**n when n is large!
+   //;# It does not err, just silently gives the wrong answer :(
+   //;# Better: in verilog e.g. {16{1'b1}} = 0xFFFF
    //; {
    //;   my   $nreg_bits = $registered_count * $sides;
    //;   my $nonreg_bits = $config_bit_count - $nreg_bits;
-   //;   my $mask = sprintf("%016X", 2**$nonreg_bits - 1);
-      config_sb <= `$config_reg_width`'h`$mask`;
+      // SR/NB 12/2017
+      // Initialize registers to "unregistered" (leading zeroes);
+      // initialize routes to pe_out_res (ones) (in the case of PEs)
+      //
+      // SR 5/2018 NOTE/BEWARE/FIXME! sb module also used in memtiles, which
+      // have no pe_res_out, so default behavior (below) may be unexpected!!!
+      // (Memtile defaults are rdata and/or almost_empty, maybe.)
+      config_sb <= {`$nonreg_bits`{1'b1}};
    //; }
 
     end else begin

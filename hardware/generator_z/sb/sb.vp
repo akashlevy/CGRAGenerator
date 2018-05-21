@@ -111,7 +111,19 @@ read_data
       // SR 5/2018 NOTE/BEWARE/FIXME! sb module also used in memtiles, which
       // have no pe_res_out, so default behavior (below) may be unexpected!!!
       // (Memtile defaults are rdata and/or almost_empty, maybe.)
-      config_sb <= {`$nonreg_bits`{1'b1}};
+      //
+      // SR 5/2018 Hacky 'fix' for above problem:
+      // For mem-control-bit switchboxes, use all zeroes as the default.
+      // This does not really fix the problem maybe, but it propagates
+      // the previously-working solution ish.
+   //;#
+   //;# SR 5/2018
+   //;# This is the hacky way how I tell whether sb targets mem-control-bits
+   //;   if ($nonreg_bits > 40) {
+      config_sb <= {`$config_reg_width`{1'b0}}; // for mem-control-bit wiring
+   //;   } else {
+      config_sb <= {`$nonreg_bits`{1'b1}}; // for routing normal wire tracks
+   //;   }
    //; }
 
     end else begin

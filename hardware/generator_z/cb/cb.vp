@@ -59,12 +59,13 @@ read_data
   reg [`$config_reg_width-1`:0] config_cb;
   /* verilator lint_on UNUSED */
   //; my $config_addrs_needed = int(ceil($config_bit_count / 32.0));
+  //; my $reset_val = $num_tracks - $feedthrough_count + $has_constant - 1;
   always @(posedge clk or posedge reset) begin
     if (reset==1'b1) begin
 //;   if ($constant_bit_count>0) {
-        config_cb <= {`$constant_bit_count`'d`${default_value}`,`$mux_sel_bit_count`'d`($num_tracks - $feedthrough_count + $has_constant - 1)`};
+        config_cb <= {`$constant_bit_count`'d`${default_value}`,`$mux_sel_bit_count`'d`$reset_val`};
 //;   } else {
-        config_cb <= `$mux_sel_bit_count`'d`($num_tracks - $feedthrough_count + $has_constant - 1)`;
+        config_cb <= `$mux_sel_bit_count`'d`$reset_val`;
 //;   }
     end else begin
       if (config_en==1'b1) begin
@@ -93,7 +94,7 @@ read_data
 //;open(CBINFO, ">$filename") or die "Couldn't open file $filename, $!";
 //;print CBINFO "        <sel_width>$mux_sel_bit_count</sel_width>\n";
 //;#print CBINFO "        <has_constant>$has_constant</has_constant>\n";
-//;print CBINFO "        <mux snk='out'>\n";
+//;print CBINFO "        <mux snk='out' default='$reset_val'>\n";
 //; my $sel=0;
   always @(*) begin
     case (config_cb[`$mux_sel_bit_count - 1`:0])

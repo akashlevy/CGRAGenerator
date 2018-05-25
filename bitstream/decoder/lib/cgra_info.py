@@ -282,8 +282,13 @@ def sb_decode(sb,RR,DDDDDDDD):
                     
 
         # Process the connection
-        configh = getnum(mux.attrib['configh'])
-        configl = getnum(mux.attrib['configl'])
+        # OLD
+        # configh = getnum(mux.attrib['configh'])
+        # configl = getnum(mux.attrib['configl'])
+        # NEW
+        configh = getnum(mux.attrib['bith'])
+        configl = getnum(mux.attrib['bitl'])
+
         snk     = mux.attrib['snk']
 
         # Check to see if this is the right register
@@ -673,7 +678,11 @@ def find_regbit(sb, src, DBG=0):
         if owsrc == src:
             if DBG: print '684 found src', reg.attrib['src']
             assert reg.attrib['bith'] == reg.attrib['bitl']
-            regbit = getnum(reg.attrib['bith'])
+            reg_address  = getnum(reg.attrib['reg_address'])
+            bith         = getnum(reg.attrib['bith'])
+            bitl         = getnum(reg.attrib['bitl'])
+            assert bith == bitl;
+            regbit = 32 * reg_address + bitl;
             return regbit
 
     errmsg = "\nERROR Cannot find '<reg>' tag in sb; " + \

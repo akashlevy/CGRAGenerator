@@ -17,9 +17,12 @@ config_data,
 config_write,
 config_read,
 tile_id,
-read_data
-);
+read_data,
+rte,
+esd);
 
+  input rte;
+  input esd;
   /* verilator lint_off UNUSED */
   input  clk;
   input  reset;
@@ -36,7 +39,8 @@ read_data
   /* verilator lint_on UNUSED */
 
   wire ___genesis_wire_`${side}`_`${io_group}`;
-
+  wire muxed_f2p;
+  wire rte, esd;
   //; # Bits [31:24] are for switch box, [23:0] for connection box.
   //; # So we have to let the linter know (verilator 'lint_off' directives above) or it complains:
   //; # %Warning-UNUSED: .../cb_unq1.v:73: Bits of signal are not used: config_addr[23:0]
@@ -76,8 +80,32 @@ read_data
       read_data = 'h0;
     end
   end
-  assign pad = (io_bit==1'b1)?((out_bus==1'b0)?f2p_16:f2p_1):1'bz;
-  assign p2f = pad;
+  //assign pad = (io_bit==1'b1)?((out_bus==1'b0)?f2p_16:f2p_1):1'bz;
+  //assign p2f = pad;
+
+  assign muxed_f2p = (out_bus==1'b0) ? f2p_16 : f2p_1;
+
+//; my $prefix = "H";
+//; if ($side==1 || $side==3) {
+//;   $prefix = "V";
+//; }
+PRWDWUWSWCDGH_`${prefix}` IOPAD(
+  .PAD(pad),
+  .I(muxed_f2p),
+  .OEN(io_bit),
+  .ST(1'b0),
+  .SL(1'b0),
+  .IE(io_bit),
+  .C(p2f),
+  .DS0(1'b0), 
+  .DS1(1'b0), 
+  .DS2(1'b0),
+  .PU(1'b0),
+  .PD(1'b0), 
+  .RTE(rte),
+  .ESD(esd)
+);
+
 
 
 endmodule

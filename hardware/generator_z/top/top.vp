@@ -34,6 +34,7 @@
 //; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
 //; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
+//; @IO_count = qw(16 16 16 16);
 //; #
 //; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
 //; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
@@ -45,7 +46,7 @@
 //; # not include IO tiles in the basic block.
 //; #
 //; my $basic_block  = "pe pe pe mem\n";
-//;    $basic_block .= "pe pe pe X  ";
+//;    $basic_block .= "pe pe pe mem  ";
 //; #
 //; # Number of times the basic block repeats in the horizontal direction.
 //; #
@@ -59,6 +60,8 @@
 //; if ($grid_size == "64x64") { $basic_block_repeat_x = 16; $basic_block_repeat_y = 32; }
 //; if ($grid_size == "16x16") { $basic_block_repeat_x =  4; $basic_block_repeat_y = 8; }
 //; if ($grid_size == "48x48") { $basic_block_repeat_x = 12; $basic_block_repeat_y = 24; }
+//; $basic_block_repeat_x = 4; $basic_block_repeat_y = 8;
+
 //; #
 //; #
 //; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
@@ -120,7 +123,7 @@
 //; };
 //; $tile_config->{ 'mem' } = {
 //;       type => 'memory_tile',
-//;       tile_height => 2,
+//;       tile_height => 1,
 //;       tile_width => 1,
 //;       gen_mem_for_busname => 'BUS16',
 //;       control_busname => 'BUS1',
@@ -702,15 +705,19 @@ wire [31:0] analog_r`$i`;
 //;       }
 //;     }
 //;    if ($tile_type eq "mem") {
+    wire [31:0] config_addr_`$tile_addr_hex`;
+    wire [31:0] config_data_`$tile_addr_hex`;
+    wire  config_read_`$tile_addr_hex`;
+    wire  config_write_`$tile_addr_hex`;
     wire [31:0] read_data_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk_in(clk),
       .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_write(config_write),
-      .config_read(config_read),
+      .config_addr(config_addr_`$tile_addr_hex`),
+      .config_data(config_data_`$tile_addr_hex`),
+      .config_write(config_write_`$tile_addr_hex`),
+      .config_read(config_read_`$tile_addr_hex`),
 //;   for (my $row=0; $row < $tile_config->{ $tile_type }{ 'tile_height' }; $row++) {
 //;     for my $bus (sort keys %bus_num_tracks_hash) {
 //;       my $num_tracks = $bus_num_tracks_hash { $bus };
@@ -779,14 +786,18 @@ wire [31:0] analog_r`$i`;
             //;  }
 //;    } elsif ($tile_type eq "pe") {
     wire [31:0] read_data_`$tile_addr_hex`;
+    wire [31:0] config_addr_`$tile_addr_hex`;
+    wire [31:0] config_data_`$tile_addr_hex`;
+    wire  config_read_`$tile_addr_hex`;
+    wire  config_write_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk_in(clk),
       .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_read(config_read),
-      .config_write(config_write),
+      .config_addr(config_addr_`$tile_addr_hex`),
+      .config_data(config_data_`$tile_addr_hex`),
+      .config_read(config_read_`$tile_addr_hex`),
+      .config_write(config_write_`$tile_addr_hex`),
 //;     for my $bus (sort keys %bus_num_tracks_hash) {
 //;       my $num_tracks = $bus_num_tracks_hash { $bus };
 //;       my $bus_width = $bus_width_hash { $bus };
@@ -830,14 +841,18 @@ wire [31:0] analog_r`$i`;
 //;    } elsif ($tile_type eq "io1") {
 
     wire [31:0] read_data_`$tile_addr_hex`;
+    wire [31:0] config_addr_`$tile_addr_hex`;
+    wire [31:0] config_data_`$tile_addr_hex`;
+    wire  config_read_`$tile_addr_hex`;
+    wire  config_write_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk(clk),
       .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_read(config_read),
-      .config_write(config_write),
+      .config_addr(config_addr_`$tile_addr_hex`),
+      .config_data(config_data_`$tile_addr_hex`),
+      .config_read(config_read_`$tile_addr_hex`),
+      .config_write(config_write_`$tile_addr_hex`),
 //;       my $s = $io_side; 
 //;       my $opposite_side = $s + int($sides*0.5);
 //;       if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}

@@ -317,7 +317,7 @@ if (${config:t:r} == 'onebit_bool') set ONEBIT
 # endif
 
 # Can use this to extend time on travis
-if ($?TRAVIS) ./my_travis_wait.csh 15 &
+# if ($?TRAVIS) ./my_travis_wait.csh 15 &
 
 # Turn nclocks into an integer.
 set nclocks = `echo $nclocks | sed 's/,//g' | sed 's/K/000/' | sed 's/M/000000/'`

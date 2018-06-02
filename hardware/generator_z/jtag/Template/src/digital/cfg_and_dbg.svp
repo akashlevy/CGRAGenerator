@@ -325,7 +325,7 @@ module `mname`
    
 
    // assign transaction to the bus on update (pulse)
-   assign 			   sc_cfgReq.op = (inst_update_qualified) ? 
+   assign 			   sc_cfgReq_op = (inst_update_qualified) ? 
 						   sc_inst : `$sc_cfg_op_width`'d`$sc_nop`;
    // assign tdo with instruction always
    assign 			   sc_cfg_inst_tdo = sc_inst[0];
@@ -344,7 +344,7 @@ module `mname`
       .Clk(tck),	.en(sc_cfg_addr_shift_dr),      .Reset(test_logic_reset));
 
    // assign bus / tdo with address (always)
-   assign 			     sc_cfgReq.addr = sc_addr;
+   assign 			     sc_cfgReq_addr = sc_addr;
    assign 			     sc_cfg_addr_tdo = sc_addr[0];
    //*******
 
@@ -357,10 +357,10 @@ module `mname`
    //;					     Width => $sc_cfg_bus_width);
    logic [`$sc_cfg_bus_width-1`:0] sc_data_rd;
    logic 			   sc_data_rd_en;
-   assign 			   sc_data_rd_en = (sc_cfgRep.op == `$sc_cfg_op_width`'d`$sc_bypassop`)? 
+   assign 			   sc_data_rd_en = (sc_cfgRep_op == `$sc_cfg_op_width`'d`$sc_bypassop`)? 
 						   1'b1: 1'b0;
    `$sc_data_rd_reg->get_module_name()` `$sc_data_rd_reg->get_instance_name()` 
-     (.dout(sc_data_rd),	.din(sc_cfgRep.data),
+     (.dout(sc_data_rd),	.din(sc_cfgRep_data),
       .Clk(Clk),	.en(sc_data_rd_en),      
       .Reset(Reset));
    //*******
@@ -383,7 +383,7 @@ module `mname`
       .Reset(test_logic_reset));
 
    // assign bus / tdo with data (always)
-   assign 			     sc_cfgReq.data = sc_data;
+   assign 			     sc_cfgReq_data = sc_data;
    assign sc_cfg_data_tdo = sc_data[0];
    //*******
    //; } # end of "if ($sc_cfg_bus =~ m/on|yes/i)..."

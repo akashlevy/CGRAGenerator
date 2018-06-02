@@ -116,12 +116,19 @@ module `mname`
   (
    // Signals for a system clked configuration bus
    //; if ($sc_cfg_bus =~ m/^(on|yes)$/i){
-   `$sc_cfg_req_ifc->get_module_name()`.cfgOut sc_cfgReq,
-   `$sc_cfg_rep_ifc->get_module_name()`.cfgIn sc_cfgRep,
+   //`$sc_cfg_req_ifc->get_module_name()`.cfgOut sc_cfgReq,
+   output [31:0] sc_cfgReq_addr,
+   output [31:0] sc_cfgReq_data,
+   output [4:0] sc_cfgReq_op,
+   
+   //`$sc_cfg_rep_ifc->get_module_name()`.cfgIn sc_cfgRep,
+   input [31:0] sc_cfgRep_addr,
+   input [31:0] sc_cfgRep_data,
+   input [4:0] sc_cfgRep_op,
 
    // system clock and reset
-   input                                logic Clk,
-   input             	                logic Reset,
+   input                                Clk,
+   input             	                Reset,
    //; }
    
    // Signals for a jtag clked configuration bus
@@ -140,16 +147,16 @@ module `mname`
     output 				logic bsr_update_en,
     output 				logic bsr_capture_en,
     output 				logic bsr_shift_dr,
-    input 				logic bsr_tdo,
+    input 				bsr_tdo,
 
     //Is global controller running on sys clk? or still on test clk?
-    input	 logic sys_clk_activated,
+    input	 sys_clk_activated,
 
 
-    input        logic  tms,          	// JTAG Test Mode Select
-    input        logic  tck,          	// JTAG Test Clock
-    input        logic  trst_n,         // JTAG Test Reset
-    input        logic  tdi,          	// JTAG Test Data Input
+    input        tms,          	// JTAG Test Mode Select
+    input        tck,          	// JTAG Test Clock
+    input        trst_n,         // JTAG Test Reset
+    input        tdi,          	// JTAG Test Data Input
     output       logic  tdo,	      	// JTAG Test Data Output
     output       logic  tdo_en	        // JTAG Test Data Output
     );

@@ -63,8 +63,10 @@ jm_out
   reg sys_clk_act_sync_1;
   reg sys_clk_act_sync_2;
   //separate op out from address field
-`$jtag_ifc -> instantiate` (.Clk(clk), .Reset(reset_in));
+`$jtag_ifc -> instantiate` (); //.Clk(clk), .Reset(reset_in));
 `$jtag_obj -> instantiate` (.ifc(`$jtag_ifc->iname()`),
+	      		    .clk(clk),
+			    .reset(reset_in),
 			    .sys_clk_activated(sys_clk_activated),
 			    .bsr_tdi(),
 			    .bsr_sample(),

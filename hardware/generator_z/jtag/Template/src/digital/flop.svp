@@ -38,14 +38,14 @@
 module `mname`(
 	       //inputs
 	       //; if ($type !~ m/constant/i) {
-	       input logic 		   Clk,
-	       input logic [`$width-1`:0]  din,
+	       input 		   Clk,
+	       input [`$width-1`:0]  din,
 	       //; }
 	       //; if ($type =~ m/rflop/i || $type =~ m/reflop/i) {
-	       input logic 		   Reset,
+	       input 		   Reset,
 	       //; }
 	       //; if ($type =~ m/eflop/i || $type =~ m/reflop/i) {
-	       input logic 		   en,
+	       input 		   en,
 	       //; }
 
 	       //outputs
@@ -92,4 +92,4 @@ module `mname`(
 	dout <= din;
    end
    //; }
-endmodule : `mname`
+endmodule

@@ -113,6 +113,8 @@ module `$self->get_module_name()`
   (
    // main IOs
    `$ifc->get_module_name()`.des ifc,
+   input clk,
+   input reset,
    input  sys_clk_activated, //Is global controller on sys clk yet?
    //Signals for boundary scan register
    output bsr_tdi,
@@ -193,8 +195,8 @@ module `$self->get_module_name()`
       .sc_cfgRep_addr(sc_gc2jtag_ifc_addr),
       .sc_cfgRep_data(sc_gc2jtag_ifc_data),
       .sc_cfgRep_op(sc_gc2jtag_ifc_op),      
-      .Reset(ifc.Reset),
-      .Clk(ifc.Clk),
+      .Reset(reset), //ifc.Reset),
+      .Clk(clk), //ifc.Clk),
       .sys_clk_activated(sys_clk_activated)
       );
    

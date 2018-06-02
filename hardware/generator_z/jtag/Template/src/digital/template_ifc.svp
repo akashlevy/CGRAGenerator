@@ -31,7 +31,7 @@
 //;
 //;# include ("analog_defs.vph");
 
-interface `$self->get_module_name()`(input Clk, input Reset);
+interface `$self->get_module_name()` (); //(input Clk, input Reset);
    //; foreach my $io (@{$io_list}){
    //; my $type = 'logic';
    //; $type = 'real' if $io->{pad} =~ m/^(anl|analog)/i;
@@ -42,6 +42,8 @@ interface `$self->get_module_name()`(input Clk, input Reset);
    //;   }
    //; }
    //;
+
+   logic Clk;
    
 
    modport des(
@@ -52,8 +54,8 @@ interface `$self->get_module_name()`(input Clk, input Reset);
    //; }
    //;
 	       
-   input Clk,
-   input Reset
+   input Clk
+//   input Reset
 	       );
     
    
@@ -80,8 +82,8 @@ interface `$self->get_module_name()`(input Clk, input Reset);
       `$dir`				`$io->{name}`,
       //; }
       //;
-    input Clk,
-    input Reset
+    output Clk
+//    input Reset
       );
    
       

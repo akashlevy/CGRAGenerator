@@ -194,7 +194,9 @@ always @(*) begin
       mem_data_in0 = config_data[15:0];
       mem_data_in1 = config_data[15:0];
       data_out = (sram_sel==1'b1)?mem_data_out1:mem_data_out0;
-      valid_out = 1'b0;  
+      valid_out = 1'b0;
+      almost_full = 1'b0;
+      almost_empty = 1'b0;
   end
   else begin
   case (mode)

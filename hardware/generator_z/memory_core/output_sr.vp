@@ -101,6 +101,8 @@ valid
         data_out <= {data_sr[`($dwidth*2) - 1`:`($dwidth)`]};
       end else if (count==2'd3) begin
         data_out <= {data_sr[`($dwidth*3) - 1`: `($dwidth*2)`]};
+      end else begin
+        data_out <= `($dwidth)`'h0;
       end
     end else begin
       data_out <= `$dwidth`'d0;

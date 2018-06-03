@@ -86,7 +86,7 @@ module `$self->get_module_name()`
    output logic bsr_capture_en, // required by bsr cells
    output logic bsr_shift_dr, // required by bsr cells	  
    output logic bsr_update_en, // required by bsr cells
-   input logic 	bsr_tdo, // data from the boundary scan register
+   input logic	bsr_tdo, // data from the boundary scan register
   
    // Special registers
    //; foreach my $jtag_inst (@{$special_jtag_insts}){

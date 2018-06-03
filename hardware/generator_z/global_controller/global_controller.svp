@@ -64,8 +64,17 @@ jm_out
   reg sys_clk_act_sync_2;
   //separate op out from address field
 `$jtag_ifc -> instantiate` (); //.Clk(clk), .Reset(reset_in));
-`$jtag_obj -> instantiate` (.ifc(`$jtag_ifc->iname()`),
-	      		    .clk(clk),
+`$jtag_obj -> instantiate` (//.ifc(`$jtag_ifc->iname()`),
+			    .ifc_trst_n(`$jtag_ifc->iname()`.trst_n),
+			    .ifc_tck(`$jtag_ifc->iname()`.tck),
+			    .ifc_tms(`$jtag_ifc->iname()`.tms),
+			    .ifc_tdi(`$jtag_ifc->iname()`.tdi),
+			    .ifc_tdo(`$jtag_ifc->iname()`.tdo),
+			    .ifc_config_addr_to_gc(`$jtag_ifc->iname()`.config_addr_to_gc),
+			    .ifc_config_data_from_gc(`$jtag_ifc->iname()`.config_data_from_gc),
+			    .ifc_config_data_to_gc(`$jtag_ifc->iname()`.config_data_to_gc),
+			    .ifc_config_op_to_gc(`$jtag_ifc->iname()`.config_op_to_gc),
+		      		    .clk(clk),
 			    .reset(reset_in),
 			    .sys_clk_activated(sys_clk_activated),
 			    .bsr_tdi(),

@@ -86,7 +86,7 @@ module `$self->get_module_name()`
    output logic bsr_capture_en, // required by bsr cells
    output logic bsr_shift_dr, // required by bsr cells	  
    output logic bsr_update_en, // required by bsr cells
-   input logic	bsr_tdo, // data from the boundary scan register
+   input 	bsr_tdo, // data from the boundary scan register
   
    // Special registers
    //; foreach my $jtag_inst (@{$special_jtag_insts}){
@@ -97,14 +97,14 @@ module `$self->get_module_name()`
 
    // Special TDOs
    //; foreach my $jtag_inst (@{$special_jtag_insts}){
-   input logic 	`$jtag_inst->{name}`_tdo, // serial data out from DATA register `$jtag_inst->{name}`
+   input 	`$jtag_inst->{name}`_tdo, // serial data out from DATA register `$jtag_inst->{name}`
    //;}
 
    // the standard JTAG IOs
-   input logic 	tms, // JTAG Test Mode Select
-   input logic 	tck, // JTAG Test Clock
-   input logic 	trst_n, // JTAG Test Reset
-   input logic 	tdi, // JTAG Test Data Input
+   input 	tms, // JTAG Test Mode Select
+   input 	tck, // JTAG Test Clock
+   input 	trst_n, // JTAG Test Reset
+   input 	tdi, // JTAG Test Data Input
    output logic tdo, // JTAG Test Data Output
    output logic tdo_en	        // JTAG Test Data Output
    );

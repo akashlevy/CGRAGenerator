@@ -52,10 +52,6 @@ generate
   end
 endgenerate
 
-
-logic [31:0] nc_cfg_d;
-assign nc_cfg_d = cfg_d;
-
 endmodule
 
 

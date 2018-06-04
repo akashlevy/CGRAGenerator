@@ -139,18 +139,6 @@ assign chain_valid_out = valid_out;
 //assign mem_data_out0_with_snap = (clk_en > prev_clk_en) ? stall_snapshot_0 : mem_data_out0;
 //assign mem_data_out1_with_snap = (clk_en > prev_clk_en) ? stall_snapshot_1 : mem_data_out1;
 
-// WENHACK code, please do not remove w/o checking with steveri@stanford.edu!
-// At the last minute, run.csh can modify wen_int assignment above
-// to read "assign  wen_in_int = WENHACK" instead
-reg WENHACK;
-always @(posedge gclk_in or posedge reset) begin
-   if (reset==1'b1) begin
-     WENHACK = 1'b0;
-   end else if (data_in != 16'b0) begin
-     WENHACK = 1'b1;
-   end
-end
-
 /*always @(posedge gclk_in or posedge reset) begin
    if (reset==1'b1) begin
       stall_snapshot_0 <= 0;

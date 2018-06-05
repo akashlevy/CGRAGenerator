@@ -686,11 +686,13 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
   endif
 
   echo
+  echo "# run.csh: Reminder config was $config:r"
   echo "# Show output vs. input; output should be 2x input for most common testbench"
 
   if ($?input) then
     echo
-    ls -l $input $output
+    ls -l $input
+    ls -l $output
 
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
@@ -713,7 +715,7 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
 
     echo
     set cmd = "od -t u1 $input"
-    echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
+    echo "INPUT  $cmd"; $cmd | head; echo ...; $cmd | tail -n 3
 
     echo
     if ($?ONEBIT) then
@@ -724,8 +726,10 @@ if ($?VERBOSE) echo '  First prepare input and output files...'
       echo now output = $output
     endif
 
+    echo ''
     set cmd = "od -t u1 $output"
-    echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
+    echo "OUTPUT $cmd"; $cmd | head; echo ...; $cmd | tail -n 3
+    echo ''
   endif
 
   if ($?FAIL) then
@@ -741,13 +745,13 @@ if (! `expr $pwd : /home/travis`) then
   set gbuild = ../../hardware/generator_z/top
   cat << eof
 
-************************************************************************
-NOTE: If you want to clean up after yourself you'll want to do this:
-
-  ./run.csh -clean
-  pushd $gbuild; ./genesis_clean.cmd; popd
-
-************************************************************************
+  ************************************************************************
+  NOTE: If you want to clean up after yourself you'll want to do this:
+  
+    ./run.csh -clean
+    pushd $gbuild; ./genesis_clean.cmd; popd
+  
+  ************************************************************************
 
 eof
 endif
@@ -760,6 +764,8 @@ DIE:
     if ( "`cat /tmp/joblist-$$`" != '' ) then
       echo "killing 'my_travis' background job(s)"
       cat /tmp/joblist-$$
+      # Wait for stdout to settle I guess
+      sleep 10
       kill -9 %1 || echo "Nothing to kill maybe; that's okay."
       sleep 10
       jobs

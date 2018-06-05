@@ -45,6 +45,7 @@ echo 'cd $gen/bitstream/bsbuilder'
 echo 'alias json2dot $gen/testdir/graphcompare/json2dot.py'
 echo ''
 
+unset someone_failed
 set t = '$tmp'
 foreach b ($bmarks)
   set result = 'PASSED'
@@ -106,9 +107,19 @@ foreach b ($bmarks)
   # if ($result == "FAILED") exit 13
   if ($result == "FAILED") then
     echo "WARNING comparison failed; will attempt to recover"
+    set someone_failed
   endif
 
 end
+
+if ($?someone_failed) then
+  echo "Hey!  In case you didn't notice..."
+  echo "One or more of the above tests FAILED"
+  echo ""
+else
+  echo "Looks like all tests PASSED"
+  echo ""
+endif
 
 # Clean up
 # No! Not my job!

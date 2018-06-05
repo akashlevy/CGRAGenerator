@@ -101,9 +101,11 @@ read_data
    //;# Note perl has insufficient precision to calculate 2**n when n is large!
    //;# It does not err, just silently gives the wrong answer :(
    //;# Better: in verilog e.g. {16{1'b1}} = 0xFFFF
+   //; my   $nreg_bits = $registered_count * $sides;
+   //; my $nonreg_bits = $config_bit_count - $nreg_bits;
+   //; my $mux_default = ($nonreg_bits <= 40) ? 1 : 0;
+   //; my $reg_default = 0; 
    //; {
-   //;   my   $nreg_bits = $registered_count * $sides;
-   //;   my $nonreg_bits = $config_bit_count - $nreg_bits;
       // SR/NB 12/2017
       // Initialize registers to "unregistered" (leading zeroes);
       // initialize routes to pe_out_res (ones) (in the case of PEs)
@@ -120,11 +122,7 @@ read_data
    //;# SR 5/2018
    //;# This is the hacky way how I tell whether sb targets mem-control-bits
 
-   //;   if ($nonreg_bits <= 40) {
-      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b0}},{`$nonreg_bits`{1'b1}}}; // for routing normal wire tracks
-   //;   } else {
-      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b0}},{`$nonreg_bits`{1'b0}}}; // for mem-control-bit wiring
-   //;   }
+      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b`$reg_default`}},{`$nonreg_bits`{1'b`$mux_default`}}}; // for mem-control-bit wiring
    //; }
 
     end else begin
@@ -191,11 +189,9 @@ read_data
 //;        my $config_bit_l = ($number_of_driven_outputs_per_side * $number_of_config_bits_per_driven_output * $i) + ($number_of_config_bits_per_driven_output * $driven_config_bit_count);
 //;        $driven_config_bit_count++;
 //;        my $config_bit_h =  $config_bit_l + $number_of_config_bits_per_driven_output-1;
-//;       if ($registered[$j]==1) {
-//;         print SBINFO "        <mux snk='out_${i}_${j}' reg='$registered[$j]' configh='$config_bit_h' configl='$config_bit_l' configr='$config_bit_r'>\n";
-//;       } else {
-//;         print SBINFO "        <mux snk='out_${i}_${j}' reg='$registered[$j]' configh='$config_bit_h' configl='$config_bit_l'>\n";
-//;       }
+//; #        print SBINFO "        <mux snk='out_${i}_${j}'  bith='$config_bit_h' bitl='$config_bit_l' configr='$config_bit_r'>\n";
+//;         print SBINFO "        <mux snk='out_${i}_${j}' reg_address='@{[floor($config_bit_h/$config_reg_width)]}' ";
+//;         print SBINFO "bith='$config_bit_h' bitl='$config_bit_l' default='@{[($mux_default==1) ? (2 ** ($config_bit_h-$config_bit_l+1) - 1) : 0]}'>\n";
     case (config_sb[`$config_bit_h`:`$config_bit_l`])
 //;        my $sel = 0;
 //;        for(my $k=0; $k<$sides; $k++) {
@@ -209,11 +205,15 @@ read_data
 //;          print SBINFO "          <src sel='$sel'>pe_output_${k}</src>\n";
 //;          $sel++;
 //;        }
+//;       print SBINFO "        </mux>\n";
         default: out_`$i`_`$j`_i = 0;
     endcase
   end
 //; 
 //;       if ($registered[$j]==1) {
+//;  my $bithl_reg = $config_bit_r % $config_reg_width;
+//;  print SBINFO "        <reg src='out_${i}_${j}' reg_address='@{[floor($config_bit_r/$config_reg_width)]}' "; 
+//;  print SBINFO "bith='$bithl_reg' bitl='$bithl_reg' default='$reg_default' />\n";
   reg [`$width-1`:0] out_`$i`_`$j`_id1;
   wire out_`$i`_`$j`_le;
   assign out_`$i`_`$j`_le = clk_en | (config_ungate[`$config_ungate_r`]); 
@@ -226,7 +226,6 @@ read_data
 //;       } else {
   assign out_`$i`_`$j` = out_`$i`_`$j`_i;
 //;       }
-//;       print SBINFO "        </mux>\n";
 //;     }
 //;  }
 //; }

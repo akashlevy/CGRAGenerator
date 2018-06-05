@@ -122,7 +122,11 @@ read_data
    //;# SR 5/2018
    //;# This is the hacky way how I tell whether sb targets mem-control-bits
 
-      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b`$reg_default`}},{`$nonreg_bits`{1'b`$mux_default`}}}; // for mem-control-bit wiring
+   //;   if ($nonreg_bits <= 40) {
+      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b0}},{`$nonreg_bits`{1'b1}}}; // for routing normal wire tracks
+   //;   } else {
+      config_sb <= {{`($config_reg_width-$nonreg_bits)`{1'b0}},{`$nonreg_bits`{1'b0}}}; // for mem-control-bit wiring
+   //;   }
    //; }
 
     end else begin

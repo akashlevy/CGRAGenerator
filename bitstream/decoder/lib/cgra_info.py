@@ -282,8 +282,13 @@ def sb_decode(sb,RR,DDDDDDDD):
                     
 
         # Process the connection
-        configh = getnum(mux.attrib['configh'])
-        configl = getnum(mux.attrib['configl'])
+        # OLD
+        # configh = getnum(mux.attrib['configh'])
+        # configl = getnum(mux.attrib['configl'])
+        # NEW
+        configh = getnum(mux.attrib['bith'])
+        configl = getnum(mux.attrib['bitl'])
+
         snk     = mux.attrib['snk']
 
         # Check to see if this is the right register
@@ -664,6 +669,26 @@ def search_muxes(fan_dir, tile, port, DBG=0):
 
     return sblist+cblist
 
+def find_regbit(sb, src, DBG=0):
+    '''Given switchbox sb containing wire "src", return associated regbit'''
+    # <reg src='out_BUS16_S0_T0' reg_address='1' bith='8' bitl='8' default='0' />
+    for reg in sb.iter('reg'):
+        # Look for sinks whose src is rdst
+        owsrc = reg.attrib['src']
+        if owsrc == src:
+            if DBG: print '684 found src', reg.attrib['src']
+            assert reg.attrib['bith'] == reg.attrib['bitl']
+            reg_address  = getnum(reg.attrib['reg_address'])
+            bith         = getnum(reg.attrib['bith'])
+            bitl         = getnum(reg.attrib['bitl'])
+            assert bith == bitl;
+            regbit = 32 * reg_address + bitl;
+            return regbit
+
+    errmsg = "\nERROR Cannot find '<reg>' tag in sb; " + \
+             "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
+    assert False, errmsg
+
 
 def find_mux(tile, src, snk, DBG=0):
     '''Find the mux that connects "src" to "snk" in "tile"'''
@@ -673,17 +698,6 @@ def find_mux(tile, src, snk, DBG=0):
         for bb in tile.iter(box):
             for mux in bb.iter('mux'):
 
-
-
-
-                # SI PODEMOS!
-                # Can't do single-bit wires (yet)  SI PODEMOS!
-                # if re.search('_BUS1_', mux.attrib['snk']):
-                # assert False, "Can't do single-bit wires (yet)"
-
-
-
-
                 # Look for sinks whose src is rdst
                 owsnk = mux.attrib['snk']
                 if owsnk == snk:
@@ -692,30 +706,31 @@ def find_mux(tile, src, snk, DBG=0):
                         owsrc = msrc.text
                         if DBG: print '690 found src', owsrc
                         if src == owsrc:
-                            return get_encoding(tile,bb,mux,msrc,DBG-1)
+                            if box == 'cb': regbit = -1
+                            else: regbit = find_regbit(bb, snk, DBG)
+                            return get_encoding(tile,bb,mux,msrc,regbit,DBG-1)
 
-    # if DBG:
-    if True:
-        # Provide helpful messages about why we failed
-        errmsg = "\nTile %s: Cannot connect '%s' to '%s'\n" %\
-                         (tile.attrib['tile_addr'], src,snk)
+    # Provide helpful messages about why we failed
+    errmsg = "\nTile %s: Cannot connect '%s' to '%s'\n" %\
+                     (tile.attrib['tile_addr'], src,snk)
 
-        rlist = find_sources(tile, 'sb', src) + find_sources(tile, 'cb', src)
-        rlist = '\n    '.join(rlist)
-        errmsg = errmsg + "%s can connect to\n    %s\n" % (src, rlist)
+    rlist = find_sources(tile, 'sb', src) + find_sources(tile, 'cb', src)
+    rlist = '\n    '.join(rlist)
+    errmsg = errmsg + "%s can connect to\n    %s\n" % (src, rlist)
 
-        rlist = find_sinks(tile, 'sb', snk) + find_sinks(tile, 'cb', snk)
-        rlist = '\n    '.join(rlist)
-        errmsg = errmsg + "%s can connect to\n    %s\n" % (snk, rlist)
+    rlist = find_sinks(tile, 'sb', snk) + find_sinks(tile, 'cb', snk)
+    rlist = '\n    '.join(rlist)
+    errmsg = errmsg + "%s can connect to\n    %s\n" % (snk, rlist)
 
-        assert False, errmsg
-
+    # assert False, errmsg NOPE
     # Note find_mux must be allowed to fail gracefully
     # as that e.g. triggers a retry in the serpent PNR
     # sys.exit(-1)
+    if DBG: print errmsg
     return False
 
-def get_encoding(tile,box,mux,msrc,DBG=0):
+
+def get_encoding(tile,box,mux,msrc,regbit,DBG=0):
     DBG = max(DBG,0)
     parms={}
 
@@ -731,14 +746,13 @@ def get_encoding(tile,box,mux,msrc,DBG=0):
     # print '  ', box[0].tag, '=', sw
 
     if box.tag=='sb':
-        parms['configh']= getnum(mux.attrib['configh'])
-        parms['configl']= getnum(mux.attrib['configl'])
-        try: parms['configr']= getnum(mux.attrib['configr'])
-        except:
+        parms['configh']= getnum(mux.attrib['bith'])
+        parms['configl']= getnum(mux.attrib['bitl'])
+        parms['configr']= regbit
+        if regbit == -1:
             errmsg = "\nERROR Cannot find 'configr' field in sb; " + \
                      "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
             assert False, errmsg
-
 
     else:
         parms['configh']= (parms['sw'] - 1)

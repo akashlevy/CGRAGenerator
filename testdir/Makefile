@@ -118,8 +118,8 @@ test:
 	   -nclocks 5M || echo FAIL
 
 	cmp $(VERILATOR_TOP)/io/$(IMAGE)_out.raw $(TEMPDIR)/$(IMAGE)_out.raw      \
-		&& ./writelog.csh log1 PASSED `date +%R` test $(IMAGE) \
-		|| ./writelog.csh log1 FAILED `date +%R` test $(IMAGE)
+		&& ./writelog.csh log1 PASSED `date +%R` test $(CONFIG) \
+		|| ./writelog.csh log1 FAILED `date +%R` test $(CONFIG)
 
 	cd $(VERILATOR_TOP);\
 	cmp io/$(IMAGE)_out.raw $(TEMPDIR)/$(IMAGE)_out.raw

@@ -939,7 +939,6 @@ class Node:
         Else return FALSE i guess.
         '''
         DBG = max(0,DBG)
-
         if a[0] == 'T': T = int(re.search('^T(\d+)', a).group(1))
         if b[0] == 'T': T = int(re.search('^T(\d+)', b).group(1))
 
@@ -963,19 +962,14 @@ class Node:
         #                          in.*      {mem_in,op1,op2}   
 
         if DBG>1: print "       Looks like both are available to '%s' (%s)\n" % (self.name, where(451))
-
-        # print "       Ask cgra: can '%s' connect to '%s'? (%s)" % (a,b,where(457))
-
-        # if cgra_info.connect_within_tile(T, a, b, DBG-1):
-        # FIXME is this bad?  connect_within_tile() used to
-        # return False if no connect, now it dies.
-        try:
-            cgra_info.connect_within_tile(T, a, b, max(0,DBG-1))
+        #         print "       Ask cgra: can '%s' connect to '%s'? (%s)" % (a,b,where(457))
+        if cgra_info.connect_within_tile(T, a, b, max(0,DBG-1)):
             if DBG: print '     YES'
             return ['%s -> %s' % (a,b)]
-        except:
+        else:
             if DBG: print "     NO"
-        
+
+
         if b[-1] == 'b' and a[-1] != 'b':
             print "OOPS SOOOOO looks like we tried to connect bit and non-bit wires4"
             assert False

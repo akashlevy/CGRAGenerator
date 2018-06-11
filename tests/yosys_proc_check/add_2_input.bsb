@@ -1,40 +1,40 @@
-T21_add(wire,const1__0)
-T21_in_s2t0 -> T21_op1
-T21_pe_out -> T21_out_s0t0
-T22_add(wire,const1__0)
-T22_in_s2t0 -> T22_op1
-T22_pe_out -> T22_out_s0t0
-T23_add(wire,const1__0)
-T23_in_s2t0 -> T23_op1
-T23_pe_out -> T23_out_s0t0
-T24_in_s2t0 -> T24_out_s0t0
-T25_add(wire,const1__0)
-T25_in_s2t0 -> T25_op1
-T25_pe_out -> T25_out_s0t0
-T26_add(wire,const1__0)
-T26_in_s2t0 -> T26_op1
-T26_pe_out -> T26_out_s0t0
-T27_add(wire,const1__0)
-T27_in_s2t0 -> T27_op1
-T27_pe_out -> T27_out_s0t0
-T28_in_s2t0 -> T28_out_s0t0
-T29_add(wire,const1__0)
-T29_in_s2t0 -> T29_op1
-T29_pe_out -> T29_out_s0t0
-T30_add(wire,const1__0)
-T30_in_s2t0 -> T30_op1
-T30_pe_out -> T30_out_s0t0
-T31_add(wire,const1__0)
-T31_in_s2t0 -> T31_op1
-T31_pe_out -> T31_out_s0t0
-T32_in_s2t0 -> T32_out_s0t0
-T33_add(wire,const1__0)
-T33_in_s2t0 -> T33_op1
-T33_pe_out -> T33_out_s0t0
-T34_add(wire,const1__0)
-T34_in_s2t0 -> T34_op1
-T34_pe_out -> T34_out_s0t0
-T35_add(wire,const1__0)
-T35_in_s2t0 -> T35_op1
-T35_pe_out -> T35_out_s0t0
-T36_in_s2t0 -> T36_out_s0t0
+T21_in_s2t0 -> T21_out_s1t0
+T40_in_s3t0 -> T40_out_s1t0
+T59_in_s3t0 -> T59_out_s1t0
+T78_in_s3t0 -> T78_out_s0t0
+T79_in_s2t0 -> T79_out_s3t0
+T60_in_s1t0 -> T60_out_s3t0
+T41_in_s1t0 -> T41_out_s3t0
+T22_in_s1t0 -> T22_out_s0t0
+T23_in_s2t0 -> T23_out_s0t0
+T24_in_s2t0 -> T24_out_s0t0 # Memory tile
+T25_in_s2t0 -> T25_out_s1t0
+T44_in_s3t0 -> T44_out_s1t0
+T63_in_s3t0 -> T63_out_s1t0
+T82_in_s3t0 -> T82_out_s0t0
+T83_in_s2t0 -> T83_out_s3t0
+T64_in_s1t0 -> T64_out_s3t0
+T45_in_s1t0 -> T45_out_s3t0
+T26_in_s1t0 -> T26_out_s0t0
+T27_in_s2t0 -> T27_out_s0t0
+T28_in_s2t0 -> T28_out_s0t0 # Memory tile
+T29_in_s2t0 -> T29_out_s1t0
+T48_in_s3t0 -> T48_out_s1t0
+T67_in_s3t0 -> T67_out_s1t0
+T86_in_s3t0 -> T86_out_s0t0
+T87_in_s2t0 -> T87_out_s3t0
+T68_in_s1t0 -> T68_out_s3t0
+T49_in_s1t0 -> T49_out_s3t0
+T30_in_s1t0 -> T30_out_s0t0
+T31_in_s2t0 -> T31_out_s0t0
+T32_in_s2t0 -> T32_out_s0t0 # Memory tile
+T33_in_s2t0 -> T33_out_s1t0
+T52_in_s3t0 -> T52_out_s1t0
+T71_in_s3t0 -> T71_out_s1t0
+T90_in_s3t0 -> T90_out_s0t0
+T91_in_s2t0 -> T91_out_s3t0
+T72_in_s1t0 -> T72_out_s3t0
+T53_in_s1t0 -> T53_out_s3t0
+T34_in_s1t0 -> T34_out_s0t0
+T35_in_s2t0 -> T35_out_s0t0
+T36_in_s2t0 -> T36_out_s0t0 # Memory tile

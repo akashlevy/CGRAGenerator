@@ -1,0 +1,40 @@
+T21_add(wire,const1__0)
+T21_in_s2t0 -> T21_op1
+T21_pe_out -> T21_out_s0t0
+T22_add(wire,const1__0)
+T22_in_s2t0 -> T22_op1
+T22_pe_out -> T22_out_s0t0
+T23_add(wire,const1__0)
+T23_in_s2t0 -> T23_op1
+T23_pe_out -> T23_out_s0t0
+T24_in_s2t0 -> T24_out_s0t0
+T25_add(wire,const1__0)
+T25_in_s2t0 -> T25_op1
+T25_pe_out -> T25_out_s0t0
+T26_add(wire,const1__0)
+T26_in_s2t0 -> T26_op1
+T26_pe_out -> T26_out_s0t0
+T27_add(wire,const1__0)
+T27_in_s2t0 -> T27_op1
+T27_pe_out -> T27_out_s0t0
+T28_in_s2t0 -> T28_out_s0t0
+T29_add(wire,const1__0)
+T29_in_s2t0 -> T29_op1
+T29_pe_out -> T29_out_s0t0
+T30_add(wire,const1__0)
+T30_in_s2t0 -> T30_op1
+T30_pe_out -> T30_out_s0t0
+T31_add(wire,const1__0)
+T31_in_s2t0 -> T31_op1
+T31_pe_out -> T31_out_s0t0
+T32_in_s2t0 -> T32_out_s0t0
+T33_add(wire,const1__0)
+T33_in_s2t0 -> T33_op1
+T33_pe_out -> T33_out_s0t0
+T34_add(wire,const1__0)
+T34_in_s2t0 -> T34_op1
+T34_pe_out -> T34_out_s0t0
+T35_add(wire,const1__0)
+T35_in_s2t0 -> T35_op1
+T35_pe_out -> T35_out_s0t0
+T36_in_s2t0 -> T36_out_s0t0

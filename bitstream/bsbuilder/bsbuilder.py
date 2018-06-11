@@ -281,6 +281,7 @@ def configure_output_pads():
 000000F4 00000001
 00000106 00000001
 00000114 00000001
+00000000 00000000
 '''
 
 def preprocess(input_lines, DBG=0):
@@ -839,7 +840,7 @@ def bs_op(tileno, line, DBG=0):
     assert op1=='reg_a' or op1=='wire_a' or op1=='const_a',op1
     assert op2=='reg_b' or op2=='wire_b' or op2=='const_b',op2
 
-    data = op_data[opname] | op_data['pe_flag_pe'] | op_data[op1] | op_data[op2] 
+    data = op_data[opname] | op_data['pe_flag_pe'] | op_data[op1] | op_data[op2]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
     addr = "FF00%04X" % tileno

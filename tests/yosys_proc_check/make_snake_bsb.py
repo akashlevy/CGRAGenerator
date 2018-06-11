@@ -69,45 +69,49 @@ def reverse_side(side):
         print 'Error; Unsupported side = ', side
         assert(False)
 
-def print_block(tile_pair, in_side, out_side):
-    print in_wire_str(tile_pair_to_tile_num(tile_pair), in_side, 0) + ' -> ' + out_wire_str(tile_pair_to_tile_num(tile_pair), out_side, 0)
+def print_block(tile_pair, in_side, in_track, out_side, out_track):
+    print in_wire_str(tile_pair_to_tile_num(tile_pair), in_side, in_track) + ' -> ' + out_wire_str(tile_pair_to_tile_num(tile_pair), out_side, out_track)
 
-def print_downward_chain(snake_start, snake_height):
+def print_downward_chain(snake_start, snake_height, in_track, out_track):
     current = snake_start
     input_side = 2
     exit_side = 0
     steady_in_side = 3
     steady_out_side = 1
 
+    steady_track = 0
+
     # Start of chain
-    print_block(current, input_side, steady_out_side)
+    print_block(current, input_side, in_track, steady_out_side, steady_track)
 
     for i in xrange(0, snake_height - 2):
         current = tile_below(current)
-        print_block(current, steady_in_side, steady_out_side)
+        print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
 
     current = tile_below(current)
-    print_block(current, steady_in_side, exit_side)
+    print_block(current, steady_in_side, steady_track, exit_side, out_track)
 
     current = tile_right(current)
     return current
 
-def print_upward_chain(snake_start, snake_height):
+def print_upward_chain(snake_start, snake_height, in_track, out_track):
     current = snake_start
     input_side = 2
     exit_side = 0
     steady_in_side = 1
     steady_out_side = 3
 
+    steady_track = 0
+
     # Start of chain
-    print_block(current, input_side, steady_out_side)
+    print_block(current, input_side, in_track, steady_out_side, steady_track)
 
     for i in xrange(0, snake_height - 2):
         current = tile_above(current)
-        print_block(current, steady_in_side, steady_out_side)
+        print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
 
     current = tile_above(current)
-    print_block(current, steady_in_side, exit_side)
+    print_block(current, steady_in_side, steady_track, exit_side, out_track)
 
     current = tile_right(current)
     return current
@@ -116,25 +120,20 @@ def print_snake(snake_start, snake_width, snake_height):
     current = snake_start
     input_side = 2
     output_side = 1
-    track = 0
+    in_track = 0
+    out_track = 0
 
     for col in xrange(0, snake_width):
-#        print in_wire_str(tile_pair_to_tile_num(current), input_side, track) + ' -> ' + out_wire_str(tile_pair_to_tile_num(current), output_side, track) + ' # top of loop'
-
         if col % 2 == 0:
-            current = print_downward_chain(current, snake_height)
+            out_track = 0
+            current = print_downward_chain(current, snake_height, in_track, out_track)
         else:
-            current = print_upward_chain(current, snake_height)
-
-#        input_side = reverse_side(output_side)
-#        output_side = 0
-#        current = tile_right(current)
+            out_track = 3
+            current = print_upward_chain(current, snake_height, in_track, out_track)
         
 snake_height = 2
 current = (0, 0)
 
-# Id like for each element of the snake to contain where it will get its input from, and where its data is going to.
-# Id also like to distinguish between tiles that will do a plus one, and memory tiles
 tiles = []
 col = 0
 for i in xrange(0, 4):

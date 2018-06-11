@@ -1,4 +1,5 @@
 from sets import Set
+import math
 import itertools
 
 def tile_str(tile_no):
@@ -31,8 +32,26 @@ def tile_right(tile_pair):
 
 base = 21
 row_stride = 19
+def row_ind(r):
+    assert(r >= 0)
+
+    if (r == 0):
+        return base
+    elif r == 1:
+        return base + 19
+    else:
+        return row_ind(r - 1) + (14 if (r % 2) == 0 else 18)
+
 def tile_pair_to_tile_num(tile_pair):
-    return base + tile_pair[0]*row_stride + tile_pair[1]
+    row = tile_pair[0]
+    col = tile_pair[1]
+
+    r_ind = row_ind(row)
+    c_ind = col
+    if (c_ind != 0) and (row % 2 != 0):
+        c_ind -= (int(math.ceil(col / 4.0)) - 1)
+    
+    return r_ind + c_ind
 
 def is_memory_tile(tile_pair):
     return ((tile_pair[1] + 1) % 4) == 0
@@ -128,7 +147,7 @@ def print_snake(snake_start, snake_width, snake_height):
             out_track = 0
             current = print_downward_chain(current, snake_height, in_track, out_track)
         else:
-            out_track = 3
+            out_track = 0
             current = print_upward_chain(current, snake_height, in_track, out_track)
         
 snake_height = 2

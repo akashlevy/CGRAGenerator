@@ -153,17 +153,8 @@ for r in tile_layout:
 
 def tile_pair_to_tile_num(tile_pair):
     target_row = tile_layout[tile_pair[0]]
-    #print 'row', tile_pair[0], '=', target_row
-    return target_row[tile_pair[1]]
-    # row = tile_pair[0]
-    # col = tile_pair[1]
 
-    # r_ind = row_ind(row)
-    # c_ind = col
-    # if (c_ind != 0) and (row % 2 != 0):
-    #     c_ind -= (int(math.ceil(col / 4.0)) - 1)
-    
-    # return r_ind + c_ind
+    return target_row[tile_pair[1]]
 
 def is_memory_tile(tile_pair):
     return ((tile_pair[1] + 1) % 4) == 0
@@ -261,8 +252,14 @@ def print_snake(snake_start, snake_width, snake_height):
         else:
             out_track = 0
             current = print_upward_chain(current, snake_height, in_track, out_track)
-        
-snake_height = 1
+
+def pe_out_str(pe_num):
+    return tile_str(pe_num) + '_pe_out'
+
+def wire_to(src, dest):
+    return src + ' -> ' + dest
+
+snake_height = 16
 current = (2, 2)
 
 col = 2
@@ -271,7 +268,12 @@ for i in xrange(0, 4):
 
     pe_0 = (2, col + 2)
     pe_num = tile_pair_to_tile_num(pe_0)
-    print in_wire_str(pe_num, 2, 0) + ' -> ' + out_wire_str(pe_num, 0, 0)
+    
+    print tile_str(pe_num) + '_add(wire,const1__0)'
+    print wire_to(in_wire_str(pe_num, 2, 0), tile_str(pe_num) + '_op1')
+    print pe_out_str(pe_num) + ' -> ' + out_wire_str(pe_num, 0, 0)
+
+    #Old code: print in_wire_str(pe_num, 2, 0) + ' -> ' + out_wire_str(pe_num, 0, 0)
 
     mem = (2, col + 3)
     mem_num = tile_pair_to_tile_num(mem)

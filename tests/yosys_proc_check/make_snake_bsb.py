@@ -145,22 +145,25 @@ tile_no = append_blank(row, tile_no)
 tile_no = append_blank(row, tile_no)
 
 for r in tile_layout:
-    for elem in r:
-        sys.stdout.write("0x%-6x" % elem)
-    sys.stdout.write("\n")
+    # for elem in r:
+    #     sys.stdout.write("0x%-6x" % elem)
+    # sys.stdout.write("\n")
 
     assert(len(r) == 20)
 
 def tile_pair_to_tile_num(tile_pair):
-    row = tile_pair[0]
-    col = tile_pair[1]
+    target_row = tile_layout[tile_pair[0]]
+    #print 'row', tile_pair[0], '=', target_row
+    return target_row[tile_pair[1]]
+    # row = tile_pair[0]
+    # col = tile_pair[1]
 
-    r_ind = row_ind(row)
-    c_ind = col
-    if (c_ind != 0) and (row % 2 != 0):
-        c_ind -= (int(math.ceil(col / 4.0)) - 1)
+    # r_ind = row_ind(row)
+    # c_ind = col
+    # if (c_ind != 0) and (row % 2 != 0):
+    #     c_ind -= (int(math.ceil(col / 4.0)) - 1)
     
-    return r_ind + c_ind
+    # return r_ind + c_ind
 
 def is_memory_tile(tile_pair):
     return ((tile_pair[1] + 1) % 4) == 0
@@ -260,17 +263,17 @@ def print_snake(snake_start, snake_width, snake_height):
             current = print_upward_chain(current, snake_height, in_track, out_track)
         
 snake_height = 1
-current = (0, 0)
+current = (2, 2)
 
-col = 0
+col = 2
 for i in xrange(0, 4):
-    print_snake((0, col), 2, snake_height)
+    print_snake((2, col), 2, snake_height)
 
-    pe_0 = (0, col + 2)
+    pe_0 = (2, col + 2)
     pe_num = tile_pair_to_tile_num(pe_0)
     print in_wire_str(pe_num, 2, 0) + ' -> ' + out_wire_str(pe_num, 0, 0)
 
-    mem = (0, col + 3)
+    mem = (2, col + 3)
     mem_num = tile_pair_to_tile_num(mem)
     print in_wire_str(mem_num, 2, 0) + ' -> ' + out_wire_str(mem_num, 0, 0) + ' # Memory tile'
     

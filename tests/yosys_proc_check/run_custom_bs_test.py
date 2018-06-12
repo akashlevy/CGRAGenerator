@@ -4,7 +4,7 @@ def run_cmd(cmd):
     res = os.system(cmd)
     assert(res == 0)
 
-#run_cmd('python make_snake_bsb.py > add_2_input.bsb')
+run_cmd('python make_snake_bsb.py > add_2_input.bsb')
 
 build_bs_cmd = '~/CGRAGenerator/bitstream/bsbuilder/bsbuilder.py add_2_input.bsb > add_2_input_tmp.bsa'
 run_cmd(build_bs_cmd)

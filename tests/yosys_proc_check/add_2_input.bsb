@@ -1,47 +1,24 @@
-# T21_in_s2t0 -> T21_out_s0t0
-# T22_in_s2t0 -> T22_out_s0t0
-# T23_in_s2t0 -> T23_out_s0t0
-# T24_in_s2t0 -> T24_out_s0t0
-
-# T25_in_s2t0 -> T25_out_s0t0
-# T26_in_s2t0 -> T26_out_s0t0
-# T27_in_s2t0 -> T27_out_s0t0
-# T28_in_s2t0 -> T28_out_s0t0
-
-T29_in_s2t0 -> T29_out_s0t0
-T30_in_s2t0 -> T30_out_s0t0
-T31_in_s2t0 -> T31_out_s0t0
-T32_in_s2t0 -> T32_out_s0t0
-
-T33_in_s2t0 -> T33_out_s0t0
-T34_in_s2t0 -> T34_out_s0t0
-T35_in_s2t0 -> T35_out_s0t0
-T36_in_s2t0 -> T36_out_s0t0
-
-# Zig-zag lines
 T21_in_s2t0 -> T21_out_s1t0
 T40_in_s3t0 -> T40_out_s0t0
 T41_in_s2t0 -> T41_out_s3t0
 T22_in_s1t0 -> T22_out_s0t0
 T23_in_s2t0 -> T23_out_s0t0
 T24_in_s2t0 -> T24_out_s0t0 # Memory tile
-
 T25_in_s2t0 -> T25_out_s1t0
-T44_in_s3t0 -> T44_out_s0t0
+T43_in_s3t0 -> T43_out_s0t0
 T44_in_s2t0 -> T44_out_s3t0
 T26_in_s1t0 -> T26_out_s0t0
 T27_in_s2t0 -> T27_out_s0t0
 T28_in_s2t0 -> T28_out_s0t0 # Memory tile
-
-# T29_in_s2t0 -> T29_out_s1t0
-# T47_in_s3t0 -> T47_out_s0t0
-# T47_in_s2t0 -> T47_out_s3t0
-# T30_in_s1t0 -> T30_out_s0t0
-# T31_in_s2t0 -> T31_out_s0t0
-# T32_in_s2t0 -> T32_out_s0t0 # Memory tile
-# T33_in_s2t0 -> T33_out_s1t0
-# T50_in_s3t0 -> T50_out_s0t0
-# T50_in_s2t0 -> T50_out_s3t0
-# T34_in_s1t0 -> T34_out_s0t0
-# T35_in_s2t0 -> T35_out_s0t0
-# T36_in_s2t0 -> T36_out_s0t0 # Memory tile
+T29_in_s2t0 -> T29_out_s1t0
+T46_in_s3t0 -> T46_out_s0t0
+T47_in_s2t0 -> T47_out_s3t0
+T30_in_s1t0 -> T30_out_s0t0
+T31_in_s2t0 -> T31_out_s0t0
+T32_in_s2t0 -> T32_out_s0t0 # Memory tile
+T33_in_s2t0 -> T33_out_s1t0
+T49_in_s3t0 -> T49_out_s0t0
+T50_in_s2t0 -> T50_out_s3t0
+T34_in_s1t0 -> T34_out_s0t0
+T35_in_s2t0 -> T35_out_s0t0
+T36_in_s2t0 -> T36_out_s0t0 # Memory tile

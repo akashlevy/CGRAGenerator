@@ -1,18 +1,60 @@
 T21_in_s2t0 -> T21_out_s1t0
-T40_in_s3t0 -> T40_out_s1t0
-T54_in_s3t0 -> T54_out_s1t0
-T72_in_s3t0 -> T72_out_s1t0
-T86_in_s3t0 -> T86_out_s1t0
-T104_in_s3t0 -> T104_out_s1t0
-T118_in_s3t0 -> T118_out_s1t0
-T136_in_s3t0 -> T136_out_s1t0
-T150_in_s3t0 -> T150_out_s1t0
-T168_in_s3t0 -> T168_out_s1t0
-T182_in_s3t0 -> T182_out_s1t0
-T200_in_s3t0 -> T200_out_s1t0
-T214_in_s3t0 -> T214_out_s1t0
-T232_in_s3t0 -> T232_out_s1t0
-T246_in_s3t0 -> T246_out_s1t0
+T40_add(wire,const1__0)
+T40_in_s3t0 -> T40_out_s2t0
+T40_out_s2t0 -> T40_op1
+T40_pe_out -> T40_out_s1t0
+T54_add(wire,const1__0)
+T54_in_s3t0 -> T54_out_s2t0
+T54_out_s2t0 -> T54_op1
+T54_pe_out -> T54_out_s1t0
+T72_add(wire,const1__0)
+T72_in_s3t0 -> T72_out_s2t0
+T72_out_s2t0 -> T72_op1
+T72_pe_out -> T72_out_s1t0
+T86_add(wire,const1__0)
+T86_in_s3t0 -> T86_out_s2t0
+T86_out_s2t0 -> T86_op1
+T86_pe_out -> T86_out_s1t0
+T104_add(wire,const1__0)
+T104_in_s3t0 -> T104_out_s2t0
+T104_out_s2t0 -> T104_op1
+T104_pe_out -> T104_out_s1t0
+T118_add(wire,const1__0)
+T118_in_s3t0 -> T118_out_s2t0
+T118_out_s2t0 -> T118_op1
+T118_pe_out -> T118_out_s1t0
+T136_add(wire,const1__0)
+T136_in_s3t0 -> T136_out_s2t0
+T136_out_s2t0 -> T136_op1
+T136_pe_out -> T136_out_s1t0
+T150_add(wire,const1__0)
+T150_in_s3t0 -> T150_out_s2t0
+T150_out_s2t0 -> T150_op1
+T150_pe_out -> T150_out_s1t0
+T168_add(wire,const1__0)
+T168_in_s3t0 -> T168_out_s2t0
+T168_out_s2t0 -> T168_op1
+T168_pe_out -> T168_out_s1t0
+T182_add(wire,const1__0)
+T182_in_s3t0 -> T182_out_s2t0
+T182_out_s2t0 -> T182_op1
+T182_pe_out -> T182_out_s1t0
+T200_add(wire,const1__0)
+T200_in_s3t0 -> T200_out_s2t0
+T200_out_s2t0 -> T200_op1
+T200_pe_out -> T200_out_s1t0
+T214_add(wire,const1__0)
+T214_in_s3t0 -> T214_out_s2t0
+T214_out_s2t0 -> T214_op1
+T214_pe_out -> T214_out_s1t0
+T232_add(wire,const1__0)
+T232_in_s3t0 -> T232_out_s2t0
+T232_out_s2t0 -> T232_op1
+T232_pe_out -> T232_out_s1t0
+T246_add(wire,const1__0)
+T246_in_s3t0 -> T246_out_s2t0
+T246_out_s2t0 -> T246_op1
+T246_pe_out -> T246_out_s1t0
 T264_in_s3t0 -> T264_out_s0t0
 T265_in_s2t0 -> T265_out_s3t0
 T247_in_s1t0 -> T247_out_s3t0
@@ -35,20 +77,62 @@ T23_in_s2t0 -> T23_op1
 T23_pe_out -> T23_out_s0t0
 T24_in_s2t0 -> T24_out_s0t0 # Memory tile
 T25_in_s2t0 -> T25_out_s1t0
-T43_in_s3t0 -> T43_out_s1t0
-T58_in_s3t0 -> T58_out_s1t0
-T75_in_s3t0 -> T75_out_s1t0
-T90_in_s3t0 -> T90_out_s1t0
-T107_in_s3t0 -> T107_out_s1t0
-T122_in_s3t0 -> T122_out_s1t0
-T139_in_s3t0 -> T139_out_s1t0
-T154_in_s3t0 -> T154_out_s1t0
-T171_in_s3t0 -> T171_out_s1t0
-T186_in_s3t0 -> T186_out_s1t0
-T203_in_s3t0 -> T203_out_s1t0
-T218_in_s3t0 -> T218_out_s1t0
-T235_in_s3t0 -> T235_out_s1t0
-T250_in_s3t0 -> T250_out_s1t0
+T43_add(wire,const1__0)
+T43_in_s3t0 -> T43_out_s2t0
+T43_out_s2t0 -> T43_op1
+T43_pe_out -> T43_out_s1t0
+T58_add(wire,const1__0)
+T58_in_s3t0 -> T58_out_s2t0
+T58_out_s2t0 -> T58_op1
+T58_pe_out -> T58_out_s1t0
+T75_add(wire,const1__0)
+T75_in_s3t0 -> T75_out_s2t0
+T75_out_s2t0 -> T75_op1
+T75_pe_out -> T75_out_s1t0
+T90_add(wire,const1__0)
+T90_in_s3t0 -> T90_out_s2t0
+T90_out_s2t0 -> T90_op1
+T90_pe_out -> T90_out_s1t0
+T107_add(wire,const1__0)
+T107_in_s3t0 -> T107_out_s2t0
+T107_out_s2t0 -> T107_op1
+T107_pe_out -> T107_out_s1t0
+T122_add(wire,const1__0)
+T122_in_s3t0 -> T122_out_s2t0
+T122_out_s2t0 -> T122_op1
+T122_pe_out -> T122_out_s1t0
+T139_add(wire,const1__0)
+T139_in_s3t0 -> T139_out_s2t0
+T139_out_s2t0 -> T139_op1
+T139_pe_out -> T139_out_s1t0
+T154_add(wire,const1__0)
+T154_in_s3t0 -> T154_out_s2t0
+T154_out_s2t0 -> T154_op1
+T154_pe_out -> T154_out_s1t0
+T171_add(wire,const1__0)
+T171_in_s3t0 -> T171_out_s2t0
+T171_out_s2t0 -> T171_op1
+T171_pe_out -> T171_out_s1t0
+T186_add(wire,const1__0)
+T186_in_s3t0 -> T186_out_s2t0
+T186_out_s2t0 -> T186_op1
+T186_pe_out -> T186_out_s1t0
+T203_add(wire,const1__0)
+T203_in_s3t0 -> T203_out_s2t0
+T203_out_s2t0 -> T203_op1
+T203_pe_out -> T203_out_s1t0
+T218_add(wire,const1__0)
+T218_in_s3t0 -> T218_out_s2t0
+T218_out_s2t0 -> T218_op1
+T218_pe_out -> T218_out_s1t0
+T235_add(wire,const1__0)
+T235_in_s3t0 -> T235_out_s2t0
+T235_out_s2t0 -> T235_op1
+T235_pe_out -> T235_out_s1t0
+T250_add(wire,const1__0)
+T250_in_s3t0 -> T250_out_s2t0
+T250_out_s2t0 -> T250_op1
+T250_pe_out -> T250_out_s1t0
 T267_in_s3t0 -> T267_out_s0t0
 T268_in_s2t0 -> T268_out_s3t0
 T251_in_s1t0 -> T251_out_s3t0
@@ -71,20 +155,62 @@ T27_in_s2t0 -> T27_op1
 T27_pe_out -> T27_out_s0t0
 T28_in_s2t0 -> T28_out_s0t0 # Memory tile
 T29_in_s2t0 -> T29_out_s1t0
-T46_in_s3t0 -> T46_out_s1t0
-T62_in_s3t0 -> T62_out_s1t0
-T78_in_s3t0 -> T78_out_s1t0
-T94_in_s3t0 -> T94_out_s1t0
-T110_in_s3t0 -> T110_out_s1t0
-T126_in_s3t0 -> T126_out_s1t0
-T142_in_s3t0 -> T142_out_s1t0
-T158_in_s3t0 -> T158_out_s1t0
-T174_in_s3t0 -> T174_out_s1t0
-T190_in_s3t0 -> T190_out_s1t0
-T206_in_s3t0 -> T206_out_s1t0
-T222_in_s3t0 -> T222_out_s1t0
-T238_in_s3t0 -> T238_out_s1t0
-T254_in_s3t0 -> T254_out_s1t0
+T46_add(wire,const1__0)
+T46_in_s3t0 -> T46_out_s2t0
+T46_out_s2t0 -> T46_op1
+T46_pe_out -> T46_out_s1t0
+T62_add(wire,const1__0)
+T62_in_s3t0 -> T62_out_s2t0
+T62_out_s2t0 -> T62_op1
+T62_pe_out -> T62_out_s1t0
+T78_add(wire,const1__0)
+T78_in_s3t0 -> T78_out_s2t0
+T78_out_s2t0 -> T78_op1
+T78_pe_out -> T78_out_s1t0
+T94_add(wire,const1__0)
+T94_in_s3t0 -> T94_out_s2t0
+T94_out_s2t0 -> T94_op1
+T94_pe_out -> T94_out_s1t0
+T110_add(wire,const1__0)
+T110_in_s3t0 -> T110_out_s2t0
+T110_out_s2t0 -> T110_op1
+T110_pe_out -> T110_out_s1t0
+T126_add(wire,const1__0)
+T126_in_s3t0 -> T126_out_s2t0
+T126_out_s2t0 -> T126_op1
+T126_pe_out -> T126_out_s1t0
+T142_add(wire,const1__0)
+T142_in_s3t0 -> T142_out_s2t0
+T142_out_s2t0 -> T142_op1
+T142_pe_out -> T142_out_s1t0
+T158_add(wire,const1__0)
+T158_in_s3t0 -> T158_out_s2t0
+T158_out_s2t0 -> T158_op1
+T158_pe_out -> T158_out_s1t0
+T174_add(wire,const1__0)
+T174_in_s3t0 -> T174_out_s2t0
+T174_out_s2t0 -> T174_op1
+T174_pe_out -> T174_out_s1t0
+T190_add(wire,const1__0)
+T190_in_s3t0 -> T190_out_s2t0
+T190_out_s2t0 -> T190_op1
+T190_pe_out -> T190_out_s1t0
+T206_add(wire,const1__0)
+T206_in_s3t0 -> T206_out_s2t0
+T206_out_s2t0 -> T206_op1
+T206_pe_out -> T206_out_s1t0
+T222_add(wire,const1__0)
+T222_in_s3t0 -> T222_out_s2t0
+T222_out_s2t0 -> T222_op1
+T222_pe_out -> T222_out_s1t0
+T238_add(wire,const1__0)
+T238_in_s3t0 -> T238_out_s2t0
+T238_out_s2t0 -> T238_op1
+T238_pe_out -> T238_out_s1t0
+T254_add(wire,const1__0)
+T254_in_s3t0 -> T254_out_s2t0
+T254_out_s2t0 -> T254_op1
+T254_pe_out -> T254_out_s1t0
 T270_in_s3t0 -> T270_out_s0t0
 T271_in_s2t0 -> T271_out_s3t0
 T255_in_s1t0 -> T255_out_s3t0
@@ -107,20 +233,62 @@ T31_in_s2t0 -> T31_op1
 T31_pe_out -> T31_out_s0t0
 T32_in_s2t0 -> T32_out_s0t0 # Memory tile
 T33_in_s2t0 -> T33_out_s1t0
-T49_in_s3t0 -> T49_out_s1t0
-T66_in_s3t0 -> T66_out_s1t0
-T81_in_s3t0 -> T81_out_s1t0
-T98_in_s3t0 -> T98_out_s1t0
-T113_in_s3t0 -> T113_out_s1t0
-T130_in_s3t0 -> T130_out_s1t0
-T145_in_s3t0 -> T145_out_s1t0
-T162_in_s3t0 -> T162_out_s1t0
-T177_in_s3t0 -> T177_out_s1t0
-T194_in_s3t0 -> T194_out_s1t0
-T209_in_s3t0 -> T209_out_s1t0
-T226_in_s3t0 -> T226_out_s1t0
-T241_in_s3t0 -> T241_out_s1t0
-T258_in_s3t0 -> T258_out_s1t0
+T49_add(wire,const1__0)
+T49_in_s3t0 -> T49_out_s2t0
+T49_out_s2t0 -> T49_op1
+T49_pe_out -> T49_out_s1t0
+T66_add(wire,const1__0)
+T66_in_s3t0 -> T66_out_s2t0
+T66_out_s2t0 -> T66_op1
+T66_pe_out -> T66_out_s1t0
+T81_add(wire,const1__0)
+T81_in_s3t0 -> T81_out_s2t0
+T81_out_s2t0 -> T81_op1
+T81_pe_out -> T81_out_s1t0
+T98_add(wire,const1__0)
+T98_in_s3t0 -> T98_out_s2t0
+T98_out_s2t0 -> T98_op1
+T98_pe_out -> T98_out_s1t0
+T113_add(wire,const1__0)
+T113_in_s3t0 -> T113_out_s2t0
+T113_out_s2t0 -> T113_op1
+T113_pe_out -> T113_out_s1t0
+T130_add(wire,const1__0)
+T130_in_s3t0 -> T130_out_s2t0
+T130_out_s2t0 -> T130_op1
+T130_pe_out -> T130_out_s1t0
+T145_add(wire,const1__0)
+T145_in_s3t0 -> T145_out_s2t0
+T145_out_s2t0 -> T145_op1
+T145_pe_out -> T145_out_s1t0
+T162_add(wire,const1__0)
+T162_in_s3t0 -> T162_out_s2t0
+T162_out_s2t0 -> T162_op1
+T162_pe_out -> T162_out_s1t0
+T177_add(wire,const1__0)
+T177_in_s3t0 -> T177_out_s2t0
+T177_out_s2t0 -> T177_op1
+T177_pe_out -> T177_out_s1t0
+T194_add(wire,const1__0)
+T194_in_s3t0 -> T194_out_s2t0
+T194_out_s2t0 -> T194_op1
+T194_pe_out -> T194_out_s1t0
+T209_add(wire,const1__0)
+T209_in_s3t0 -> T209_out_s2t0
+T209_out_s2t0 -> T209_op1
+T209_pe_out -> T209_out_s1t0
+T226_add(wire,const1__0)
+T226_in_s3t0 -> T226_out_s2t0
+T226_out_s2t0 -> T226_op1
+T226_pe_out -> T226_out_s1t0
+T241_add(wire,const1__0)
+T241_in_s3t0 -> T241_out_s2t0
+T241_out_s2t0 -> T241_op1
+T241_pe_out -> T241_out_s1t0
+T258_add(wire,const1__0)
+T258_in_s3t0 -> T258_out_s2t0
+T258_out_s2t0 -> T258_op1
+T258_pe_out -> T258_out_s1t0
 T273_in_s3t0 -> T273_out_s0t0
 T274_in_s2t0 -> T274_out_s3t0
 T259_in_s1t0 -> T259_out_s3t0

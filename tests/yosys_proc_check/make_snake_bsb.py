@@ -15,6 +15,23 @@ def in_wire_str(tile_no, side_no, track_no):
 def out_wire_str(tile_no, side_no, track_no):
     return tile_str(tile_no) + '_out_s' + str(side_no) + 't' + str(track_no)
 
+def pe_out_str(pe_num):
+    return tile_str(pe_num) + '_pe_out'
+
+def wire_to(src, dest):
+    return src + ' -> ' + dest
+
+def add_constant_pe(pe_num, in_side, out_side, const_value):
+    print tile_str(pe_num) + '_add(wire,const' + str(const_value) + '__0)'
+    print wire_to(in_wire_str(pe_num, in_side, 0), tile_str(pe_num) + '_op1')
+    print pe_out_str(pe_num) + ' -> ' + out_wire_str(pe_num, out_side, 0)
+    
+def add_constant_pe_2(pe_num, in_side, out_side, const_value):
+    print tile_str(pe_num) + '_add(wire,const' + str(const_value) + '__0)'
+    print wire_to(in_wire_str(pe_num, in_side, 0), out_wire_str(pe_num, 2, 0))
+    print wire_to(out_wire_str(pe_num, 2, 0), tile_str(pe_num) + '_op1')
+    print pe_out_str(pe_num) + ' -> ' + out_wire_str(pe_num, out_side, 0)
+
 inc_path = []
 for i in xrange(21, 37):
     inc_path.append(i)
@@ -208,7 +225,9 @@ def print_downward_chain(snake_start, snake_height, in_track, out_track):
 
     for i in xrange(0, snake_height - 2):
         current = tile_below(current)
-        print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
+        add_constant_pe_2(tile_pair_to_tile_num(current), steady_in_side, steady_out_side, 1)
+
+        #print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
 
     current = tile_below(current)
     print_block(current, steady_in_side, steady_track, exit_side, out_track)
@@ -253,12 +272,6 @@ def print_snake(snake_start, snake_width, snake_height):
             out_track = 0
             current = print_upward_chain(current, snake_height, in_track, out_track)
 
-def pe_out_str(pe_num):
-    return tile_str(pe_num) + '_pe_out'
-
-def wire_to(src, dest):
-    return src + ' -> ' + dest
-
 snake_height = 16
 current = (2, 2)
 
@@ -268,13 +281,9 @@ for i in xrange(0, 4):
 
     pe_0 = (2, col + 2)
     pe_num = tile_pair_to_tile_num(pe_0)
+
+    add_constant_pe(pe_num, 2, 0, 1)
     
-    print tile_str(pe_num) + '_add(wire,const1__0)'
-    print wire_to(in_wire_str(pe_num, 2, 0), tile_str(pe_num) + '_op1')
-    print pe_out_str(pe_num) + ' -> ' + out_wire_str(pe_num, 0, 0)
-
-    #Old code: print in_wire_str(pe_num, 2, 0) + ' -> ' + out_wire_str(pe_num, 0, 0)
-
     mem = (2, col + 3)
     mem_num = tile_pair_to_tile_num(mem)
     print in_wire_str(mem_num, 2, 0) + ' -> ' + out_wire_str(mem_num, 0, 0) + ' # Memory tile'

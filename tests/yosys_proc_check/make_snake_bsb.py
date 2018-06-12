@@ -1,6 +1,7 @@
 from sets import Set
 import math
 import itertools
+import sys
 
 def tile_str(tile_no):
     return 'T' + str(tile_no)
@@ -41,6 +42,114 @@ def row_ind(r):
         return base + 19
     else:
         return row_ind(r - 1) + (14 if (r % 2) == 0 else 18)
+
+def append_blank(row, ind):
+    row.append(0)
+    return ind
+
+def append_tile(row, ind):
+    row.append(ind)
+    return ind + 1
+
+tile_layout = []
+tile_no = 2
+
+def append_no_mem_row(row, ind):
+    tn = ind
+    for i in xrange(0, 16):
+        if (i % 4) == 3:
+            tn = append_blank(row, tn)
+        else:
+            tn = append_tile(row, tn)
+
+    return tn
+
+def append_full_row(row, ind):
+    tn = ind
+    for i in xrange(0, 16):
+        tn = append_tile(row, tn)
+    return tn
+
+# one bit row
+row = []
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+for i in xrange(0, 16):
+    tile_no = append_tile(row, tile_no)
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+
+#print row
+tile_layout.append(row)
+
+# 16 bit pad row
+row = []
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+
+tile_no = append_tile(row, tile_no)
+for i in xrange(0, 16 + 1):
+    tile_no = append_blank(row, tile_no)
+
+tile_layout.append(row)
+
+# full 16 bit pad rows
+row = []
+
+tile_no = append_tile(row, tile_no)
+tile_no = append_tile(row, tile_no)
+
+tile_no = append_full_row(row, tile_no)
+
+tile_no = append_tile(row, tile_no)
+tile_no = append_tile(row, tile_no)
+
+tile_layout.append(row)
+    
+# normal rows 15?
+for i in range(1, 16):
+    row = []
+    # IO tile
+    tile_no = append_tile(row, tile_no)
+    # blank
+    tile_no = append_blank(row, tile_no)
+    if (i % 2) == 0:
+        tile_no = append_full_row(row, tile_no)
+    else:
+        tile_no = append_no_mem_row(row, tile_no)
+    # for i in xrange(0, 16):
+    #     tile_no = append_tile(row, tile_no)
+
+    tile_no = append_tile(row, tile_no)
+    tile_no = append_blank(row, tile_no)
+
+    tile_layout.append(row)
+# another 16 bit pad row
+row = []
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+
+tile_no = append_tile(row, tile_no)
+for i in xrange(0, 16 + 1):
+    tile_no = append_blank(row, tile_no)
+
+tile_layout.append(row)
+
+# another 1 bit pad row
+row = []
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+for i in xrange(0, 16):
+    tile_no = append_tile(row, tile_no)
+tile_no = append_blank(row, tile_no)
+tile_no = append_blank(row, tile_no)
+
+for r in tile_layout:
+    for elem in r:
+        sys.stdout.write("0x%-6x" % elem)
+    sys.stdout.write("\n")
+
+    assert(len(r) == 20)
 
 def tile_pair_to_tile_num(tile_pair):
     row = tile_pair[0]
@@ -150,13 +259,12 @@ def print_snake(snake_start, snake_width, snake_height):
             out_track = 0
             current = print_upward_chain(current, snake_height, in_track, out_track)
         
-snake_height = 2
+snake_height = 1
 current = (0, 0)
 
-tiles = []
 col = 0
 for i in xrange(0, 4):
-    print_snake((0, col), 2, 4)
+    print_snake((0, col), 2, snake_height)
 
     pe_0 = (0, col + 2)
     pe_num = tile_pair_to_tile_num(pe_0)
@@ -166,6 +274,4 @@ for i in xrange(0, 4):
     mem_num = tile_pair_to_tile_num(mem)
     print in_wire_str(mem_num, 2, 0) + ' -> ' + out_wire_str(mem_num, 0, 0) + ' # Memory tile'
     
-    tiles.append((0, col + 2))
-    tiles.append((0, col + 3))
     col += 4

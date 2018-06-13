@@ -4,6 +4,7 @@ def run_cmd(cmd):
     res = os.system(cmd)
     assert(res == 0)
 
+
 gen = '~/CGRAGenerator/'
 app_path = '{0}bitstream/bsbuilder/testdir/examples/'.format(gen)
 app_name = 'pointwise'
@@ -31,3 +32,10 @@ run_cmd(build_bsa_cmd)
 remove_lines_cmd = './remove_config_blanks.sh {0}.bsa > {0}_only_config_lines.bsa'.format(app_name)
 print 'Remove lines command', remove_lines_cmd
 run_cmd(remove_lines_cmd)
+
+# TODO: Add FlatCircuit-like automatic testbench generation
+compile_vcs_cmd = 'vcs -assert disable +nbaopt +rad +nospecify +notimingchecks -ld gcc-4.4 +vcs+lic+wait -licqueue +cli -sverilog -full64 +incdir+/hd/cad/synopsys/dc_shell/latest/packages/gtech/src_ver/ +incdir+/hd/cad/synopsys/dc_shell/latest/dw/sim_ver/ -y /hd/cad/synopsys/dc_shell/latest/dw/sim_ver/ -CFLAGS \'-O3 -march=native\' test_pointwise.v ../../hardware/generator_z/top/genesis_verif/*.v ../../hardware/generator_z/top/genesis_verif/*.sv -top test'
+print 'Compile vcs command =', compile_vcs_cmd
+run_cmd(compile_vcs_cmd)
+
+run_cmd('./simv')

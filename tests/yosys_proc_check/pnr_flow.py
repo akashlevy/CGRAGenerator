@@ -10,8 +10,9 @@ gen = '~/CGRAGenerator/'
 #app_path = '{0}bitstream/bsbuilder/testdir/examples/'.format(gen)
 #app_path = '~/CGRAMapper/examples/'.format(gen)
 app_path = './'
-app_name = 'add_five'
+#app_name = 'design_top_golden_original'
 #app_name = 'add_2_input'
+app_name = 'add_five'
 app_path = '{0}{1}'.format(app_path, app_name)
 bsdir = '{0}/bitstream/bsbuilder/'.format(gen)
 
@@ -19,7 +20,7 @@ serpent_path = '{0}bitstream/bsbuilder/serpent.py'.format(gen)
 mapper_path = '~/CGRAMapper/'
 
 # Map the coreir file
-map_cmd = '{0}bin/mapper {1}.json {2}_mapped.json'.format(mapper_path, app_path, app_name)
+map_cmd = '{0}bin/cgra-mapper {1}.json {2}_mapped.json'.format(mapper_path, app_path, app_name)
 run_cmd(map_cmd)
 # print 'Running command', map_cmd
 # res = os.system(map_cmd)

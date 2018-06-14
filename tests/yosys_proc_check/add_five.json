@@ -1,0 +1,30 @@
+{"top":"global.DesignTop",
+"namespaces":{
+  "global":{
+    "modules":{
+      "DesignTop":{
+        "type":["Record",[
+          ["in",["Array",16,"BitIn"]],
+          ["out",["Array",16,"Bit"]]
+        ]],
+        "instances":{
+          "add0":{
+            "genref":"coreir.add",
+            "genargs":{"width":["Int",16]}
+          },
+          "five_const":{
+            "genref":"coreir.const",
+            "genargs":{"width":["Int",16]},
+            "modargs":{"value":[["BitVector",16],"16'h0005"]}
+          }
+        },
+        "connections":[
+          ["self.in","add0.in0"],
+          ["five_const.out","add0.in1"],
+          ["self.out","add0.out"]
+        ]
+      }
+    }
+  }
+}
+}

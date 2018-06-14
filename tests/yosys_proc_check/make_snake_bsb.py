@@ -230,6 +230,7 @@ def print_downward_chain(snake_start, snake_height, in_track, out_track):
         #print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
 
     current = tile_below(current)
+    #add_constant_pe_2(tile_pair_to_tile_num(current), steady_in_side, steady_out_side, 1)
     print_block(current, steady_in_side, steady_track, exit_side, out_track)
 
     current = tile_right(current)
@@ -249,7 +250,8 @@ def print_upward_chain(snake_start, snake_height, in_track, out_track):
 
     for i in xrange(0, snake_height - 2):
         current = tile_above(current)
-        print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
+        #print_block(current, steady_in_side, steady_track, steady_out_side, steady_track)
+        add_constant_pe_2(tile_pair_to_tile_num(current), steady_in_side, steady_out_side, 1)
 
     current = tile_above(current)
     print_block(current, steady_in_side, steady_track, exit_side, out_track)

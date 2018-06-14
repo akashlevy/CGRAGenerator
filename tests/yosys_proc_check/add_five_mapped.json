@@ -1,0 +1,47 @@
+{"top":"global.DesignTop",
+"namespaces":{
+  "commonlib":{
+    
+  },
+  "global":{
+    "modules":{
+      "DesignTop":{
+        "type":["Record",[
+          ["in",["Array",16,"BitIn"]],
+          ["out",["Array",16,"Bit"]]
+        ]],
+        "instances":{
+          "add0$binop":{
+            "genref":"cgralib.PE",
+            "genargs":{"numbitports":["Int",3], "numdataports":["Int",2], "op_kind":["String","alu"], "width":["Int",16]},
+            "modargs":{"alu_op":[["BitVector",6],"6'h00"], "alu_op_debug":["String","add"], "data0_mode":["String","BYPASS"], "data0_value":[["BitVector",16],"16'h0000"], "data1_mode":["String","BYPASS"], "data1_value":[["BitVector",16],"16'h0000"], "signed":[["BitVector",1],"1'h0"]}
+          },
+          "five_const":{
+            "genref":"coreir.const",
+            "genargs":{"width":["Int",16]},
+            "modargs":{"value":[["BitVector",16],"16'h0005"]}
+          },
+          "io16_out":{
+            "genref":"cgralib.IO",
+            "genargs":{"width":["Int",16]},
+            "modargs":{"mode":["String","out"]}
+          },
+          "io16in_in":{
+            "genref":"cgralib.IO",
+            "genargs":{"width":["Int",16]},
+            "modargs":{"mode":["String","in"]}
+          }
+        },
+        "connections":[
+          ["io16in_in.out","add0$binop.data.in.0"],
+          ["five_const.out","add0$binop.data.in.1"],
+          ["io16_out.in","add0$binop.data.out"]
+        ]
+      }
+    }
+  },
+  "mantle":{
+    
+  }
+}
+}

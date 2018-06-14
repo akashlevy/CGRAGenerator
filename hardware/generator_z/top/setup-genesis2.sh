@@ -6,6 +6,10 @@ if [ ! -d $GENESIS_HOME ]; then
     echo /tmp/Genesis2 version not found, will git clone a new one for you
     git clone https://github.com/StanfordVLSI/Genesis2.git /tmp/Genesis2
     GENESIS_HOME=/tmp/Genesis2
+
+    # huh.  seems to break if don't remove distrib Zlib?
+    # Compress::Raw::Zlib object version 2.060 does not match bootstrap parameter 2.033 at /tmp/Genesis2/Genesis2Tools/PerlLibs/ExtrasForOldPerlDistributions/Compress/Raw/Zlib.pm line 98.
+    /bin/rm -rf /tmp/Genesis2/Genesis2Tools/PerlLibs/ExtrasForOldPerlDistributions/Compress
   fi
 fi
 export GENESIS_HOME

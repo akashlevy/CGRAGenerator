@@ -76,12 +76,33 @@ def simplify(nodename):
 #     #     "modargs":{"alu_op":["String","add"], "data0_mode":["String","BYPASS"], "data0_value":[["BitVector",16],0], "data1_mode":["String","BYPASS"], "data1_value":[["BitVector",16],0]}
 #     #   },
 
-#     # Sample const node:
-#     #           "const7__338":{
-#     #             "genref":"coreir.const",
-#     #             "genargs":{"width":["Int",16]},
-#     #             "modargs":{"value":[["BitVector",16],7]}
-#     #           },
+    # Sample const node:
+    #     "five_const":{
+    #       "genref":"coreir.const",
+    #       "genargs":{"width":["Int",16]},
+    #       "modargs":{"value":[["BitVector",16],"16'h0005"]}
+    #     },
+    # Must change node name to 'const5_five_const' maybe
+
+    DBG=0
+    if DBG:
+        print "FOO %s" % nodename
+        print instances[nodename]['genref']
+
+    if instances[nodename]['genref'] == "coreir.const":
+
+        if DBG: print "# FOO found const", nodename
+        value = instances[nodename]['modargs']['value'][1]
+
+        if DBG: print "# FOO found const value (str) %s", value
+
+        assert value[0:4] == "16'h"
+        value = int(value[4:], 16)
+        
+        if DBG: print "# FOO found const value (int) %d", value
+        newnodename = 'const%d_%s' % (value,nodename)
+        return newnodename
+
 
     # Memory nodes:
     # "lb_p4_clamped_stencil_update_stream$mem_1$cgramem" => "mem_1"

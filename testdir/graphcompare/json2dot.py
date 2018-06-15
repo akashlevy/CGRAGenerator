@@ -9,16 +9,15 @@
 import json
 import re
 import sys
-
-filename = "examples/cascade_mapped.json"
-
+# filename = "examples/cascade_mapped.json"
 # my_data = json.loads(open(filename).read())
+
 my_data = json.loads(sys.stdin.read())
 
 # print my_data
 # print "------------------------------------------------------------------------------"
 
-instances = my_data["namespaces"]["global"]["modules"]["DesignTop"]["instances"]
+instances   = my_data["namespaces"]["global"]["modules"]["DesignTop"]["instances"]
 connections = my_data["namespaces"]["global"]["modules"]["DesignTop"]["connections"]
 
 
@@ -51,8 +50,11 @@ def simplify(nodename):
     parse = re.search('([^.]*)\.bit\.in\.([0-9])', nodename)
     if parse:
         rval = '%s.in%s' % (parse.group(1), parse.group(2))
-        # Things will break later if this does not conform
-        assert rval.find('bitPE.in') >= 0
+
+        # # Things will break later if this does not conform
+        # assert rval.find('bitPE.in') >= 0
+        # Let it break later, I guess, and then we can fix it maybe.
+
         return rval
 
     # "PE_U8.data.in.1" => "PE_U8.in1"
@@ -85,11 +87,17 @@ def simplify(nodename):
     # Must change node name to 'const5_five_const' maybe
 
     DBG=0
-    if DBG:
-        print "FOO %s" % nodename
-        print instances[nodename]['genref']
+    if DBG: print "FOO %s" % nodename
 
-    if instances[nodename]['genref'] == "coreir.const":
+    has_genref = True
+    try: dummy = instances[nodename]['genref']
+    except: has_genref = False
+
+    has_modref = True
+    try: dummy = instances[nodename]['modref']
+    except: has_modref = False
+
+    if has_genref and (instances[nodename]['genref'] == "coreir.const"):
 
         value = instances[nodename]['modargs']['value'][1]
         if DBG: print "# FOO found const", nodename
@@ -104,7 +112,24 @@ def simplify(nodename):
             assert value[0:4] == "16'h"
             value = int(value[4:], 16)
         
+        if nodename.find('const') == 0:
+            # Old style nodename, probably fine as is
+            return nodename
+
         newnodename = 'const%d_%s' % (value,nodename)
+        return newnodename
+
+    # "bitand_791_792_793$c0":{
+    #     "modref":"corebit.const",
+    #     "modargs":{"value":["Bool",false]}
+    # 
+    if has_modref and (instances[nodename]['modref'] == "corebit.const"):
+        value = instances[nodename]['modargs']['value'][1]
+        assert type(value) == bool
+        if value:
+            newnodename = 'const1_%s' % nodename
+        else:
+            newnodename = 'const0_%s' % nodename
         return newnodename
 
 
@@ -174,12 +199,14 @@ def to_or_from(nodename):
         # connections go FROM output TO input
         return "to"
 
-    if re.search("\.wdata$", nodename): return "to"
     if re.search("\.rdata$", nodename): return "from"
-    if re.search("\.wen$", nodename): return "to"
+    if re.search("\.wdata$", nodename): return "to"
+    if re.search("\.wen$",   nodename): return "to"
+    if re.search("\.ren$",   nodename): return "to"
+    if re.search("\.cg_en$", nodename): return "to"
 
-    # print "FOO I don't know what '%s' is" % nodename
     # return "unknown"
+    sys.stdout.flush()
     sys.stderr.write("\nERROR I don't know what '%s' is\n\n" % nodename)
     assert False
 
@@ -276,21 +303,40 @@ for k in connections:
         from_node = u1
         to_node   = u0
 
-#     # For some reason output is emitted backwards-assed...!!?
-#     if (innode == "OUTPUT"):
-#         innode = outnode
-#         outnode = "OUTPUT"
+#     # print "  %s" % instances[innode]['modargs']
+# 
+#     # E.g. "# lut_value 0x88"
+#     if re.search('(.*_lut_bitPE)$', from_node):
+#         annotation = find_lut_value(from_node)
+# 
+#     # "slt_790_775_791$not$lut$lut"
+# 
+#     # Can also look like: "lb_grad_xx_2_stencil_update_stream$lbmem_1_0$c0_lutcnst"
+#     if re.search('(.*lutcnst)$', from_node):
+#         annotation = find_lut_value(from_node)
+# 
 
-    # print "  %s" % instances[innode]['modargs']
+    # Try a new thing for luts maybe
+    # "slt_790_775_791$not$lut$lut":{
+    #    "modargs":{
+    #    "bit0_mode":["String","BYPASS"],
+    #    "bit0_value":["Bool",false],
+    #    "bit1_mode":["String","BYPASS"],
+    #    "bit1_value":["Bool",false],
+    #    "bit2_mode":["String","BYPASS"],
+    #    "bit2_value":["Bool",false],
+    #    "flag_sel":[["BitVector",4],"4'he"],
+    #    "flag_sel_debug":["String","F_LUT"],
+    #    "lut_value":[["BitVector",8],"8'h55"]
+    #    }
+    has_lut_value = True
+    try: dummy = instances[from_node]['modargs']['lut_value']
+    except: has_lut_value = False
+    if has_lut_value: annotation = find_lut_value(from_node)
 
-    # E.g. "# lut_value 0x88"
-    if re.search('(.*_lut_bitPE)$', from_node):
-        annotation = find_lut_value(from_node)
-
-    # print '    "%s" -> "%s";' % (from_node, to_node)
     print '    "%s" -> "%s";%s' % (from_node, to_node, annotation)
-
     if DBG: print ""
+
 
 print_trailer()
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 
 # -*- coding: utf-8 -*-
@@ -91,15 +91,19 @@ def simplify(nodename):
 
     if instances[nodename]['genref'] == "coreir.const":
 
-        if DBG: print "# FOO found const", nodename
         value = instances[nodename]['modargs']['value'][1]
+        if DBG: print "# FOO found const", nodename
+        if DBG: print "# FOO found const value %s %s" % (value, type(value))
 
-        if DBG: print "# FOO found const value (str) %s", value
+        # Old style const value: "2"
+        # Old style const value: "16'h0005"
 
-        assert value[0:4] == "16'h"
-        value = int(value[4:], 16)
+        # if type(value) == str:
+        # Oops apparently "16'h0005" can be <type 'unicode'> !! :(
+        if type(value) != int:
+            assert value[0:4] == "16'h"
+            value = int(value[4:], 16)
         
-        if DBG: print "# FOO found const value (int) %d", value
         newnodename = 'const%d_%s' % (value,nodename)
         return newnodename
 

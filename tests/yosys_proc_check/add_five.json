@@ -12,7 +12,7 @@
             "genref":"coreir.add",
             "genargs":{"width":["Int",16]}
           },
-          "five_const":{
+          "const5_5":{
             "genref":"coreir.const",
             "genargs":{"width":["Int",16]},
             "modargs":{"value":[["BitVector",16],"16'h0005"]}
@@ -20,7 +20,7 @@
         },
         "connections":[
           ["self.in","add0.in0"],
-          ["five_const.out","add0.in1"],
+          ["const5_5.out","add0.in1"],
           ["self.out","add0.out"]
         ]
       }

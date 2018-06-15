@@ -10,9 +10,9 @@ gen = '~/CGRAGenerator/'
 #app_path = '{0}bitstream/bsbuilder/testdir/examples/'.format(gen)
 #app_path = '~/CGRAMapper/examples/'.format(gen)
 app_path = './'
-#app_name = 'design_top_golden_original'
+app_name = 'design_top_golden_original'
 #app_name = 'add_2_input'
-app_name = 'add_five'
+#app_name = 'add_five'
 app_path = '{0}{1}'.format(app_path, app_name)
 bsdir = '{0}/bitstream/bsbuilder/'.format(gen)
 

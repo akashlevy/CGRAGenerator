@@ -4,15 +4,26 @@
 # Preamble #############################################################
 ########################################################################
 
+# Note/FIXME probably should do this:
+#    if (-e ./genesis_clean.cmd) ./genesis_clean.cmd
+
 # @Caleb: For providing registers on all outputs of all SBs, do-
 # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
 # export CGRA_GEN_ALL_REG=1  (sh syntax)
 export CGRA_GEN_ALL_REG=1
 
+# If it's travis then it must mean verilator hacks, yes?
+if [ ! -z ${TRAVIS_BUILD_DIR+x} ]; then
+  echo "${0:t} WARNING I think we are running from travis; setting USE_VERILATOR_HACKS"
+  export USE_VERILATOR_HACKS="TRUE"
+fi
+
 if [ ! `command -v Genesis2.pl` ]; then
   echo 'build_cgra.sh: Oops cannot find Genesis2.pl; I will try to fix this for you'
   echo 'build_cgra.sh: source ./setup-genesis2.sh'
   source ./setup-genesis2.sh
+  command -v Genesis2.pl || exit 13
+  echo ''
 fi
 
 if [ -d genesis_verif ]; then

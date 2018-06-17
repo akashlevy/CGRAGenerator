@@ -110,7 +110,8 @@ def find_output_tile():
     global OUTPUT_TILENO
     for i in range(1000):
         t = cgra_info.tiletype(i)
-        if (t[0:2] == "pe") or (t[0:3] == "mem"):
+        # if (t[0:2] == "pe") or (t[0:3] == "mem"):
+        if is_pe_tile(t) or is_mem_tile(t):
             (r,c) = cgra_info.tileno2rc(i)
             if r == 2:
                 OUTPUT_TILENO = i
@@ -961,6 +962,12 @@ class Node:
         #                          in.*           out_.*
         #                          in.*      {mem_in,op1,op2}   
 
+        ####################################################################
+        ####################################################################
+        ####################################################################
+        # BOOKMARK1 wrap the rest of this func as a separate func connect_within_tile2(T, a, b)
+        # that can be called independently
+
         if DBG>1: print "       Looks like both are available to '%s' (%s)\n" % (self.name, where(451))
         #         print "       Ask cgra: can '%s' connect to '%s'? (%s)" % (a,b,where(457))
         if cgra_info.connect_within_tile(T, a, b, max(0,DBG-1)):
@@ -1056,6 +1063,10 @@ class Node:
             print "NO MIDDLE"
             print "no good"
             return False
+
+        ####################################################################
+        ####################################################################
+        ####################################################################
             
 
 def addT(tileno, r):
@@ -1161,7 +1172,10 @@ def build_node(nodes, line, DBG=0):
 
     if lhs == 'wen_lut':
         if DBG: pwhere(1013, "# WARNING no longer ignoring wen_lut\n")
-        assert rhs[0:3] == 'mem', 'oops why does wen_lut not connect to a mem tile!?'
+
+        # assert rhs[0:3] == 'mem', 'oops why does wen_lut not connect to a mem tile!?'
+        assert   is_memnode(rhs),   'oops why does wen_lut not connect to a mem tile!?'
+
         getnode(rhs).wen_lut = 'needs_wenlut'
         getnode(rhs).show()
         return
@@ -1207,7 +1221,17 @@ def process_fifo_depth_comments(rhs, line, DBG=0):
         return
     else:
         if DBG: pwhere(1019, "# Found a fifo_depth comment to process")
-        assert rhs[0:3] == 'mem', 'oops dunno what mem to config fifo_depth'
+        errmsg='''
+
+ERROR rhs[0:3] should be mem tile but rhs is actually:
+ERROR  "%s"
+
+''' % rhs
+
+        # assert rhs[0:3] == 'mem', 'oops dunno what mem to config fifo_depth'
+        # assert rhs[0:3] == 'mem', errmsg
+        assert is_memnode(rhs),     errmsg
+
         fifo_depth = parse.group(1)
         getnode(rhs).fifo_depth = int(fifo_depth)
         # print "\n666foo", rhs, line; getnode(rhs).show()
@@ -1348,11 +1372,20 @@ def init_tile_resources(DBG=0):
 
 def is_pe_tile(tileno):  return cgra_info.mem_or_pe(tileno) == 'pe'
 def is_mem_tile(tileno): return cgra_info.mem_or_pe(tileno) == 'mem'
+
 def is_bitnode(nodename):
     # E.g. 'bitmux_157_157_149_lut_bitPE.in0' or 'io1_out_0_0'
     if   nodename.find('bitPE.in') >= 0: return True
     elif nodename.find('io1')      == 0: return True # e.g. 'io1_out_0_0'
     else: return False
+
+def is_memnode(nodename):
+    # old style mem node must start with 'mem"
+    if nodename[0:3] == 'mem': return True
+
+    # new style mem node contains '$lbmem' maybe?
+    return (nodename.find('$lbmem') > 0)
+
 
 def initialize_node_INPUT():
     input  = INPUT_WIRE_T
@@ -1370,8 +1403,20 @@ def initialize_node_INPUT():
     # assert INPUT.routed == False
 
 def is_const(nodename):  return nodename.find('const') == 0
-def is_reg(nodename):    return nodename.find('reg') == 0
-def is_mem(nodename):    return nodename.find('mem') == 0
+def is_reg(nodename):
+
+    # old
+    if nodename.find('reg') == 0: return True
+
+    # new "lb_padded_2_stencil_update_stream$lb1d_0$reg_1"
+    return nodename.find('$reg') > 0
+
+
+def is_mem(nodename):
+    # return nodename.find('mem') == 0
+    return is_memnode(nodename)
+
+
 def is_pe(nodename):
     return (nodename) and (\
         (nodename.find('add') == 0) or \
@@ -2012,7 +2057,21 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         elif is_regreg(dname):
             assert False, 'what do we do with regreg??'
         else:
-            assert False, 'what do we do with regs?? (see below)'
+            errmsg = '''
+
+ERROR dname = "%s"
+ERROR looks like dname is a reg
+ERROR what do we do with regs?? (see below)
+
+''' % dname
+
+            # print errmsg
+            # print 'is_reg?', is_reg(dname)
+            # print 'is_regop?', is_regop(dname)
+            # print 'is_regreg?', is_regreg(dname)
+
+            # assert False, 'what do we do with regs?? (see below)'
+            assert False, errmsg
             # ANSWER: make sure reg dest is registered in REGISTERS etc.
         
         getnode(dname).place(dtileno, d_in, d_out, DBG)
@@ -2859,6 +2918,15 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
             print "     - OOP its being used by someone else, try another one\n"
             continue
 
+        # cend = can_connect_end(snode, endpoint, dstport,DBG)
+
+        # BOOKMARK3 FIXME snode => dnode
+        # WHAT? NO!  Ends connect in DNODE not SNODE
+        targtile1 = snode.tileno
+        targtile2 = parseT(endpoint)[0]
+        print 66666, targtile1, targtile2
+        # assert targtile1 == targtile2, "HEY!"
+
         cend = can_connect_end(snode, endpoint, dstport,DBG)
 
         if cend: return cend
@@ -2910,20 +2978,42 @@ def can_connect_begin(snode,src,begin,DBG=0):
         print ''
     return cbegin
 
-def can_connect_end(snode, end,dstport,DBG=0):
+def can_connect_end(snode, endpoint, dstport, DBG=0):
 
-#     if is_bitnode(dstport):
-#         print '''
-#         Found single-bit input; what now?
-# 
-#         '''
-#         # assert False
+    #     if is_bitnode(dstport):
+    #         print '''
+    #         Found single-bit input; what now?
+    # 
+    #         '''
+    #         # assert False
 
-    # cend = can_connect(snode, end,dstport,DBG)
+    ####################################################################
+    ####################################################################
+    ####################################################################
+    DBG=9
+    # cend = can_connect(snode, endpoint,dstport,DBG)
     if DBG>1: print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
-       % (end,dstport,snode.name,where(2933))
+       % (endpoint,dstport,snode.name,where(2933))
 
-    cend = snode.connect(end,dstport,DBG=DBG)
+    # Can path endpoint 'T41_in_s2t0' connect to dest port 'T41_mem_in'?
+    # if endpoint == 'T41_in_s2t0': assert False, 'Why INPUT net?  Should be T41 net surely?'
+
+    # WHAT? NO!  Ends connect in DNODE not SNODE
+    targtile1 = snode.tileno
+    targtile2 = parseT(endpoint)[0]
+    print 66666, targtile1, targtile2
+    # assert targtile1 == targtile2, "HEY!"
+
+    cend = snode.connect(endpoint,dstport,DBG=DBG)
+
+    # BOOKMARK2 instead of snode.connect() should be dnode.connect()
+    # BUT dnode might not yet be allocated;
+    # in which case call connect_within_tile2(dtileno, endpoint, dstport) (see other BOOKMARK)
+    ####################################################################
+    ####################################################################
+    ####################################################################
+
+
     if not cend:
         if DBG>1: print 'oops no route from p1 to p2'
         # (will return False below, yes?)

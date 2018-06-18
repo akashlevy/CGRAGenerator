@@ -185,22 +185,26 @@ FF00002A 0002F00B
 # data[(23, 22)] : @ tile (3, 4) connect wire 0 (in_BUS16_S0_T1) to out_BUS16_S2_T1
 # data[(25, 24)] : @ tile (3, 4) connect wire 3 (pe_out_res) to out_BUS16_S2_T2
 
-F100002B 0000000C
+0008002B 00200002
+# data[(1, 0)] : @ tile (3, 6) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S0_T0
+# data[(21, 20)] : @ tile (3, 6) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
+# data[(23, 22)] : @ tile (3, 6) connect wire 0 (in_BUS16_S0_T1) to out_BUS16_S2_T1
+
+F100002C 0000000C
 # data[(15, 0)] : init `data1` reg with const `12`
 
-FF00002B 0003F00B
+FF00002C 0003F00B
 # data[(5, 0)] : alu_op = mul
 # data[(6, 6)] : unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_DELAY= 0x3
 # data[(19, 18)]: data1: REG_CONST= 0x0
 
-0002002B 00000005
-# data[(3, 0)] : @ tile (3, 6) connect wire 5 (out_BUS16_S2_T0) to data0
+0002002C 00000000
+# data[(3, 0)] : @ tile (3, 7) connect wire 0 (in_BUS16_S2_T0) to data0
 
-0008002B 00E00000
-# data[(21, 20)] : @ tile (3, 6) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
-# data[(23, 22)] : @ tile (3, 6) connect wire 3 (pe_out_res) to out_BUS16_S2_T1
+0008002C 00C00000
+# data[(23, 22)] : @ tile (3, 7) connect wire 3 (pe_out_res) to out_BUS16_S2_T1
 
 FF000036 000AF000
 # data[(5, 0)] : alu_op = add

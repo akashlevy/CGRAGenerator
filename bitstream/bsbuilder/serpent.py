@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import sys
 import re
@@ -700,6 +700,19 @@ def getnode(nodename):
     bn = base_nodename(nodename)
     return nodes[bn]
 
+def nodetile(tileno):
+    '''Given tileno, find associated node, else return False'''
+
+    # Shortcut/special case if tileno is INPUT tile
+    # Could contain TWO nodes; must use 'INPUT' or things break I think
+    if tileno == INPUT_TILE: return nodes["INPUT"]
+
+    for nodename in nodes:
+        node = nodes[nodename]
+        if node.tileno == int(tileno): return node
+
+    return False
+
 class Node:
     def __init__(self, nodename):
         self.name       = nodename
@@ -939,43 +952,53 @@ class Node:
         If can connect, return connection(s) necessary.
         Else return FALSE i guess.
         '''
-        DBG = max(0,DBG)
-        if a[0] == 'T': T = int(re.search('^T(\d+)', a).group(1))
-        if b[0] == 'T': T = int(re.search('^T(\d+)', b).group(1))
+        return serpent_connect_within_tile(self, a, b, T, DBG)
 
-        # Canonicalize a,b to have embedded tile info e.g. 'T<t>_resource'
-        if a[0] != 'T': a = "T%d_%s" % (T,a)
-        if b[0] != 'T': b = "T%d_%s" % (T,b)
 
-        if DBG>1: print ''
-        if DBG>1: print "looking to connect '%s' and '%s'" % (a,b)
+# FIXME this should be part of cgra_info.connect_within_tile() !!!
+def serpent_connect_within_tile(node, a, b, T, DBG=0):
 
-        if not self.is_avail(a):
+    DBG = max(0,DBG)
+    if a[0] == 'T': T = int(re.search('^T(\d+)', a).group(1))
+    if b[0] == 'T': T = int(re.search('^T(\d+)', b).group(1))
+
+    # Canonicalize a,b to have embedded tile info e.g. 'T<t>_resource'
+    if a[0] != 'T': a = "T%d_%s" % (T,a)
+    if b[0] != 'T': b = "T%d_%s" % (T,b)
+
+    if DBG>1: print ''
+    if DBG>1: print "looking to connect '%s' and '%s'" % (a,b)
+
+    if node != False:
+        if not node.is_avail(a):
             if DBG>1: print "'%s' not avail to tile %d" % (a,T)
             return False
-        if not self.is_avail(b):
+        if not node.is_avail(b):
             if DBG>1: print "'%s' not avail to tile %d" % (b,T)
             return False
 
-        # Valid combinations:       a               b
-        #                     pe_out|mem_out      out_.*
-        #                          in.*           out_.*
-        #                          in.*      {mem_in,op1,op2}   
-
-        ####################################################################
-        ####################################################################
-        ####################################################################
-        # BOOKMARK1 wrap the rest of this func as a separate func connect_within_tile2(T, a, b)
-        # that can be called independently
-
-        if DBG>1: print "       Looks like both are available to '%s' (%s)\n" % (self.name, where(451))
+        if DBG>1: print "       Looks like both are available to '%s' (%s)\n" % (node.name, where(451))
         #         print "       Ask cgra: can '%s' connect to '%s'? (%s)" % (a,b,where(457))
-        if cgra_info.connect_within_tile(T, a, b, max(0,DBG-1)):
-            if DBG: print '     YES'
-            return ['%s -> %s' % (a,b)]
-        else:
-            if DBG: print "     NO"
 
+    else:
+        if DBG>1: print "       Looks like tile %d not mapped yet" % T
+
+
+    # Valid combinations:       a               b
+    #                     pe_out|mem_out      out_.*
+    #                          in.*           out_.*
+    #                          in.*      {mem_in,op1,op2}   
+
+    if cgra_info.connect_within_tile(T, a, b, max(0,DBG-1)):
+        if DBG: print '     YES'
+        return ['%s -> %s' % (a,b)]
+    else:
+        if DBG: print "     NO"
+
+    return can_connect_through_intermediary(node, T, a, b, DBG)
+
+def can_connect_through_intermediary(node, T, a, b, DBG=0):
+        # (If node == False then tileno T not mapped yet)
 
         if b[-1] == 'b' and a[-1] != 'b':
             print "OOPS SOOOOO looks like we tried to connect bit and non-bit wires4"
@@ -1045,7 +1068,7 @@ class Node:
             middle_canon = cgra_info.cgra2canon(middle, T)
 
             # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
-            if not self.is_avail(middle_canon):
+            if middle_canon not in resources[T]:
                 if DBG: print "Oops middle node is occupied; we will have to try again"
                 # assert self.is_avail(middle_canon)
                 return False
@@ -1063,10 +1086,6 @@ class Node:
             print "NO MIDDLE"
             print "no good"
             return False
-
-        ####################################################################
-        ####################################################################
-        ####################################################################
             
 
 def addT(tileno, r):
@@ -2618,7 +2637,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         # FIXME this is bad
         global ENDPOINT_MUST_BE_FREE
         ENDPOINT_MUST_BE_FREE = True
-        p = connect_endpoint(snode, snode.output, dname, dtileno, DBG=DBG)
+        p = connect_endpoint(snode.output, dname, dtileno, DBG=DBG)
         ENDPOINT_MUST_BE_FREE = False
         return p
 
@@ -2746,7 +2765,12 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
         if DBG: print "2 (redo). Attach path endpoint '%s' to dest node '%s' (%s)"\
            % (path[-1], dname, where(2203))
 
-    cend = connect_endpoint(snode, path[-1], dname, dtileno, DBG)
+    # BOOKMARK/FIXME should be dnode, right? below?
+    # cend = connect_endpoint(snode, path[-1], dname, dtileno, DBG)
+
+    dnode = nodetile(dtileno)
+    cend = connect_endpoint(path[-1], dname, dtileno, DBG)
+
     if not cend:
         pwhere(2169, "  Cannot connect src '%s' to endpoint '%s'?" % (sname, path[0]))
         # assert False, 'disaster could not find a path'
@@ -2883,13 +2907,13 @@ def find_outport(tileno, nodename):
 
 
 
-def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
+def connect_endpoint(endpoint, dname, dtileno, DBG):
 
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
     # for regpe it's op1 or op2
-    dplist = dstports(dname,dtileno,DBG=1)
+    dplist = dstports(dname, dtileno, DBG=1)
 
     if DBG:
         # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']
@@ -2918,16 +2942,7 @@ def connect_endpoint(snode, endpoint, dname, dtileno, DBG):
             print "     - OOP its being used by someone else, try another one\n"
             continue
 
-        # cend = can_connect_end(snode, endpoint, dstport,DBG)
-
-        # BOOKMARK3 FIXME snode => dnode
-        # WHAT? NO!  Ends connect in DNODE not SNODE
-        targtile1 = snode.tileno
-        targtile2 = parseT(endpoint)[0]
-        print 66666, targtile1, targtile2
-        # assert targtile1 == targtile2, "HEY!"
-
-        cend = can_connect_end(snode, endpoint, dstport,DBG)
+        cend = can_connect_end(endpoint, dstport, DBG)
 
         if cend: return cend
         else:
@@ -2978,7 +2993,8 @@ def can_connect_begin(snode,src,begin,DBG=0):
         print ''
     return cbegin
 
-def can_connect_end(snode, endpoint, dstport, DBG=0):
+
+def can_connect_end(endpoint, dstport, DBG=0):
 
     #     if is_bitnode(dstport):
     #         print '''
@@ -2987,47 +3003,23 @@ def can_connect_end(snode, endpoint, dstport, DBG=0):
     #         '''
     #         # assert False
 
-    ####################################################################
-    ####################################################################
-    ####################################################################
-    DBG=9
-    # cend = can_connect(snode, endpoint,dstport,DBG)
-    if DBG>1: print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
-       % (endpoint,dstport,snode.name,where(2933))
+    dtileno = parseT(endpoint)[0]
+    dnode = nodetile(dtileno)
 
-    # Can path endpoint 'T41_in_s2t0' connect to dest port 'T41_mem_in'?
-    # if endpoint == 'T41_in_s2t0': assert False, 'Why INPUT net?  Should be T41 net surely?'
+    if DBG>1 and (dnode != False):
+        print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
+              % (endpoint,dstport,dnode.name,where(2933))
 
-    # WHAT? NO!  Ends connect in DNODE not SNODE
-    targtile1 = snode.tileno
-    targtile2 = parseT(endpoint)[0]
-    print 66666, targtile1, targtile2
-    # assert targtile1 == targtile2, "HEY!"
-
-    cend = snode.connect(endpoint,dstport,DBG=DBG)
-
-    # BOOKMARK2 instead of snode.connect() should be dnode.connect()
-    # BUT dnode might not yet be allocated;
-    # in which case call connect_within_tile2(dtileno, endpoint, dstport) (see other BOOKMARK)
-    ####################################################################
-    ####################################################################
-    ####################################################################
-
+    cend = serpent_connect_within_tile(dnode, endpoint, dstport, dtileno, DBG=DBG)
 
     if not cend:
         if DBG>1: print 'oops no route from p1 to p2'
         # (will return False below, yes?)
 
-#     if is_bitnode(dstport):
-#         print """
-#         Found single-bit input; wha' hoppen'?
-# 
-#         """
-#         assert False
-
-    if cend:
+    else:
         print '   Ready to connect endpoint %s (%s)' % (cend, where(1516))
         print ''
+
     return cend
 
 

@@ -3,7 +3,7 @@
 # const0_0::add_466_470_471_PE.in0 T59_op2
 # const0_0$1::mul_492_493_494_PE.in1 T42_op2
 # const11_11::mul_468_469_470_PE.in1 T76_op2
-# const12_12::mul_486_487_488_PE.in1 T43_op2
+# const12_12::mul_486_487_488_PE.in1 T44_op2
 # const13_13::mul_504_505_506_PE.in1 T87_op2
 # const14_14::mul_474_475_476_PE.in1 T75_op2
 # const16_16::mul_510_511_512_PE.in1 T22_op2
@@ -11,7 +11,7 @@
 # const18_18::mul_498_499_500_PE.in1 T23_op2
 # const19_19::mul_516_517_518_PE.in1 T21_op2
 
-# REGISTERS ['T21_out_s1t0', 'T24_out_s0t0', 'T57_out_s0t0', 'T76_op1', 'T43_op1', 'T87_op1']
+# REGISTERS ['T21_out_s1t0', 'T24_out_s0t0', 'T57_out_s0t0', 'T76_op1', 'T44_op1', 'T87_op1']
 
 # PE tiles
 T21_mul(wire,const19_19)   # mul_516_517_518_PE
@@ -20,7 +20,7 @@ T23_mul(wire,const18_18)   # mul_498_499_500_PE
 T40_add(wire,wire)         # add_490_494_495_PE
 T41_add(wire,wire)         # add_484_488_489_PE
 T42_mul(wire,const0_0$1)   # mul_492_493_494_PE
-T43_mul(reg,const12_12)    # mul_486_487_488_PE
+T44_mul(reg,const12_12)    # mul_486_487_488_PE
 T54_add(wire,wire)         # add_496_500_501_PE
 T55_add(wire,wire)         # add_478_482_483_PE
 T56_mul(wire,const17_17)   # mul_480_481_482_PE
@@ -164,7 +164,8 @@ T55_in_s0t0 -> T55_out_s2t0
 T55_out_s2t0 -> T55_op1
 
 # mul_486_487_488_PE::add_484_488_489_PE.in1
-T43_pe_out -> T43_out_s2t1
+T44_pe_out -> T44_out_s2t1
+T43_in_s0t1 -> T43_out_s2t1
 T24_in_s4t1 -> T24_out_s6t1
 T42_in_s0t1 -> T42_out_s2t1
 T41_in_s0t1 -> T41_out_s1t1
@@ -225,8 +226,8 @@ T22_out_s2t0 -> T22_op1
 
 # reg_1_1::reg_1_2
 T25_in_s2t0 -> T25_out_s1t0
-T43_in_s3t0 -> T43_out_s2t0
-T43_out_s2t0 -> T43_op1 (r)
+T43_in_s3t0 -> T43_out_s0t0
+T44_in_s2t0 -> T44_op1 (r)
 
 # reg_1_1::mul_492_493_494_PE.in0
 T25_in_s2t0 -> T25_out_s1t0
@@ -236,7 +237,7 @@ T42_in_s0t0 -> T42_out_s2t0
 T42_out_s2t0 -> T42_op1
 
 # reg_1_2::mul_486_487_488_PE.in0
-# T43_op1 (r) 
+# T44_op1 (r) 
 
 # reg_2_1::reg_2_2
 T58_in_s2t0 -> T58_out_s0t0

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import sys
 import re
@@ -349,6 +349,8 @@ def process_output(line):
           (tileno, r, c, dir, side, track, g)
 
 
+# Every dest must have exactly ONE source
+ALLSOURCES = {}
 def bs_connection(tileno, line, DBG=0):
     DBG= max(0,DBG)
     # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
@@ -382,6 +384,14 @@ def bs_connection(tileno, line, DBG=0):
     # Connect lhs to rhs
     Tlhs = "T%d_%s" % (tileno,lhs)
     Trhs = "T%d_%s" % (tileno,rhs)
+
+    # Make sure that no two guys try to write the same guy.
+    if (Trhs in ALLSOURCES) and (ALLSOURCES[Trhs] != Tlhs):
+        assert False, \
+               "ERROR Uh oh looks like more than one guy wants to write '%s'"\
+               % Trhs
+    ALLSOURCES[Trhs] = Tlhs
+
     cwt = cgra_info.connect_within_tile(tileno, Tlhs, Trhs, max(0,DBG-1))
     if not cwt:
         # Print useful connection hints

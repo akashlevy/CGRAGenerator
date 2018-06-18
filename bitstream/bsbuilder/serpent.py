@@ -751,8 +751,8 @@ class Node:
         # self.processed = False
 
     def tiletype(self):
-        if self.name[0:3] == 'mem': return 'mem'
-        else:                       return 'pe'
+        if is_mem_node(self.name): return 'mem'
+        else:                      return 'pe'
 
     def addop(self, operand):
         assert type(operand) == str
@@ -891,7 +891,7 @@ class Node:
 
         # If dest exists and says 'bitPE.in' then it has buswidth 1 instead of default 16
         # dests=['bitmux_157_157_149_lut_bitPE.in0', 'bitxor_149_151_155_lut_bitPE.in0']
-        if (len(self.dests) > 0) and is_bitnode(self.dests[0]): buswidth = 1
+        if (len(self.dests) > 0) and is_bit_node(self.dests[0]): buswidth = 1
         else: buswidth = 16
 
         # if (self.buswidth == 1) and (output[-3:] == "out"):
@@ -1193,7 +1193,7 @@ def build_node(nodes, line, DBG=0):
         if DBG: pwhere(1013, "# WARNING no longer ignoring wen_lut\n")
 
         # assert rhs[0:3] == 'mem', 'oops why does wen_lut not connect to a mem tile!?'
-        assert   is_memnode(rhs),   'oops why does wen_lut not connect to a mem tile!?'
+        assert   is_mem_node(rhs),   'oops why does wen_lut not connect to a mem tile!?'
 
         getnode(rhs).wen_lut = 'needs_wenlut'
         getnode(rhs).show()
@@ -1249,7 +1249,7 @@ ERROR  "%s"
 
         # assert rhs[0:3] == 'mem', 'oops dunno what mem to config fifo_depth'
         # assert rhs[0:3] == 'mem', errmsg
-        assert is_memnode(rhs),     errmsg
+        assert is_mem_node(rhs),     errmsg
 
         fifo_depth = parse.group(1)
         getnode(rhs).fifo_depth = int(fifo_depth)
@@ -1392,13 +1392,13 @@ def init_tile_resources(DBG=0):
 def is_pe_tile(tileno):  return cgra_info.mem_or_pe(tileno) == 'pe'
 def is_mem_tile(tileno): return cgra_info.mem_or_pe(tileno) == 'mem'
 
-def is_bitnode(nodename):
+def is_bit_node(nodename):
     # E.g. 'bitmux_157_157_149_lut_bitPE.in0' or 'io1_out_0_0'
     if   nodename.find('bitPE.in') >= 0: return True
     elif nodename.find('io1')      == 0: return True # e.g. 'io1_out_0_0'
     else: return False
 
-def is_memnode(nodename):
+def is_mem_node(nodename):
     # old style mem node must start with 'mem"
     if nodename[0:3] == 'mem': return True
 
@@ -1433,7 +1433,7 @@ def is_reg(nodename):
 
 def is_mem(nodename):
     # return nodename.find('mem') == 0
-    return is_memnode(nodename)
+    return is_mem_node(nodename)
 
 
 def is_pe(nodename):
@@ -1958,10 +1958,9 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         elif dname == "io1_out_0_0":
             dtileno = OUTPUT_TILENO_onebit
 
-
-
         elif not is_placed(dname):
             dtileno = get_nearest_tile(sname, dname)
+
         else:
             dtileno = getnode(dname).tileno
             print "Actually it does have a home already, in tile %d" % dtileno
@@ -2573,7 +2572,7 @@ def get_nearest_tile(sname, dname, DBG=0):
     nearest = packer.find_nearest(stileno, dtype, DBG=0)
     assert getnode(dname).tiletype() == cgra_info.mem_or_pe(nearest)
 
-    # print 'foudn nearest tile', nearest
+    # print 'found nearest tile', nearest
     assert nearest != -1
 
     # stile = getnode(sname).tileno
@@ -2660,7 +2659,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         
         # FIXME this is sooo bad; should never have built the wrong path in the first place
         # If BUS1 path, Change default (BUS16) wires to 'b' (BUS1) wires
-        if is_bitnode(dname): fix_path(path, dname, DBG)
+        if is_bit_node(dname): fix_path(path, dname, DBG)
 
         final_path = eval_path(path, snode, dname, dtileno, DBG)
         if final_path:
@@ -2683,7 +2682,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
 # FIXME WHY ISN'T ALL THIS CONNECT STUFF IN THE
 # CONNECT_TILES LIBRARY WHERE IT BELONGS!!?
 def fix_path(path, dname, DBG=0):
-    assert is_bitnode(dname)
+    assert is_bit_node(dname)
 
     if DBG:
         print('Dest "%s" is a single-bit node, yes?' % dname)
@@ -2996,7 +2995,7 @@ def can_connect_begin(snode,src,begin,DBG=0):
 
 def can_connect_end(endpoint, dstport, DBG=0):
 
-    #     if is_bitnode(dstport):
+    #     if is_bit_node(dstport):
     #         print '''
     #         Found single-bit input; what now?
     # 

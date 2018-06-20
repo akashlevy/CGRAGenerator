@@ -692,10 +692,15 @@ def test_connect_tiles():
 def get_default_cgra_info_filename():
     return cgra_info.get_default_cgra_info_filename()
 
-def addnode(nodename):
+def addnode(nodename, DBG=0):
     global nodes
     nodename = base_nodename(nodename)
-    if not nodename in nodes: nodes[nodename] = Node(nodename)
+    if nodename in nodes:
+        if DBG>1: print("Node '%s' already exists" % nodename)
+    else:
+        nodes[nodename] = Node(nodename)
+        if DBG>1: print("Build node '%s'" % nodename)
+
     # print '\n\n'; print 'added', nodename; for n in nodes: print n; print '\n\n'
 
         
@@ -705,10 +710,16 @@ def getnode(nodename):
 
 def base_nodename(nodename):
     # Strip off in/out info e.g.
+    #   "reg_0_1.in" => "reg_0_1"
     #   "mul_347_348_349_PE.data.in.1" => "mul_347_348_349_PE"
     #   "mul_347_348_349_PE.data.out"  => "mul_347_348_349_PE"
-    newname = re.sub(r'\.(data|bit)\.in\.[0-9]$', '', nodename)
-    newname = re.sub(r'\.(data|bit)\.out$',        '', newname)
+    newname = nodename
+    newname = re.sub(r'\.(data|bit)\.in\.[0-9]$', '', newname)
+    newname = re.sub(r'\.in',                     '', newname)
+
+    # Actually these two should have been done by json2bit maybe
+    newname = re.sub(r'\.(data|bit)\.out$', '', newname)
+    newname = re.sub(r'\.out$',             '', newname)
     return newname
 
 
@@ -1203,8 +1214,8 @@ def build_node(nodes, line, DBG=0):
     # if lhs == "io16in_in_0.out": lhs = "INPUT"
     # if rhs == "io16_out.in"    : rhs = "OUTPUT"
 
+    if DBG>1: print("Building rhs node", rhs)
     addnode(rhs);
-    if DBG>1: print("built rhs node", rhs)
 
     if lhs == 'wen_lut':
         # wenlut gets processed separately later i guess
@@ -1213,8 +1224,8 @@ def build_node(nodes, line, DBG=0):
         getnode(rhs).show()
         return
 
+    if DBG>1: print("Building lhs node", lhs)
     addnode(lhs)
-    if DBG>1: print("built lhs node", lhs)
 
     if DBG>1:
         print "LINE: %s" % line
@@ -1442,11 +1453,11 @@ def initialize_node_INPUT():
 def is_const(nodename):  return nodename.find('const') == 0
 def is_reg(nodename):
 
-    # old
+    # old - still good!  with latest json2dot maybe
     if nodename.find('reg') == 0: return True
 
-    # new "lb_padded_2_stencil_update_stream$lb1d_0$reg_1"
-    return nodename.find('$reg') > 0
+#     # new "lb_padded_2_stencil_update_stream$lb1d_0$reg_1"
+#     return nodename.find('$reg') > 0
 
 
 def is_mem(nodename):

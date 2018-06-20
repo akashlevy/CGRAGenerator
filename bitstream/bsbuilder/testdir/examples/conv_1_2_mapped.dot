@@ -1,13 +1,13 @@
 digraph Diagram {
   node [shape=box]; # Comment
-    "const0__304" -> "add_305_309_310_PE.in0";
-    "const5__308" -> "mul_307_308_309_PE.in1";
-    "const5__308$1" -> "mul_312_308_313_PE.in1";
+    "const0__304" -> "add_305_309_310_PE.data.in.0";
+    "const5__308" -> "mul_307_308_309_PE.data.in.1";
+    "const5__308$1" -> "mul_312_308_313_PE.data.in.1";
     "add_305_313_314_PE" -> "OUTPUT";
     "INPUT" -> "lb_p4_clamped_stencil_update_stream$reg_0_1";
-    "INPUT" -> "mul_312_308_313_PE.in0";
-    "lb_p4_clamped_stencil_update_stream$reg_0_1" -> "mul_307_308_309_PE.in0";
-    "add_305_309_310_PE" -> "add_305_313_314_PE.in0";
-    "mul_307_308_309_PE" -> "add_305_309_310_PE.in1";
-    "mul_312_308_313_PE" -> "add_305_313_314_PE.in1";
+    "INPUT" -> "mul_312_308_313_PE.data.in.0";
+    "lb_p4_clamped_stencil_update_stream$reg_0_1" -> "mul_307_308_309_PE.data.in.0";
+    "add_305_309_310_PE" -> "add_305_313_314_PE.data.in.0";
+    "mul_307_308_309_PE" -> "add_305_309_310_PE.data.in.1";
+    "mul_312_308_313_PE" -> "add_305_313_314_PE.data.in.1";
 }

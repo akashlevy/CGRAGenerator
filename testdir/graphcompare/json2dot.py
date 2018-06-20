@@ -46,11 +46,30 @@ def simplify(nodename):
     # "io1_out_0_0.in"  => "OUTPUT_1bit"
     '''
 
+    # "io16in_in_0.out" => "INPUT"
+    # "io16_out.in"     => "OUTPUT"
+    # "io1_out_0_0.in"  => "OUTPUT_1bit"
     if   re.search("^io16.*\.out",   nodename): return "INPUT"
     elif re.search("^io16.*\.in",    nodename): return "OUTPUT"
     elif re.search("^io1[^0-9]\.in", nodename): return "OUTPUT_1bit"
 
-    else: return nodename
+    # Dammit *every* lhs node is an "out" ; so delete the redundant info ('out' suffix)
+    # 
+    # "const0__304.out"   -> "const0__304"
+    # "const5__308$1.out" -> "const5__308$1"
+    # "add_305_309_310_PE.data.out" -> "add_305_309_310_PE"
+    # "mul_307_308_309_PE.data.out" ->  "mul_307_308_309_PE.data"
+    # "lb_p4_clamped_stencil_update_stream$reg_0_1.out" ->     "lb_p4_clamped_stencil_update_stream$reg_0_1"
+    newname = nodename
+    newname = re.sub(r'\.(data|bit)\.out$', '', newname)
+    newname = re.sub(r'\.out$',             '', newname)
+
+    # Note: regs only have one input and one output, so...
+    # "lb_p4_clamped_stencil_update_stream$reg_0_1.in" => "lb_p4_clamped_stencil_update_stream$reg_0_1"
+    parse = re.search(r'^(.*\$reg.*)\.in$', newname)
+    if parse: newname = parse.group(1)
+
+    return newname
 
 
     # NOPE

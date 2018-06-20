@@ -103,7 +103,7 @@ OUTPUT_TILENO_onebit = 0x108 # First PE tile in SW corner
 
 
 # Find the output tile = last pe or mem in row 2
-# FIXME should also set OUTPUT_TILENO_onebit for node "io1_out_0_0"
+# FIXME should also set OUTPUT_TILENO_onebit for node "OUTPUT_1bit" ("io1_out_0_0")
 # which is the tile above io1bit tile for LSB in first group on side 1 (bottom) (see above)
 
 def find_output_tile():
@@ -396,8 +396,14 @@ def main(DBG=1):
 
 def want_onebit_output():
     '''Return True if onebit outputs is wanted'''
-    if 'io1_out_0_0' in nodes: return True
+
+    # OLD
+    # if 'io1_out_0_0' in nodes: return True
+    # else:                      return False
+
+    if 'OUTPUT_1bit' in nodes: return True
     else:                      return False
+
 
 def final_output(DBG=0):
 
@@ -480,9 +486,9 @@ def print_io_info(DBG=0):
     # onebit_bool DAG uses 'io1_out_0_0' instead of OUTPUT
     try: onode = getnode('OUTPUT');
     except:
-        if DBG: print("# WARNING Using 'io1_out_0_0' as OUTPUT node")
-        if DBG>1: getnode('io1_out_0_0').show()
-        onode = getnode('io1_out_0_0')
+        if DBG: print("# WARNING Using 'OUTPUT_1bit' as OUTPUT node")
+        if DBG>1: getnode('OUTPUT_1bit').show()
+        onode = getnode('OUTPUT_1bit')
 
     if DBG>1:
         inode.show()
@@ -494,7 +500,8 @@ def print_io_info(DBG=0):
     owire = onode.output
 
     if DBG>1:
-        print "# local name for input wire is '%s'" % iwire
+        print "# local name for input  wire is '%s'" % iwire
+        print "# local name for output wire is '%s'" % owire
 
     ig = cgra_info.canon2global(iwire)
     og = cgra_info.canon2global(owire)
@@ -685,20 +692,25 @@ def test_connect_tiles():
 def get_default_cgra_info_filename():
     return cgra_info.get_default_cgra_info_filename()
 
-
-def base_nodename(nodename):
-    # Strip off in/out info e.g. 'bitor_154_155_156_lut_bitPE.in0' =>
-    #                            'bitor_154_155_156_lut_bitPE'
-    return re.sub('\.in[0-9]$', '', nodename)
-
 def addnode(nodename):
     global nodes
     nodename = base_nodename(nodename)
     if not nodename in nodes: nodes[nodename] = Node(nodename)
+    # print '\n\n'; print 'added', nodename; for n in nodes: print n; print '\n\n'
+
         
 def getnode(nodename):
     bn = base_nodename(nodename)
     return nodes[bn]
+
+def base_nodename(nodename):
+    # Strip off in/out info e.g.
+    #   "mul_347_348_349_PE.data.in.1" => "mul_347_348_349_PE"
+    #   "mul_347_348_349_PE.data.out"  => "mul_347_348_349_PE"
+    newname = re.sub(r'\.(data|bit)\.in\.[0-9]$', '', nodename)
+    newname = re.sub(r'\.(data|bit)\.out$',        '', newname)
+    return newname
+
 
 def nodetile(tileno):
     '''Given tileno, find associated node, else return False'''
@@ -1177,32 +1189,38 @@ def build_node(nodes, line, DBG=0):
 
     line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
     line = re.sub("\$cgramem", "", line)
-    if DBG>1: pwhere(978, "# Building node for input line '%s'" % line)
+    if DBG>1: pwhere(1201, "# Building node for input line '%s'" % line)
 
     parse = re.search('["]([^"]+)["][^"]+["]([^"]+)["]', line)
     if not parse:
-        if DBG: pwhere(995, "# Could/did not parse input line '%s'" % line)
+        if DBG: pwhere(1205, "# Could/did not parse input line '%s' (but that's okay!)" % line)
         return
 
     lhs = parse.group(1); rhs = parse.group(2)
     if DBG>1: print "# Found lhs/rhs", lhs, rhs, "\n";
 
+    # json2dot is repsonsible to do this!
+    # if lhs == "io16in_in_0.out": lhs = "INPUT"
+    # if rhs == "io16_out.in"    : rhs = "OUTPUT"
+
     addnode(rhs);
+    if DBG>1: print("built rhs node", rhs)
 
     if lhs == 'wen_lut':
-        if DBG: pwhere(1013, "# WARNING no longer ignoring wen_lut\n")
-
-        # assert rhs[0:3] == 'mem', 'oops why does wen_lut not connect to a mem tile!?'
-        assert   is_mem_node(rhs),   'oops why does wen_lut not connect to a mem tile!?'
-
+        # wenlut gets processed separately later i guess
+        assert is_mem_node(rhs), 'oops why does wen_lut not connect to a mem tile!?'
         getnode(rhs).wen_lut = 'needs_wenlut'
         getnode(rhs).show()
         return
 
     addnode(lhs)
+    if DBG>1: print("built lhs node", lhs)
+
+    if DBG>1:
+        print "LINE: %s" % line
+        print "Attaching '%s' to '%s'" % (lhs,rhs)
 
     getnode(lhs).dests.append(rhs)
-    # print getnode(rhs).dests
 
     # Uhhhh...look for and process fifo_depth comments
     process_fifo_depth_comments(rhs,line,DBG)
@@ -1438,25 +1456,24 @@ def is_mem(nodename):
 
 def is_pe(nodename):
     return (nodename) and (\
-        (nodename.find('add') == 0) or \
-        (nodename.find('mul') == 0) or \
-        (nodename.find('PE') >= 0) \
-         )
+        # (nodename.find('add')   == 0) or \
+        # (nodename.find('mul')   == 0) or \
+        (nodename.find('PE')    >= 0) or \
+        (nodename.find('binop') >= 0) or \
+        False)
+
 def is_io(nodename):
-    print "is it a io?"
-    nodename="OUTPUT"
-    print nodename
-    print (re.search("(aaa)|(OUTPUT)", nodename) == True)
     return \
            (nodename != None) and \
-           (re.search("(INPUT)|(OUTPUT)|(io1_out_0_0)", nodename) != None)
+           (re.search("(INPUT|OUTPUT)", nodename) != None)
+         # (re.search("(INPUT)|(OUTPUT)|(io1_out_0_0)", nodename) != None)
 
 def is_lut(nodename):
     '''E.g. "bitand_153_151_154_lut_bitPE" is a lut'''
     return (nodename) and (nodename.find('lut_bitPE') >= 0)
 
 
-def dstports(name,tile,DBG=0):
+def dstports(name, tile, DBG=0):
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
@@ -2074,12 +2091,13 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         elif is_regreg(dname):
             assert False, 'what do we do with regreg??'
+
         else:
             errmsg = '''
 
 ERROR dname = "%s"
-ERROR looks like dname is a reg
-ERROR what do we do with regs?? (see below)
+ERROR what is it?  
+ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 
 ''' % dname
 
@@ -2214,7 +2232,7 @@ def check_for_wen_lut(sname, dname, DBG=0):
 
         # Make a note to build the wen_lut path later
         getnode(dname).wen_lut = (cand,candside) # E.g. "(25, 'right')"
-        # print getnode(dname).wen_lut
+
 
 def route_wen(memtile):
     '''
@@ -2332,9 +2350,9 @@ def place_pe_in_input_tile(dname):
     assert getnode('INPUT').tileno == INPUT_TILE
 
     # Assumes: INPUT dest is a 16-bit pe operand op1 or op2
-    # E.g. if dname = "mul_347_348_349_PE.in0",
+    # E.g. if dname = "mul_347_348_349_PE.data.in.0",
     # connect to op1 in node "mul_347_348_349_PE"
-    parse = re.search('\.in([0-9])$', dname)
+    parse = re.search('\.in\.([0-9])$', dname)
     if (parse):
         which_in = int(parse.group(1));
         op = 'op%d' % (which_in + 1)
@@ -2877,6 +2895,81 @@ def find_outport(tileno, nodename):
     '''
     # .*bitPE.in[012] maps to bit[012];
     # .*PE.in[01] map to op[12] (yes ug)
+
+
+    # NEW support for harris
+    parse = re.search('ashr', nodename)
+    if parse:
+        assert False, 'the rubber has hit the road'
+
+
+    ########################################################################
+    # NEW
+
+    # Sample NEW nodenames (6/2018)
+    # add_754_755_756$binop.in1
+    # sub_770_773_774$binop.in1
+    # ashr_760_763_764$binop.in1
+    #
+    # bitand_791_792_793$lut$lut.in1
+    # slt_790_775_791$not$lut$lut.in1
+    # 
+    # mux_793_794_795$mux.in1
+    # sle100_775_792$compop.in1
+    # smax_776_777_778$cgramax.in1
+
+ 
+    if parse: (optype,pornum) = ('binop', int(parse.group(1)))
+
+    parse = re.search(r'mux.in(\d)', nodename)
+    if parse:
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        portnum = int(parse.group(1))
+        if   (portnum==0): assert getnode(nodename).input0 == False
+        elif (portnum==1): assert getnode(nodename).input1 == False
+
+        opnum = portnum + 1
+        only_dest = 'T%d_op%s' % (tileno, opnum)
+        return only_dest
+
+
+
+    parse = re.search(r'binop.in(\d)', nodename)
+    if parse:
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        portnum = int(parse.group(1))
+        if   (portnum==0): assert getnode(nodename).input0 == False
+        elif (portnum==1): assert getnode(nodename).input1 == False
+
+        opnum = portnum + 1
+        only_dest = 'T%d_op%s' % (tileno, opnum)
+        return only_dest
+
+
+
+    parse = re.search(r'lut.in(\d)', nodename)
+    if parse: (optype,pornum) = ('lut', int(parse.group(1)))
+
+
+    if optype == 'lut':
+        only_dest = 'T%d_bit%d' % (tileno, portnum)
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        bitnum = portnum
+        if   (bitnum==0): assert getnode(nodename).bit0 == False
+        elif (bitnum==1): assert getnode(nodename).bit1 == False
+        elif (bitnum==2): assert getnode(nodename).bit2 == False
+
+        return only_dest
+
+
+
+
+
+
+    ########################################################################
+    # OLD
+    # bitwise op?
     parse = re.search(r'bitPE.in(\d)', nodename)
     if parse:
         only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
@@ -2888,6 +2981,7 @@ def find_outport(tileno, nodename):
         elif (bitnum==2): assert getnode(nodename).bit2 == False
 
         return only_dest
+
     parse = re.search(r'PE.in(\d)', nodename)
     if parse:
 

@@ -40,12 +40,23 @@ if DBG:
         except: print "%-12s %s" % (k, "N/A")
 
 def simplify(nodename):
-    '''E.g.
-    "bitmux_157_lut_bitPE.bit.in.1" => "bitmux_157_lut_bitPE.in1"
-    "PE_U8.data.in.1" => "PE_U8.in1"
-    "PE_U70.data.out" => "PE_U70"
+    '''Try to improve readability of dot file e.g.
+    # "io16in_in_0.out" => "INPUT"
+    # "io16_out.in"     => "OUTPUT"
+    # "io1_out_0_0.in"  => "OUTPUT_1bit"
     '''
 
+    if   re.search("^io16.*\.out",   nodename): return "INPUT"
+    elif re.search("^io16.*\.in",    nodename): return "OUTPUT"
+    elif re.search("^io1[^0-9]\.in", nodename): return "OUTPUT_1bit"
+
+    else: return nodename
+
+
+    # NOPE
+    ########################################################################
+    ########################################################################
+    ########################################################################
     # "bitmux_157_lut_bitPE.bit.in.1" => "bitmux_157_lut_bitPE.in1"
     parse = re.search('([^.]*)\.bit\.in\.([0-9])', nodename)
     if parse:
@@ -172,11 +183,14 @@ def to_or_from(nodename):
     # I guess ".in", ".out" is supposed to be some kind of clue... :(
 
     # Some node names include:
+    # OLD
     #   PE_U6.data.out
     #   PE_U66.data.in.1
     #   lb_conv1_2_stencil_update_stream$mem_1.rdata
     #   lb_conv1_2_stencil_update_stream$mem_1.wdata
     #   lb_conv1_2_stencil_update_stream$reg_0_1.out
+    # NEW
+    #   mul_347_348_349_PE.data.out
 
     #     # Special cases for i/o nodes: up is down and down is up
     #     if re.search("io16in.*\.out$", nodename): return "from"

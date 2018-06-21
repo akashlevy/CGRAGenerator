@@ -397,13 +397,8 @@ def main(DBG=1):
 
 def want_onebit_output():
     '''Return True if onebit outputs is wanted'''
-
-    # OLD
-    # if 'io1_out_0_0' in nodes: return True
-    # else:                      return False
-
     if 'OUTPUT_1bit' in nodes: return True
-    else:                      return False
+    else: return False
 
 
 def final_check(DBG=0):
@@ -492,7 +487,7 @@ def print_io_info(DBG=0):
     # OUTPUT tile  0 (0,0) / in_BUS16_S1_T1 / wire_1_0_BUS16_S3_T1
     inode = getnode('INPUT');  
 
-    # onebit_bool DAG uses 'io1_out_0_0' instead of OUTPUT
+    # onebit_bool DAG uses 'OUTPUT_1bit' instead of OUTPUT
     try: onode = getnode('OUTPUT');
     except:
         if DBG: print("# WARNING Using 'OUTPUT_1bit' as OUTPUT node")
@@ -1439,9 +1434,9 @@ def is_pe_tile(tileno):  return cgra_info.mem_or_pe(tileno) == 'pe'
 def is_mem_tile(tileno): return cgra_info.mem_or_pe(tileno) == 'mem'
 
 def is_bit_node(nodename):
-    # E.g. 'bitmux_157_157_149_lut_bitPE.in0' or 'io1_out_0_0'
-    if   nodename.find('bitPE.in') >= 0: return True
-    elif nodename.find('io1')      == 0: return True # e.g. 'io1_out_0_0'
+    # E.g. 'bitmux_157_157_149_lut_bitPE.bit.in.0' or 'OUTPUT_1bit'
+    if   nodename.find('bitPE.bit.in') >= 0: return True
+    elif nodename  ==  'OUTPUT_1bit':        return True
     else: return False
 
 def is_mem_node(nodename):
@@ -1494,7 +1489,7 @@ def is_io(nodename):
     return \
            (nodename != None) and \
            (re.search("(INPUT|OUTPUT)", nodename) != None)
-         # (re.search("(INPUT)|(OUTPUT)|(io1_out_0_0)", nodename) != None)
+         # (re.search("(INPUT)|(OUTPUT)|(OUTPUT_1bit)", nodename) != None)
 
 def is_lut(nodename):
     '''E.g. "bitand_153_151_154_lut_bitPE" is a lut'''
@@ -1508,20 +1503,22 @@ def dstports(name, tile, DBG=0):
     # for regpe it's op1 or op2
     def T(port): return 'T%d_%s' % (tile,port)
 
-    if is_mem(name):  p = [T('mem_in')]
+    if   is_mem(name):  p = [T('mem_in')]
     elif is_pe(name):
         if is_commutative(name):
+            if DBG>1: print "found pe; it's commutative\n"
             p = []
             # FIXME note currently no mechanism for commutative bit ops e.g. AND, OR
             if getnode(name).input0 == False: p.append(T('op1'))
             if getnode(name).input1 == False: p.append(T('op2'))
             # e.g. p = [T('op1'),T('op2')]
         else:
+            if DBG>1: print "found pe; it's NOT commutative\n"
             p = [find_outport(tile, name)]
 
     elif is_regop(name): p = [T(getnode(name).input0)]
 
-    elif name == 'io1_out_0_0':
+    elif name == 'OUTPUT_1bit':
         if is_mem_tile(tile): out_side = 6
         else:                 out_side = 2
         if DBG: pwhere(1395, "One-bit output can only go out on side %s (bottom)" % out_side)
@@ -1542,8 +1539,13 @@ def dstports(name, tile, DBG=0):
             outport = "T%d_out_s%dt0" % (tile,side)
             p.append(outport)
 
+    dplist = sorted(p)
+    # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']
+    if DBG: print "   In-ports avail to dest node '%s': %s" % (name,dplist)
+    assert not (dplist == [False])
+
     # if DBG: print 'found destination ports', p
-    return sorted(p)
+    return dplist
 
 # Return pe input that contains the register
 # e.g. regpe_input('reg_2_3') = 'op1' (unplaced regpe) or
@@ -2000,7 +2002,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         if dname == "OUTPUT":
             dtileno = OUTPUT_TILENO
 
-        elif dname == "io1_out_0_0":
+        elif dname == "OUTPUT_1bit":
             dtileno = OUTPUT_TILENO_onebit
 
         elif not is_placed(dname):
@@ -2021,7 +2023,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             if dname == "OUTPUT":
                 pwhere(1567, 'Connecting to OUTPUT tile %d\n' % dtileno)
 
-            elif dname == "io1_out_0_0":
+            elif dname == "OUTPUT_1bit":
                 pwhere(1657, 'Connecting to one-bit OUTPUT tile %d\n' % dtileno)
 
             else:
@@ -2031,7 +2033,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         # (For now at least) output must be track 0
         if   dname == "OUTPUT":      trackrange = [0]
-        elif dname == "io1_out_0_0": trackrange = [0]
+        elif dname == "OUTPUT_1bit": trackrange = [0]
         elif is_mem(sname): trackrange = range(5)
         elif is_pe(sname):  trackrange = range(5)
         else: trackrange = [0]
@@ -2044,7 +2046,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(1608, "trackrange = %s" % trackrange)
 
         if not path:
-            if (dname == "OUTPUT") or (dname == "io1_out_0_0"):
+            if (dname == "OUTPUT") or (dname == "OUTPUT_1bit"):
                 print "Cannot find our way to OUTPUT, looks like we're screwed :("
                 assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
 
@@ -2092,7 +2094,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             trackno = 0
             d_out = addT(dtileno,'_out_s0t%d' % trackno)
 
-        elif dname == "io1_out_0_0":
+        elif dname == "OUTPUT_1bit":
             # One-bit output must come out track 0 on the bottom side (S5)
             # of the mem tile above the pad (OUTPUT_TILE_onebit)
             trackno = 0
@@ -2701,7 +2703,11 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
     for path in [pvh,phv]:
         if DBG: pwhere(1325,
                        "Evaluating %s path %s" % (which,path)); which = 'phv'
-        
+        if DBG>1:
+            print "\nIs '%s' a bitnode?" % dname
+            if     is_bit_node(dname): print("yes; yes it is\n\n")
+            if not is_bit_node(dname): print("no it is not\n\n")
+
         # FIXME this is sooo bad; should never have built the wrong path in the first place
         # If BUS1 path, Change default (BUS16) wires to 'b' (BUS1) wires
         if is_bit_node(dname): fix_path(path, dname, DBG)
@@ -2913,7 +2919,7 @@ def is_commutative(nodename):
     else:
         return False
 
-def find_outport(tileno, nodename):
+def find_outport(tileno, nodename, DBG=0):
     '''
     Given tile number e.g. 22 and nodename e.g. "sub_305_313_314_PE.in1"
     or "bitmux_157_157_149_lut_bitPE.in0/in1/in2"
@@ -2923,12 +2929,13 @@ def find_outport(tileno, nodename):
     # .*bitPE.in[012] maps to bit[012];
     # .*PE.in[01] map to op[12] (yes ug)
 
-
+    # HAHA note this func is only called when we have a non-commutative pe op i.e.
+    # onebit_bool is the ONLY one that gets here so far...!??
+    if DBG>1: print "fooz want to find outport list for '%s'" % nodename
     # NEW support for harris
     parse = re.search('ashr', nodename)
     if parse:
         assert False, 'the rubber has hit the road'
-
 
     ########################################################################
     # NEW
@@ -2945,8 +2952,8 @@ def find_outport(tileno, nodename):
     # sle100_775_792$compop.in1
     # smax_776_777_778$cgramax.in1
 
- 
-    if parse: (optype,pornum) = ('binop', int(parse.group(1)))
+    # binop NEVER USED!!?
+    if parse: (optype, portnum) = ('binop', int(parse.group(1)))
 
     parse = re.search(r'mux.in(\d)', nodename)
     if parse:
@@ -2959,8 +2966,6 @@ def find_outport(tileno, nodename):
         only_dest = 'T%d_op%s' % (tileno, opnum)
         return only_dest
 
-
-
     parse = re.search(r'binop.in(\d)', nodename)
     if parse:
         # Little checkyweck to see if port is avail or did somebody already take it!
@@ -2972,13 +2977,9 @@ def find_outport(tileno, nodename):
         only_dest = 'T%d_op%s' % (tileno, opnum)
         return only_dest
 
-
-
     parse = re.search(r'lut.in(\d)', nodename)
-    if parse: (optype,pornum) = ('lut', int(parse.group(1)))
-
-
-    if optype == 'lut':
+    if parse:
+        (optype, portnum) = ('lut', int(parse.group(1)))
         only_dest = 'T%d_bit%d' % (tileno, portnum)
 
         # Little checkyweck to see if port is avail or did somebody already take it!
@@ -2989,15 +2990,11 @@ def find_outport(tileno, nodename):
 
         return only_dest
 
-
-
-
-
-
     ########################################################################
-    # OLD
-    # bitwise op?
-    parse = re.search(r'bitPE.in(\d)', nodename)
+
+    # OLD: parse = re.search(r'bitPE.in(\d)', nodename)
+    # NEW: 'bitor_154_155_156_lut_bitPE.bit.in.0'
+    parse = re.search(r'bitPE\.bit\.in\.(\d)', nodename)
     if parse:
         only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
 
@@ -3009,8 +3006,11 @@ def find_outport(tileno, nodename):
 
         return only_dest
 
-    parse = re.search(r'PE.in(\d)', nodename)
+    # OLD: parse = re.search(r'PE.in(\d)', nodename)
+    # NEW: 'ult_152_147_153_uge_PE.data.in.0'
+    parse = re.search(r'PE\.data\.in\.(\d)', nodename)
     if parse:
+        if DBG>1: 'Found a pe'
 
         # Little checkyweck to see if port is avail or did somebody already take it!
         portnum = int(parse.group(1))

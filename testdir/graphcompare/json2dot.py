@@ -51,7 +51,7 @@ def simplify(nodename):
     # "io1_out_0_0.in"  => "OUTPUT_1bit"
     if   re.search("^io16.*\.out",   nodename): return "INPUT"
     elif re.search("^io16.*\.in",    nodename): return "OUTPUT"
-    elif re.search("^io1[^0-9]\.in", nodename): return "OUTPUT_1bit"
+    elif re.search("^io1_out.*\.in", nodename): return "OUTPUT_1bit"
 
     # Dammit *every* lhs node is an "out" ; so delete the redundant info ('out' suffix)
     # 

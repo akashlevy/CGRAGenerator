@@ -389,6 +389,7 @@ def main(DBG=1):
 
     print "########################################################"
     print "# FINAL OUTPUT", note
+    final_check()
     final_output()
 
     sys.exit(0)
@@ -403,6 +404,14 @@ def want_onebit_output():
 
     if 'OUTPUT_1bit' in nodes: return True
     else:                      return False
+
+
+def final_check(DBG=0):
+    '''Make sure everyone has been allocated to a tile'''
+    for sname in sorted(nodes):
+        if getnode(sname).tileno == -1:
+            errmsg = "\nERROR? Node '%s' unassigned (tileno = -1)?" % sname
+            print errmsg; assert False, errmsg
 
 
 def final_output(DBG=0):
@@ -717,9 +726,13 @@ def base_nodename(nodename):
     newname = re.sub(r'\.(data|bit)\.in\.[0-9]$', '', newname)
     newname = re.sub(r'\.in',                     '', newname)
 
-    # Actually these two should have been done by json2bit maybe
+    # Optional: output rewrites should have been done by json2bit maybe
     newname = re.sub(r'\.(data|bit)\.out$', '', newname)
     newname = re.sub(r'\.out$',             '', newname)
+
+    # mam_1.wen => mem_1
+    newname = re.sub(r'\.wen$', '', newname)
+
     return newname
 
 
@@ -1188,7 +1201,7 @@ def build_nodes(DBG=0):
 
     if DBG:
         print ''
-        print "Found nodes and destinations:"
+        print "Found nodes and destinations (note wen_luts processed separately):"
         for n in sorted(nodes): print "  %-20s %s" % (n, getnode(n).dests)
         print ""
 
@@ -1200,7 +1213,9 @@ def build_node(nodes, line, DBG=0):
 
     line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
     line = re.sub("\$cgramem", "", line)
-    if DBG>1: pwhere(1201, "# Building node for input line '%s'" % line)
+    if DBG>1:
+        print('\n\n'); 
+        pwhere(1201, "# Building node for input line '%s'" % line)
 
     parse = re.search('["]([^"]+)["][^"]+["]([^"]+)["]', line)
     if not parse:
@@ -1214,10 +1229,12 @@ def build_node(nodes, line, DBG=0):
     # if lhs == "io16in_in_0.out": lhs = "INPUT"
     # if rhs == "io16_out.in"    : rhs = "OUTPUT"
 
-    if DBG>1: print("Building rhs node", rhs)
+    if DBG>1: print("Building rhs node" + rhs)
     addnode(rhs);
 
-    if lhs == 'wen_lut':
+    # Hm this is kind of terrible maybe FIXME/hack
+    # Ignore wen_lut nodes e.g. 'lb_p4_clamped_stencil_update_stream_wen_lut_bitPE'
+    if lhs.find('wen_lut') > 0:
         # wenlut gets processed separately later i guess
         assert is_mem_node(rhs), 'oops why does wen_lut not connect to a mem tile!?'
         getnode(rhs).wen_lut = 'needs_wenlut'
@@ -1251,8 +1268,8 @@ def process_lut_value_comments(lhs, line, DBG=0):
     if not parse:
         return
     else:
-        if DBG: pwhere(1019, "# Found a lut_value comment to process:")
-        if DBG: pwhere(1158, "# %s" % line)
+        if DBG: pwhere(1266, "# Found a lut_value comment to process:")
+        if DBG: pwhere(1267, "# %s" % line)
         lut_value = parse.group(1)
         getnode(lhs).lut_value = int(lut_value,16)
         if DBG: getnode(lhs).show()
@@ -1268,7 +1285,7 @@ def process_fifo_depth_comments(rhs, line, DBG=0):
     if not parse:
         return
     else:
-        if DBG: pwhere(1019, "# Found a fifo_depth comment to process")
+        if DBG: pwhere(1283, "# Found a fifo_depth comment to process")
         errmsg='''
 
 ERROR rhs[0:3] should be mem tile but rhs is actually:
@@ -1871,8 +1888,8 @@ def process_nodes(sname, indent='# ', DBG=1):
         if DBG: pnr_debug_info(was_placed,was_routed,indent,sname,dname)
 
         # Hmph! Hmph! Another special case!
-        # If placed tile is a mem tile, look for an associated wen_lut
-        check_for_wen_lut(sname,dname,DBG)
+        # If placed tile is a mem tile, we probably need to build an associated wen_lut
+        if getnode(dname).wen_lut == 'needs_wenlut': build_wen_lut(sname, dname, DBG)
 
         # Do this as a separate pass for breadth-first...
         # process_nodes(dname, indent+'    ')
@@ -1887,7 +1904,7 @@ def process_nodes(sname, indent='# ', DBG=1):
         process_nodes(dname, indent+'    ')
 
 
-def pnr_debug_info(was_placed,was_routed,indent,sname,dname):
+def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
 
         dnode = getnode(dname)
         if was_placed:
@@ -2204,45 +2221,44 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 # END def place_and_route()
 ########################################################################
 
-def check_for_wen_lut(sname, dname, DBG=0):
-    if not is_mem(dname): return
-    if DBG: pwhere(1842, "Placed a mem tile.  Is there an associated wen_lut?")
-    if getnode(dname).wen_lut == 'needs_wenlut':
-        if DBG: print "#   Yes. Now where to put it? Look right. Look left."
-        mtileno = getnode(dname).tileno
-        (r,c) = cgra_info.tileno2rc(mtileno)
-        # print "#   Mem tile is in tile %d (0x%x)" % (mtileno,mtileno)
+def build_wen_lut(sname, dname, DBG=0):
+    assert getnode(dname).wen_lut == 'needs_wenlut'
 
-        # Check tile to right of memtile, then if not avail, check left
-        candside = 'right'; cand = cgra_info.rc2tileno(r,c+1)
-        print "#   So...to my right is tile %d (0x%d).  Is it free?" % (cand,cand),
-        print packer.is_free(cand)
-        if not packer.is_free(cand):
-            # Not free
-            candside = 'left'; cand = cgra_info.rc2tileno(r,c-1)
-            if DBG: print "#  Okay, well then to my left is tile %d (0x%d)," % (cand,cand),
-            if DBG: print "Is it free?", packer.is_free(cand)
-            if not packer.is_free(cand): assert False, "oh that's a shame"
+    if DBG: pwhere(2243, "#   Must create a wen_lut for mem node '%s'" % dname)
+    mtileno = getnode(dname).tileno
+    (r,c) = cgra_info.tileno2rc(mtileno)
+    # print "#   Mem tile is in tile %d (0x%x)" % (mtileno,mtileno)
 
-        # Whew assert did not trigger so one of them works.
-        # print "okay successfully found a candidate to hold the wen_lut hooray"
-        if DBG:
-            print '#   Great! Place the wen_lut in tile %d(0x%x)' % (cand,cand)
-            print ''
-            print "# order before wen_lut alloc:"
-            packer.FMT.order()
-            print ''
-        packer.allocate(cand, DBG=0)
-        if DBG:
-            print "# order after wen_lut alloc:"
-            packer.FMT.order()
-            print ''
+    # Check tile to right of memtile, then if not avail, check left
+    candside = 'right'; cand = cgra_info.rc2tileno(r,c+1)
+    print "#   So...to my right is tile %d (0x%d).  Is it free?" % (cand,cand),
+    print packer.is_free(cand)
+    if not packer.is_free(cand):
+        # Not free
+        candside = 'left'; cand = cgra_info.rc2tileno(r,c-1)
+        if DBG: print "#  Okay, well then to my left is tile %d (0x%d)," % (cand,cand),
+        if DBG: print "Is it free?", packer.is_free(cand)
+        if not packer.is_free(cand): assert False, "oh that's a shame"
 
-        # Make a note to build the LUT later
-        global WEN_LUT_LIST; WEN_LUT_LIST.append(cand)
+    # Whew assert did not trigger so one of them works.
+    # print "okay successfully found a candidate to hold the wen_lut hooray"
+    if DBG:
+        print '#   Great! Place the wen_lut in tile %d(0x%x)' % (cand,cand)
+        print ''
+        print "# order before wen_lut alloc:"
+        packer.FMT.order()
+        print ''
+    packer.allocate(cand, DBG=0)
+    if DBG:
+        print "# order after wen_lut alloc:"
+        packer.FMT.order()
+        print ''
 
-        # Make a note to build the wen_lut path later
-        getnode(dname).wen_lut = (cand,candside) # E.g. "(25, 'right')"
+    # Make a note to build the LUT later
+    global WEN_LUT_LIST; WEN_LUT_LIST.append(cand)
+
+    # Make a note to build the wen_lut path later
+    getnode(dname).wen_lut = (cand,candside) # E.g. "(25, 'right')"
 
 
 def route_wen(memtile):

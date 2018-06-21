@@ -64,6 +64,11 @@ def simplify(nodename):
     newname = re.sub(r'\.(data|bit)\.out$', '', newname)
     newname = re.sub(r'\.out$',             '', newname)
 
+    # Similarly,
+    # "wdata" and "rdata" at the end of a mem is superfluous,
+    # can/should be deduced from lhs vs. rhs etc.
+    newname = re.sub(r'\.[rw]data$', '', newname)
+
     # Note: regs only have one input and one output, so...
     # "lb_p4_clamped_stencil_update_stream$reg_0_1.in" => "lb_p4_clamped_stencil_update_stream$reg_0_1"
     parse = re.search(r'^(.*\$reg.*)\.in$', newname)

@@ -435,7 +435,15 @@ def final_output(DBG=0):
             dname = getnode(sname).dests[0]
             # getnode(sname).show()
             # getnode(dname).show()
-            print '# %s::%s %s' % (sname,dname,getnode(sname).output)
+
+            # The new stuff
+            o = getnode(sname).output
+            # E.g. 'T41_in.1' => 'T41_op2'
+            parse = re.search('^(.*)_(in)\.([012])', o)
+            if parse:
+                o = '%s_op%d' % (parse.group(1), int(parse.group(3))+1)
+
+            print '# %s::%s %s' % (sname, dname, o)
     print ''
 
     # Registers and ops
@@ -785,13 +793,20 @@ class Node:
         if is_mem_node(self.name): return 'mem'
         else:                      return 'pe'
 
-    def addop(self, operand):
+    def addop(self, operand, which_op = 'either'):
         assert type(operand) == str
-        # FIXME Cut out the commutative crapS!
-        if not self.input0:
-            self.input0 = operand; return "op1"
+
+        # Can ask for in.0, in.1 or "either" (default)
+        if (which_op == 'in.0'):
+            self.input0 = operand; return "in.0"
+        elif (which_op == 'in.1'):
+            self.input1 = operand; return "in.1"
+
+        # Defaults to "either op, you pick"
+        elif not self.input0:
+            self.input0 = operand; return "in.0"
         elif not self.input1:
-            self.input1 = operand; return "op2"
+            self.input1 = operand; return "in.1"
         else:
             print "ERROR my dance card she is full"
             return False
@@ -1433,10 +1448,11 @@ def init_tile_resources(DBG=0):
 def is_pe_tile(tileno):  return cgra_info.mem_or_pe(tileno) == 'pe'
 def is_mem_tile(tileno): return cgra_info.mem_or_pe(tileno) == 'mem'
 
+# harris: slt_790_775_791$not$lut$lut.bit.in.0
 def is_bit_node(nodename):
     # E.g. 'bitmux_157_157_149_lut_bitPE.bit.in.0' or 'OUTPUT_1bit'
-    if   nodename.find('bitPE.bit.in') >= 0: return True
-    elif nodename  ==  'OUTPUT_1bit':        return True
+    if   nodename.find('bit.in') >= 0: return True
+    elif nodename  ==  'OUTPUT_1bit' : return True
     else: return False
 
 def is_mem_node(nodename):
@@ -1468,8 +1484,8 @@ def is_reg(nodename):
     # old - still good!  with latest json2dot maybe
     if nodename.find('reg') == 0: return True
 
-#     # new "lb_padded_2_stencil_update_stream$lb1d_0$reg_1"
-#     return nodename.find('$reg') > 0
+    # new (harris) "lb_padded_2_stencil_update_stream$lb1d_0$reg_1"
+    else: return nodename.find('$reg') > 0
 
 
 def is_mem(nodename):
@@ -1477,13 +1493,32 @@ def is_mem(nodename):
     return is_mem_node(nodename)
 
 
+# harris: ashr_760_763_764$binop.data.in.0
+# harris: smax_788_789_790$cgramax.data.in.1
+# harris: slt_790_775_791$comp$compop.data.in.0
+# I guess luts are a pe for this definition
+# harris: slt_790_775_791$not$lut$lut.bit.in.0
 def is_pe(nodename):
     return (nodename) and (\
         # (nodename.find('add')   == 0) or \
         # (nodename.find('mul')   == 0) or \
-        (nodename.find('PE')    >= 0) or \
-        (nodename.find('binop') >= 0) or \
+        (nodename.find('PE')       >= 0) or \
+        (nodename.find('$binop')   >= 0) or \
+        (nodename.find('$compop')  >= 0) or \
+        (nodename.find('$cgramax') >= 0) or \
+        (nodename.find('$lut')     >= 0) or \
+        (nodename.find('$mux')     >= 0) or \
         False)
+
+# harris: ashr_760_763_764$binop.data.in.0
+# harris: smax_788_789_790$cgramax.data.in.1
+# harris: slt_790_775_791$comp$compop.data.in.0
+# E.g. nodename = 'smax_780_781_782$cgramax.data.in.1' => portnum = 1
+def pe_portnum(nodename):
+    if   not is_pe(nodename) : return -1
+    elif not re.search(r'\.data\.in\.(\d)$', nodename): return -1
+    else: return int(nodename[-1])    
+
 
 def is_io(nodename):
     return \
@@ -1491,18 +1526,31 @@ def is_io(nodename):
            (re.search("(INPUT|OUTPUT)", nodename) != None)
          # (re.search("(INPUT)|(OUTPUT)|(OUTPUT_1bit)", nodename) != None)
 
+# harris: slt_790_775_791$not$lut$lut.bit.in.0
 def is_lut(nodename):
     '''E.g. "bitand_153_151_154_lut_bitPE" is a lut'''
-    return (nodename) and (nodename.find('lut_bitPE') >= 0)
+    return (nodename) and (\
+        (nodename.find('lut_bitPE') >= 0) or \
+        (nodename.find('$lut') >= 0) or \
+        False)
 
 
+
+# dest node 'mux_793_794_795$mux.bit.in.0'
+# dest port 'T118_op1'
 def dstports(name, tile, DBG=0):
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
     # for regpe it's op1 or op2
-    def T(port): return 'T%d_%s' % (tile,port)
+    def T(port):
+        if port[-4:2] == 'in':
+            assert port in ['in.0', 'in.1', 'in.2']
+            port = 'op%d' % (int(port[-1]) + 1)
 
+        assert port in ['op1', 'op2', 'op3', 'mem_in'], 'Found port "%s"' % port
+        return 'T%d_%s' % (tile,port)
+    # DBG=9
     if   is_mem(name):  p = [T('mem_in')]
     elif is_pe(name):
         if is_commutative(name):
@@ -1512,11 +1560,14 @@ def dstports(name, tile, DBG=0):
             if getnode(name).input0 == False: p.append(T('op1'))
             if getnode(name).input1 == False: p.append(T('op2'))
             # e.g. p = [T('op1'),T('op2')]
+
         else:
             if DBG>1: print "found pe; it's NOT commutative\n"
             p = [find_outport(tile, name)]
 
-    elif is_regop(name): p = [T(getnode(name).input0)]
+    elif is_regop(name):
+        if DBG>1: print "found a reg_op"
+        p = [T(getnode(name).input0)]
 
     elif name == 'OUTPUT_1bit':
         if is_mem_tile(tile): out_side = 6
@@ -1541,7 +1592,7 @@ def dstports(name, tile, DBG=0):
 
     dplist = sorted(p)
     # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']
-    if DBG: print "   In-ports avail to dest node '%s': %s" % (name,dplist)
+    if DBG: print "   DP In-ports avail to dest node '%s': %s" % (name,dplist)
     assert not (dplist == [False])
 
     # if DBG: print 'found destination ports', p
@@ -1579,7 +1630,7 @@ def constant_folding(DBG=0):
         pe = getnode(k.dests[0])
         assert is_pe(pe.name)
 
-        op = pe.addop(k.name)
+        op = pe.addop(k.name, 'either')
 
         # 'input0' is the integer value of theconstant
         kval = re.search('const(\d+)', k.name).group(1)
@@ -1595,7 +1646,7 @@ def constant_folding(DBG=0):
         if DBG:
             kstr = '%-14s' % ("'" + k.name + "'")
             pstr = '%-20s' % ("'" + pe.name + "'")
-            print "#   Folded %s into %s as %s" % (kstr,pstr,op)
+            print "#   Folded const %s into %s as %s" % (kstr,pstr,op)
         if DBG>1: pe.show(); print ""
 
 # UNPLACED REGOP REG
@@ -1674,14 +1725,26 @@ def register_folding(DBG=9):
         # Also set getnode('add_x_y').op1 = regname FIXME do we do this?
         # route [pe, "op1"] means duh obvious right?
         # Also: sname->dname route must be non-None !!
-        op = pe.addop(reg_name) # "op1" or "op2"
-        reg.input0  = op       # E.g. "op1"
+
+        # E.g. pe_name = 'smax_780_781_782$cgramax.data.in.1' => which_op = 'in.1'
+        which_op = pe_name[-4:]
+        #         print "pe_name=", pe_name
+        #         print "which_op=", which_op
+        #         print '\n\n'
+
+        assert (which_op == "in.0") or (which_op == "in.1")
+        op = pe.addop(reg_name, which_op) # "in.0" (OLD: "op2")
+
+        reg.input0  = op       # E.g. "in.0"
         reg.output = pe_name  # E.g. "add_x_y"
         reg.route[pe_name] = [op]  
 
         # if DBG: print "Found foldable reg '%s'" % reg_name
-        if DBG: print "#   Folded '%s' into pe '%s' as '%s'" % \
+        if DBG: print "#   Folded reg '%s' into pe '%s' as '%s'" % \
            (reg_name,pe_name,op)
+
+        # Folded 'lb_p3_cim_stencil_update_stream$lb1d_1$reg_2'
+        # into pe 'smax_780_781_782$cgramax.data.in.1' as 'data.0'
 
         if DBG>1:
             reg.show()
@@ -1750,7 +1813,7 @@ def add_route(sname, dname, tileno, src_port, dst_port, DBG=1):
         # Must choose port indicated by name
         # I.e. foo.in0,in1 must connect to op1, op2 respectively (that's right)
         # (FIXME could make exception for commutative ops I spose)
-        parse = re.search('\.in([0-9])$', dname)
+        parse = re.search('\.in\.([0-9])$', dname)
         if not parse: assert False, 'oof what now'
         which_in = int(parse.group(1));
         op = 'op%d' % (which_in + 1)
@@ -1792,13 +1855,13 @@ def is_regop(regname):
     '''
     "regname" is a reg-pair if:
     - regname is the name of a reg node AND
-    - regname.input0 is one of 'op1','op2' OR
+    - regname.input0 is one of 'in.0','in.1' OR
     - regname.output is a PE node
     '''
     assert type(regname) == str
     if not is_reg(regname): return False
 
-    reg_out = getnode(regname).output # E.g. "op1" or "T2_op1"
+    reg_out = getnode(regname).output # E.g. "op1" or "T2_op1" # what?? don't think so...
     # print reg_src;
                 
     if is_pe(reg_out): return True
@@ -2585,9 +2648,12 @@ def place_regop_op(dname, dtileno, d_in, DBG):
     dnode = getnode(dname)
     if DBG>2: dnode.show()
     if DBG>2: print dnode.route[pname]
+
+    # New stuff
     assert \
-           (dnode.route[pname] == ['op1']) or \
-           (dnode.route[pname] == ['op2'])
+           (dnode.route[pname] == ['in.0']) or \
+           (dnode.route[pname] == ['in.1'])
+
     print "# 1b. Set route to op"
     dnode.route[pname] = [d_in]
     if DBG>2: dnode.show()
@@ -2928,14 +2994,10 @@ def find_outport(tileno, nodename, DBG=0):
     '''
     # .*bitPE.in[012] maps to bit[012];
     # .*PE.in[01] map to op[12] (yes ug)
-
+    # DBG=9
     # HAHA note this func is only called when we have a non-commutative pe op i.e.
     # onebit_bool is the ONLY one that gets here so far...!??
     if DBG>1: print "fooz want to find outport list for '%s'" % nodename
-    # NEW support for harris
-    parse = re.search('ashr', nodename)
-    if parse:
-        assert False, 'the rubber has hit the road'
 
     ########################################################################
     # NEW
@@ -2952,8 +3014,90 @@ def find_outport(tileno, nodename, DBG=0):
     # sle100_775_792$compop.in1
     # smax_776_777_778$cgramax.in1
 
-    # binop NEVER USED!!?
-    if parse: (optype, portnum) = ('binop', int(parse.group(1)))
+    # harris: ashr_760_763_764$binop.data.in.0
+    # binop NEVER USED!!?  FIXME
+    # if parse: (optype, portnum) = ('binop', int(parse.group(1)))
+
+    # MUX
+    # harris: mux_793_794_795.mux.bit.in.0
+    parse = re.search(r'mux.bit.in.(\d)', nodename)
+    if parse:
+
+        # FIXME should be a func (below); also used for luts (below);
+        # should cojmbine and just have one clause for all nodes .*bit.in.[0-2]
+        portnum = int(parse.group(1))
+        only_dest = 'T%d_bit%d' % (tileno, portnum)
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        bitnum = portnum
+        if   (bitnum==0): assert getnode(nodename).bit0 == False
+        elif (bitnum==1): assert getnode(nodename).bit1 == False
+        elif (bitnum==2): assert getnode(nodename).bit2 == False
+        return only_dest
+
+    # harris: ashr_760_763_764$binop.data.in.0
+    # harris: smax_788_789_790$cgramax.data.in.1
+    # harris: slt_790_775_791$comp$compop.data.in.0
+    #
+    # parse = re.search(r'(binop|cgramax|compop)\.data\.in\.(\d)', nodename)
+    # if parse: portnum = int(parse.group(2))
+    #
+    # SEE: def pe_porntum
+    portnum = pe_portnum(nodename)
+    if portnum >= 0:
+        DBG=9
+        if DBG>1: print("found binop/cgramax")
+        if DBG>1: getnode(nodename).show()
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        if   (portnum==0): assert getnode(nodename).input0 == False
+        elif (portnum==1): assert getnode(nodename).input1 == False
+
+        opnum = portnum + 1
+        only_dest = 'T%d_op%s' % (tileno, opnum)
+        return only_dest
+
+# Pretty sure this is covered by "other bit ops" below
+#     # LUTS
+#     # harris: slt_790_775_791$not$lut$lut.bit.in.0
+#     parse = re.search(r'lut\.bit\.in\.(\d)', nodename)
+#     if parse:
+#         # (optype, portnum) = ('lut', int(parse.group(1)))
+#         portnum = int(parse.group(1))
+#         only_dest = 'T%d_bit%d' % (tileno, portnum)
+# 
+#         # Little checkyweck to see if port is avail or did somebody already take it!
+#         bitnum = portnum
+#         if   (bitnum==0): assert getnode(nodename).bit0 == False
+#         elif (bitnum==1): assert getnode(nodename).bit1 == False
+#         elif (bitnum==2): assert getnode(nodename).bit2 == False
+# 
+#         return only_dest
+
+    # LUTS and OTHER BIT OPS
+    # OLD: parse = re.search(r'bitPE.in(\d)', nodename)
+    # NEW: 'bitor_154_155_156_lut_bitPE.bit.in.0'
+    # also harris: slt_790_775_791$not$lut$lut.bit.in.0
+    parse = re.search(r'\.bit\.in\.(\d)', nodename)
+    if parse:
+        only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
+
+        # Little checkyweck to see if port is avail or did somebody already take it!
+        bitnum = int(parse.group(1))
+        if   (bitnum==0): assert getnode(nodename).bit0 == False
+        elif (bitnum==1): assert getnode(nodename).bit1 == False
+        elif (bitnum==2): assert getnode(nodename).bit2 == False
+
+        return only_dest
+
+    # NEW support for harris
+    parse = re.search('ashr', nodename)
+    if parse:
+        assert False, 'the rubber has hit the road'
+
+
+    ########################################################################
+    # OLD
 
     parse = re.search(r'mux.in(\d)', nodename)
     if parse:
@@ -2966,17 +3110,8 @@ def find_outport(tileno, nodename, DBG=0):
         only_dest = 'T%d_op%s' % (tileno, opnum)
         return only_dest
 
-    parse = re.search(r'binop.in(\d)', nodename)
-    if parse:
-        # Little checkyweck to see if port is avail or did somebody already take it!
-        portnum = int(parse.group(1))
-        if   (portnum==0): assert getnode(nodename).input0 == False
-        elif (portnum==1): assert getnode(nodename).input1 == False
-
-        opnum = portnum + 1
-        only_dest = 'T%d_op%s' % (tileno, opnum)
-        return only_dest
-
+    # OLD: parse = re.search(r'lut.in(\d)', nodename)
+    # NEW: slt_790_775_791$not$lut$lut.bit.in.0
     parse = re.search(r'lut.in(\d)', nodename)
     if parse:
         (optype, portnum) = ('lut', int(parse.group(1)))
@@ -2989,8 +3124,6 @@ def find_outport(tileno, nodename, DBG=0):
         elif (bitnum==2): assert getnode(nodename).bit2 == False
 
         return only_dest
-
-    ########################################################################
 
     # OLD: parse = re.search(r'bitPE.in(\d)', nodename)
     # NEW: 'bitor_154_155_156_lut_bitPE.bit.in.0'
@@ -3037,7 +3170,7 @@ def connect_endpoint(endpoint, dname, dtileno, DBG):
 
     if DBG:
         # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']
-        print "   In-ports avail to dest node '%s': %s" % (dname,dplist)
+        print "   CE In-ports avail to dest node '%s': %s" % (dname,dplist)
         print "   Take each one in turn"
 
     # Hm. if nodename designates an in-port e.g. 'add_305_313_314_PE.in1'
@@ -3061,6 +3194,15 @@ def connect_endpoint(endpoint, dname, dtileno, DBG):
         if ENDPOINT_MUST_BE_FREE and (dstport not in resources[dtileno]):
             print "     - OOP its being used by someone else, try another one\n"
             continue
+
+# FIXME either delete this or make it like DBG>1 thing
+#         if dstport == 'T118_op1':
+#             print("dname = %s" % dname)
+#             getnode(dname).show()
+#             print("dstports (dplist) = %s" % dplist)
+# 
+#             print("thinking we wanna connect to 'T118_op1' right?")
+#             assert False, "how things look now?"
 
         cend = can_connect_end(endpoint, dstport, DBG)
 

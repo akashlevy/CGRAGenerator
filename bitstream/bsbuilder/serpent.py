@@ -2086,12 +2086,121 @@ def place_dest(sname, dname, DBG=0):
     return dtileno
 
 
+
+def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
+
+
+    # BOOKMARK okay here it is, this is the thing.
+    # NEW: try again
+    # 1. replace 'OUTPUT' w/'OUTPUT_ADJACENT_nop' in sname.dest
+    # Create new node 'OUTPUT_ADJACENT_nop'
+    # Try  rval = place_and_route(sname,'OUTPUT_ADJACENT_nop',indent='# ',DBG=0)
+    # followed by place_and_route('OUTPUT_ADJACENT_nop', 'OUTPUT' etc
+
+
+
+    # 1. replace 'OUTPUT' w/'add_OUTPUT_ADJACENT$binop.data.in.0', like:
+    snode = getnode(sname)
+    print ''
+    print snode.dests
+
+    for i,n in enumerate(snode.dests):
+        if n == 'OUTPUT': snode.dests[i] = 'add_OUTPUT_ADJACENT$binop.data.in.0'
+
+    print snode.dests
+    print ''
+
+
+
+    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop', 'const0_OUTPUT_ADJACENT' something like
+    # 
+# 
+# node='const100_100'
+#   type='idunno'
+#   ----
+#   tileno= -1
+#   input0='False'
+#   input1='False'
+#   bit0='False'
+#   bit1='False'
+#   bit2='False'
+#   output='False'
+#   ----
+#   placed= False
+#   dests=['sle100_775_792$compop.data.in.0']
+#   route ['sle100_775_792$compop.data.in.0'] = []
+#   net= []
+
+
+
+    print 'add looks like:'
+    for nodename in nodes:
+        getnode(nodename).show()
+
+
+    # BOOKMARK IS THIS OKAY!!!?
+# 
+# node='add_703_704_705$binop'
+#   type='idunno'
+#   ----
+#   tileno= -1
+#   input0='False'
+#   input1='lb_grad_xy_2_stencil_update_stream$lb1d_2$reg_2'
+#   bit0='False'
+#   bit1='False'
+#   bit2='False'
+#   output='False'
+#   ----
+#   placed= False
+#   dests=['add_706_707_708$binop.data.in.0']
+#   route ['add_706_707_708$binop.data.in.0'] = []
+#   net= []
+
+
+
+
+    assert False
+
+
+    # node='add_OUTPUT_ADJACENT$binop'
+    #   type='idunno'
+    #   ----
+    #   tileno= 40
+    #   input0='T40_op1'
+    #   input1='False'
+    #   bit0='False'
+    #   bit1='False'
+    #   bit2='False'
+    #   output='T40_pe_out'
+    #   ----
+    #   placed= True
+    #   dests=['sub_694_696_697$binop.data.in.0']
+    #   route ['sub_694_696_697$binop.data.in.0'] = []
+    #   net= ['T40_pe_out']
+
+
+
+
+
 def try_again(sname, dname, dtileno, DBG=0):
     '''Try sname->dname again, using some dest OTHER THAN dtileno'''
-    if (dname == "OUTPUT") or (dname == "OUTPUT_1bit"):
+
+    if (dname == "OUTPUT"):
+        # Okay we're gonna try and fix it.
+
+        try_again_OUTPUT(sname, dname, dtileno, DBG)
+
+
+
+
+
+
+    elif (dname == "OUTPUT_1bit"):
         print ""
         print "Cannot find our way to OUTPUT, looks like we're screwed :("
         assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
+
+
 
     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
     packer.unallocate(dtileno, DBG=0)
@@ -2144,7 +2253,6 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         # If node is pe or mem, can try multiple tracks
 
-        # BOOKMARK okay here it is, this is the thing.
         # (For now at least) output must be track 0
         if   dname == "OUTPUT":      trackrange = [0]
         elif dname == "OUTPUT_1bit": trackrange = [0]
@@ -2167,7 +2275,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         if not path:
             # Try again, using some dest OTHER THAN dtileno
             rval = try_again(sname, dname, dtileno, DBG)
-
+            return rval
 
         print "# Having found the final path,"
         print "# 1. place dname '%s' in dtileno" % dname

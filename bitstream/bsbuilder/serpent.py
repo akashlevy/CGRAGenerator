@@ -2047,6 +2047,45 @@ def place_dname_in_input_node(dname, indent, DBG=0):
     else: return False
 
 
+def place_dest(sname, dname, DBG=0):
+    '''
+    # Get nearest tile compatible with target node 'dname'
+    # "Nearest" means closest to input tile (NW corner)
+    # dtileno = get_nearest_tile(sname, dname)
+    '''
+    if dname == "OUTPUT":
+        dtileno = OUTPUT_TILENO
+
+    elif dname == "OUTPUT_1bit":
+        dtileno = OUTPUT_TILENO_onebit
+
+    elif not is_placed(dname):
+        dtileno = get_nearest_tile(sname, dname)
+
+    else:
+        dtileno = getnode(dname).tileno
+        print "Actually it does have a home already, in tile %d" % dtileno
+        if dtileno in packer.EXCEPTIONS:
+            print "exceptions = ", packer.EXCEPTIONS
+            pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
+            assert False, "Out of options"
+
+    # FIXME will need an 'undo' for order[] list if dtileno ends up not used
+
+    # print 'dtileno/nearest is %d' % dtileno
+    if DBG:
+        if dname == "OUTPUT":
+            pwhere(1567, 'Connecting to OUTPUT tile %d\n' % dtileno)
+
+        elif dname == "OUTPUT_1bit":
+            pwhere(1657, 'Connecting to one-bit OUTPUT tile %d\n' % dtileno)
+
+        else:
+            pwhere(2093, 'Nearest available tile is %d\n' % dtileno)
+
+    return dtileno
+
+
 def place_and_route(sname,dname,indent='# ',DBG=0):
     # DBG=9
     if is_routed(sname, dname, indent, DBG): return True
@@ -2065,9 +2104,6 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
 
     # BOOKMARK cleaning place_and_route()
-
-
-
     # Does destination have a home?  YES, see above
     if True:
         #FIXME wtf with the 'if true' jazz
@@ -2075,44 +2111,10 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         DBG=1
         if DBG: print indent+"No route to '%s'" % dname
 
-        # Removed 3/2018
-        # if dname=='OUTPUT':
-        #     process_output(sname,dname)
-        #     return True
-
         # Get nearest tile compatible with target node 'dname'
         # "Nearest" means closest to input tile (NW corner)
         # dtileno = get_nearest_tile(sname, dname)
-
-        if dname == "OUTPUT":
-            dtileno = OUTPUT_TILENO
-
-        elif dname == "OUTPUT_1bit":
-            dtileno = OUTPUT_TILENO_onebit
-
-        elif not is_placed(dname):
-            dtileno = get_nearest_tile(sname, dname)
-
-        else:
-            dtileno = getnode(dname).tileno
-            print "Actually it does have a home already, in tile %d" % dtileno
-            if dtileno in packer.EXCEPTIONS:
-                print "exceptions = ", packer.EXCEPTIONS
-                pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
-                assert False, "Out of options"
-
-        # FIXME will need an 'undo' for order[] list if dtileno ends up not used
-
-        # print 'dtileno/nearest is %d' % dtileno
-        if DBG:
-            if dname == "OUTPUT":
-                pwhere(1567, 'Connecting to OUTPUT tile %d\n' % dtileno)
-
-            elif dname == "OUTPUT_1bit":
-                pwhere(1657, 'Connecting to one-bit OUTPUT tile %d\n' % dtileno)
-
-            else:
-                pwhere(2093, 'Nearest available tile is %d\n' % dtileno)
+        dtileno = place_dest(sname, dname, DBG)
 
         # If node is pe or mem, can try multiple tracks
 

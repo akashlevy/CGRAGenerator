@@ -857,31 +857,39 @@ class Node:
         '''
         # rname must have embedded tileno, e.g. 'T1_in_s3t2' or 'T5_mem_out'
         (tileno,r) = parse_resource(rname)
-
+        # DBG=9
         if DBG>2: pwhere(386)
-        if DBG>2: print "Looking for '%s' in %s" % (r, self.net)
 
         # E.g. resources[T] = ['in_s0t0', 'in_s0t1', ...
         # Can't use a register unless we're specifically looking for a register
         if rname in REGISTERS:
+            if DBG>2: print('')
+            if DBG>2: print "Looking for '%s' in tile T%d (0x%x)" % (r, tileno, tileno)
             assert rname not in resources[tileno],\
                    "'%s' is a register: should not be in resources list!"
             # But it CAN be in the net list maybe...?
-            print "'%s' not avail to '%s' b/c its a register" % (r, self.name)
+            print "OOPS looks like '%s' (0x%x) is a register...?" % (r, tileno)
+            print "Did not want a register in this path!"
+            # print "'%s' not avail to '%s' b/c its a register" % (r, self.name)
             return False
             # assert r not in self.net, "'%s' is a register: should not be part of net list!"
 
-        if DBG>2: print "Looking for '%s' in %s" % (rname, self.net)
-        if DBG>2: print "is_avail: looking for '%s' in '%s' nodenet" \
-              % (rname, self.name)
+        if DBG>2: print('')
+        if DBG>2: pwhere(874, "Looking for '%s' in T%d (0x%x)" % (r, tileno, tileno))
+
+        # First check to see if resource already assigned to output net of orig node (?)
+        # 'is_avail: looking for 'T121_in_s2t0' in 'mux_793_794_795$mux' nodenet'
+        if DBG>2: print "is_avail: looking for '%s' in '%s' nodenet" % (rname, self.name)
         if rname in self.net:
-            # print "       %-11s available in '%s' nodenet" \'] % (rname, self.name)
+            if DBG>2: print "  YES %-11s available in '%s' nodenet" % (rname, self.name)
             return True
 
-        if DBG>2: print "is_avail: looking for '%s' in tile %d resources %s" \
+        # Then check to see if resource is free/unassigned
+        # "is_avail: still looking for 'T121_in_s2t0' in tile 121 resources ['T121_in_s0t0', 'T121_in_s0t1'..."
+        if DBG>2: print "is_avail: Looking for '%s' in tile %d resources %s" \
               % (rname, tileno, resources[tileno])
         if rname in resources[tileno]:
-            # print "       %-11s is in free list for tile %d" % (rname, tileno)
+            if DBG>2: print "  YES %-11s available to tile T%d (0x%x)" % (rname, tileno, tileno)
             return True
 
         else:
@@ -1947,7 +1955,7 @@ def process_nodes(sname, indent='# ', DBG=1):
 
         print indent+"  Processing '%s' dest '%s'" % (sname,dname)
 
-        rval = place_and_route(sname,dname,indent+'  ')
+        rval = place_and_route(sname,dname,indent+' ')
         assert rval
 
         if DBG: pnr_debug_info(was_placed,was_routed,indent,sname,dname)
@@ -2006,15 +2014,42 @@ def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
         #     print indent+"  Processed dest '%s'; now process children %s" % \
         #           (dname, dchildren)
 
-def place_and_route(sname,dname,indent='# ',DBG=0):
 
-    global REGISTERS
+def place_dname_in_input_node(dname, indent, DBG=0):
+    '''
+    # If src is INPUT node and dest is an unallocated PE,
+    # or if src is INPUT node and dest is a register,
+    # we will put dest in same tile with INPUT.
+    '''
+    global INPUT_OCCUPIED
+    if DBG>2: pwhere(2025, 'place_dname_in_input_node()')
+    
+    # Early outs
+    if INPUT_OCCUPIED:
+        if DBG>2: print('  input occupied');
+        return False
 
-    if is_routed(sname,dname):
-        DBG=1
-        if DBG: print indent+"huh already been done"
+    elif INPUT_TILE_PE_OUT not in resources[INPUT_TILENO]:
+        if DBG>2: print('  not in resources');
+        return False
+
+    elif is_pe(dname):
+        place_pe_in_input_tile(dname)
+        INPUT_OCCUPIED = True
         return True
 
+    elif is_folded_reg(dname):
+        place_folded_reg_in_input_tile(dname)
+        # assert False, "TODO put reg-pe folded pair in INPUT tile :("
+        INPUT_OCCUPIED = True
+        return True
+
+    else: return False
+
+
+def place_and_route(sname,dname,indent='# ',DBG=0):
+    # DBG=9
+    if is_routed(sname, dname, indent, DBG): return True
     if DBG: print indent+"PNR '%s' -> '%s'" % (sname,dname)
 
     # Source should already be placed, yes?
@@ -2022,29 +2057,16 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         pwhere(1709, "ERROR 1709 '%s' has not been placed yet?" % sname)
         assert is_placed(sname)
 
-    # Apparently...if src is INPUT node and dest is an unallocated PE,
-    # we'll put the PE in same tile with INPUT.
-    # Note what if it's a reg-folded PE?
+    if (sname == "INPUT"):
+        # If src is INPUT node and dest is an unallocated PE,
+        # or if src is INPUT node and dest is a register,
+        # we'll put dest in same tile with INPUT.
+        if place_dname_in_input_node(dname, indent, DBG): return True
 
-       # and ('T0_pe_out' in resources[INPUT_TILENO])
-    global INPUT_OCCUPIED
-    if sname=='INPUT' \
-       and is_pe(dname) \
-       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO])\
-       and not INPUT_OCCUPIED:
-        place_pe_in_input_tile(dname)
-        INPUT_OCCUPIED = True
-        return True
 
-       # and ('T0_pe_out' in resources[INPUT_TILENO])\
-    if sname=='INPUT' \
-       and is_folded_reg(dname) \
-       and (INPUT_TILE_PE_OUT in resources[INPUT_TILENO])\
-       and not INPUT_OCCUPIED:
-        place_folded_reg_in_input_tile(dname)
-        # assert False, "TODO put reg-pe folded pair in INPUT tile :("
-        INPUT_OCCUPIED = True
-        return True
+    # BOOKMARK cleaning place_and_route()
+
+
 
     # Does destination have a home?  YES, see above
     if True:
@@ -2090,10 +2112,11 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(1657, 'Connecting to one-bit OUTPUT tile %d\n' % dtileno)
 
             else:
-                pwhere(1114, 'Nearest available tile is %d\n' % dtileno)
+                pwhere(2093, 'Nearest available tile is %d\n' % dtileno)
 
         # If node is pe or mem, can try multiple tracks
 
+        # BOOKMARK okay here it is, this is the thing.
         # (For now at least) output must be track 0
         if   dname == "OUTPUT":      trackrange = [0]
         elif dname == "OUTPUT_1bit": trackrange = [0]
@@ -2103,13 +2126,19 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         for track in trackrange:
             path = find_best_path(sname, dname, dtileno, track, DBG=1)
-            if path: break
+            if path:
+                if DBG>2: print "HEY FOUND PATH", path
+                break
+            else:
+                if DBG>2: print "No path for you! (..on track '%d')" % track
+
             if track != trackrange[-1]:
                 pwhere(1607, "could not find path on track %d, try track %d" % (track, track+1))
                 pwhere(1608, "trackrange = %s" % trackrange)
 
         if not path:
             if (dname == "OUTPUT") or (dname == "OUTPUT_1bit"):
+                print ""
                 print "Cannot find our way to OUTPUT, looks like we're screwed :("
                 assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
 
@@ -2129,7 +2158,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             return rval
 
         print "# Having found the final path,"
-        print "# 1. place dname in dtileno"
+        print "# 1. place dname '%s' in dtileno" % dname
         print '# 1a. If regsolo, add name to REGISTERS for later'
         print "# 1b. If regop, place (but don't route) assoc. pe"
         print "# 2. Add the connection to src->dst route list"
@@ -2137,7 +2166,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         print "# 4. Remove path resources from the free list"
         print ""
 
-        print 999999999, dtileno
+        # print 666, dtileno
         # if dtileno == 15: print 666
         print "# 1. place dname in dtileno"
         d_in = CT.allports(path)[-1]
@@ -2167,17 +2196,13 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         elif is_regsolo(dname):
             print '# 1a. If regsolo, add name to REGISTERS for later'
             d_out = CT.find_neighbor(d_in, DBG=9)
-            # assert False
 
-            print "# Add reg's input wire to list of registers"
-
-
+            global REGISTERS
+            if DBG>2: print "# Add reg's input wire to list of registers"
             # REGISTERS.append(path[-1])
             REGISTERS.append(d_in)
-
-
-            print 'added reg to REGISTERS'
-            print 'now registers is', REGISTERS
+            if DBG>2: print 'added reg to REGISTERS'
+            if DBG>2: print 'now registers is', REGISTERS
 
         elif is_regop(dname):
             d_out = place_regop_op(dname, dtileno, d_in, DBG)
@@ -3353,8 +3378,13 @@ def can_connect_end(endpoint, dstport, DBG=0):
 def is_placed(nodename):
     return getnode(nodename).is_placed()
 
-def is_routed(sname,dname):
-    return getnode(sname).is_routed(dname)
+def is_routed(sname, dname, indent="# ", DBG=0):
+    # return getnode(sname).is_routed(dname)
+    DBG=1
+    if getnode(sname).is_routed(dname): return True
+    else:
+        if DBG: print indent+"huh already been done"
+        return False
 
 
 def test_connect():

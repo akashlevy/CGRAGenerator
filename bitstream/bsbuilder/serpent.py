@@ -2086,6 +2086,30 @@ def place_dest(sname, dname, DBG=0):
     return dtileno
 
 
+def try_again(sname, dname, dtileno, DBG=0):
+    '''Try sname->dname again, using some dest OTHER THAN dtileno'''
+    if (dname == "OUTPUT") or (dname == "OUTPUT_1bit"):
+        print ""
+        print "Cannot find our way to OUTPUT, looks like we're screwed :("
+        assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
+
+    pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
+    packer.unallocate(dtileno, DBG=0)
+
+    if dtileno in packer.EXCEPTIONS:
+        print "exceptions = ", packer.EXCEPTIONS
+        pwhere(1614, "OOPS Already tried and failed oh nooooo")
+        assert False, "Out of options"
+
+    # Add dtileno as an EXCEPTION and try again
+    packer.EXCEPTIONS.append(dtileno)
+    rval = place_and_route(sname,dname,indent='# ',DBG=0)
+
+    # Restore EXCEPTIONS, return final result.
+    packer.EXCEPTIONS = []
+    return rval
+
+
 def place_and_route(sname,dname,indent='# ',DBG=0):
     # DBG=9
     if is_routed(sname, dname, indent, DBG): return True
@@ -2104,6 +2128,8 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
 
     # BOOKMARK cleaning place_and_route()
+
+
     # Does destination have a home?  YES, see above
     if True:
         #FIXME wtf with the 'if true' jazz
@@ -2139,25 +2165,9 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(1608, "trackrange = %s" % trackrange)
 
         if not path:
-            if (dname == "OUTPUT") or (dname == "OUTPUT_1bit"):
-                print ""
-                print "Cannot find our way to OUTPUT, looks like we're screwed :("
-                assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
+            # Try again, using some dest OTHER THAN dtileno
+            rval = try_again(sname, dname, dtileno, DBG)
 
-            pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
-            packer.unallocate(dtileno, DBG=0)
-
-            if dtileno in packer.EXCEPTIONS:
-                print "exceptions = ", packer.EXCEPTIONS
-                pwhere(1614, "OOPS Already tried and failed oh nooooo")
-                assert False, "Out of options"
-
-            packer.EXCEPTIONS.append(dtileno)
-            rval = place_and_route(sname,dname,indent='# ',DBG=0)
-
-            # Restore EXCEPTIONS, return final result.
-            packer.EXCEPTIONS = []
-            return rval
 
         print "# Having found the final path,"
         print "# 1. place dname '%s' in dtileno" % dname

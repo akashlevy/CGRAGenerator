@@ -1887,6 +1887,36 @@ def is_regsolo(regname):
     return True
 
 
+def already_placed(sname, dname, indent='# ', DBG=0):
+    was_placed = is_placed(dname)
+    was_routed = is_routed(sname,dname)
+
+    # Skip nodes that have already been placed and routed
+    # EXCEPT INPUT NODE destinations
+
+    if was_placed and was_routed:
+
+        # Seems to work fine w/o this 6/27/2018
+        #         # FIXME try with this (below) commented out, I think it does nothing
+        #         if sname == 'INPUT':
+        #             # INPUT is a weird special case
+        #             if DBG: print 'INPUT still needs processing'
+        #             return False
+        if False: print('foo')
+
+        # if sname is regop and dname is its dest,
+        # - keep processing
+        # - use special case in place_and_route to shortcut it
+        if is_regop(sname) and getnode(sname).output == dname:
+            if DBG: print indent+'REGOP still needs processing'
+            return False
+
+        else:
+            print indent+"  (already processed '%s')" % dname
+            return True
+
+    return False
+
 def process_nodes(sname, indent='# ', DBG=1):
     '''Place and route each unprocessed destination for nodename'''
 
@@ -1936,28 +1966,24 @@ def process_nodes(sname, indent='# ', DBG=1):
         # Skip nodes that have already been placed and routed
         # EXCEPT INPUT NODE destinations
 
-        if was_placed and was_routed:
-
-            if sname == 'INPUT':
-                # INPUT is a weird special case
-                if DBG: print 'INPUT still needs processing'
-
-            # if sname is regop and dname is its dest,
-            # - keep processing
-            # - use special case in place_and_route to shortcut it
-            elif is_regop(sname) and getnode(sname).output == dname:
-                if DBG: print indent+'REGOP still needs processing'
-
-            else:
-                print indent+"  (already processed '%s')" % dname
-                already_done.append(dname)
-                continue
-
         print indent+"  Processing '%s' dest '%s'" % (sname,dname)
+        if already_placed(sname, dname, indent, DBG):
+            already_done.append(dname)
+            continue
 
+        # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
         rval = place_and_route(sname,dname,indent+' ')
         assert rval
 
+        adjname0 = 'add_OUTPUT_ADJACENT$binop.data.in.0'
+        if adjname0 in getnode(sname).dests:
+            DBG=9
+            if DBG>2: print("# dname was rewritten from OUTPUT to 'add_OUTPUT_ADJACENT$binop.data.in.0';")
+            if DBG>2: print("# pnr_debug_info would fail!")
+            if DBG>2: print("# b/c dname changed during place_and_route()")
+            continue
+
+        # Note uses was_placed, was_routed info from BEFORE place_and_route()
         if DBG: pnr_debug_info(was_placed,was_routed,indent,sname,dname)
 
         # Hmph! Hmph! Another special case!
@@ -1968,7 +1994,6 @@ def process_nodes(sname, indent='# ', DBG=1):
         # process_nodes(dname, indent+'    ')
 
     # Recursively process each dest
-
     for dname in sorted_schildren:
         if dname in already_done: continue
 
@@ -2086,98 +2111,132 @@ def place_dest(sname, dname, DBG=0):
     return dtileno
 
 
-
-def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
-
-
-    # BOOKMARK okay here it is, this is the thing.
-    # NEW: try again
-    # 1. replace 'OUTPUT' w/'OUTPUT_ADJACENT_nop' in sname.dest
-    # Create new node 'OUTPUT_ADJACENT_nop'
-    # Try  rval = place_and_route(sname,'OUTPUT_ADJACENT_nop',indent='# ',DBG=0)
-    # followed by place_and_route('OUTPUT_ADJACENT_nop', 'OUTPUT' etc
-
-
-
-    # 1. replace 'OUTPUT' w/'add_OUTPUT_ADJACENT$binop.data.in.0', like:
+def replace_dest(sname, old_dest, new_dest, DBG=0):
     snode = getnode(sname)
-    print ''
-    print snode.dests
+    if DBG: pwhere(2130, \
+                   "In 'sname' dest list, replace '%s' w/ '%s'" \
+                   % (old_dest, new_dest))
+    if DBG>2:
+        print ''
+        print("#   Before:")
+        print snode.show()
 
     for i,n in enumerate(snode.dests):
-        if n == 'OUTPUT': snode.dests[i] = 'add_OUTPUT_ADJACENT$binop.data.in.0'
+        if n == old_dest: snode.dests[i] = new_dest
 
-    print snode.dests
-    print ''
+    # Replace existing placeholder route w/ placeholder route for new dest
+    assert snode.route[old_dest] == []
+    snode.route = {}; snode.route[new_dest] = []
 
-
-
-    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop', 'const0_OUTPUT_ADJACENT' something like
-    # 
-# 
-# node='const100_100'
-#   type='idunno'
-#   ----
-#   tileno= -1
-#   input0='False'
-#   input1='False'
-#   bit0='False'
-#   bit1='False'
-#   bit2='False'
-#   output='False'
-#   ----
-#   placed= False
-#   dests=['sle100_775_792$compop.data.in.0']
-#   route ['sle100_775_792$compop.data.in.0'] = []
-#   net= []
+    if DBG>2: 
+        print("#   After:")
+        print snode.show()
+        print ''
 
 
+HELPERNUM = 0
+def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
+    DBG=9
 
-    print 'add looks like:'
-    for nodename in nodes:
-        getnode(nodename).show()
+    # Ultimate destination
+    assert dname == 'OUTPUT'
 
+    # New intermediate node
+    adjname = 'add_OUTPUT_ADJACENT$binop'
+    adjname0 = adjname + '.data.in.0'
+    adjname1 = adjname + '.data.in.1'
 
-    # BOOKMARK IS THIS OKAY!!!?
-# 
-# node='add_703_704_705$binop'
-#   type='idunno'
-#   ----
-#   tileno= -1
-#   input0='False'
-#   input1='lb_grad_xy_2_stencil_update_stream$lb1d_2$reg_2'
-#   bit0='False'
-#   bit1='False'
-#   bit2='False'
-#   output='False'
-#   ----
-#   placed= False
-#   dests=['add_706_707_708$binop.data.in.0']
-#   route ['add_706_707_708$binop.data.in.0'] = []
-#   net= []
+    if DBG: pwhere(2118, '# Try again using intermediate node "%s"' % adjname)
+
+    # 1. in 'sname' dests list, replace 'OUTPUT'
+    #    w/'add_OUTPUT_ADJACENT$binop.data.in.0', like
+    replace_dest(sname, dname, adjname0, DBG)
 
 
+    # BOOKMARK CONTINUE CLEANING HERE
 
 
-    assert False
+    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop',
+    #    'const0_OUTPUT_ADJACENT' something like
+
+    # Note 'constant_folding' will palce this for us at the end (I hope)
+    cname = 'const0_OUTPUT_ADJACENT'
+    addnode(cname)
+    cnode = getnode(cname)
+    cnode.dests = [adjname1]
+    cnode.route[adjname1] = []
+    cnode.show()
 
 
-    # node='add_OUTPUT_ADJACENT$binop'
+    # node='const0_OUTPUT_ADJACENT'
     #   type='idunno'
     #   ----
-    #   tileno= 40
-    #   input0='T40_op1'
+    #   tileno= -1
+    #   input0='False'
     #   input1='False'
     #   bit0='False'
     #   bit1='False'
     #   bit2='False'
-    #   output='T40_pe_out'
+    #   output='False'
+    #   ----
+    #   placed= False
+    #   dests=['add_OUTPUT_ADJACENT$binop.data.in.1']
+    #   route ['add_OUTPUT_ADJACENT$binop.data.in.1'] = []
+    #   net= []
+
+    addnode(adjname)
+    adjnode = getnode(adjname)
+    adjnode.tileno = 35
+    adjnode.output = 'T35_pe_out'
+    adjnode.placed = True
+    adjnode.dests = ['OUTPUT']
+    adjnode.route['OUTPUT'] = []
+    adjnode.net = ['T35_pe_out']
+    adjnode.show()
+
+    # node='add_OUTPUT_ADJACENT$binop'
+    #   type='idunno'
+    #   ----
+    #   tileno= 35
+    #   input0='False'
+    #   input1='False'
+    #   bit0='False'
+    #   bit1='False'
+    #   bit2='False'
+    #   output='T35_pe_out'
     #   ----
     #   placed= True
-    #   dests=['sub_694_696_697$binop.data.in.0']
-    #   route ['sub_694_696_697$binop.data.in.0'] = []
-    #   net= ['T40_pe_out']
+    #   dests=['OUTPUT']
+    #   route ['OUTPUT'] = [could pre-populate]
+    #   net= ['T35_pe_out']
 
+    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+    adjnode.show()
+
+    # node='add_OUTPUT_ADJACENT$binop'
+    #   type='idunno'
+    #   ----
+    #   tileno= 35
+    #   input0='False'
+    #   input1='False'
+    #   bit0='False'
+    #   bit1='False'
+    #   bit2='False'
+    #   output='T35_pe_out'
+    #   ----
+    #   placed= True
+    #   dests=['OUTPUT']
+    #   route ['OUTPUT'] = [could pre-populate]
+    #   net= ['T35_pe_out']
+
+
+    # 3. call place-and-route recursively using new dname
+    if not place_and_route(sname, adjname0, indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+
+    print 'HOORAY completed OUTPUT hack'
+    return True
 
 
 
@@ -2187,19 +2246,15 @@ def try_again(sname, dname, dtileno, DBG=0):
 
     if (dname == "OUTPUT"):
         # Okay we're gonna try and fix it.
-
-        try_again_OUTPUT(sname, dname, dtileno, DBG)
-
-
-
-
-
+        return try_again_OUTPUT(sname, dname, dtileno, DBG)
 
     elif (dname == "OUTPUT_1bit"):
         print ""
         print "Cannot find our way to OUTPUT, looks like we're screwed :("
         assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
 
+
+    assert not is_placed(dname)
 
 
     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
@@ -2253,28 +2308,69 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         # If node is pe or mem, can try multiple tracks
 
+
+        # FIXME if sname is already placed the track may be pre-ordained here alread
+        # E.g. in example below "output='T122_in_s2t0'" so should only look at track 0 right?
+        # 
+        # node='lb_p3_cim_stencil_update_stream$lb1d_2$reg_1'
+        #   type='regsolo'
+        #   ----
+        #   tileno= 121
+        #   input0='T121_out_s0t0'
+        #   input1='False'
+        #   bit0='False'
+        #   bit1='False'
+        #   bit2='False'
+        #   output='T122_in_s2t0'
+        #   ----
+        #   placed= True
+        #   dests=['lb_p3_cim_stencil_update_stream$lb1d_2$reg_2', 'smax_776_777_778$cgramax.data.in.1']
+        #   route ['lb_p3_cim_stencil_update_stream$lb1d_2$reg_2'] = ['T122_in_s2t0 -> T122_out_s3t0', 'T107_in_s1t0 -> T107_out_s2t0', 'T107_out_s2t0 -> T107_op1']
+        #   route ['smax_776_777_778$cgramax.data.in.1']           = []
+        #   net= ['T122_in_s2t0', 'T122_in_s2t0', 'T122_out_s3t0', 'T107_in_s1t0', 'T107_out_s2t0', 'T107_out_s2t0', 'T107_op1']
+
+
+
+
         # (For now at least) output must be track 0
         if   dname == "OUTPUT":      trackrange = [0]
         elif dname == "OUTPUT_1bit": trackrange = [0]
         elif is_mem(sname): trackrange = range(5)
         elif is_pe(sname):  trackrange = range(5)
-        else: trackrange = [0]
 
+        # This breaks it
+        #elif is_reg(sname):  trackrange = range(5)
+
+        else:
+            assert "WARNING unknown tile this is probably bad..."
+            trackrange = [0]
+
+
+        # FIXME this needs to be cleaned up
+        DBG=9
         for track in trackrange:
+            print "TRYING TRACK", track, "OF", trackrange
             path = find_best_path(sname, dname, dtileno, track, DBG=1)
+            print "TRACK", track, "no good"
             if path:
                 if DBG>2: print "HEY FOUND PATH", path
                 break
             else:
                 if DBG>2: print "No path for you! (..on track '%d')" % track
 
+            print track, trackrange[-1]
             if track != trackrange[-1]:
                 pwhere(1607, "could not find path on track %d, try track %d" % (track, track+1))
                 pwhere(1608, "trackrange = %s" % trackrange)
 
+
+
+
         if not path:
             # Try again, using some dest OTHER THAN dtileno
             rval = try_again(sname, dname, dtileno, DBG)
+            # try_again calls place and route, doing the cleanup work below.
+            # So we can return immediately
             return rval
 
         print "# Having found the final path,"
@@ -2994,6 +3090,7 @@ def buswidth(connection):
     else:                     return 16
 
 def can_connect_ends(path, snode, dname, dtileno, DBG=0):
+    # DBG=9
     stileno = snode.tileno
     sname   = snode.name
 
@@ -3004,8 +3101,14 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
         print "1. Attach source node '%s' to path beginpoint '%s'"\
               % (sname, path[0])
 
+
+
+    if snode.output not in snode.net:
+        print snode.net
     assert snode.output in snode.net,\
-           "'%s' output '%s' is not in '%s' net!!?" % (sname, snode.input0,sname)
+           "'%s' output '%s' is not in '%s' net!!?" % (sname, snode.output, sname)
+
+
 
     cbegin = connect_beginpoint(snode, path[0], buswidth(path[0]), DBG)
     if not cbegin:

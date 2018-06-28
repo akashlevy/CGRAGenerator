@@ -1971,19 +1971,25 @@ def process_nodes(sname, indent='# ', DBG=1):
             already_done.append(dname)
             continue
 
+        # FIXME this is just awful ain't it
+        global REWRITTEN_DNAME
+        REWRITTEN_DNAME = False
         # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
         rval = place_and_route(sname,dname,indent+' ')
         assert rval
 
-        adjname0 = 'add_OUTPUT_ADJACENT$binop.data.in.0'
-        if adjname0 in getnode(sname).dests:
+        # FIXME should move this into pnr_debug_info()
+        # Note pnr_debug_info (below) would fail if don't update dname!")
+        if REWRITTEN_DNAME: 
+            # E.g. new intermediate node 'add_OUTPUT_ADJACENT$binop.data.in.0'
             DBG=9
-            if DBG>2: print("# dname was rewritten from OUTPUT to 'add_OUTPUT_ADJACENT$binop.data.in.0';")
-            if DBG>2: print("# pnr_debug_info would fail!")
-            if DBG>2: print("# b/c dname changed during place_and_route()")
-            continue
+            if DBG>2: print("# dname was rewritten, was '%s', now '%s'" % (dname, REWRITTEN_DNAME))
+            # if DBG>2: print("# b/c dname changed during place_and_route()")
+            dname = REWRITTEN_DNAME
+            # continue
 
         # Note uses was_placed, was_routed info from BEFORE place_and_route()
+        # FIXME maybe try w/o just see what happens...?
         if DBG: pnr_debug_info(was_placed,was_routed,indent,sname,dname)
 
         # Hmph! Hmph! Another special case!
@@ -2134,40 +2140,9 @@ def replace_dest(sname, old_dest, new_dest, DBG=0):
         print ''
 
 
-HELPERNUM = 0
-def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
-    DBG=9
-
-    # Ultimate destination
-    assert dname == 'OUTPUT'
-
-    # New intermediate node
-    adjname = 'add_OUTPUT_ADJACENT$binop'
-    adjname0 = adjname + '.data.in.0'
-    adjname1 = adjname + '.data.in.1'
-
-    if DBG: pwhere(2118, '# Try again using intermediate node "%s"' % adjname)
-
-    # 1. in 'sname' dests list, replace 'OUTPUT'
-    #    w/'add_OUTPUT_ADJACENT$binop.data.in.0', like
-    replace_dest(sname, dname, adjname0, DBG)
-
-
-    # BOOKMARK CONTINUE CLEANING HERE
-
-
-    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop',
-    #    'const0_OUTPUT_ADJACENT' something like
-
-    # Note 'constant_folding' will palce this for us at the end (I hope)
-    cname = 'const0_OUTPUT_ADJACENT'
-    addnode(cname)
-    cnode = getnode(cname)
-    cnode.dests = [adjname1]
-    cnode.route[adjname1] = []
-    cnode.show()
-
-
+def create_node_w_dest(sname, dname, DBG=0):
+    if DBG: pwhere(2173, "# Create new node '%s' w/dest '%s'" % (sname, dname))
+    # E.g.
     # node='const0_OUTPUT_ADJACENT'
     #   type='idunno'
     #   ----
@@ -2183,6 +2158,56 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     #   dests=['add_OUTPUT_ADJACENT$binop.data.in.1']
     #   route ['add_OUTPUT_ADJACENT$binop.data.in.1'] = []
     #   net= []
+    addnode(sname)
+    snode = getnode(sname)
+    snode.dests = [dname]
+    snode.route[dname] = []
+    # Note 'constant_folding' will place this for us at the end (I hope)
+    if sname[0:5] != 'const':
+        assert False, 'should this be placed and routed now?'
+
+    if DBG>2: snode.show()
+    return snode
+
+
+HELPERNUM = 0
+def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
+    DBG=9
+
+    # Ultimate destination
+    assert dname == 'OUTPUT'
+
+    # Base name for new nodes
+    global HELPERNUM
+    helper_basename = 'sherpa%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
+
+    # New intermediate (adjunct) node
+    adjname = 'add_OUTPUT_ADJACENT$binop'
+    adjname = 'add_' + helper_basename + '$binop' # E.g. 'add_sherpa001$binop'
+
+    if DBG: pwhere(2118, '# Try again using intermediate node "%s"' % adjname)
+
+    # 1. in 'sname' dests list, replace 'OUTPUT'
+    #    w/'add_OUTPUT_ADJACENT$binop.data.in.0', like
+    adjname0 = adjname + '.data.in.0' # E.g. 'add_sherpa001$binop.data.in.0'
+    replace_dest(sname, dname, adjname0, DBG)
+
+    # Somebody later needs this (just awful)
+    global REWRITTEN_DNAME
+    REWRITTEN_DNAME = adjname0
+
+    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop',
+    #    'const0_OUTPUT_ADJACENT' something like
+
+    # Create new node 'const0_sherpa000' and connect to adj node input 1 (op2)
+    # cname = 'const0_OUTPUT_ADJACENT'
+    cname = 'const0_' + helper_basename # E.g. 'const0_sherpa000'
+    adjname1 = adjname + '.data.in.1'   # E.g. 'add_sherpa001$binop.data.in.1'
+    cnode = create_node_w_dest(cname, adjname1, DBG)
+
+
+    # BOOKMARK CONTINUE CLEANING HERE
+    # Consider generic build_node() for this and create_node... above
 
     addnode(adjname)
     adjnode = getnode(adjname)

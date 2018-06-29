@@ -2251,6 +2251,9 @@ def create_adj_node(adjname, dname, adj_tileno, DBG=0):
             print('# Creating unplaced intermediate node "%s"' % adjname)
         else:
             print('# Creating intermediate node "%s" in tile T%d' % (adjname,adj_tileno))
+            packer.allocate(adj_tileno, DBG)
+            print("# order after placing intermediate node '%s'" % adjname)
+            packer.FMT.order()
 
     # E.g. old_dname = 'OUTPUT'
     old_dname = dname
@@ -2288,6 +2291,7 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
     adjname = 'add_' + helper_basename + '$binop'
 
+    ########################################################################
     # Create new adj node 'add_adj000' and point it to old dest 'dname'
     #   If going to OUTPUT (tile 36), put adj in tile 35;
     #   FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
@@ -2296,37 +2300,41 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     else:                 adj_tileno = -1 # Let PNR place adj later
     create_adj_node(adjname, dname, adj_tileno, DBG)
 
+    ########################################################################
     # In 'sname' dests list, replace old dest 'dname' w/new dest 'add_adj000'
     # using input 0 (op1) as new dest
     adjname0 = adjname + '.data.in.0' # E.g. 'add_adj001$binop.data.in.0'
     replace_dest(sname, dname, adjname0, DBG)
 
+    was_placed = getnode(adjname).is_placed
     # Route src => adj by calling place-and-route recursively using new dname
     # This should place adj node if not done yet
     # (Could be combined in replace_dest(), yes?)
     if not place_and_route(sname, adjname0, indent='# ', DBG=0):
         assert False, 'well that didnt work did it'
 
+    if not was_placed:
+        packer.allocate(getnode(adjname).tileno, DBG)
+        print("# order after placing '%s'" % adjname)
+        packer.FMT.order()
+
+
+    ########################################################################
+    # Now route adj => dname; this will place dname if not done yet
+    was_placed = getnode(dname).is_placed
+
+    assert dname == 'OUTPUT' # for now
+    if not place_and_route(adjname, dname, indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+
+    if (dname == 'OUTPUT') or (not was_placed):
+        packer.allocate(getnode(dname).tileno, DBG)
+        print("# order after placing '%s'" % dname)
+        packer.FMT.order()
+
 
     # CONTINUE CLEANING HERE
     # wANT PACKER FMT TO UPDATE AFTER EACH NEW NODE PLACEMENT
-
-
-    # Now route adj => dname; this will place dname if not done yet
-    print "666before pnr"
-    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
-        assert False, 'well that didnt work did it'
-
-
-#     packer.allocate(getnode(adjname.tileno), DBG)
-#     print '# order after ???'
-#     packer.FMT.order()
-
-
-    print "666after pnr"
-
-
-
     # BOOKMARK this is next
 
 

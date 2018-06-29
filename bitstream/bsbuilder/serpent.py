@@ -90,11 +90,15 @@ def find_input_tile():
             print "I think output wire is %s" % INPUT_TILE_PE_OUT
             return i
 
+# This is calculated now
+# OUTPUT_TILENO = 0x24         # First (PE or?) mem tile in NW corner
+OUTPUT_TILENO = -1
 
-OUTPUT_TILENO = 0x24         # First PE tile in NW corner
-OUTPUT_TILENO_onebit = 0x108 # First PE tile in SW corner
+# FIXME should be calculated, see above.
+OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
 
-# Should be the tile ABOVE io1bit tile that is the LSB in first group on side 1 (bottom) e.g.
+# Should be the tile ABOVE io1bit tile that is the LSB in first group
+# on side 1 (bottom) e.g.
 #      <tile type='io1bit' tile_addr='0x125' row='19' col='17' ... name='pad_S1_T15'>
 #        <io_bit>0</io_bit><!-- LSB=0 -->
 #        <io_group>2</io_group>
@@ -109,16 +113,17 @@ OUTPUT_TILENO_onebit = 0x108 # First PE tile in SW corner
 def find_output_tile():
     global OUTPUT_TILENO
     for i in range(1000):
-        t = cgra_info.tiletype(i)
-        # if (t[0:2] == "pe") or (t[0:3] == "mem"):
-        if is_pe_tile(t) or is_mem_tile(t):
+        if is_pe_tile(i) or is_mem_tile(i):
             (r,c) = cgra_info.tileno2rc(i)
             if r == 2:
                 OUTPUT_TILENO = i
             elif r > 2:
-                print "I think output tile is T%d" % OUTPUT_TILENO
+                print "I think output tile is T%d (early)" % OUTPUT_TILENO
                 # Early out
                 return
+    print "I think output tile is T%d (late)" % OUTPUT_TILENO
+    return
+
 
 # Set this to True if a PE has been placed in the INPUT tile
 # FIXME is this the best way to do this!!?
@@ -350,6 +355,8 @@ def main(DBG=1):
     assert not getnode('INPUT').placed
     initialize_routes()
     initialize_node_INPUT()
+    initialize_node_OUTPUT()
+    initialize_node_OUTPUT_1bit()
 
     # FIXME should be part of initialize_node_INPUT somehow right?
     # Allocate tile 0 for input node
@@ -907,7 +914,11 @@ class Node:
 
         # Originally, input=False was a sign that wire can connect to
         # any available input.  But we don't do that no more.
-        assert input != False, 'we dont do that no more'
+        # assert input != False, 'we dont do that no more'
+
+        # Maybe need it for unrouted 16- or 1-bit OUTPUT nodes e.g.
+        if name[0:6] != "OUTPUT":
+            assert input != False, 'we dont do that no more'
 
         if   is_pe(name):
             assert re.search('(op[12])|(bit[012])',     input),\
@@ -918,11 +929,12 @@ class Node:
             assert re.search('mem_in$',  input)
             assert re.search('mem_out$', output)
 
-
         if self.placed:
-            print "#   WARNING %s already placed at %s" % (name, self.input0)
-            # assert False, "ERROR %s already placed at %s" % (name, self.input0)
+            # assert False, "ERROR %s already placed in tile T%s" % (name, self.tileno)
+            pwhere(934)
+            print "#   WARNING %s already placed at %s" % (name, self.tileno)
             print "#   It's okay, probably an alu with two inputs"
+            if DBG: self.show()
 
         self.tileno = tileno
 
@@ -1243,7 +1255,7 @@ def build_node(nodes, line, DBG=0):
     lhs = parse.group(1); rhs = parse.group(2)
     if DBG>1: print "# Found lhs/rhs", lhs, rhs, "\n";
 
-    # json2dot is repsonsible to do this!
+    # json2dot is responsible to do this!
     # if lhs == "io16in_in_0.out": lhs = "INPUT"
     # if rhs == "io16_out.in"    : rhs = "OUTPUT"
 
@@ -1485,6 +1497,45 @@ def initialize_node_INPUT():
     # assert INPUT.input0 == False
     # assert INPUT.input1 == False
     # assert INPUT.routed == False
+
+def initialize_node_OUTPUT():
+    # INPUT_WIRE_T =      'T%d_in_s2t0' % INPUT_TILENO
+
+    if 'OUTPUT' in nodes:
+        # assert is_mem_tile(tileno) # Not relevant, maybe
+
+        tileno = OUTPUT_TILENO
+        input = False # not routed yet
+
+        # (For now at least) output must be track 0, see above
+        # FIXME later could have an option to hop tracks maybe
+        # So: One-bit output must come out track 0 on the right side (S0)
+        # of the mem tile to the left of the pad (OUTPUT_TILE)
+        trackno = 0; output = 'T%d_out_s0t%d' % (tileno, trackno)
+        # 0 is only track that goes to io16 output tile, right?
+        # 'output' only used for no-longer-used output comment i think
+
+        # Place 'name' in tile 'tileno' at location 'src'
+        getnode('OUTPUT').place(tileno, input, output)
+        getnode('OUTPUT').show()
+
+def initialize_node_OUTPUT_1bit():
+    if 'OUTPUT_1bit' in nodes:
+        # assert is_pe_tile(tileno) # not relevant maybe
+        tileno = OUTPUT_TILENO_onebit
+
+        input = False
+
+        # output = False
+        # FIXME here's a mystery: why does pe tile have a side 5??
+        # output = 'foo' # this don't work
+        # 'output' only used for no-longer-used output comment i think
+        trackno=0; output = 'T%d_out_s1t%d' % (tileno, trackno) # this works
+        # output = 'T%d_out_s5t%d' % (tileno, trackno) # this works (why?)
+        # 0 is only track that goes to io16 output tile, right?
+
+        getnode('OUTPUT_1bit').place(tileno, input, output)
+
 
 def is_const(nodename):  return nodename.find('const') == 0
 def is_reg(nodename):
@@ -2084,11 +2135,13 @@ def place_dest(sname, dname, DBG=0):
     # "Nearest" means closest to input tile (NW corner)
     # dtileno = get_nearest_tile(sname, dname)
     '''
-    if dname == "OUTPUT":
-        dtileno = OUTPUT_TILENO
+    if False: assert False
 
-    elif dname == "OUTPUT_1bit":
-        dtileno = OUTPUT_TILENO_onebit
+#     if dname == "OUTPUT":
+#         dtileno = OUTPUT_TILENO
+# 
+#     elif dname == "OUTPUT_1bit":
+#         dtileno = OUTPUT_TILENO_onebit
 
     elif not is_placed(dname):
         dtileno = get_nearest_tile(sname, dname)
@@ -2173,24 +2226,104 @@ def create_node_w_dest(sname, dname, DBG=0):
 HELPERNUM = 0
 def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     DBG=9
+    if DBG: pwhere(2176, '# Try again using intermediate/adjunct/sherpa node')
 
     # Ultimate destination
     assert dname == 'OUTPUT'
-
-    # Base name for new nodes
+    if 'OUTPUT' in nodes: getnode('OUTPUT').show()
+    # New intermediate (adjunct) node e.g. 'add_sherpa001$binop'
+    # adjname = 'add_OUTPUT_ADJACENT$binop'
     global HELPERNUM
     helper_basename = 'sherpa%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
+    adjname = 'add_' + helper_basename + '$binop'
 
-    # New intermediate (adjunct) node
-    adjname = 'add_OUTPUT_ADJACENT$binop'
-    adjname = 'add_' + helper_basename + '$binop' # E.g. 'add_sherpa001$binop'
+    # Create new adj node 'add_sherpa000' and route it to old dest
+    if DBG: print('# Creating intermediate node "%s"' % adjname)
+    # create_sherpa_node(adjname, dname, DBG)
 
-    if DBG: pwhere(2118, '# Try again using intermediate node "%s"' % adjname)
+# BOOKMARK this is next
+# def create_sherpa_node(adjname, dname, DBG=0):
+    # Create new adj node 'add_sherpa000' and route it to old dest
+    # 
+    # node='add_OUTPUT_ADJACENT$binop'
+    #   type='idunno'
+    #   ----
+    #   tileno= 35
+    #   input0='False'
+    #   input1='False'
+    #   bit0='False'
+    #   bit1='False'
+    #   bit2='False'
+    #   output='T35_pe_out'
+    #   ----
+    #   placed= True
+    #   dests=['OUTPUT']
+    #   route ['OUTPUT'] = [could pre-populate]
+    #   net= ['T35_pe_out']
+    # E.g. old_dname = 'OUTPUT'
+    old_dname = dname
+    dnode = getnode(old_dname)
+    dnode.show()
+    assert is_placed(old_dname)
+    # old_dest_tileno = dnode.tileno
 
-    # 1. in 'sname' dests list, replace 'OUTPUT'
-    #    w/'add_OUTPUT_ADJACENT$binop.data.in.0', like
+    if old_dname == 'OUTPUT':
+        # FIXME this should be more heuristic, see e.g. 'find_output_tile()
+        # dtileno = OUTPUT_ADJACENT_TILENO
+        adj_tileno = 35
+    else:
+        assert False, 'call get_dest here or something maybe, right?'
+        # And/or send unplaced tile to place_and_route e.g. simply
+        # adj_tileno = -1 etc.
+
+
+    addnode(adjname)
+    adjnode = getnode(adjname)
+    adjnode.tileno = adj_tileno
+    adjnode.output = 'T%d_pe_out' % adj_tileno # E.g. 'T35_pe_out'
+    adjnode.placed = True
+    adjnode.dests = [old_dname]
+    adjnode.route[old_dname] = []
+    adjnode.net = [adjnode.output]
+    adjnode.show()
+
+
+
+#     addnode(adjname)
+#     adjnode = getnode(adjname)
+#     adjnode.tileno = 35
+#     adjnode.output = 'T35_pe_out'
+#     adjnode.placed = True
+#     adjnode.dests = ['OUTPUT']
+#     adjnode.route['OUTPUT'] = []
+#     adjnode.net = ['T35_pe_out']
+#     adjnode.show()
+
+
+    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+    adjnode.show()
+
+
+
+
+
+
+
+
+
+    # 1. in 'sname' dests list, replace old dest 'OUTPUT'
+    # w/ adj node input 0 (op1) as new dest
     adjname0 = adjname + '.data.in.0' # E.g. 'add_sherpa001$binop.data.in.0'
     replace_dest(sname, dname, adjname0, DBG)
+
+
+    # 3. call place-and-route recursively using new dname
+    if not place_and_route(sname, adjname0, indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+
+
+
 
     # Somebody later needs this (just awful)
     global REWRITTEN_DNAME
@@ -2208,57 +2341,6 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
 
     # BOOKMARK CONTINUE CLEANING HERE
     # Consider generic build_node() for this and create_node... above
-
-    addnode(adjname)
-    adjnode = getnode(adjname)
-    adjnode.tileno = 35
-    adjnode.output = 'T35_pe_out'
-    adjnode.placed = True
-    adjnode.dests = ['OUTPUT']
-    adjnode.route['OUTPUT'] = []
-    adjnode.net = ['T35_pe_out']
-    adjnode.show()
-
-    # node='add_OUTPUT_ADJACENT$binop'
-    #   type='idunno'
-    #   ----
-    #   tileno= 35
-    #   input0='False'
-    #   input1='False'
-    #   bit0='False'
-    #   bit1='False'
-    #   bit2='False'
-    #   output='T35_pe_out'
-    #   ----
-    #   placed= True
-    #   dests=['OUTPUT']
-    #   route ['OUTPUT'] = [could pre-populate]
-    #   net= ['T35_pe_out']
-
-    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
-        assert False, 'well that didnt work did it'
-    adjnode.show()
-
-    # node='add_OUTPUT_ADJACENT$binop'
-    #   type='idunno'
-    #   ----
-    #   tileno= 35
-    #   input0='False'
-    #   input1='False'
-    #   bit0='False'
-    #   bit1='False'
-    #   bit2='False'
-    #   output='T35_pe_out'
-    #   ----
-    #   placed= True
-    #   dests=['OUTPUT']
-    #   route ['OUTPUT'] = [could pre-populate]
-    #   net= ['T35_pe_out']
-
-
-    # 3. call place-and-route recursively using new dname
-    if not place_and_route(sname, adjname0, indent='# ', DBG=0):
-        assert False, 'well that didnt work did it'
 
     print 'HOORAY completed OUTPUT hack'
     return True
@@ -2359,7 +2441,10 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         # (For now at least) output must be track 0
         if   dname == "OUTPUT":      trackrange = [0]
+
+        # FIXME i think onebit is a mem tile and could use any of the five tracks!?
         elif dname == "OUTPUT_1bit": trackrange = [0]
+
         elif is_mem(sname): trackrange = range(5)
         elif is_pe(sname):  trackrange = range(5)
 
@@ -2418,20 +2503,26 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         elif is_mem(dname): d_out = addT(dtileno, 'mem_out')
 
-        # elif dname == "OUTPUT":
-        elif dname == "OUTPUT":
-            # (For now at least) output must be track 0, see above
-            # FIXME later could have an option to hop tracks maybe
-            # So: One-bit output must come out track 0 on the right side (S0)
-            # of the mem tile to the left of the pad (OUTPUT_TILE)
-            trackno = 0
-            d_out = addT(dtileno,'_out_s0t%d' % trackno)
+#         # BOOKMARK FIXME should not need this no mo
+#         # elif dname == "OUTPUT":
+#         elif dname == "OUTPUT":
+#             # (For now at least) output must be track 0, see above
+#             # FIXME later could have an option to hop tracks maybe
+#             # So: One-bit output must come out track 0 on the right side (S0)
+#             # of the mem tile to the left of the pad (OUTPUT_TILE)
+#             trackno = 0
+#             d_out = addT(dtileno,'out_s0t%d' % trackno)
+# 
+#         elif dname == "OUTPUT_1bit":
+#             # One-bit output must come out track 0 on the bottom side (S5)
+#             # of the mem tile above the pad (OUTPUT_TILE_onebit)
+#             trackno = 0
+#             d_out = addT(dtileno,'out_s5t%d' % trackno)
+# 
 
-        elif dname == "OUTPUT_1bit":
-            # One-bit output must come out track 0 on the bottom side (S5)
-            # of the mem tile above the pad (OUTPUT_TILE_onebit)
-            trackno = 0
-            d_out = addT(dtileno,'_out_s5t%d' % trackno)
+        elif dname[0:6] == "OUTPUT":
+            print('should be already done i think')
+            d_out = getnode(dname).output
 
 
         elif is_regsolo(dname):
@@ -3184,7 +3275,7 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
             
 def output_endpoint_hack(dname, path, DBG=0):
     assert (dname == 'OUTPUT') and re.search('in_s6', path[-1])
-
+    DBG=9
     if DBG: print '''
           Well.  For one reason or another, we have arrived
           at the lower left half (side 6) of a mem tile as

@@ -292,7 +292,7 @@ FF000038 0200E00E
 # data[(1, 1)] : one-bit # 0x1
 
 # INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
-# OUTPUT tile 264 (17, 2) / out_BUS16_S5_T0 / wire_18_2_BUS16_S1_T0
+# OUTPUT tile 264 (17, 2) / out_BUS16_S1_T0 / wire_17_2_BUS16_S1_T0
 
 # Configure side 0 (right side) io1bit tiles as 16bit output bus;
 # assumes output is tile 36 (io16bit_0x24)

@@ -130,4 +130,4 @@ T56_out_s2t1b -> T56_bit0
 
 # WARNING Using 'OUTPUT_1bit' as OUTPUT node
 # INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
-# OUTPUT tile 264 (17, 2) / out_BUS16_S5_T0 / wire_18_2_BUS16_S1_T0
+# OUTPUT tile 264 (17, 2) / out_BUS16_S1_T0 / wire_17_2_BUS16_S1_T0

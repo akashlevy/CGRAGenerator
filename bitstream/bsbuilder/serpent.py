@@ -2223,27 +2223,12 @@ def create_node_w_dest(sname, dname, DBG=0):
     return snode
 
 
-HELPERNUM = 0
-def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
-    DBG=9
-    if DBG: pwhere(2176, '# Try again using intermediate/adjunct/sherpa node')
-
-    # Ultimate destination
-    assert dname == 'OUTPUT'
-    if 'OUTPUT' in nodes: getnode('OUTPUT').show()
-    # New intermediate (adjunct) node e.g. 'add_sherpa001$binop'
-    # adjname = 'add_OUTPUT_ADJACENT$binop'
-    global HELPERNUM
-    helper_basename = 'sherpa%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
-    adjname = 'add_' + helper_basename + '$binop'
-
-    # Create new adj node 'add_sherpa000' and route it to old dest
-    if DBG: print('# Creating intermediate node "%s"' % adjname)
-    # create_sherpa_node(adjname, dname, DBG)
-
-# BOOKMARK this is next
-# def create_sherpa_node(adjname, dname, DBG=0):
-    # Create new adj node 'add_sherpa000' and route it to old dest
+def create_adj_node(adjname, dname, adj_tileno, DBG=0):
+    '''
+    Need an intermediate (adj) node "adjname"
+    between src and dst nodes (sname and dname).
+    '''
+    # Create new adj node 'add_adj000' and route it to old dest 'dname'
     # 
     # node='add_OUTPUT_ADJACENT$binop'
     #   type='idunno'
@@ -2260,22 +2245,20 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     #   dests=['OUTPUT']
     #   route ['OUTPUT'] = [could pre-populate]
     #   net= ['T35_pe_out']
+
+    if DBG:
+        if adj_tileno == -1:
+            print('# Creating unplaced intermediate node "%s"' % adjname)
+        else:
+            print('# Creating intermediate node "%s" in tile T%d' % (adjname,adj_tileno))
+
     # E.g. old_dname = 'OUTPUT'
     old_dname = dname
+
     dnode = getnode(old_dname)
-    dnode.show()
+    if DBG>2: dnode.show()
     assert is_placed(old_dname)
     # old_dest_tileno = dnode.tileno
-
-    if old_dname == 'OUTPUT':
-        # FIXME this should be more heuristic, see e.g. 'find_output_tile()
-        # dtileno = OUTPUT_ADJACENT_TILENO
-        adj_tileno = 35
-    else:
-        assert False, 'call get_dest here or something maybe, right?'
-        # And/or send unplaced tile to place_and_route e.g. simply
-        # adj_tileno = -1 etc.
-
 
     addnode(adjname)
     adjnode = getnode(adjname)
@@ -2284,44 +2267,67 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     adjnode.placed = True
     adjnode.dests = [old_dname]
     adjnode.route[old_dname] = []
-    adjnode.net = [adjnode.output]
-    adjnode.show()
+
+    #Maybe this happens later, by its own self
+    #adjnode.net = [adjnode.output]
+
+    if DBG>2: adjnode.show()
 
 
+HELPERNUM = 0
+def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
+    DBG=9
+    if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
 
-#     addnode(adjname)
-#     adjnode = getnode(adjname)
-#     adjnode.tileno = 35
-#     adjnode.output = 'T35_pe_out'
-#     adjnode.placed = True
-#     adjnode.dests = ['OUTPUT']
-#     adjnode.route['OUTPUT'] = []
-#     adjnode.net = ['T35_pe_out']
-#     adjnode.show()
+    # Ultimate destination
+    assert dname == 'OUTPUT'
+    if 'OUTPUT' in nodes: getnode('OUTPUT').show()
+    # New intermediate (adjunct) node e.g. 'add_adj001$binop'
+    # adjname = 'add_OUTPUT_ADJACENT$binop'
+    global HELPERNUM
+    helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
+    adjname = 'add_' + helper_basename + '$binop'
 
+    # Create new adj node 'add_adj000' and point it to old dest 'dname'
+    #   If going to OUTPUT (tile 36), put adj in tile 35;
+    #   FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
+    #   dtileno = OUTPUT_ADJACENT_TILENO
+    if dname == 'OUTPUT': adj_tileno = 35
+    else:                 adj_tileno = -1 # Let PNR place adj later
+    create_adj_node(adjname, dname, adj_tileno, DBG)
 
-    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
-        assert False, 'well that didnt work did it'
-    adjnode.show()
-
-
-
-
-
-
-
-
-
-    # 1. in 'sname' dests list, replace old dest 'OUTPUT'
-    # w/ adj node input 0 (op1) as new dest
-    adjname0 = adjname + '.data.in.0' # E.g. 'add_sherpa001$binop.data.in.0'
+    # In 'sname' dests list, replace old dest 'dname' w/new dest 'add_adj000'
+    # using input 0 (op1) as new dest
+    adjname0 = adjname + '.data.in.0' # E.g. 'add_adj001$binop.data.in.0'
     replace_dest(sname, dname, adjname0, DBG)
 
-
-    # 3. call place-and-route recursively using new dname
+    # Route src => adj by calling place-and-route recursively using new dname
+    # This should place adj node if not done yet
+    # (Could be combined in replace_dest(), yes?)
     if not place_and_route(sname, adjname0, indent='# ', DBG=0):
         assert False, 'well that didnt work did it'
 
+
+    # CONTINUE CLEANING HERE
+    # wANT PACKER FMT TO UPDATE AFTER EACH NEW NODE PLACEMENT
+
+
+    # Now route adj => dname; this will place dname if not done yet
+    print "666before pnr"
+    if not place_and_route(adjname, 'OUTPUT', indent='# ', DBG=0):
+        assert False, 'well that didnt work did it'
+
+
+#     packer.allocate(getnode(adjname.tileno), DBG)
+#     print '# order after ???'
+#     packer.FMT.order()
+
+
+    print "666after pnr"
+
+
+
+    # BOOKMARK this is next
 
 
 
@@ -2329,13 +2335,14 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     global REWRITTEN_DNAME
     REWRITTEN_DNAME = adjname0
 
+    # Finally, attach constant '0' to other input of adj node (add0 no-op)
     # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop',
     #    'const0_OUTPUT_ADJACENT' something like
 
-    # Create new node 'const0_sherpa000' and connect to adj node input 1 (op2)
+    # Create new node 'const0_adj000' and connect to adj node input 1 (op2)
     # cname = 'const0_OUTPUT_ADJACENT'
-    cname = 'const0_' + helper_basename # E.g. 'const0_sherpa000'
-    adjname1 = adjname + '.data.in.1'   # E.g. 'add_sherpa001$binop.data.in.1'
+    cname = 'const0_' + helper_basename # E.g. 'const0_adj000'
+    adjname1 = adjname + '.data.in.1'   # E.g. 'add_adj001$binop.data.in.1'
     cnode = create_node_w_dest(cname, adjname1, DBG)
 
 
@@ -2580,11 +2587,11 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
         pwhere(1186)
         print ""
 
-        print "# 3. add all the path ports to the src net"
+        print "# 3. add all the path ports to the src net (2603)"
         snode = getnode(sname)
         print "BEFORE: '%s' net is %s" % (sname, snode.net)
         for p in CT.allports(path):
-            snode.net.append(p)
+            if p not in snode.net: snode.net.append(p)
         print "AFTER: '%s' net is %s" % (sname, snode.net)
         print ''
         
@@ -2948,11 +2955,11 @@ def place_folded_reg_in_input_tile(dname):
 
     # Note input goes to reg-mul_307 AND mul_312 !
 
-    print "# 3. add all the path ports to the src net"
+    print "# 3. add all the path ports to the src net (2971)"
     snode = getnode(sname)
     print "BEFORE: '%s' net is %s" % (sname, snode.net)
     for p in CT.allports(path):
-        snode.net.append(p)
+        if p not in snode.net: snode.net.append(p)
     print "AFTER: '%s' net is %s" % (sname, snode.net)
     print ''
 

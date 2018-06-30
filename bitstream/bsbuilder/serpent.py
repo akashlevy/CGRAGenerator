@@ -1940,7 +1940,7 @@ def is_regsolo(regname):
 
 def already_placed(sname, dname, indent='# ', DBG=0):
     was_placed = is_placed(dname)
-    was_routed = is_routed(sname,dname)
+    was_routed = is_routed(sname,dname,indent)
 
     # Skip nodes that have already been placed and routed
     # EXCEPT INPUT NODE destinations
@@ -2011,9 +2011,6 @@ def process_nodes(sname, indent='# ', DBG=1):
     already_done = []
     if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_schildren)
     for dname in sorted_schildren:
-        was_placed = is_placed(dname)
-        was_routed = is_routed(sname,dname)
-
         # Skip nodes that have already been placed and routed
         # EXCEPT INPUT NODE destinations
 
@@ -2023,21 +2020,15 @@ def process_nodes(sname, indent='# ', DBG=1):
             continue
 
         # FIXME this is just awful ain't it
+        # Preserve state for before/after PNR call
         global REWRITTEN_DNAME
         REWRITTEN_DNAME = False
+        was_placed = is_placed(dname)
+        was_routed = is_routed(sname,dname)
+
         # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
         rval = place_and_route(sname,dname,indent+' ')
         assert rval
-
-        # FIXME should move this into pnr_debug_info()
-        # Note pnr_debug_info (below) would fail if don't update dname!")
-        if REWRITTEN_DNAME: 
-            # E.g. new intermediate node 'add_OUTPUT_ADJACENT$binop.data.in.0'
-            DBG=9
-            if DBG>2: print("# dname was rewritten, was '%s', now '%s'" % (dname, REWRITTEN_DNAME))
-            # if DBG>2: print("# b/c dname changed during place_and_route()")
-            dname = REWRITTEN_DNAME
-            # continue
 
         # Note uses was_placed, was_routed info from BEFORE place_and_route()
         # FIXME maybe try w/o just see what happens...?
@@ -2060,11 +2051,22 @@ def process_nodes(sname, indent='# ', DBG=1):
 
 
 def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
+        return
+
+        # FIXME should move this into pnr_debug_info()
+        # Note pnr_debug_info (below) would fail if don't update dname!")
+        global REWRITTEN_DNAME
+        if REWRITTEN_DNAME: 
+            # E.g. new intermediate node 'add_OUTPUT_ADJACENT$binop.data.in.0'
+            DBG=9
+            if DBG>2: print("# dname was rewritten, was '%s', now '%s'" % (dname, REWRITTEN_DNAME))
+            # if DBG>2: print("# b/c dname changed during place_and_route()")
+            dname = REWRITTEN_DNAME
+            # continue
 
         dnode = getnode(dname)
         if was_placed:
-            print indent+"  ('%s' was already placed in tile %d)" \
-                  % (dname, dnode.tileno)
+            print indent+"  ('%s' was already placed in tile %d)" % (dname, dnode.tileno)
         else:
             # was not placed before but is placed now
             assert is_placed(dname)
@@ -2078,7 +2080,7 @@ def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
 
         if was_routed:
             # was not placed before but is placed now
-            assert is_routed(sname,dname)
+            assert is_routed(sname,dname,indent)
             print indent+"  ('%s' was already routed)" % dname
         else:
             # (tileno,resource) = (getnode(dname).tileno, getnode(dname).input0)
@@ -2129,7 +2131,7 @@ def place_dname_in_input_node(dname, indent, DBG=0):
     else: return False
 
 
-def place_dest(sname, dname, DBG=0):
+def place_dest(sname, dname, indent, DBG=0):
     '''
     # Get nearest tile compatible with target node 'dname'
     # "Nearest" means closest to input tile (NW corner)
@@ -2148,7 +2150,7 @@ def place_dest(sname, dname, DBG=0):
 
     else:
         dtileno = getnode(dname).tileno
-        print "Actually it does have a home already, in tile %d" % dtileno
+        print "Actually '%s' does have a home already, in tile %d" % (dname, dtileno)
         if dtileno in packer.EXCEPTIONS:
             print "exceptions = ", packer.EXCEPTIONS
             pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
@@ -2398,19 +2400,26 @@ def try_again(sname, dname, dtileno, DBG=0):
 
 def place_and_route(sname,dname,indent='# ',DBG=0):
     # DBG=9
-    if is_routed(sname, dname, indent, DBG): return True
     if DBG: print indent+"PNR '%s' -> '%s'" % (sname,dname)
+    if is_routed(sname, dname, indent, DBG):
+        print(indent+"  ('%s' -> '%s' route already exists" % (sname, dname))
+        return True
 
     # Source should already be placed, yes?
     if not is_placed(sname):
         pwhere(1709, "ERROR 1709 '%s' has not been placed yet?" % sname)
-        assert is_placed(sname)
+        assert False
 
     if (sname == "INPUT"):
         # If src is INPUT node and dest is an unallocated PE,
         # or if src is INPUT node and dest is a register,
         # we'll put dest in same tile with INPUT.
-        if place_dname_in_input_node(dname, indent, DBG): return True
+        if place_dname_in_input_node(dname, indent, DBG):
+            print(indent+" Placed '%s' in INPUT node (2420)" % dname)
+            print indent+" Routed %s" % getnode(sname).route[dname]
+            print indent+" Now node['%s'].net = %s" % (sname,getnode(sname).net)
+            print ""
+            return True
 
 
     # BOOKMARK cleaning place_and_route()
@@ -2426,7 +2435,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         # Get nearest tile compatible with target node 'dname'
         # "Nearest" means closest to input tile (NW corner)
         # dtileno = get_nearest_tile(sname, dname)
-        dtileno = place_dest(sname, dname, DBG)
+        dtileno = place_dest(sname, dname, indent, DBG)
 
         # If node is pe or mem, can try multiple tracks
 
@@ -2645,7 +2654,6 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
         print 'Wrong, sure it can! alu with op1 routed but not yet op2, yes?'
         print 'Off to new territory...'
 
-
 #         if DBG: print indent+"No route '%s -> %s'" % (sname,dname)
 #         if DBG: print indent+"For now just mark it finished"
 #         bogus_route = "%s -> %s BOGOSITY" % (sname,dname)
@@ -2653,6 +2661,22 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 #         finish_route(sname,dname)
 
     # return (tileno,resource)
+
+    # FIXME Whaaaat? This ain't right... :(
+    # (tileno,resource) = (getnode(dname).tileno, getnode(dname).input0)
+    # print indent+"  Placed '%s' at tile %d port '%s'" % (dname,tileno,resource)
+    # print indent+"  Routed '%s -> %s'" % (sname,dname)
+
+#             print indent+"  1679 Placed '%s' in tile %d at location '%s'" \
+#                   % (dname, t, loc)
+
+
+    # I think loc is last thing added to sname net...?
+    print indent+" Placed '%s' in tile %d at location '%s' (2676)" \
+          % (dname, getnode(dname).tileno, getnode(sname).net[-1])
+    print indent+" Routed %s" % getnode(sname).route[dname]
+    print indent+" Now node['%s'].net = %s" % (sname,getnode(sname).net)
+    print ""
     return True
 
 # END def place_and_route()
@@ -3737,6 +3761,7 @@ def is_routed(sname, dname, indent="# ", DBG=0):
     DBG=1
     if getnode(sname).is_routed(dname): return True
     else:
+        # if DBG: print indent+"huh '%s' -> '%s' already been routed" % (sname,dname)
         if DBG: print indent+"huh already been done"
         return False
 

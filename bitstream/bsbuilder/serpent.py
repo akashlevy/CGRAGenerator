@@ -2386,6 +2386,59 @@ def try_again(sname, dname, dtileno, DBG=0):
     return rval
 
 
+def find_trackrange(sname, dname, DBG=0):
+        # If node is pe or mem, can try multiple tracks
+
+
+        # FIXME if sname is already placed the track may be pre-ordained here already
+        # E.g. in example below "output='T122_in_s2t0'"
+        # so should only look at track 0 right?
+        # 
+        # node='lb_p3_cim_stencil_update_stream$lb1d_2$reg_1'
+        #   type='regsolo'
+        #   tileno= 121
+        #   input0='T121_out_s0t0'
+        #   input1='False'
+        #   bit0='False'
+        #   ...
+
+        # If dest input0 is a wire, assume that means reg w/ constrained track (see above)
+
+        try: parse16 = re.search('s[0-9]t([0-9])$', getnode(dname).input0)
+        except: parse16 = False
+
+        try: parse1  = re.search('s[0-9]t([0-9])b$', getnode(dname).bit0)
+        except: parse1 = False
+
+        if parse16:
+            t = int(parse16.group(1))
+            pwhere(2446, "placed regsolo? looks like we're stuck w/track %d" % t)
+            trackrange = [t]
+
+        elif parse1:
+            t = int(parse1.group(1))
+            pwhere(2452, "placed 1bit regsolo? looks like we're stuck w/track %d" % t)
+            trackrange = [t]
+
+        # (For now at least) output must be track 0, note I think OUTPUT is a mem tile
+        elif dname == "OUTPUT":      trackrange = [0]
+
+        # FIXME i think onebit is a pe tile and could use any of the five tracks!?
+        elif dname == "OUTPUT_1bit": trackrange = [0]
+
+        elif is_mem(sname): trackrange = range(5)
+        elif is_pe(sname):  trackrange = range(5)
+
+        # This breaks it
+        #elif is_reg(sname):  trackrange = range(5)
+
+        else:
+            assert "WARNING unknown tile this is probably bad..."
+            trackrange = [0]
+
+        return trackrange
+
+
 def place_and_route(sname,dname,indent='# ',DBG=0):
     # DBG=9
     if DBG: print indent+"PNR '%s' -> '%s'" % (sname,dname)
@@ -2409,9 +2462,6 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             print ""
             return True
 
-    # BOOKMARK cleaning place_and_route()
-
-
     # Does destination have a home?  YES, see above
     if True:
         #FIXME wtf with the 'if true' jazz
@@ -2424,49 +2474,10 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         # dtileno = get_nearest_tile(sname, dname)
         dtileno = place_dest(sname, dname, indent, DBG)
 
-        # If node is pe or mem, can try multiple tracks
+        # Which track(s) should we search for a route?
+        trackrange = find_trackrange(sname, dname, DBG)
 
-
-        # FIXME if sname is already placed the track may be pre-ordained here already
-        # E.g. in example below "output='T122_in_s2t0'"
-        # so should only look at track 0 right?
-        # 
-        # node='lb_p3_cim_stencil_update_stream$lb1d_2$reg_1'
-        #   type='regsolo'
-        #   ----
-        #   tileno= 121
-        #   input0='T121_out_s0t0'
-        #   input1='False'
-        #   bit0='False'
-        #   bit1='False'
-        #   bit2='False'
-        #   output='T122_in_s2t0'
-        #   ----
-        #   placed= True
-        #   dests=['lb_p3_cim_stencil_update_stream$lb1d_2$reg_2', 'smax_776_777_778$cgramax.data.in.1']
-        #   route ['lb_p3_cim_stencil_update_stream$lb1d_2$reg_2'] = ['T122_in_s2t0 -> T122_out_s3t0', 'T107_in_s1t0 -> T107_out_s2t0', 'T107_out_s2t0 -> T107_op1']
-        #   route ['smax_776_777_778$cgramax.data.in.1']           = []
-        #   net= ['T122_in_s2t0', 'T122_in_s2t0', 'T122_out_s3t0', 'T107_in_s1t0', 'T107_out_s2t0', 'T107_out_s2t0', 'T107_op1']
-
-
-
-
-        # (For now at least) output must be track 0
-        if   dname == "OUTPUT":      trackrange = [0]
-
-        # FIXME i think onebit is a mem tile and could use any of the five tracks!?
-        elif dname == "OUTPUT_1bit": trackrange = [0]
-
-        elif is_mem(sname): trackrange = range(5)
-        elif is_pe(sname):  trackrange = range(5)
-
-        # This breaks it
-        #elif is_reg(sname):  trackrange = range(5)
-
-        else:
-            assert "WARNING unknown tile this is probably bad..."
-            trackrange = [0]
-
+        # BOOKMARK cleaning place_and_route()
 
         # FIXME this needs to be cleaned up
         DBG=9

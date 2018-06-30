@@ -2213,7 +2213,8 @@ def create_node_w_dest(sname, dname, DBG=0):
     return snode
 
 
-def create_adj_node(adjname, dname, adj_tileno, DBG=0):
+HELPERNUM = 0
+def create_adj_node(dname, helper_basename, DBG=0):
     '''
     Need an intermediate (adj) node "adjname"
     between src and dst nodes (sname and dname).
@@ -2236,59 +2237,79 @@ def create_adj_node(adjname, dname, adj_tileno, DBG=0):
     #   route ['OUTPUT'] = [could pre-populate]
     #   net= ['T35_pe_out']
 
-    if DBG:
-        if adj_tileno == -1:
-            print('# Creating unplaced intermediate node "%s"' % adjname)
-        else:
-            print('# Creating intermediate node "%s" in tile T%d' % (adjname,adj_tileno))
-            packer.allocate(adj_tileno, DBG)
-            print("# order after placing intermediate node '%s'" % adjname)
-            packer.FMT.order()
-
-    # E.g. old_dname = 'OUTPUT'
-    old_dname = dname
-
-    dnode = getnode(old_dname)
-    if DBG>2: dnode.show()
-    assert is_placed(old_dname)
-    # old_dest_tileno = dnode.tileno
-
+    # New intermediate (adjunct) node e.g. 'add_adj001$binop'
+    adjname = 'add_' + helper_basename + '$binop'
     addnode(adjname)
     adjnode = getnode(adjname)
-    adjnode.tileno = adj_tileno
-    adjnode.output = 'T%d_pe_out' % adj_tileno # E.g. 'T35_pe_out'
-    adjnode.placed = True
-    adjnode.dests = [old_dname]
-    adjnode.route[old_dname] = []
+    adjnode.dests = [dname]
+    adjnode.route[dname] = []
 
     #Maybe this happens later, by its own self
     #adjnode.net = [adjnode.output]
 
-    if DBG>2: adjnode.show()
-
-
-HELPERNUM = 0
-def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
-    DBG=9
-    if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
-
-    # Ultimate destination
-    assert dname == 'OUTPUT'
-    if 'OUTPUT' in nodes: getnode('OUTPUT').show()
-    # New intermediate (adjunct) node e.g. 'add_adj001$binop'
-    # adjname = 'add_OUTPUT_ADJACENT$binop'
-    global HELPERNUM
-    helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
-    adjname = 'add_' + helper_basename + '$binop'
-
-    ########################################################################
-    # Create new adj node 'add_adj000' and point it to old dest 'dname'
     #   If going to OUTPUT (tile 36), put adj in tile 35;
     #   FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
     #   dtileno = OUTPUT_ADJACENT_TILENO
     if dname == 'OUTPUT': adj_tileno = 35
     else:                 adj_tileno = -1 # Let PNR place adj later
-    create_adj_node(adjname, dname, adj_tileno, DBG)
+    adjnode.tileno = adj_tileno
+
+    if adj_tileno == -1:
+        if DBG: print('# Creating unplaced intermediate node "%s"' % adjname)
+    else:
+        packer.allocate(adj_tileno, DBG)
+        if DBG: print('# Creating intermediate node "%s" in tile T%d' % (adjname,adj_tileno))
+        if DBG: print("# order after placing intermediate node '%s'" % adjname)
+        packer.FMT.order()
+        adjnode.output = 'T%d_pe_out' % adj_tileno # E.g. 'T35_pe_out'
+        adjnode.placed = True
+
+    #Maybe this happens later, by its own self
+    #adjnode.net = [adjnode.output]
+
+    if DBG>2: adjnode.show()
+    return adjname
+
+
+def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
+    DBG=9
+    if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
+
+    # May want to take this out, dunno if we need it at all...
+    if dname == 'OUTPUT': getnode('OUTPUT').show()
+
+
+
+    if dname != 'OUTPUT':
+        pwhere(2277, 'WARNING 666a this may only work for dname == OUTPUT')
+
+
+
+#     if (dname == "OUTPUT_1bit"):
+#         print ""
+#         print "Cannot find our way to OUTPUT, looks like we're screwed :("
+#         assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
+# 
+#     elif (dname != "OUTPUT"):
+#         assert False, 'oops only works w/OUTPUT node (for now)'
+#         
+
+
+#     # Ultimate destination
+#     assert dname == 'OUTPUT'
+#     if 'OUTPUT' in nodes: getnode('OUTPUT').show()
+
+    # New basename for helper nodes e.g. 'adj000', 'adj001', etc.
+    global HELPERNUM
+    helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
+
+    ########################################################################
+    # Create new adj node 'add_adj000' and point it to old dest 'dname'
+    # 
+    # create_adj_node(adjname, dname, adj_tileno, DBG)
+    adjname = create_adj_node(dname, helper_basename, DBG)
+
+    # BOOKMARK non-OUTPUT-specific to HERE maybe
 
     ########################################################################
     # In 'sname' dests list, replace old dest 'dname' w/new dest 'add_adj000'
@@ -2355,15 +2376,22 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
 
 def try_again(sname, dname, dtileno, DBG=0):
     '''Try sname->dname again, using some dest OTHER THAN dtileno'''
+    DBG=9
+    if DBG: pwhere(2359, '# Try again using some dest OTHER THAN tile %s'% dtileno)
 
-    if (dname == "OUTPUT"):
+    if is_placed(dname):
+        assert dname == 'OUTPUT'
         # Okay we're gonna try and fix it.
         return try_again_OUTPUT(sname, dname, dtileno, DBG)
 
-    elif (dname == "OUTPUT_1bit"):
-        print ""
-        print "Cannot find our way to OUTPUT, looks like we're screwed :("
-        assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
+#     if (dname == "OUTPUT"):
+#         # Okay we're gonna try and fix it.
+#         return try_again_OUTPUT(sname, dname, dtileno, DBG)
+# 
+#     elif (dname == "OUTPUT_1bit"):
+#         print ""
+#         print "Cannot find our way to OUTPUT, looks like we're screwed :("
+#         assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
 
 
     assert not is_placed(dname)

@@ -2047,7 +2047,11 @@ def process_nodes(sname, indent='# ', DBG=1):
 
         # basename => search for 'bitor_154_bitPE' not 'bitor_154_bitPE.in1'
         dname = base_nodename(dname)
-        process_nodes(dname, indent+'    ')
+
+        # When indent gets too long start over w/ '##', '###', '####' etc
+        new_indent = indent+'    '
+        if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
+        process_nodes(dname, new_indent)
 
 
 def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
@@ -2150,7 +2154,7 @@ def place_dest(sname, dname, indent, DBG=0):
 
     else:
         dtileno = getnode(dname).tileno
-        print "Actually '%s' does have a home already, in tile %d" % (dname, dtileno)
+        print "Actually '%s' has a home already, in tile %d" % (dname, dtileno)
         if dtileno in packer.EXCEPTIONS:
             print "exceptions = ", packer.EXCEPTIONS
             pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)

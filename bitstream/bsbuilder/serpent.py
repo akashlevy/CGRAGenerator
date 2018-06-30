@@ -2141,37 +2141,21 @@ def place_dest(sname, dname, indent, DBG=0):
     # "Nearest" means closest to input tile (NW corner)
     # dtileno = get_nearest_tile(sname, dname)
     '''
-    if False: assert False
-
-#     if dname == "OUTPUT":
-#         dtileno = OUTPUT_TILENO
-# 
-#     elif dname == "OUTPUT_1bit":
-#         dtileno = OUTPUT_TILENO_onebit
-
-    elif not is_placed(dname):
-        dtileno = get_nearest_tile(sname, dname)
-
-    else:
+    if is_placed(dname):
         dtileno = getnode(dname).tileno
         print "Actually '%s' has a home already, in tile %d" % (dname, dtileno)
         if dtileno in packer.EXCEPTIONS:
             print "exceptions = ", packer.EXCEPTIONS
             pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
             assert False, "Out of options"
+    else:
+        dtileno = get_nearest_tile(sname, dname)
 
-    # FIXME will need an 'undo' for order[] list if dtileno ends up not used
-
-    # print 'dtileno/nearest is %d' % dtileno
     if DBG:
-        if dname == "OUTPUT":
-            pwhere(1567, 'Connecting to OUTPUT tile %d\n' % dtileno)
-
-        elif dname == "OUTPUT_1bit":
-            pwhere(1657, 'Connecting to one-bit OUTPUT tile %d\n' % dtileno)
-
-        else:
-            pwhere(2093, 'Nearest available tile is %d\n' % dtileno)
+        if dname == "OUTPUT_1bit": msg = 'Connecting to one-bit OUTPUT tile %d\n' % dtileno
+        elif dname == "OUTPUT":    msg = 'Connecting to OUTPUT tile %d\n' % dtileno
+        else:                      msg = 'Nearest available tile is %d\n' % dtileno
+        pwhere(2161, msg)
 
     return dtileno
 
@@ -2425,7 +2409,6 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             print ""
             return True
 
-
     # BOOKMARK cleaning place_and_route()
 
 
@@ -2444,8 +2427,9 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         # If node is pe or mem, can try multiple tracks
 
 
-        # FIXME if sname is already placed the track may be pre-ordained here alread
-        # E.g. in example below "output='T122_in_s2t0'" so should only look at track 0 right?
+        # FIXME if sname is already placed the track may be pre-ordained here already
+        # E.g. in example below "output='T122_in_s2t0'"
+        # so should only look at track 0 right?
         # 
         # node='lb_p3_cim_stencil_update_stream$lb1d_2$reg_1'
         #   type='regsolo'

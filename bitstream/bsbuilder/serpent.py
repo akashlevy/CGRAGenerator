@@ -1594,10 +1594,40 @@ def is_lut(nodename):
         False)
 
 
+def find_regsolo_dstports(name, tile, track, DBG=0):
+    DBG=1
+    if DBG: pwhere(1684, "# '%s' is a 'regsolo' register I guess?" % name)
+    ntracks = 5 # FIXME should be global i guess...?
+    # so return names of all outports in the tile
+    # as possible dest ports
+    p = []
+
+    if is_mem_tile(tile): nsides = 8 # Yes reg can be in a mem tile, why not
+    else: nsides = 4
+
+    if track == -1: trackrange = range(ntracks)
+    else:           trackrange = [track]
+
+    if DBG: print( "- make sure each outport goes somewhere valid!")
+    for track in trackrange:
+      for side in range(nsides):
+        outport = "T%d_out_s%dt%d" % (tile,side,track)
+        n = CT.find_neighbor(outport, DBG=0)
+
+        # assert n[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
+        if n[0:3] != 'T0_':
+          if DBG: print("-- Hey '%s' you're okay you connect to '%s'" % (outport, n))
+          p.append(outport)
+
+        elif DBG: print("** Hmm '%s' neighbor '%s' not exist maybe **" % (outport, n))
+
+    if DBG: print ""
+    return p
+
 
 # dest node 'mux_793_794_795$mux.bit.in.0'
 # dest port 'T118_op1'
-def dstports(name, tile, DBG=0):
+def dstports(name, tile, track, DBG=0):
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
@@ -1609,11 +1639,13 @@ def dstports(name, tile, DBG=0):
 
         assert port in ['op1', 'op2', 'op3', 'mem_in'], 'Found port "%s"' % port
         return 'T%d_%s' % (tile,port)
-    # DBG=9
+    DBG=1
+    ntracks = 5
+    if DBG: pwhere(1613, "okay here we are in dstports()")
     if   is_mem(name):  p = [T('mem_in')]
     elif is_pe(name):
         if is_commutative(name):
-            if DBG>1: print "found pe; it's commutative\n"
+            if DBG: print "found pe; it's commutative\n"
             p = []
             # FIXME note currently no mechanism for commutative bit ops e.g. AND, OR
             if getnode(name).input0 == False: p.append(T('op1'))
@@ -1621,11 +1653,11 @@ def dstports(name, tile, DBG=0):
             # e.g. p = [T('op1'),T('op2')]
 
         else:
-            if DBG>1: print "found pe; it's NOT commutative\n"
+            if DBG: print "found pe; it's NOT commutative\n"
             p = [find_outport(tile, name)]
 
     elif is_regop(name):
-        if DBG>1: print "found a reg_op"
+        if DBG: print "found a reg_op"
         p = [T(getnode(name).input0)]
 
     elif name == 'OUTPUT_1bit':
@@ -1634,28 +1666,31 @@ def dstports(name, tile, DBG=0):
         if DBG: pwhere(1395, "One-bit output can only go out on side %s (bottom)" % out_side)
 
         p = []
-        ntracks = 5
         for track in range(ntracks):
             outport = "T%d_out_s%dt%db" % (tile, out_side, track)
             p.append(outport)
-    else:
-        # 'name' is a register, I guess;
-        # so return names of all outports in the tile
-        # as possible dest ports
+
+    elif name == 'OUTPUT':
+        # Output on track 0 ONLY
+        # FIXME yeah this should be more nuanced than that :(
         p = []
         if is_mem_tile(tile): nsides = 8
         else:                 nsides = 4
         for side in range(nsides):
             outport = "T%d_out_s%dt0" % (tile,side)
             p.append(outport)
+    else:
+        assert is_regsolo(name)
+        p = find_regsolo_dstports(name, tile, track, DBG)
 
     dplist = sorted(p)
     # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']
     if DBG: print "   DP In-ports avail to dest node '%s': %s" % (name,dplist)
-    assert not (dplist == [False])
 
     # if DBG: print 'found destination ports', p
+    assert not (dplist == [False])
     return dplist
+
 
 # Return pe input that contains the register
 # e.g. regpe_input('reg_2_3') = 'op1' (unplaced regpe) or
@@ -1664,10 +1699,10 @@ def regpe_input(name): return getnode(name).input0
 
 
 def test_dstports():
-    dstports('mem_1', 8)
-    dstports('add_1', 1)
-    dstports('mul_1', 1)
-    dstports('reg_1', 1)
+    dstports('mem_1', 8, -1)
+    dstports('add_1', 1, -1)
+    dstports('mul_1', 1, -1)
+    dstports('reg_1', 1, -1)
 # test_dstports()
 
 
@@ -2399,7 +2434,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         for track in trackrange:
             print "TRYING TRACK", track, "OF", trackrange
             path = find_best_path(sname, dname, dtileno, track, DBG=1)
-            print "TRACK", track, "no good"
+            if not path: print "TRACK", track, "no good"
             if path:
                 if DBG>2: print "HEY FOUND PATH", path
                 break
@@ -2473,6 +2508,10 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
             REGISTERS.append(d_in)
             if DBG>2: print 'added reg to REGISTERS'
             if DBG>2: print 'now registers is', REGISTERS
+
+            # If neighbor tile is zero we did something wrong!
+            assert d_out[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
+
 
         elif is_regop(dname):
             d_out = place_regop_op(dname, dtileno, d_in, DBG)
@@ -3067,7 +3106,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         # FIXME this is bad
         global ENDPOINT_MUST_BE_FREE
         ENDPOINT_MUST_BE_FREE = True
-        p = connect_endpoint(snode.output, dname, dtileno, DBG=DBG)
+        p = connect_endpoint(snode.output, dname, dtileno, track, DBG=DBG)
         ENDPOINT_MUST_BE_FREE = False
         return p
 
@@ -3210,7 +3249,8 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
     # cend = connect_endpoint(snode, path[-1], dname, dtileno, DBG)
 
     dnode = nodetile(dtileno)
-    cend = connect_endpoint(path[-1], dname, dtileno, DBG)
+    anytrack = -1 # Any track
+    cend = connect_endpoint(path[-1], dname, dtileno, anytrack, DBG)
 
     if not cend:
         pwhere(2169, "  Cannot connect src '%s' to endpoint '%s'?" % (sname, path[0]))
@@ -3260,14 +3300,15 @@ def output_endpoint_hack(dname, path, DBG=0):
 
 
 def ports_available(snode, path, DBG=0):
+    # DBG=9
     stileno = snode.tileno
     sname   = snode.name
-
     if DBG>2: print "# is entire path available to src net?"
     path_ports = CT.allports(path)
     if DBG>2: print "#   entire path: ", path_ports
 
     for p in path_ports:
+        if DBG>2: print("checking path port '%s'" % p)
         if not snode.is_avail(p,DBG):
             if DBG: print "NO path not available"
             return False
@@ -3485,13 +3526,13 @@ def find_outport(tileno, nodename, DBG=0):
 
 
 
-def connect_endpoint(endpoint, dname, dtileno, DBG):
+def connect_endpoint(endpoint, dname, dtileno, track, DBG):
 
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
     # for regpe it's op1 or op2
-    dplist = dstports(dname, dtileno, DBG=1)
+    dplist = dstports(dname, dtileno, track, DBG=1)
 
     if DBG:
         # In-ports avail to dest node 'add_305_313_314_PE.in1': ['T22_op1', 'T22_op2']

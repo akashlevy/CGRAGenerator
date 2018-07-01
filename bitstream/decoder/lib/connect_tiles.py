@@ -496,7 +496,7 @@ def parse_resource(r):
 # lifted from bsview.py
 def find_neighbor(w, DBG=9):
     '''E.g. find_neighbor_wire("T4_in_s1t1") => ("T5_out_s3t1")'''
-
+    DBG=0
     # FIXME this can all be cleaned up...
 
     if (0):
@@ -521,6 +521,7 @@ def find_neighbor(w, DBG=9):
     else:                  in_or_out="out"
 
     (r,c) = cgra_info.tileno2rc(tileno)
+    if DBG: print("FN: I am '%s' at (r,c) = (%d,%d)" % (w, r,c))
 
     # Adjust for wire in bottom of a memtile
     if (top_or_bottom == '1'): r = r + 1
@@ -540,10 +541,10 @@ def find_neighbor(w, DBG=9):
     if (c < 0): return (False,False)
 
     #   print (r,c,side)
-
+    if DBG: print("FN: My neighbor is (r,c) = (%d,%d)" % (r,c))
     nbr_tileno = cgra_info.rc2tileno(r,c)
     # Note should return 'False' if (r,c) invalid
-    if DBG: print "Found nbr tile number '%s'" % str(nbr_tileno)
+    if DBG: print "Found neighbor tile number '%s'" % str(nbr_tileno)
 
     top_or_bottom = ''
     if (cgra_info.tiletype(nbr_tileno) == "memory_tile"):

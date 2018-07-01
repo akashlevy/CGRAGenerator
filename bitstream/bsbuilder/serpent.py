@@ -2240,58 +2240,26 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     # Attach constant 0 to its 'op2' input (input 1)
     adjname = create_adj_node(dname, DBG)
 
-
-
-    # BOOKMARK non-OUTPUT-specific to HERE maybe
-
-
-
     ########################################################################
     # In 'sname' dests list, replace old dest 'dname' w/new dest 'add_adj000'
     # using input 0 (op1) as new dest
     adjname0 = adjname + '.data.in.0' # E.g. 'add_adj001$binop.data.in.0'
     replace_dest(sname, dname, adjname0, DBG)
 
-    was_placed = getnode(adjname).is_placed
     # Route src => adj by calling place-and-route recursively using new dname
     # This should place adj node if not done yet
     # (Could be combined in replace_dest(), yes?)
     if not place_and_route(sname, adjname0, indent='# ', DBG=0):
         assert False, 'well that didnt work did it'
 
-    if not was_placed:
-        packer.allocate(getnode(adjname).tileno, DBG)
-        print("# order after placing '%s'" % adjname)
-        packer.FMT.order()
-
-
     ########################################################################
     # Now route adj => dname; this will place dname if not done yet
-    was_placed = getnode(dname).is_placed
-
-    assert dname == 'OUTPUT' # for now
     if not place_and_route(adjname, dname, indent='# ', DBG=0):
         assert False, 'well that didnt work did it'
 
-    if (dname == 'OUTPUT') or (not was_placed):
-        packer.allocate(getnode(dname).tileno, DBG)
-        print("# order after placing '%s'" % dname)
-        packer.FMT.order()
-
-
-    # CONTINUE CLEANING HERE
-    # wANT PACKER FMT TO UPDATE AFTER EACH NEW NODE PLACEMENT
-    # BOOKMARK this is next
-
-
-
-    # BOOKMARK CONTINUE CLEANING HERE
-    # Consider generic build_node() for this and create_node... above
-
     print 'HOORAY completed OUTPUT hack'
+    print 'wait no HOORAY completed non-OUTPUT-specific adj-node hack'
     return True
-
-
 
 
 def try_again(sname, dname, dtileno, DBG=0):
@@ -2300,14 +2268,13 @@ def try_again(sname, dname, dtileno, DBG=0):
     if DBG: pwhere(2359, '# Try again using some dest OTHER THAN tile %s'% dtileno)
 
     if is_placed(dname):
-        assert dname == 'OUTPUT'
+        # Note 'is_placed' is not tentative; it only changes when route finalized
+        pwhere(2273, 'oops cannot change dest, must insert intermediate node')
         # Okay we're gonna try and fix it.
         return try_again_OUTPUT(sname, dname, dtileno, DBG)
 
-#     if (dname == "OUTPUT"):
-#         # Okay we're gonna try and fix it.
-#         return try_again_OUTPUT(sname, dname, dtileno, DBG)
-# 
+    # BOOKMARK CONTINUE CLEANING HERE maybe
+
 #     elif (dname == "OUTPUT_1bit"):
 #         print ""
 #         print "Cannot find our way to OUTPUT, looks like we're screwed :("
@@ -2624,6 +2591,14 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
     print indent+" Routed %s" % getnode(sname).route[dname]
     print indent+" Now node['%s'].net = %s" % (sname,getnode(sname).net)
     print ""
+
+    # FIXME OUTPUT placement is kind of a WART
+    if (dname == 'OUTPUT'):
+        pwhere(2639, 'this is the wrong place for this innit')
+        packer.allocate(getnode(dname).tileno, DBG)
+        print("# order after placing '%s'" % dname)
+        packer.FMT.order()
+
     return True
 
 # END def place_and_route()

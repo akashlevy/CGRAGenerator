@@ -2019,20 +2019,9 @@ def process_nodes(sname, indent='# ', DBG=1):
             already_done.append(dname)
             continue
 
-        # FIXME this is just awful ain't it
-        # Preserve state for before/after PNR call
-        global REWRITTEN_DNAME
-        REWRITTEN_DNAME = False
-        was_placed = is_placed(dname)
-        was_routed = is_routed(sname,dname)
-
         # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
         rval = place_and_route(sname,dname,indent+' ')
         assert rval
-
-        # Note uses was_placed, was_routed info from BEFORE place_and_route()
-        # FIXME maybe try w/o just see what happens...?
-        if DBG: pnr_debug_info(was_placed,was_routed,indent,sname,dname)
 
         # Hmph! Hmph! Another special case!
         # If placed tile is a mem tile, we probably need to build an associated wen_lut
@@ -2052,55 +2041,6 @@ def process_nodes(sname, indent='# ', DBG=1):
         new_indent = indent+'    '
         if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
         process_nodes(dname, new_indent)
-
-
-def pnr_debug_info(was_placed, was_routed, indent, sname, dname):
-        return
-
-        # FIXME should move this into pnr_debug_info()
-        # Note pnr_debug_info (below) would fail if don't update dname!")
-        global REWRITTEN_DNAME
-        if REWRITTEN_DNAME: 
-            # E.g. new intermediate node 'add_OUTPUT_ADJACENT$binop.data.in.0'
-            DBG=9
-            if DBG>2: print("# dname was rewritten, was '%s', now '%s'" % (dname, REWRITTEN_DNAME))
-            # if DBG>2: print("# b/c dname changed during place_and_route()")
-            dname = REWRITTEN_DNAME
-            # continue
-
-        dnode = getnode(dname)
-        if was_placed:
-            print indent+"  ('%s' was already placed in tile %d)" % (dname, dnode.tileno)
-        else:
-            # was not placed before but is placed now
-            assert is_placed(dname)
-
-            # FIXME is it not possible that e.g. bit0 is placed but not bit1??
-            if is_lut(dname): (t,loc) = (dnode.tileno,dnode.bit0)
-            else:             (t,loc) = (dnode.tileno,dnode.input0)
-
-            print indent+"  1679 Placed '%s' in tile %d at location '%s'" \
-                  % (dname, t, loc)
-
-        if was_routed:
-            # was not placed before but is placed now
-            assert is_routed(sname,dname,indent)
-            print indent+"  ('%s' was already routed)" % dname
-        else:
-            # (tileno,resource) = (getnode(dname).tileno, getnode(dname).input0)
-            # print indent+"  Placed '%s' at tile %d port '%s'" % (dname,tileno,resource)
-            # print indent+"  Routed '%s -> %s'" % (sname,dname)
-            print indent+"  Routed %s" % getnode(sname).route[dname]
-            print indent+"  Now node['%s'].net = %s" % (sname,getnode(sname).net)
-                                               
-        print ""
-        
-        # dchildren = sorted(getnode(dname).dests)
-        # if dchildren == []:
-        #     print indent+"  Dest '%s' has no children" % dname
-        # else:
-        #     print indent+"  Processed dest '%s'; now process children %s" % \
-        #           (dname, dchildren)
 
 
 def place_dname_in_input_node(dname, indent, DBG=0):
@@ -2295,18 +2235,6 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     if dname != 'OUTPUT':
         pwhere(2277, 'WARNING 666a this may only work for dname == OUTPUT')
 
-#     if (dname == "OUTPUT_1bit"):
-#         print ""
-#         print "Cannot find our way to OUTPUT, looks like we're screwed :("
-#         assert False, "Cannot find our way to OUTPUT, looks like we're screwed :("
-# 
-#     elif (dname != "OUTPUT"):
-#         assert False, 'oops only works w/OUTPUT node (for now)'
-#         
-#     # Ultimate destination
-#     assert dname == 'OUTPUT'
-#     if 'OUTPUT' in nodes: getnode('OUTPUT').show()
-
     ########################################################################
     # Create new adj node 'add_adj000' and point it to old dest 'dname'
     # Attach constant 0 to its 'op2' input (input 1)
@@ -2356,10 +2284,6 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     # BOOKMARK this is next
 
 
-
-    # Somebody later needs this (just awful)
-    global REWRITTEN_DNAME
-    REWRITTEN_DNAME = adjname0
 
     # BOOKMARK CONTINUE CLEANING HERE
     # Consider generic build_node() for this and create_node... above

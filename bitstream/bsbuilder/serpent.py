@@ -2201,6 +2201,7 @@ def create_node_w_dest(sname, dname, DBG=0):
     #   dests=['add_OUTPUT_ADJACENT$binop.data.in.1']
     #   route ['add_OUTPUT_ADJACENT$binop.data.in.1'] = []
     #   net= []
+
     addnode(sname)
     snode = getnode(sname)
     snode.dests = [dname]
@@ -2214,7 +2215,7 @@ def create_node_w_dest(sname, dname, DBG=0):
 
 
 HELPERNUM = 0
-def create_adj_node(dname, helper_basename, DBG=0):
+def create_adj_node(dname, DBG=0):
     '''
     Need an intermediate (adj) node "adjname"
     between src and dst nodes (sname and dname).
@@ -2237,8 +2238,13 @@ def create_adj_node(dname, helper_basename, DBG=0):
     #   route ['OUTPUT'] = [could pre-populate]
     #   net= ['T35_pe_out']
 
+    # New basename for helper nodes e.g. 'adj000', 'adj001', etc.
+    global HELPERNUM
+    helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
+
     # New intermediate (adjunct) node e.g. 'add_adj001$binop'
     adjname = 'add_' + helper_basename + '$binop'
+
     addnode(adjname)
     adjnode = getnode(adjname)
     adjnode.dests = [dname]
@@ -2268,6 +2274,14 @@ def create_adj_node(dname, helper_basename, DBG=0):
     #adjnode.net = [adjnode.output]
 
     if DBG>2: adjnode.show()
+
+    # Attach constant '0' to input 1 (op2) of adj node (add0 no-op)
+    # Create new node 'const0_adj000' and connect to adj node input 1 (op2)
+    cname = 'const0_' + helper_basename # E.g. 'const0_adj000'
+    adjname1 = adjname + '.data.in.1'   # E.g. 'add_adj001$binop.data.in.1'
+    cnode = create_node_w_dest(cname, adjname1, DBG)
+
+    # Might need this later who knows
     return adjname
 
 
@@ -2276,14 +2290,10 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
 
     # May want to take this out, dunno if we need it at all...
-    if dname == 'OUTPUT': getnode('OUTPUT').show()
-
-
+    # if dname == 'OUTPUT': getnode('OUTPUT').show()
 
     if dname != 'OUTPUT':
         pwhere(2277, 'WARNING 666a this may only work for dname == OUTPUT')
-
-
 
 #     if (dname == "OUTPUT_1bit"):
 #         print ""
@@ -2293,23 +2303,20 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
 #     elif (dname != "OUTPUT"):
 #         assert False, 'oops only works w/OUTPUT node (for now)'
 #         
-
-
 #     # Ultimate destination
 #     assert dname == 'OUTPUT'
 #     if 'OUTPUT' in nodes: getnode('OUTPUT').show()
 
-    # New basename for helper nodes e.g. 'adj000', 'adj001', etc.
-    global HELPERNUM
-    helper_basename = 'adj%03d' % HELPERNUM; HELPERNUM = HELPERNUM+1
-
     ########################################################################
     # Create new adj node 'add_adj000' and point it to old dest 'dname'
-    # 
-    # create_adj_node(adjname, dname, adj_tileno, DBG)
-    adjname = create_adj_node(dname, helper_basename, DBG)
+    # Attach constant 0 to its 'op2' input (input 1)
+    adjname = create_adj_node(dname, DBG)
+
+
 
     # BOOKMARK non-OUTPUT-specific to HERE maybe
+
+
 
     ########################################################################
     # In 'sname' dests list, replace old dest 'dname' w/new dest 'add_adj000'
@@ -2353,17 +2360,6 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     # Somebody later needs this (just awful)
     global REWRITTEN_DNAME
     REWRITTEN_DNAME = adjname0
-
-    # Finally, attach constant '0' to other input of adj node (add0 no-op)
-    # 2. Create new nodes 'add_OUTPUT_ADJACENT$binop',
-    #    'const0_OUTPUT_ADJACENT' something like
-
-    # Create new node 'const0_adj000' and connect to adj node input 1 (op2)
-    # cname = 'const0_OUTPUT_ADJACENT'
-    cname = 'const0_' + helper_basename # E.g. 'const0_adj000'
-    adjname1 = adjname + '.data.in.1'   # E.g. 'add_adj001$binop.data.in.1'
-    cnode = create_node_w_dest(cname, adjname1, DBG)
-
 
     # BOOKMARK CONTINUE CLEANING HERE
     # Consider generic build_node() for this and create_node... above

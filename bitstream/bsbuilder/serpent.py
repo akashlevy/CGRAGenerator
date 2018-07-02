@@ -2336,54 +2336,66 @@ def try_again(sname, dname, dtileno, DBG=0):
     return rval
 
 
+def find_trackrange_regsolo(nodename, DBG=0):
+
+    # If sname already placed, track may be pre-ordained
+    # E.g. in example below output='T73_in_s2t1'
+    # So need to route on track 1, yes?
+    # 
+    # node='lb_p3_cim_stencil_update_stream$lb1d_0$reg_1'
+    #   type='regsolo'
+    #   ----
+    #   tileno= 72
+    #   input0='T72_out_s0t1'
+    #   input1='False'
+    #   bit0='False'
+    #   output='T73_in_s2t1'
+
+    if not is_regsolo(nodename): return False
+    dnode = getnode(nodename)
+    if DBG>2: dnode.show()
+    if dnode.output:
+        if DBG>2: print dnode.output
+        assert is_regsolo(nodename)
+        parse = re.search(r's[0-9]t([0-9])b?$', dnode.output)
+        if parse:
+            assert is_placed(nodename)
+            out_track = int(parse.group(1))
+            pwhere(2407, "dest is placed regsolo; "+
+                   "must connect to '%s' on track %d" % (dnode.output, out_track))
+            return [out_track]
+
+    assert False, 'shouldna called this func if it was gunna fail...'
+    return False
+
+
 def find_trackrange(sname, dname, DBG=0):
-        # If node is pe or mem, can try multiple tracks
 
-
-        # FIXME if sname is already placed the track may be pre-ordained here already
-        # E.g. in example below "output='T122_in_s2t0'"
-        # so should only look at track 0 right?
-        # 
-        # node='lb_p3_cim_stencil_update_stream$lb1d_2$reg_1'
-        #   type='regsolo'
-        #   tileno= 121
-        #   input0='T121_out_s0t0'
-        #   input1='False'
-        #   bit0='False'
-        #   ...
-
-        # If dest input0 is a wire, assume that means reg w/ constrained track (see above)
-
-        try: parse16 = re.search('s[0-9]t([0-9])$', getnode(dname).input0)
-        except: parse16 = False
-
-        try: parse1  = re.search('s[0-9]t([0-9])b$', getnode(dname).bit0)
-        except: parse1 = False
-
-        if parse16:
-            t = int(parse16.group(1))
-            pwhere(2446, "placed regsolo? looks like we're stuck w/track %d" % t)
-            trackrange = [t]
-
-        elif parse1:
-            t = int(parse1.group(1))
-            pwhere(2452, "placed 1bit regsolo? looks like we're stuck w/track %d" % t)
-            trackrange = [t]
+        if sname == "INPUT":
+            trackrange = [0]
 
         # (For now at least) output must be track 0, note I think OUTPUT is a mem tile
-        elif dname == "OUTPUT":      trackrange = [0]
+        elif dname == "OUTPUT":
+            trackrange = [0]
 
         # FIXME i think onebit is a pe tile and could use any of the five tracks!?
-        elif dname == "OUTPUT_1bit": trackrange = [0]
+        elif dname == "OUTPUT_1bit":
+            trackrange = [0]
 
-        elif is_mem(sname): trackrange = range(5)
-        elif is_pe(sname):  trackrange = range(5)
+        # Check for if sname or dname is a placed regsolo
+        elif is_placed(dname) and is_regsolo(dname):
+            trackrange = find_trackrange_regsolo(dname, DBG)
 
-        # This breaks it
-        #elif is_reg(sname):  trackrange = range(5)
+        elif is_regsolo(sname):
+            trackrange = find_trackrange_regsolo(sname, DBG)
+
+        # If node is pe or mem, can try multiple tracks (see further below)
+        elif is_mem(sname) or is_pe(sname):
+            # assert not is_placed(dname) # Nope could be e.g. placed mul w/open input left
+            trackrange = range(5)
 
         else:
-            assert "WARNING unknown tile this is probably bad..."
+            assert False, "WARNING unknown tile this is probably bad..."
             trackrange = [0]
 
         return trackrange
@@ -2429,25 +2441,23 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         # BOOKMARK cleaning place_and_route()
 
-        # FIXME this needs to be cleaned up
-        DBG=9
+        # FIXME this needs to be cleaned up?
+        # DBG=9
         for track in trackrange:
-            print "TRYING TRACK", track, "OF", trackrange
+            if DBG: print "TRYING TRACK", track, "OF", trackrange
+
             path = find_best_path(sname, dname, dtileno, track, DBG=1)
             if not path: print "TRACK", track, "no good"
             if path:
-                if DBG>2: print "HEY FOUND PATH", path
+                if DBG: print "HEY FOUND PATH", path
                 break
             else:
-                if DBG>2: print "No path for you! (..on track '%d')" % track
+                if DBG: print "No path for you! (..on track '%d')" % track
 
             print track, trackrange[-1]
             if track != trackrange[-1]:
                 pwhere(1607, "could not find path on track %d, try track %d" % (track, track+1))
                 pwhere(1608, "trackrange = %s" % trackrange)
-
-
-
 
         if not path:
             # Try again, using some dest OTHER THAN dtileno
@@ -3086,8 +3096,16 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
     dnode = getnode(dname)
     stileno = snode.tileno
     pwhere(1289,\
-        "Want to route from src tile %d ('%s') to dest tile %d ('%s')\n" \
-        % (stileno, sname, dtileno, dname))
+        "Want to route from src tile %d ('%s') to dest tile %d ('%s') on track '%d'\n" \
+        % (stileno, sname, dtileno, dname, track))
+
+    # output='T73_in_s2t1'
+    if DBG>2: print snode.output
+    parse = re.search(r's[0-9]t([0-9])b?$', snode.output)
+    if parse:
+        print("...looking to connect '%s' on track %d" % (snode.output, track))
+        out_track = int(parse.group(1))
+        assert track == out_track
 
     getnode(sname).show()
 
@@ -3228,7 +3246,7 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
 
     cbegin = connect_beginpoint(snode, path[0], buswidth(path[0]), DBG)
     if not cbegin:
-        err = "  Cannot connect beginpoint '%s' to path-begin '%s'?" % (snode, path[0])
+        err = "  Cannot connect beginpoint '%s' to path-begin '%s'?" % (snode.name, path[0])
         assert False, err
         assert False, 'disaster could not find a path'
         return False

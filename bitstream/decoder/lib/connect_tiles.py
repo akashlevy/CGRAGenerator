@@ -176,10 +176,31 @@ def test_ctsc():
     p = connect_tiles_same_col(3, 17, track, DBG=1)
     verify(p, results,resno,testname); resno = resno+1
 
+def connect_top_and_bottom(rsrc, csrc, track, DBG=0):
+    '''Connect mem tile top/bottom e.g. ["T57_out_s1t0", "T57_in_s7t0"]'''
+
+    # Here's what happened maybe:
+    # # path1: # Connect tile 57 (r4,c5) to tile 57 (r4,c5) on hv path
+    # # Destination is a memory tile
+    # # Both tiles are in same row
+    # print "See, it's the same tile but it's different see"
+    
+    assert is_mem_rc(rsrc, csrc)
+    beginwire = build_wire_rc(rsrc,csrc,'out',1,track) # 'T57_out_s1t0'
+    endwire   = build_wire_rc(rsrc,csrc,'in', 7,track) # 'T57_in_s7t0'
+    path = [beginwire,endwire]
+
+    if DBG: print("\n# Connect mem tile top and bottom: %s" % path)
+    assert False, 'see stdout above'
+    return path
+
+
 def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
     '''tile17 should be row 2, col 3 maybe'''
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
+    # DBG=9
+    if src == 57: DBG=9
 
     if DBG:
         print "# Connect tile %d (r%d,c%d)" % (src,rsrc,csrc),
@@ -188,9 +209,13 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         if is_mem_rc(rdst,cdst):
             print "# Destination is a memory tile"
 
+    if src == dst:
+        if DBG>2: print("# Huh src and dest tile are same")
+        if DBG>2: print("# Probly means need to connect top and bottom of a mem tile")
+        return connect_top_and_bottom(rsrc, csrc, track, DBG)
+
     # No need for a corner if sr, dst are in same row or col
     (cornerconn,path1,path2) = ([],[],[])
-    
 
     # FIXME okay maybe this is kinda terrible.
     memstraight = False
@@ -244,6 +269,21 @@ def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
         corn = cgra_info.rc2tileno(rcorn,ccorn)
         if DBG: print "# Found corner tile %d (r%d,c%d)"\
            % (corn, rcorn, ccorn)
+
+        if (corn == src) and (DBG>2):
+            print "haha this ain't right :("
+            print "this is probably what happened:"
+            print '''
+            # Connect tile 57 (r4,c5) to tile 77 (r5,c8) on vh path
+            # Found corner tile 57 (r5,c5)
+            # path1: # Connect tile 57 (r4,c5) to tile 57 (r4,c5) on hv path
+            # Destination is a memory tile
+            # Both tiles are in same row
+            # Need to connect mem tile top to bottom e.g. ["T57_out_s1t0", "T57_in_s7t0"]
+            # This will happen via modification to connect_tiles() in path1 calc below
+            '''
+            (rsrc,csrc) = cgra_info.tileno2rc(src)
+            assert rcorn == rsrc+1
 
         # horizontal path from src to corn
         if DBG>1: print "# path1:",
@@ -324,7 +364,7 @@ def prettyprint_path(dir, begin, path1, cornerconn, path2, end):
 
 def connect_tiles_same_row(src=0,dst=5,track=0,DBG=0):
     if DBG<0: DBG=0 # ugh
-
+    # DBG=1
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
 
@@ -333,11 +373,11 @@ def connect_tiles_same_row(src=0,dst=5,track=0,DBG=0):
         # Source row matches bottom half of mem tile
         rdst = rdst+1
 
-    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d)" %\
-       (src,rsrc,csrc, dst,rdst,cdst)
+    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d) on track %d 336" %\
+       (src,rsrc,csrc, dst,rdst,cdst, track)
 
     # tiles must be on same row; must be two different tiles
-    assert rsrc == rdst; assert src != dst
+    assert rsrc == rdst, 'foo'; assert src != dst, 'bar'
     
     if cdst>csrc: (inside,outside) = (2,0) # left-to-right
     else:         (inside,outside) = (0,2) # right-to-left
@@ -385,8 +425,8 @@ def connect_tiles_same_col(src,dst,track,DBG=0):
         if (rdst%2==0): rdst = rdst + 1 # Stop when get to *bottom* of dest tile
         else          : rdst = dst%2
 
-    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d)" %\
-       (src,rsrc,csrc,dst,rdst,cdst)
+    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d) on track %d 388" %\
+       (src,rsrc,csrc, dst,rdst,cdst, track)
 
     # tiles must be on same col; must be two different tiles
     assert csrc == cdst; assert src != dst

@@ -335,7 +335,7 @@ def main(DBG=1):
 
     # oops FIXME swizzlers
     global SWIZZLE_TRACKS
-    SWIZZLE_TRACKS = False
+    SWIZZLE_TRACKS = True
     if dot_filename == 'harris.dot':
         print "ONE TIME ONLY!  SWIZZLE_TRACKS == TRUE!!!"
         SWIZZLE_TRACKS = True
@@ -2384,11 +2384,8 @@ def find_trackrange_regsolo(nodename, DBG=0):
 ANYTRACK = range(5)
 def anytrack():
     '''Return [0,1,2,3,4] then [1,2,3,4,0] then [2,3,4,0,1] etc'''
-    global ANYTRACK
-    global SWIZZLE_TRACKS
-    rval = ANYTRACK
-    # Rotate ANYTRACK
-    if SWIZZLE_TRACKS: ANYTRACK = ANYTRACK[1:] + ANYTRACK[0:1]
+    global ANYTRACK; global SWIZZLE_TRACKS; rval = ANYTRACK
+    if SWIZZLE_TRACKS: ANYTRACK = ANYTRACK[1:] + ANYTRACK[0:1] # Rotate
     return rval
 
 

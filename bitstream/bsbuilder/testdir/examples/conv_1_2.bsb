@@ -27,8 +27,8 @@ T40_out_s2t0 -> T40_op1 (r)
 T21_in_s2t0 -> T21_op1
 
 # add_305_309_310_PE::add_305_313_314_PE.data.in.0
-T41_pe_out -> T41_out_s3t0
-T22_in_s1t0 -> T22_op2
+T41_pe_out -> T41_out_s3t2
+T22_in_s1t2 -> T22_op2
 
 # add_305_313_314_PE::OUTPUT
 T22_pe_out -> T22_out_s0t0
@@ -48,8 +48,8 @@ T35_in_s2t0 -> T35_out_s0t0
 T36_in_s2t0 -> T36_out_s0t0
 
 # mul_307_308_309_PE::add_305_309_310_PE.data.in.1
-T40_pe_out -> T40_out_s0t0
-T41_in_s2t0 -> T41_op1
+T40_pe_out -> T40_out_s0t1
+T41_in_s2t1 -> T41_op1
 
 # mul_312_308_313_PE::add_305_313_314_PE.data.in.1
 T21_pe_out -> T21_out_s0t0

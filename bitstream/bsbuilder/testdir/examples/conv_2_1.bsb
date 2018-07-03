@@ -35,9 +35,9 @@ T24_out_s2t0_b0 -> T24_wen
 T21_in_s2t0 -> T21_op1
 
 # add_335_339_340_PE::add_341_345_346_PE.data.in.0
-T22_pe_out -> T22_out_s1t0
-T41_in_s3t0 -> T41_out_s2t0
-T41_out_s2t0 -> T41_op1
+T22_pe_out -> T22_out_s1t2
+T41_in_s3t2 -> T41_out_s2t2
+T41_out_s2t2 -> T41_op1
 
 # add_341_345_346_PE::OUTPUT
 T41_pe_out -> T41_out_s0t0
@@ -68,10 +68,10 @@ T22_in_s0t1 -> T22_out_s2t1
 T22_out_s2t1 -> T22_op1
 
 # mul_343_344_345_PE::add_341_345_346_PE.data.in.1
-T21_pe_out -> T21_out_s1t0
-T40_in_s3t0 -> T40_out_s0t0
-T41_in_s2t0 -> T41_out_s1t0
-T41_out_s1t0 -> T41_op2
+T21_pe_out -> T21_out_s1t3
+T40_in_s3t3 -> T40_out_s0t3
+T41_in_s2t3 -> T41_out_s1t3
+T41_out_s1t3 -> T41_op2
 
 # INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
 # OUTPUT tile  36 ( 2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0

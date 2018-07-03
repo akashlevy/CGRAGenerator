@@ -2510,7 +2510,7 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
 
         elif is_regsolo(dname):
             print '# 1a. If regsolo, add name to REGISTERS for later'
-            d_out = CT.find_neighbor(d_in, DBG=9)
+            d_out = CT.find_neighbor(d_in, DBG=0)
 
             global REGISTERS
             if DBG>2: print "# Add reg's input wire to list of registers"

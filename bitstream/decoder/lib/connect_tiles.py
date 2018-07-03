@@ -176,30 +176,12 @@ def test_ctsc():
     p = connect_tiles_same_col(3, 17, track, DBG=1)
     verify(p, results,resno,testname); resno = resno+1
 
-def connect_top_and_bottom(rsrc, csrc, track, DBG=0):
-    '''Connect mem tile top/bottom e.g. ["T57_out_s1t0", "T57_in_s7t0"]'''
-
-    # Here's what happened maybe:
-    # # path1: # Connect tile 57 (r4,c5) to tile 57 (r4,c5) on hv path
-    # # Destination is a memory tile
-    # # Both tiles are in same row
-    # print "See, it's the same tile but it's different see"
-    
-    assert is_mem_rc(rsrc, csrc)
-    beginwire = build_wire_rc(rsrc,csrc,'out',1,track) # 'T57_out_s1t0'
-    endwire   = build_wire_rc(rsrc,csrc,'in', 7,track) # 'T57_in_s7t0'
-    path = [beginwire,endwire]
-
-    if DBG: print("\n# Connect mem tile top and bottom: %s" % path)
-    assert False, 'see stdout above'
-    return path
-
-
 def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
     '''tile17 should be row 2, col 3 maybe'''
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
     # DBG=9
+    # BOOKMARK remember to remove this later!
     if src == 57: DBG=9
 
     if DBG:
@@ -209,19 +191,24 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         if is_mem_rc(rdst,cdst):
             print "# Destination is a memory tile"
 
-    if src == dst:
-        if DBG>2: print("# Huh src and dest tile are same")
-        if DBG>2: print("# Probly means need to connect top and bottom of a mem tile")
-        return connect_top_and_bottom(rsrc, csrc, track, DBG)
-
     # No need for a corner if sr, dst are in same row or col
     (cornerconn,path1,path2) = ([],[],[])
 
+
     # FIXME okay maybe this is kinda terrible.
     memstraight = False
+
+    # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
     if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
-        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway)"
+        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 237"
+        memstraight = True
+
+    # Case 2: hpath *begins* at bottom of mem tile
+    # Hm I wonder what would happen if...
+    elif is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 243"
+        print 'new stuff bar'
         memstraight = True
 
     # if rsrc==rdst:
@@ -230,6 +217,11 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         p = connect_tiles_same_row(src,dst,track,DBG=DBG-1)
         (begin,path1,end) = unpack_path(p)
         if DBG: prettyprint_path(dir, begin, path1, cornerconn, path2, end)
+
+        # FIXME DELETEME
+        if is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+            assert False, "well?  how'd we do?"
+
         return pack_path(begin,path1,end)
 
     elif csrc==cdst:
@@ -270,28 +262,13 @@ def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
         if DBG: print "# Found corner tile %d (r%d,c%d)"\
            % (corn, rcorn, ccorn)
 
-        if (corn == src) and (DBG>2):
-            print "haha this ain't right :("
-            print "this is probably what happened:"
-            print '''
-            # Connect tile 57 (r4,c5) to tile 77 (r5,c8) on vh path
-            # Found corner tile 57 (r5,c5)
-            # path1: # Connect tile 57 (r4,c5) to tile 57 (r4,c5) on hv path
-            # Destination is a memory tile
-            # Both tiles are in same row
-            # Need to connect mem tile top to bottom e.g. ["T57_out_s1t0", "T57_in_s7t0"]
-            # This will happen via modification to connect_tiles() in path1 calc below
-            '''
-            (rsrc,csrc) = cgra_info.tileno2rc(src)
-            assert rcorn == rsrc+1
-
-        # horizontal path from src to corn
+        # horizontal (or vert) path from src to corn
         if DBG>1: print "# path1:",
         p = connect_tiles(src,corn,track,DBG=0)
         (begin1,path1,end1) = unpack_path(p)
         if DBG>1: print "# "
 
-        # vert path from corn to dest
+        # vert (or horiz) path from corn to dest
         if DBG>1: print "# path2:",
         # (begin2,path2,end2) = connect_tiles(corn,dst,track,DBG=DBG-1)
         p = connect_tiles(corn,dst,track,DBG=0)
@@ -364,28 +341,60 @@ def prettyprint_path(dir, begin, path1, cornerconn, path2, end):
 
 def connect_tiles_same_row(src=0,dst=5,track=0,DBG=0):
     if DBG<0: DBG=0 # ugh
-    # DBG=1
+
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
 
+    # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
     if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
         # Source row matches bottom half of mem tile
         rdst = rdst+1
 
+    # Case 2: hpath *begins* at bottom of mem tile
+    start_on_bottom = False
+    if (rsrc+1) == rdst and is_mem_rc(rsrc,csrc):
+        print 'new stuff foo'
+        # Source row matches bottom half of mem tile
+        # rsrc = rsrc+1
+        start_on_bottom = True
+
+    else:
+        # tiles must be on same row; must be two different tiles
+        # (unless start_on_bottom :o )
+        assert rsrc == rdst, 'foo'
+    assert src != dst, 'bar'
+
+
     if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d) on track %d 336" %\
        (src,rsrc,csrc, dst,rdst,cdst, track)
 
-    # tiles must be on same row; must be two different tiles
-    assert rsrc == rdst, 'foo'; assert src != dst, 'bar'
     
     if cdst>csrc: (inside,outside) = (2,0) # left-to-right
     else:         (inside,outside) = (0,2) # right-to-left
 
-    beginwire = build_wire_rc(rsrc,csrc,'out',outside,track)
-    
     path = []
+    if start_on_bottom:
+        # Case 2: hpath *begins* at bottom of mem tile
+        # Must add path from top to bottom e.g.
+        # ['T57_out_s1t0'], ['T57_in_s7t0' -> 'T57_out_s4t0']
+        beginwire = build_wire_rc(rsrc,csrc,'out',1,track)
 
+        inwire  = build_wire_rc(rsrc,csrc,'in' ,    7    ,track)
+        outwire = build_wire_rc(rsrc,csrc,'out',outside+4,track)
+        rsrc = rsrc+1
+
+        # OR could have done I think:
+        # rsrc = rsrc+1
+        # inwire  = build_wire_rc(rsrc,csrc,'in' ,   3   ,track)
+        # outwire = build_wire_rc(rsrc,csrc,'out',outside,track)
+
+        connection = "%s -> %s" % (inwire, outwire)
+        path.append(connection)
+
+    else:
+        beginwire = build_wire_rc(rsrc,csrc,'out',outside,track)
+    
     if (cdst>=csrc): cols = range(csrc+1,cdst, 1) # left-to-right
     else:            cols = range(csrc-1,cdst,-1) # right-to-left
     # print cols
@@ -534,9 +543,8 @@ def parse_resource(r):
 
 
 # lifted from bsview.py
-def find_neighbor(w, DBG=9):
+def find_neighbor(w, DBG=0):
     '''E.g. find_neighbor_wire("T4_in_s1t1") => ("T5_out_s3t1")'''
-    DBG=0
     # FIXME this can all be cleaned up...
 
     if (0):

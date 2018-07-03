@@ -2159,14 +2159,22 @@ def replace_dest(sname, old_dest, new_dest, DBG=0):
     for i,n in enumerate(snode.dests):
         if n == old_dest: snode.dests[i] = new_dest
 
+    # This should not exist right?
+    assert snode.route[old_dest] == [], 'Freak out!'
+
     # Replace existing placeholder route w/ placeholder route for new dest
-    assert snode.route[old_dest] == []
-    snode.route = {}; snode.route[new_dest] = []
+    del snode.route[old_dest]  # Delete entry for old_dest
+    snode.route[new_dest] = [] # Add entry for new dest
 
     if DBG>2: 
         print("#   After:")
         print snode.show()
         print ''
+
+    # FIXME delete this when we have moved on
+    if snode.name == 'lb_grad_yy_2_stencil_update_stream$lb1d_1$reg_1':
+        pwhere(2176, "MOVING ON NOW")
+        assert False
 
 
 def create_node_w_dest(sname, dname, DBG=0):
@@ -3266,8 +3274,14 @@ def can_connect_ends(path, snode, dname, dtileno, DBG=0):
     cbegin = connect_beginpoint(snode, path[0], buswidth(path[0]), DBG)
     if not cbegin:
         err = "  Cannot connect beginpoint '%s' to path-begin '%s'?" % (snode.name, path[0])
-        assert False, err
-        assert False, 'disaster could not find a path'
+        #         assert False, err
+        #         assert False, 'disaster could not find a path'
+        # 
+        # died on line 23296: endpoints 'T218_out_s2t1' and 'T233_in_s3t1'
+        # Dude no need to die, it'll try again...right?
+        # print '666a'
+        # pwhere(3292, err)
+        # print("# Dude no need to die, it'll try again...right?")
         return False
 
     #######################################

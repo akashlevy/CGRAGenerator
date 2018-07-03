@@ -2260,6 +2260,7 @@ def create_adj_node(dname, DBG=0):
     return adjname
 
 
+# FIXME this is no longer OUTPUT-specific should rename it
 def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     DBG=9
     if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
@@ -2267,8 +2268,8 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     # May want to take this out, dunno if we need it at all...
     # if dname == 'OUTPUT': getnode('OUTPUT').show()
 
-    if dname != 'OUTPUT':
-        pwhere(2277, 'WARNING 666a this may only work for dname == OUTPUT')
+#     if dname != 'OUTPUT':
+#         pwhere(2277, 'WARNING 666a this may only work for dname == OUTPUT')
 
     ########################################################################
     # Create new adj node 'add_adj000' and point it to old dest 'dname'
@@ -2579,8 +2580,7 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
         unfree_resources(path,DBG)
 
         print ''
-        pwhere(1198)
-        print "HOORAY connected '%s' to '%s'" % (sname,dname)
+        print "HOORAY connected '%s' to '%s' 2583" % (sname,dname)
         if DBG:
             print ''
             getnode(sname).show()
@@ -2972,8 +2972,7 @@ def place_folded_reg_in_input_tile(dname):
     #         print resources[1]
 
     print ''
-    pwhere(1198)
-    print "HOORAY connected '%s' to '%s'" % (sname,dname)
+    print "HOORAY connected '%s' to '%s' 2975" % (sname,dname)
     if DBG:
         print ''
         getnode(sname).show()

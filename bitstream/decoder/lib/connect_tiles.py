@@ -180,9 +180,10 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
     '''tile17 should be row 2, col 3 maybe'''
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
+
     # DBG=9
     # BOOKMARK remember to remove this later!
-    if src == 57: DBG=9
+    # if src == 57: DBG=9
 
     if DBG:
         print "# Connect tile %d (r%d,c%d)" % (src,rsrc,csrc),
@@ -218,9 +219,9 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         (begin,path1,end) = unpack_path(p)
         if DBG: prettyprint_path(dir, begin, path1, cornerconn, path2, end)
 
-        # FIXME DELETEME
-        if is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
-            assert False, "well?  how'd we do?"
+#         # Note this does not trigger until harris
+#         if is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+#             assert False, "well?  how'd we do?"
 
         return pack_path(begin,path1,end)
 
@@ -562,14 +563,14 @@ def find_neighbor(w, DBG=0):
 
     in_or_out = dir
 
-    # top_or_bottom = parse.group(2)  # 'None', '0' or '1'
-    top_or_bottom = side/4 # '0' or '1'
-
     if (in_or_out=="out"): in_or_out="in"
     else:                  in_or_out="out"
 
     (r,c) = cgra_info.tileno2rc(tileno)
     if DBG: print("FN: I am '%s' at (r,c) = (%d,%d)" % (w, r,c))
+
+    # top_or_bottom = parse.group(2)  # 'None', '0' or '1'
+    top_or_bottom = side/4 # '0' or '1'
 
     # Adjust for wire in bottom of a memtile
     if (top_or_bottom == '1'): r = r + 1
@@ -594,25 +595,23 @@ def find_neighbor(w, DBG=0):
     # Note should return 'False' if (r,c) invalid
     if DBG: print "Found neighbor tile number '%s'" % str(nbr_tileno)
 
-    top_or_bottom = ''
+    # Adjust for mem tile top/bottom
+    # Even row means top, odd row means bottom
     if (cgra_info.tiletype(nbr_tileno) == "memory_tile"):
         if DBG: print "HO found memory tile.  is it a top or a bottom :)"
-        # '0' means top, '1' means bottom
-        top_or_bottom = str(r % 2)
-        if DBG:
-            if (top_or_bottom): print " It's a bottom"
-            else              : print " You're the top!"
+        if (r%2)==0:
+            if DBG: print " You're the top!"
+        else:
+            if DBG: print " It's a bottom"
+            side = side + 4
 
-    # adj_wire = "%s%s_s%dt%d" % (in_or_out, top_or_bottom, side, track)
-
-    nbr_wire = "T%s_%s%s_s%dt%d" \
-               % (nbr_tileno, in_or_out, top_or_bottom, side, track)
+    nbr_wire = "T%s_%s_s%dt%d" \
+               % (nbr_tileno, in_or_out, side, track)
 
     # if DBG: print "%s on tile %d matches %s on tile %d\n" % (w, tileno, nbr_wire, nbr_tileno)
     if DBG: print "'%s' connects to neighbor '%s'\n" % (w, nbr_wire)
 
     return nbr_wire
-
 
 
 if (DO_TEST): do_test()

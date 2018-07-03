@@ -331,6 +331,17 @@ def main(DBG=1):
     global cgra_filename
     process_args()
 
+
+
+    # oops FIXME swizzlers
+    global SWIZZLE_TRACKS
+    SWIZZLE_TRACKS = False
+    if dot_filename == 'harris.dot':
+        print "ONE TIME ONLY!  SWIZZLE_TRACKS == TRUE!!!"
+        SWIZZLE_TRACKS = True
+
+
+
     print '######################################################'
     print '# serpent.py: Read cgra info'
     cgra_info.read_cgra_info(cgra_filename, verbose=True)
@@ -2370,36 +2381,48 @@ def find_trackrange_regsolo(nodename, DBG=0):
     return False
 
 
+ANYTRACK = range(5)
+def anytrack():
+    '''Return [0,1,2,3,4] then [1,2,3,4,0] then [2,3,4,0,1] etc'''
+    global ANYTRACK
+    global SWIZZLE_TRACKS
+    rval = ANYTRACK
+    # Rotate ANYTRACK
+    if SWIZZLE_TRACKS: ANYTRACK = ANYTRACK[1:] + ANYTRACK[0:1]
+    return rval
+
+
 def find_trackrange(sname, dname, DBG=0):
 
-        if sname == "INPUT":
-            trackrange = [0]
+    if sname == "INPUT":
+        trackrange = [0]
 
-        # (For now at least) output must be track 0, note I think OUTPUT is a mem tile
-        elif dname == "OUTPUT":
-            trackrange = [0]
+    # (For now at least) output must be track 0, note I think OUTPUT is a mem tile
+    elif dname == "OUTPUT":
+        trackrange = [0]
 
-        # FIXME i think onebit is a pe tile and could use any of the five tracks!?
-        elif dname == "OUTPUT_1bit":
-            trackrange = [0]
+    # FIXME i think onebit is a pe tile and could use any of the five tracks!?
+    elif dname == "OUTPUT_1bit":
+        trackrange = [0]
 
-        # Check for if sname or dname is a placed regsolo
-        elif is_placed(dname) and is_regsolo(dname):
-            trackrange = find_trackrange_regsolo(dname, DBG)
+    # Check for if sname or dname is a placed regsolo
+    elif is_placed(dname) and is_regsolo(dname):
+        trackrange = find_trackrange_regsolo(dname, DBG)
 
-        elif is_regsolo(sname):
-            trackrange = find_trackrange_regsolo(sname, DBG)
+    elif is_regsolo(sname):
+        trackrange = find_trackrange_regsolo(sname, DBG)
 
-        # If node is pe or mem, can try multiple tracks (see further below)
-        elif is_mem(sname) or is_pe(sname):
-            # assert not is_placed(dname) # Nope could be e.g. placed mul w/open input left
-            trackrange = range(5)
+    # If node is pe or mem, can try multiple tracks (see further below)
+    elif is_mem(sname) or is_pe(sname):
+        # assert not is_placed(dname) # Nope could be e.g. placed mul w/open input left
+        # trackrange = range(5)
+        trackrange = anytrack()
 
-        else:
-            assert False, "WARNING unknown tile this is probably bad..."
-            trackrange = [0]
+    else:
+        assert False, "WARNING unknown tile this is probably bad..."
+        trackrange = [0]
 
-        return trackrange
+    return trackrange
 
 
 def place_and_route(sname,dname,indent='# ',DBG=0):

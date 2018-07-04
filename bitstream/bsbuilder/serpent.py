@@ -1625,12 +1625,30 @@ def find_regsolo_dstports(name, tile, track, DBG=0):
         outport = "T%d_out_s%dt%d" % (tile,side,track)
         n = CT.find_neighbor(outport, DBG=0)
 
-        # assert n[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
-        if n[0:3] != 'T0_':
+#         # assert n[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
+#         if n[0:3] != 'T0_':
+#           if DBG: print("-- Hey '%s' you're okay you connect to '%s'" % (outport, n))
+#           p.append(outport)
+
+
+        # '''E.g. parseT("T4_in_s2t4") = (4, "in_s2t4")'''
+        (t,w) = parseT(n)
+        if is_pe_tile(t) or is_mem_tile(t):
           if DBG: print("-- Hey '%s' you're okay you connect to '%s'" % (outport, n))
           p.append(outport)
+            
+
+
+
+
+
+
 
         elif DBG: print("** Hmm '%s' neighbor '%s' not exist maybe **" % (outport, n))
+
+        # assert outport != 'T21_out_s3t0'
+        if outport == 'T21_out_s3t0':
+            print '666a here we is'
 
     if DBG: print ""
     return p
@@ -2014,6 +2032,32 @@ def already_placed(sname, dname, indent='# ', DBG=0):
 
     return False
 
+def sort_children(schildren):
+    # Build an ordered list of what to process; pe and mem first, then regs
+    # With any luck, regs get a free ride somewhere along the path.
+    
+#     if schildren == []: return []
+
+    regchilds = []; otherchilds = []
+    for dname in sorted(schildren):
+        if   is_pe(dname):    otherchilds.append(dname)
+        elif is_io(dname):    otherchilds.append(dname)
+        elif is_mem(dname):   otherchilds.append(dname)
+        elif is_regop(dname): otherchilds.append(dname)
+        elif is_reg(dname):   regchilds.append(dname)
+
+        # should have been caught by is_io, above
+        #elif dname=='OUTPUT': otherchilds.append(dname)
+
+        else:
+            print "ERROR What is '%s'?" % dname
+            assert False, "ERROR What is '%s'?" % dname
+
+    sorted_schildren = otherchilds + regchilds
+
+    return sorted_schildren
+
+
 def process_nodes(sname, indent='# ', DBG=1):
     '''Place and route each unprocessed destination for nodename'''
 
@@ -2028,30 +2072,15 @@ def process_nodes(sname, indent='# ', DBG=1):
     # print indent+"Processing node '%s'" % sname
     src = getnode(sname)
 
-    schildren = sorted(src.dests)
-    if schildren == []:
-        print indent+"  '%s' has no children\n" % src.name
-        return
-
     # Build an ordered list of what to process; pe and mem first, then regs
     # With any luck, regs get a free ride somewhere along the path.
     
-    regchilds = []; otherchilds = []
-    for dname in sorted(schildren):
-        if   is_pe(dname):  otherchilds.append(dname)
-        elif is_io(dname):  otherchilds.append(dname)
-        elif is_mem(dname): otherchilds.append(dname)
-        elif is_regop(dname): otherchilds.append(dname)
-        elif is_reg(dname):   regchilds.append(dname)
+    sorted_schildren = sort_children(src.dests)
+    if sorted_schildren == []:
+        print indent+"  '%s' has no children\n" % src.name
+        return
 
-        # should have been caught by is_io, above
-        #elif dname=='OUTPUT': otherchilds.append(dname)
 
-        else:
-            print "ERROR What is '%s'?" % dname
-            assert False, "ERROR What is '%s'?" % dname
-
-    sorted_schildren = otherchilds + regchilds
     # Place and route all dests
 
     already_done = []
@@ -2279,6 +2308,24 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     DBG=9
     if DBG: pwhere(2176, '# Try again using intermediate/adjunct/adj node')
 
+
+    # 29300
+    # T142_out_s2t0 is not available to node 'add_adj005$binop'
+    # ../../serpent.py/2359: # Try again using some dest OTHER THAN tile 21
+    # ../../serpent.py/2273: oops cannot change dest, must insert intermediate node
+    # ../../serpent.py/2176: # Try again using intermediate/adjunct/adj node
+    # # Creating unplaced intermediate node "add_adj006$binop"
+
+
+
+
+    if sname[0:7] == 'add_adj':
+        assert False, "Wait, no, source '%s' already adjunct now what!?" % sname
+
+
+
+
+
     # May want to take this out, dunno if we need it at all...
     # if dname == 'OUTPUT': getnode('OUTPUT').show()
 
@@ -2296,6 +2343,12 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     adjname0 = adjname + '.data.in.0' # E.g. 'add_adj001$binop.data.in.0'
     replace_dest(sname, dname, adjname0, DBG)
 
+
+
+    # WHILE NOT SUCCESS
+
+
+
     # Route src => adj by calling place-and-route recursively using new dname
     # This should place adj node if not done yet
     # (Could be combined in replace_dest(), yes?)
@@ -2306,6 +2359,27 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
     # Now route adj => dname; this will place dname if not done yet
     if not place_and_route(adjname, dname, indent='# ', DBG=0):
         assert False, 'well that didnt work did it'
+
+        # BOOKMARK
+        # WHEN THIS FAILS...?
+        # Back out and try again; maybe add adj tileno to ADJ_EXCEPTIONS or sumpm
+        # UNPLACE ADJNAME0
+        # TRY AGAIN
+
+#     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
+#     packer.unallocate(dtileno, DBG=0)
+
+#     # Add dtileno as an EXCEPTION and try again
+#     packer.EXCEPTIONS.append(dtileno) => adj_tileno
+#     print "exceptions = ", packer.EXCEPTIONS
+#     rval = place_and_route(sname,dname,indent='# ',DBG=0)
+# 
+#     # Restore EXCEPTIONS, return final result.
+#     packer.EXCEPTIONS = []
+# 
+
+
+
 
     print 'HOORAY completed OUTPUT hack'
     print 'wait no HOORAY completed non-OUTPUT-specific adj-node hack'
@@ -2337,13 +2411,15 @@ def try_again(sname, dname, dtileno, DBG=0):
     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
     packer.unallocate(dtileno, DBG=0)
 
-    if dtileno in packer.EXCEPTIONS:
-        print "exceptions = ", packer.EXCEPTIONS
-        pwhere(1614, "OOPS Already tried and failed oh nooooo")
-        assert False, "Out of options"
+#     # !!????
+#     if dtileno in packer.EXCEPTIONS:
+#         print "exceptions = ", packer.EXCEPTIONS
+#         pwhere(1614, "OOPS Already tried and failed oh nooooo")
+#         assert False, "Out of options"
 
     # Add dtileno as an EXCEPTION and try again
     packer.EXCEPTIONS.append(dtileno)
+    print "exceptions = ", packer.EXCEPTIONS
     rval = place_and_route(sname,dname,indent='# ',DBG=0)
 
     # Restore EXCEPTIONS, return final result.
@@ -2376,7 +2452,7 @@ def find_trackrange_regsolo(nodename, DBG=0):
         if parse:
             assert is_placed(nodename)
             out_track = int(parse.group(1))
-            pwhere(2407, "dest is placed regsolo; "+
+            pwhere(2407, "dest '%s' is placed regsolo; " % nodename +
                    "must connect to '%s' on track %d" % (dnode.output, out_track))
             return [out_track]
 
@@ -2484,6 +2560,15 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(1608, "trackrange = %s" % trackrange)
 
         if not path:
+
+
+            if sname[0:7] == 'add_adj':
+                pwhere(2528, "oops source '%s' already adjunct now what!?" % sname)
+                return False
+                       
+
+
+
             # Try again, using some dest OTHER THAN dtileno
             rval = try_again(sname, dname, dtileno, DBG)
             # try_again calls place and route, doing the cleanup work below.
@@ -3069,7 +3154,11 @@ def get_nearest_tile(sname, dname, DBG=0):
     # if is_regsolo(dname) and not is_regop(sname) OOPS regop != reg :(
     if is_regsolo(dname) and not is_reg(sname):
         print "okay we will try to put it in the same tile with", sname
-        return stileno
+
+        if stileno in packer.EXCEPTIONS:
+            print "oop no already tried and failed at that"
+        else:
+            return stileno
 
     # print "# i'm in tile %s" % packer.FMT.tileT(sname)
     nearest = packer.find_nearest(stileno, dtype, DBG=0)
@@ -3151,6 +3240,14 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         ENDPOINT_MUST_BE_FREE = False
         return p
 
+
+
+
+    print (stileno, dtileno)
+    if (stileno==18) and (dtileno==31):
+        print("666a RECURSE NOW?")
+
+
     # foreach path p in connect_{hv,vh}connect(ptile,dtile)
     # FIXME for now only looking at track 0(!)
     phv = CT.connect_tiles(stileno,dtileno,track,dir='hv',DBG=DBG-1)
@@ -3175,6 +3272,17 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         # FIXME this is sooo bad; should never have built the wrong path in the first place
         # If BUS1 path, Change default (BUS16) wires to 'b' (BUS1) wires
         if is_bit_node(dname): fix_path(path, dname, DBG)
+
+# ../../serpent.py/1289: Want to route from src tile 21
+# ('lb_padded_2_stencil_update_stream$lb1d_0$reg_1') to dest tile 31
+# ('mul_684_685_686$binop.data.in.0') on track '0'
+
+
+        if (sname == 'lb_padded_2_stencil_update_stream$lb1d_0$reg_1') \
+           and (dname == 'mul_684_685_686$binop.data.in.0'):
+           print("666a about to recurse?")
+
+
 
         final_path = eval_path(path, snode, dname, dtileno, DBG)
         if final_path:

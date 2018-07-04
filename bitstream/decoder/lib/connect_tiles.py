@@ -181,9 +181,9 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
 
-    # DBG=9
     # BOOKMARK remember to remove this later!
     # if src == 57: DBG=9
+    if (src==18) and (dst==31): DBG=9
 
     if DBG:
         print "# Connect tile %d (r%d,c%d)" % (src,rsrc,csrc),
@@ -212,6 +212,10 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         print 'new stuff bar'
         memstraight = True
 
+    if (src==18) and (dst==31):
+        print("666b RECURSE NOW?")
+        # assert False
+
     # if rsrc==rdst:
     if (rsrc==rdst) or memstraight:
         if DBG: print "# Both tiles are in same row\n# "
@@ -236,6 +240,11 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         # First go horizontal (EW), then vertical (NS)
         # Find corner tile: same row as src, same col as dst
         (rcorn,ccorn) = (rsrc,cdst)
+
+        if (src==18) and (dst==31):
+            print("666c RECURSE NOW?")
+            # assert False
+
         p = connect_through_corner(src,dst,rcorn,ccorn,track,dir,DBG)
         return p
 
@@ -258,32 +267,38 @@ def pack_path(begin,path,end):
     return p
 
 def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
+    DBG=9
+    if (src==18) and (dst==31):
+        print("666d RECURSE NOW?")
+        # assert False
 
-        corn = cgra_info.rc2tileno(rcorn,ccorn)
-        if DBG: print "# Found corner tile %d (r%d,c%d)"\
-           % (corn, rcorn, ccorn)
+    print (rcorn,ccorn)
+    corn = cgra_info.rc2tileno(rcorn,ccorn)
+    if DBG: print "# Found corner tile %d (r%d,c%d)"\
+       % (corn, rcorn, ccorn)
+    assert corn > 0
 
-        # horizontal (or vert) path from src to corn
-        if DBG>1: print "# path1:",
-        p = connect_tiles(src,corn,track,DBG=0)
-        (begin1,path1,end1) = unpack_path(p)
-        if DBG>1: print "# "
+    # horizontal (or vert) path from src to corn
+    if DBG>1: print "# path1:",
+    p = connect_tiles(src,corn,track,DBG=0)
+    (begin1,path1,end1) = unpack_path(p)
+    if DBG>1: print "# "
 
-        # vert (or horiz) path from corn to dest
-        if DBG>1: print "# path2:",
-        # (begin2,path2,end2) = connect_tiles(corn,dst,track,DBG=DBG-1)
-        p = connect_tiles(corn,dst,track,DBG=0)
-        (begin2,path2,end2) = unpack_path(p)
-        if DBG>1: print "# "
+    # vert (or horiz) path from corn to dest
+    if DBG>1: print "# path2:",
+    # (begin2,path2,end2) = connect_tiles(corn,dst,track,DBG=DBG-1)
+    p = connect_tiles(corn,dst,track,DBG=0)
+    (begin2,path2,end2) = unpack_path(p)
+    if DBG>1: print "# "
 
-        # In corner tile, connect end1 to begin2
-        # eg cornerconn = ["%s -> %s"] % (end1,begin2)
-        # or cornerconn = ["%s -> %s", "%s -> %s"] % (end1,mid1,mid2,begin2)]
-        cornerconn = find_cornerconn(end1,begin2,DBG=DBG)
+    # In corner tile, connect end1 to begin2
+    # eg cornerconn = ["%s -> %s"] % (end1,begin2)
+    # or cornerconn = ["%s -> %s", "%s -> %s"] % (end1,mid1,mid2,begin2)]
+    cornerconn = find_cornerconn(end1,begin2,DBG=DBG)
 
-        final_path = path1 + cornerconn + path2
-        if DBG: prettyprint_path(dir, begin1, path1, cornerconn, path2, end2)
-        return pack_path(begin1, final_path, end2)
+    final_path = path1 + cornerconn + path2
+    if DBG: prettyprint_path(dir, begin1, path1, cornerconn, path2, end2)
+    return pack_path(begin1, final_path, end2)
 
 
 def find_cornerconn(end1,begin2,DBG=0):

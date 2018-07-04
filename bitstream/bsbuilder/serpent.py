@@ -2058,44 +2058,27 @@ def sort_children(schildren):
     return sorted_schildren
 
 
-# def strip_extension(nodename, DBG=0):
-#     # E.g. 'ult_152_147_153_not_lut_bitPE.in0' => 'ult_152_147_153_not_lut_bitPE'
-#     parse = re.search('(.*bitPE)\..*', nodename)
-#     if parse:
-#         oldname = nodename
-#         nodename   = parse.group(1)
-#         s = indent + "  Look for '%s' not '%s'" % (nodename, oldname)
-#         if DBG: print(s)
-#     return nodename
-
 def process_nodes(sname, indent='# ', DBG=1):
     '''Place and route each unprocessed destination for nodename'''
 
-#     # E.g. 'ult_152_147_153_not_lut_bitPE.in0' => 'ult_152_147_153_not_lut_bitPE'
-#     sname = strip_extension(sname)
-
     # print indent+"Processing node '%s'" % sname
     src = getnode(sname)
+    if src.dests == []: return     # Early out
 
     # Build an ordered list of what to process; pe and mem first, then regs
     # With any luck, regs get a free ride somewhere along the path.
     sorted_schildren = sort_children(src.dests)
 
-    # (Optional) early out
-    if sorted_schildren == []:
-        print indent+"  '%s' has no children\n" % src.name
-        return
-
     # Place and route all dests
-    already_done = []
     if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_schildren)
+
+    recurse_list = []
     for dname in sorted_schildren:
+
         # Skip nodes that have already been placed and routed
         # EXCEPT INPUT NODE destinations
-
         print indent+"  Processing '%s' dest '%s'" % (sname,dname)
         if already_placed(sname, dname, indent, DBG):
-            already_done.append(dname)
             continue
 
         # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
@@ -2106,20 +2089,77 @@ def process_nodes(sname, indent='# ', DBG=1):
         # If placed tile is a mem tile, we probably need to build an associated wen_lut
         if getnode(dname).wen_lut == 'needs_wenlut': build_wen_lut(sname, dname, DBG)
 
-        # Do this as a separate pass for breadth-first...
-        # process_nodes(dname, indent+'    ')
+        # Build list of nodes to process next
+        recurse_list.append(dname)
 
-    # Recursively process each dest
-    for dname in sorted_schildren:
-        if dname in already_done: continue
+    # Recursively continue on each previously-unprocessed dest
+    for dname in recurse_list:
 
-        # basename => search for 'bitor_154_bitPE' not 'bitor_154_bitPE.in1'
+        # For nicer output e.g. 'addnode_1706' instead of 'addnode_1706.data.in.0'
         dname = base_nodename(dname)
 
         # When indent gets too long start over w/ '##', '###', '####' etc
         new_indent = indent+'    '
         if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
         process_nodes(dname, new_indent)
+
+
+
+
+
+
+def process_nodes_new(sname, indent='# ', DBG=1):
+    '''Place and route each unprocessed destination for nodename'''
+    process_node_list([sname], indent='# ', DBG=1)
+
+
+
+def process_node_list(src_list, indent='# ', DBG=1):
+    '''Place and route each unprocessed destination for nodename'''
+    if DBG: print(indent+"Processing source-node list '%s'" % src_list)
+
+    next_level = []
+    for sname in src_list:
+        sorted_schildren = sort_children(src.dests)
+        if sorted_children == []: continue
+        if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_schildren)
+        for dest in sorted_children:
+            print(indent+"  Processing '%s' dest '%s'" % (sname,dname))
+
+            # Skip nodes that have already been placed and routed
+            # EXCEPT INPUT NODE destinations
+            if already_placed(sname, dname, indent, DBG):
+                print(indent+"    Already been done")
+                continue
+
+            # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
+            rval = place_and_route(sname,dname,indent+' ')
+            assert rval
+
+            # Hmph! Hmph! Another special case!
+            # If placed tile is a mem tile, we probably need to build an associated wen_lut
+            if getnode(dname).wen_lut == 'needs_wenlut': build_wen_lut(sname, dname, DBG)
+
+            # Add dname to list of nodes to process next
+            next_level.append(dname)
+
+
+#     for dname in next_level:
+# 
+#         # When indent gets too long start over w/ '##', '###', '####' etc
+#         new_indent = indent+'    '
+#         if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
+#         process_nodes(dname, new_indent)
+
+
+    # When indent gets too long start over w/ '##', '###', '####' etc
+    new_indent = indent+'    '
+    if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
+
+    process_node_list(next_level, indent, DBG)
+
+
+
 
 
 def place_dname_in_input_node(dname, indent, DBG=0):

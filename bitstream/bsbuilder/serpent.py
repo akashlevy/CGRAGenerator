@@ -2171,11 +2171,6 @@ def replace_dest(sname, old_dest, new_dest, DBG=0):
         print snode.show()
         print ''
 
-    # FIXME delete this when we have moved on
-    if snode.name == 'lb_grad_yy_2_stencil_update_stream$lb1d_1$reg_1':
-        pwhere(2176, "MOVING ON NOW")
-        assert False
-
 
 def create_node_w_dest(sname, dname, DBG=0):
     if DBG: pwhere(2173, "# Create new node '%s' w/dest '%s'" % (sname, dname))
@@ -3071,7 +3066,8 @@ def get_nearest_tile(sname, dname, DBG=0):
 
     # If dname is a reg node, maybe it can go in the same tile with sname?
     # regsolo => not part of a regpe or regreg pair
-    if is_regsolo(dname) and not is_regop(sname):
+    # if is_regsolo(dname) and not is_regop(sname) OOPS regop != reg :(
+    if is_regsolo(dname) and not is_reg(sname):
         print "okay we will try to put it in the same tile with", sname
         return stileno
 

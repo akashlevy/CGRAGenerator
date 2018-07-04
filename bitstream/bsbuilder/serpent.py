@@ -2058,31 +2058,35 @@ def sort_children(schildren):
     return sorted_schildren
 
 
+# def strip_extension(nodename, DBG=0):
+#     # E.g. 'ult_152_147_153_not_lut_bitPE.in0' => 'ult_152_147_153_not_lut_bitPE'
+#     parse = re.search('(.*bitPE)\..*', nodename)
+#     if parse:
+#         oldname = nodename
+#         nodename   = parse.group(1)
+#         s = indent + "  Look for '%s' not '%s'" % (nodename, oldname)
+#         if DBG: print(s)
+#     return nodename
+
 def process_nodes(sname, indent='# ', DBG=1):
     '''Place and route each unprocessed destination for nodename'''
 
-    # E.g. 'ult_152_147_153_not_lut_bitPE.in0' => 'ult_152_147_153_not_lut_bitPE'
-    parse = re.search('(.*bitPE)\..*', sname)
-    if parse:
-        oldname = sname
-        sname   = parse.group(1)
-        s = indent + "  Look for '%s' not '%s'" % (sname, oldname)
-        if DBG: print(s)
+#     # E.g. 'ult_152_147_153_not_lut_bitPE.in0' => 'ult_152_147_153_not_lut_bitPE'
+#     sname = strip_extension(sname)
 
     # print indent+"Processing node '%s'" % sname
     src = getnode(sname)
 
     # Build an ordered list of what to process; pe and mem first, then regs
     # With any luck, regs get a free ride somewhere along the path.
-    
     sorted_schildren = sort_children(src.dests)
+
+    # (Optional) early out
     if sorted_schildren == []:
         print indent+"  '%s' has no children\n" % src.name
         return
 
-
     # Place and route all dests
-
     already_done = []
     if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_schildren)
     for dname in sorted_schildren:

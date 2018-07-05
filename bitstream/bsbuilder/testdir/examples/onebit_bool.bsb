@@ -9,14 +9,14 @@
 # PE tiles
 T21_ule(const50__148,wire) # ule_148_147_149_PE
 T22_uge(const10__152,wire) # ult_152_147_153_uge_PE
-T23_lutEE(wire,wire,const0_0) # bitor_154_155_156_lut_bitPE
 T40_uge(wire,const20__150) # ult_147_150_151_uge_PE
 T41_lutCA(wire,wire,wire)  # bitmux_157_157_149_lut_bitPE
 T42_lut66(wire,wire,const0_0) # bitxor_149_151_155_lut_bitPE
-T43_lut55(wire,const0_0,const0_0) # bitnot_156_lut_bitPE
-T54_lut55(wire,const0_0,const0_0) # ult_147_150_151_not_lut_bitPE
-T55_lut88(wire,wire,const0_0) # bitand_153_151_154_lut_bitPE
-T56_lut55(wire,const0_0,const0_0) # ult_152_147_153_not_lut_bitPE
+T54_lut55(wire,const0_0,const0_0) # bitnot_156_lut_bitPE
+T55_lutEE(wire,wire,const0_0) # bitor_154_155_156_lut_bitPE
+T72_lut55(wire,const0_0,const0_0) # ult_147_150_151_not_lut_bitPE
+T73_lut88(wire,wire,const0_0) # bitand_153_151_154_lut_bitPE
+T74_lut55(wire,const0_0,const0_0) # ult_152_147_153_not_lut_bitPE
 
 # LUT tiles for wen_lut's []
 
@@ -42,10 +42,9 @@ T22_in_s2t0 -> T22_out_s1t0
 T22_out_s1t0 -> T22_op2
 
 # bitand_153_151_154_lut_bitPE::bitor_154_155_156_lut_bitPE.bit.in.0
-T55_pe_outb -> T55_out_s3t4b
-T41_in_s1t4b -> T41_out_s3t4b
-T22_in_s1t4b -> T22_out_s0t4b
-T23_in_s2t4b -> T23_bit0
+T73_pe_outb -> T73_out_s3t4b
+T55_in_s1t4b -> T55_out_s2t4b
+T55_out_s2t4b -> T55_bit0
 
 # bitmux_157_157_149_lut_bitPE::OUTPUT_1bit
 T41_pe_outb -> T41_out_s1t0b
@@ -66,28 +65,27 @@ T265_in_s3t0b -> T265_out_s2t0b
 T264_in_s0t0b -> T264_out_s2t0b
 
 # bitnot_156_lut_bitPE::bitmux_157_157_149_lut_bitPE.bit.in.1
-T43_pe_outb -> T43_out_s2t4b
-T24_in_s4t4b -> T24_out_s6t4b
-T42_in_s0t4b -> T42_out_s2t4b
-T41_in_s0t4b -> T41_out_s1t4b
+T54_pe_outb -> T54_out_s3t4b
+T40_in_s1t4b -> T40_out_s0t4b
+T41_in_s2t4b -> T41_out_s1t4b
 T41_out_s1t4b -> T41_bit1
 
 # bitnot_156_lut_bitPE::bitmux_157_157_149_lut_bitPE.bit.in.2
-T43_pe_outb -> T43_out_s2t0b
-T24_in_s4t0b -> T24_out_s6t0b
-T42_in_s0t0b -> T42_out_s2t0b
-T41_in_s0t0b -> T41_out_s2t0b
+T54_pe_outb -> T54_out_s0t0b
+T55_in_s2t0b -> T55_out_s3t0b
+T41_in_s1t0b -> T41_out_s2t0b
 T41_out_s2t0b -> T41_bit2
 
 # bitor_154_155_156_lut_bitPE::bitnot_156_lut_bitPE.bit.in.0
-T23_pe_outb -> T23_out_s1t3b
-T42_in_s3t3b -> T42_out_s0t3b
-T24_in_s6t3b -> T24_out_s4t3b
-T43_in_s2t3b -> T43_bit0
+T55_pe_outb -> T55_out_s2t3b
+T54_in_s0t3b -> T54_out_s2t3b
+T54_out_s2t3b -> T54_bit0
 
 # bitxor_149_151_155_lut_bitPE::bitor_154_155_156_lut_bitPE.bit.in.1
-T42_pe_outb -> T42_out_s3t2b
-T23_in_s1t2b -> T23_bit1
+T42_pe_outb -> T42_out_s1t2b
+T56_in_s3t2b -> T56_out_s2t2b
+T55_in_s0t2b -> T55_out_s1t2b
+T55_out_s1t2b -> T55_bit1
 
 # ule_148_147_149_PE::bitmux_157_157_149_lut_bitPE.bit.in.0
 T21_pe_outb -> T21_out_s1t0b
@@ -101,12 +99,13 @@ T41_in_s2t1b -> T41_out_s0t1b
 T42_in_s2t1b -> T42_bit0
 
 # ult_147_150_151_not_lut_bitPE::bitand_153_151_154_lut_bitPE.bit.in.1
-T54_pe_outb -> T54_out_s0t2b
-T55_in_s2t2b -> T55_out_s1t2b
-T55_out_s1t2b -> T55_bit1
+T72_pe_outb -> T72_out_s0t2b
+T73_in_s2t2b -> T73_out_s1t2b
+T73_out_s1t2b -> T73_bit1
 
 # ult_147_150_151_not_lut_bitPE::bitxor_149_151_155_lut_bitPE.bit.in.1
-T54_pe_outb -> T54_out_s3t3b
+T72_pe_outb -> T72_out_s3t3b
+T54_in_s1t3b -> T54_out_s3t3b
 T40_in_s1t3b -> T40_out_s0t3b
 T41_in_s2t3b -> T41_out_s0t3b
 T42_in_s2t3b -> T42_out_s1t3b
@@ -114,20 +113,22 @@ T42_out_s1t3b -> T42_bit1
 
 # ult_147_150_151_uge_PE::ult_147_150_151_not_lut_bitPE.bit.in.0
 T40_pe_outb -> T40_out_s1t1b
-T54_in_s3t1b -> T54_out_s2t1b
-T54_out_s2t1b -> T54_bit0
+T54_in_s3t1b -> T54_out_s1t1b
+T72_in_s3t1b -> T72_out_s2t1b
+T72_out_s2t1b -> T72_bit0
 
 # ult_152_147_153_not_lut_bitPE::bitand_153_151_154_lut_bitPE.bit.in.0
-T56_pe_outb -> T56_out_s2t1b
-T55_in_s0t1b -> T55_out_s2t1b
-T55_out_s2t1b -> T55_bit0
+T74_pe_outb -> T74_out_s2t1b
+T73_in_s0t1b -> T73_out_s2t1b
+T73_out_s2t1b -> T73_bit0
 
 # ult_152_147_153_uge_PE::ult_152_147_153_not_lut_bitPE.bit.in.0
 T22_pe_outb -> T22_out_s0t0b
 T23_in_s2t0b -> T23_out_s1t0b
 T42_in_s3t0b -> T42_out_s1t0b
-T56_in_s3t0b -> T56_out_s2t0b
-T56_out_s2t0b -> T56_bit0
+T56_in_s3t0b -> T56_out_s1t0b
+T74_in_s3t0b -> T74_out_s2t0b
+T74_out_s2t0b -> T74_bit0
 
 # WARNING Using 'OUTPUT_1bit' as OUTPUT node
 # INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0

@@ -323,6 +323,22 @@ def test_fan_out():
 #     # [[0, 2], [-2, 2], [-1, 2], [0, 2], [1, 2]]
 #     # [[2, 0], [2, -1], [2, 0], [2, 1], [2, 2]]
 
+
+PREPLACED = {}
+PREPLACED['add_644_646_647$binop'] = (10,2) # r10c2, bout halfway down
+def preplaced(nodename, DBG=0):
+    '''# Hand placement! ho HO!  how terrible is this?'''
+    # Sanity check for preplacement dictionary
+    for k in PREPLACED: assert k == base_nodename(k)
+
+    d = base_nodename(nodename)
+    if d not in PREPLACED: return -1
+
+    (r,c) = PREPLACED[d]
+    t = cgra_info.rc2tileno(r,c)
+    return t
+
+
 def main(DBG=1):
     # test_connect_tiles()
     # sys.exit(0)
@@ -330,8 +346,6 @@ def main(DBG=1):
 
     global cgra_filename
     process_args()
-
-
 
     # oops FIXME swizzlers
     global SWIZZLE_TRACKS
@@ -393,6 +407,7 @@ def main(DBG=1):
     print '######################################################'
     print '# serpent.py: Process remaining nodes, starting with INPUT'
     process_nodes('INPUT')
+    # process_nodes_new('INPUT')
 
     print '########################################'
     print '# serpent.py: constant folding - do this LAST'
@@ -2104,62 +2119,52 @@ def process_nodes(sname, indent='# ', DBG=1):
         process_nodes(dname, new_indent)
 
 
-
-
-
-
-def process_nodes_new(sname, indent='# ', DBG=1):
-    '''Place and route each unprocessed destination for nodename'''
-    process_node_list([sname], indent='# ', DBG=1)
-
-
-
-def process_node_list(src_list, indent='# ', DBG=1):
-    '''Place and route each unprocessed destination for nodename'''
-    if DBG: print(indent+"Processing source-node list '%s'" % src_list)
-
-    next_level = []
-    for sname in src_list:
-        sorted_schildren = sort_children(src.dests)
-        if sorted_children == []: continue
-        if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_schildren)
-        for dest in sorted_children:
-            print(indent+"  Processing '%s' dest '%s'" % (sname,dname))
-
-            # Skip nodes that have already been placed and routed
-            # EXCEPT INPUT NODE destinations
-            if already_placed(sname, dname, indent, DBG):
-                print(indent+"    Already been done")
-                continue
-
-            # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
-            rval = place_and_route(sname,dname,indent+' ')
-            assert rval
-
-            # Hmph! Hmph! Another special case!
-            # If placed tile is a mem tile, we probably need to build an associated wen_lut
-            if getnode(dname).wen_lut == 'needs_wenlut': build_wen_lut(sname, dname, DBG)
-
-            # Add dname to list of nodes to process next
-            next_level.append(dname)
-
-
-#     for dname in next_level:
+########################################################################
+########################################################################
+########################################################################
+# True breadth-first seems to actually do worse...!
 # 
-#         # When indent gets too long start over w/ '##', '###', '####' etc
-#         new_indent = indent+'    '
-#         if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
-#         process_nodes(dname, new_indent)
-
-
-    # When indent gets too long start over w/ '##', '###', '####' etc
-    new_indent = indent+'    '
-    if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
-
-    process_node_list(next_level, indent, DBG)
-
-
-
+# def process_nodes_new(sname, indent='# ', DBG=1):
+#     '''Place and route each unprocessed destination for nodename'''
+#     process_node_list([sname], indent='# ', DBG=1)
+# 
+# def process_node_list(src_list, indent='# ', DBG=1):
+#     '''Place and route each unprocessed destination for nodename'''
+#     if DBG: print(indent+"Processing source-node list '%s'" % src_list)
+# 
+#     next_level = []
+#     for sname in src_list:
+#         src = getnode(sname)
+#         sorted_children = sort_children(src.dests)
+#         if sorted_children == []: continue
+#         if DBG: print indent+"Processing '%s' dests %s" % (sname,sorted_children)
+#         for dname in sorted_children:
+#             print(indent+"  Processing '%s' dest '%s'" % (sname,dname))
+# 
+#             # Skip nodes that have already been placed and routed
+#             # EXCEPT INPUT NODE destinations
+#             if already_placed(sname, dname, indent, DBG):
+#                 print(indent+"    Already been done")
+#                 continue
+# 
+#             # place_and_route has special cases for re-(place and routing) 'INPUT' and reg outputs
+#             rval = place_and_route(sname,dname,indent+' ')
+#             assert rval
+# 
+#             # Hmph! Hmph! Another special case!
+#             # If placed tile is a mem tile, we probably need to build an associated wen_lut
+#             if getnode(dname).wen_lut == 'needs_wenlut': build_wen_lut(sname, dname, DBG)
+# 
+#             # For nicer output e.g. 'addnode_1706' instead of 'addnode_1706.data.in.0'
+#             dname = base_nodename(dname)
+# 
+#             # Add dname to list of nodes to process next
+#             next_level.append(dname)
+# 
+#     # When indent gets too long start over w/ '##', '###', '####' etc
+#     new_indent = indent+'    '
+#     if len(new_indent) > 40: new_indent = re.sub(' ','',indent) + '# '
+#     process_node_list(next_level, indent, DBG)
 
 
 def place_dname_in_input_node(dname, indent, DBG=0):
@@ -2168,12 +2173,19 @@ def place_dname_in_input_node(dname, indent, DBG=0):
     # or if src is INPUT node and dest is a register,
     # we will put dest in same tile with INPUT.
     '''
-    global INPUT_OCCUPIED
-    if DBG>2: pwhere(2025, 'place_dname_in_input_node()')
+    if DBG>2: pwhere(2179, 'place_dname_in_input_node()')
     
+    global INPUT_OCCUPIED
+    pptile = preplaced(dname, DBG)
+
     # Early outs
     if INPUT_OCCUPIED:
         if DBG>2: print('  input occupied');
+        return False
+
+    elif pptile != -1:
+        print("ho HO '%s' cannot go in INPUT tile, it has a pre-designated home %d" \
+              % (dname, pptile))
         return False
 
     elif INPUT_TILE_PE_OUT not in resources[INPUT_TILENO]:
@@ -2191,7 +2203,8 @@ def place_dname_in_input_node(dname, indent, DBG=0):
         INPUT_OCCUPIED = True
         return True
 
-    else: return False
+    return False
+
 
 
 def place_dest(sname, dname, indent, DBG=0):
@@ -2805,6 +2818,46 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 # END def place_and_route()
 ########################################################################
 
+
+
+########################################################################
+# is_last_wen_lut_candidate() below is supposed to fix this error
+# (tmp.srpent.log4a)
+# -----
+#  Placed 'lb_grad_yy_2_stencil_update_stream$lbmem_2_0' in tile 125
+#  at location 'T125_mem_in' (2676)
+# 
+# ../../serpent.py/2243: # Must create a wen_lut for mem node
+# 'lb_grad_yy_2_stencil_update_stream$lbmem_2_0'
+# 
+#   So...to my right is tile 126 (0x126).  Is it free? False
+#  Okay, well then to my left is tile 124 (0x124), Is it free? False
+#  NO FREE TILES FOR WENLUT!!
+########################################################################
+global HAS_WEN_LUT; HAS_WEN_LUT = []
+def is_last_wen_lut_candidate(tileno):
+    '''
+    # Reserve tile to left of mem tile for wen lut
+    # If tileno is last hope for such space, return True
+    # Ha...
+    '''
+    global HAS_WEN_LUT
+    DBG=1
+    (r,c) = cgra_info.tileno2rc(tileno)
+    if (r%2)==1: return False
+    tile_to_right = cgra_info.rc2tileno(r,c+1)
+    if is_mem_tile(tile_to_right):
+        if DBG: pwhere(2880, "okay tile %d, to my right, is a mem tile" % tile_to_right)
+        if tile_to_right in HAS_WEN_LUT:
+            if DBG: print "okay mem tile %d has a wenlut already" % tile_to_right
+            return False
+        else:
+            if DBG: print(\
+               "I am tile %d and I am the last hope for mem tile %d to have a wen lut" \
+               % (tileno, tile_to_right))
+            return True
+    return False
+
 def build_wen_lut(sname, dname, DBG=0):
     assert getnode(dname).wen_lut == 'needs_wenlut'
 
@@ -2833,10 +2886,15 @@ def build_wen_lut(sname, dname, DBG=0):
         packer.FMT.order()
         print ''
     packer.allocate(cand, DBG=0)
+
     if DBG:
         print "# order after wen_lut alloc:"
         packer.FMT.order()
         print ''
+
+    # Hmmm FIXME looks like we used two where one would do... :(
+    # Remember cand for "is_last_wen_lut_candidate()" above
+    global HAS_WEN_LUT; HAS_WEN_LUT.append(cand)
 
     # Make a note to build the LUT later
     global WEN_LUT_LIST; WEN_LUT_LIST.append(cand)
@@ -3190,6 +3248,17 @@ def get_nearest_tile(sname, dname, DBG=0):
         packer.FMT.order()
         print ''
 
+    pptile = preplaced(dname, DBG)
+    if pptile != -1:
+        print("ho HO '%s' has a pre-designated home %d" % (dname, pptile))
+        packer.alloc_tile(pptile, DBG)
+        if DBG:
+            print "# order after get_nearest():"
+            packer.FMT.order()
+            print ''
+        return pptile
+
+
     dtype = getnode(dname).tiletype()
     stileno = getnode(sname).tileno
 
@@ -3204,9 +3273,27 @@ def get_nearest_tile(sname, dname, DBG=0):
         else:
             return stileno
 
-    # print "# i'm in tile %s" % packer.FMT.tileT(sname)
-    nearest = packer.find_nearest(stileno, dtype, DBG=0)
-    assert getnode(dname).tiletype() == cgra_info.mem_or_pe(nearest)
+    ########################################################################
+    save_exceptions = packer.EXCEPTIONS
+    found_acceptable_tile = False
+    while not found_acceptable_tile:
+        # def is_last_wen_lut_candidate(tileno):
+
+        # print 'foo looking for tile nearest to', stileno
+        # print "# i'm in tile %s" % packer.FMT.tileT(sname)
+        nearest = packer.find_nearest(stileno, dtype, DBG=0)
+        assert getnode(dname).tiletype() == cgra_info.mem_or_pe(nearest)
+
+        if is_last_wen_lut_candidate(nearest):
+            # print "OOP thatsa no good 666"
+            packer.unallocate(nearest, DBG=0)
+            packer.EXCEPTIONS.append(nearest)
+        else:
+            found_acceptable_tile = True
+
+    packer.EXCEPTIONS = save_exceptions
+    ########################################################################
+
 
     # print 'found nearest tile', nearest
     assert nearest != -1

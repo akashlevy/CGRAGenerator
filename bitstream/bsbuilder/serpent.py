@@ -1,5 +1,4 @@
 #!/usr/bin/python2
-
 import sys
 import re
 import os
@@ -498,7 +497,10 @@ def final_output(DBG=0):
     print '# ROUTING'
     print ''
     for sname in sorted(nodes):
+
+        # Don't route constants haha they get folded into ALU op
         if is_const(sname): continue
+
         src = getnode(sname)
         for dname in src.dests:
             dst = getnode(dname)
@@ -1563,7 +1565,27 @@ def initialize_node_OUTPUT_1bit():
         getnode('OUTPUT_1bit').place(tileno, input, output)
 
 
-def is_const(nodename):  return nodename.find('const') == 0
+def constval(nodename):
+    # OLD: 'const0__334'
+    kval = re.search('const(\d+)', nodename)
+    if kval: return int(kval.group(1))
+    # 
+    kval = re.search('[$]c([0-9]+)$', nodename)
+    if kval: return int(kval.group(1))
+    # 
+    return None
+
+
+def is_const(nodename):
+    old_const = (nodename.find('const') == 0)
+    # 
+    # NEW: 'bitand_791_792_793$c0'
+    # FIXME this looks fragile also not sure if 100% correct!
+    new_const = (re.search('[$]c[0-9]+$', nodename) != None)
+    # 
+    return old_const or new_const
+
+
 def is_reg(nodename):
 
     # old - still good!  with latest json2dot maybe
@@ -1752,7 +1774,8 @@ def test_dstports():
 
 def constant_folding(DBG=0):
     # Combine "const" nodes with their associated PEs
-
+    # DBG=9
+    if DBG>2: pwhere(1770, "CONSTANT FOLDING")
     # Process the constants
     # dests['const16_16'] = ['mul_48716_488_PE']
     global nodes
@@ -1760,6 +1783,7 @@ def constant_folding(DBG=0):
         if not is_const(n): continue
 
         k = getnode(n)
+        if DBG>2: print("Folding constant node '%s'" % k.name)
 
         # Constant has only one destination (the PE)
         dest = k.dests
@@ -1771,8 +1795,10 @@ def constant_folding(DBG=0):
         op = pe.addop(k.name, 'either')
 
         # 'input0' is the integer value of theconstant
-        kval = re.search('const(\d+)', k.name).group(1)
-        k.input0 = int(kval)
+#         kval = re.search('const(\d+)', k.name).group(1)
+#         k.input0 = int(kval)
+
+        k.input0 = constval(k.name)
 
         k.placed = True
         k.tileno = pe.tileno

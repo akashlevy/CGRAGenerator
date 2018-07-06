@@ -326,8 +326,11 @@ def test_fan_out():
 #     # [[2, 0], [2, -1], [2, 0], [2, 1], [2, 2]]
 
 
+
+# It's here when we need it I guess
 PREPLACED = {}
-PREPLACED['add_644_646_647$binop'] = (10,2) # r10c2, bout halfway down
+# PREPLACED['add_644_646_647$binop'] = (10,2) # r10c2, bout halfway down
+# 
 def preplaced(nodename, DBG=0):
     '''# Hand placement! ho HO!  how terrible is this?'''
     # Sanity check for preplacement dictionary
@@ -2920,6 +2923,10 @@ def is_last_wen_lut_candidate(tileno):
 def build_wen_lut(sname, dname, DBG=0):
     assert getnode(dname).wen_lut == 'needs_wenlut'
 
+    # For the purposes of this exercise I guess we get to ignore exceptions...?
+    saved_exceptions = packer.EXCEPTIONS
+    packer.EXCEPTIONS = []
+
     if DBG: pwhere(2243, "#   Must create a wen_lut for mem node '%s'" % dname)
     mtileno = getnode(dname).tileno
     (r,c) = cgra_info.tileno2rc(mtileno)
@@ -2932,7 +2939,7 @@ def build_wen_lut(sname, dname, DBG=0):
     if not packer.is_free(cand):
         # Not free
         candside = 'left'; cand = cgra_info.rc2tileno(r,c-1)
-        if DBG: print "#  Okay, well then to my left is tile %d (0x%d)," % (cand,cand),
+        if DBG: print "#  Okay, well then to my left is tile %d (0x%x)," % (cand,cand),
         if DBG: print "Is it free?", packer.is_free(cand)
         if not packer.is_free(cand): assert False, "oh that's a shame"
 
@@ -2960,6 +2967,9 @@ def build_wen_lut(sname, dname, DBG=0):
 
     # Make a note to build the wen_lut path later
     getnode(dname).wen_lut = (cand,candside) # E.g. "(25, 'right')"
+
+    # Restore what we broke
+    packer.EXCEPTIONS = saved_exceptions
 
 
 def route_wen(memtile):
@@ -3099,34 +3109,29 @@ def place_pe_in_input_tile(dname):
 #     # e.g. serpent_connect_within_tile(node, 'T136_in_s1t1', 'T136_op2', 136)?
 #     cend = serpent_connect_within_tile(dnode, endpoint, dstport, dtileno, DBG=DBG)
 
-
-
     sname = 'INPUT'
     p1 = INPUT_WIRE_T
     p2 = "T%d_%s" % (INPUT_TILE, op)
     path = getnode('INPUT').connect(p1,p2,DBG=DBG)
     if not path:
-        if DBG>1: print 'oops no route from p1 to p2'
-
-
-
-
-
-
-    # FIXME this exact code is repeated elsewhere!!!
-    print "# 2. Add the connection ('path') to src node's src->dst route list 3088"
-
-# add_route(path, 'INPUT'
-# def add_route(path, sname, dname, DBG=0):
-
+        if DBG>1:
+            print 'oops no route from p1 to p2'
+            print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
+            assert False
 
     if path == False:
-        #BOOKMARK
-        print 666, "oops hey what. path is false!!?"
+        # E.g.
+        # WHOOP! There it is: out_BUS16_S1_T0
+        # Oops middle node is occupied; we will have to try again
+        print "oops hey what. path is false!!?"
+        print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
         pstack()
+        assert False
 
+    # FIXME this exact code is repeated elsewhere!!!  multiple places even maybe
+    print "# 2. Add the connection ('path') to src node's src->dst route list 3088"
 
-    # getnode('INPUT').route[dname] = path
+    assert sname == 'INPUT'
     getnode(sname).route[dname] = path
     if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
        (path, sname, dname)
@@ -3137,8 +3142,6 @@ def place_pe_in_input_tile(dname):
     print ""
 
     # getnode('INPUT').show()
-
-
 
     if DBG: print "# Route '%s -> %s' is now complete for INPUT" % (sname,dname)
 

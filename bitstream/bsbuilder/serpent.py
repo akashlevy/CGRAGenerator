@@ -2,6 +2,8 @@
 import sys
 import re
 import os
+import traceback
+
 
 # Import cgra_info via relative path
 mypath = os.path.realpath(__file__)
@@ -1980,49 +1982,58 @@ def stripT(wirename):
     return re.search('^T\d+_(.*)',wirename).group(1)
 
 
-def add_route(sname, dname, tileno, src_port, dst_port, DBG=1):
-    '''
-    Within tile "tileno" build connection "src_port -> dst_port"
-    Add connection to src node as part of route[dst]
-    Add ports to netlist for 'src'
-    Port names have the form 'T0_in_s1t1'
-    '''
 
-    if dst_port == 'choose_op':
-        # Must choose port indicated by name
-        # I.e. foo.in0,in1 must connect to op1, op2 respectively (that's right)
-        # (FIXME could make exception for commutative ops I spose)
-        parse = re.search('\.in\.([0-9])$', dname)
-        if not parse: assert False, 'oof what now'
-        which_in = int(parse.group(1));
-        op = 'op%d' % (which_in + 1)
-        dst_port = "T%d_%s" % (getnode(dname).tileno, op)
-        if DBG: print "# I must connect '%s' to '%s' (%s)" % (sname, dname, op)
-            
-    # Can't route unplaced nodes, right?
-    assert getnode(sname).placed == True
-    assert getnode(dname).placed == True
 
-    # Build the port-to-port connection
-    connection = "%s -> %s" % (src_port, dst_port)
-    if DBG: print "#   Routed ports '%s'" % connection
 
-    # getnode(sname).show()
+# ??? NEVER USED ???
+# def add_route(sname, dname, tileno, src_port, dst_port, DBG=1):
+#     '''
+#     Within tile "tileno" build connection "src_port -> dst_port"
+#     Add connection to src node as part of route[dst]
+#     Add ports to netlist for 'src'
+#     Port names have the form 'T0_in_s1t1'
+#     '''
+# 
+#     if dst_port == 'choose_op':
+#         # Must choose port indicated by name
+#         # I.e. foo.in0,in1 must connect to op1, op2 respectively (that's right)
+#         # (FIXME could make exception for commutative ops I spose)
+#         parse = re.search('\.in\.([0-9])$', dname)
+#         if not parse: assert False, 'oof what now'
+#         which_in = int(parse.group(1));
+#         op = 'op%d' % (which_in + 1)
+#         dst_port = "T%d_%s" % (getnode(dname).tileno, op)
+#         if DBG: print "# I must connect '%s' to '%s' (%s)" % (sname, dname, op)
+#             
+#     # Can't route unplaced nodes, right?
+#     assert getnode(sname).placed == True
+#     assert getnode(dname).placed == True
+# 
+#     # Build the port-to-port connection
+#     connection = "%s -> %s" % (src_port, dst_port)
+#     if DBG: print "#   Routed ports '%s'" % connection
+# 
+#     # getnode(sname).show()
+# 
+#     # Add the connection to src->dst route list
+#     getnode(sname).route[dname].append(connection)
+#     if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
+#        (connection, sname, dname)
+#     # getnode(sname).routed[dname] = True
+#     if DBG: print "#   Now node['%s'].route['%s'] = %s" % \
+#        (sname,dname,getnode(sname).route[dname])
+# 
+#     # Add the ports to netlist of src node
+#     getnode(sname).net.extend([src_port, dst_port])
+#     if DBG: print "#   Added ['%s','%s'] to netlist" % (src_port, dst_port)
+#     if DBG: print "#   Now node['%s'].net = %s" % (sname,getnode(sname).net)
+# 
+#     if DBG: getnode(sname).show()
 
-    # Add the connection to src->dst route list
-    getnode(sname).route[dname].append(connection)
-    if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
-       (connection, sname, dname)
-    # getnode(sname).routed[dname] = True
-    if DBG: print "#   Now node['%s'].route['%s'] = %s" % \
-       (sname,dname,getnode(sname).route[dname])
 
-    # Add the ports to netlist of src node
-    getnode(sname).net.extend([src_port, dst_port])
-    if DBG: print "#   Added ['%s','%s'] to netlist" % (src_port, dst_port)
-    if DBG: print "#   Now node['%s'].net = %s" % (sname,getnode(sname).net)
 
-    if DBG: getnode(sname).show()
+
+
 
 # FIXME OH NOOOOOO too many names for the same thing?
 # ALSO; shouldn't this be a func in class Node???
@@ -2764,7 +2775,8 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 #             print 'now what?'
 #             print 'add reg to REGISTERS'
 
-        print "# 2. Add the connection to src node's src->dst route list"
+        # FIXME this exact code is repeated elsewhere!!!
+        print "# 2. Add the connection to src node's src->dst route list 2767"
         getnode(sname).route[dname] = path
         if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
            (path, sname, dname)
@@ -3084,8 +3096,25 @@ def place_pe_in_input_tile(dname):
     if not path:
         if DBG>1: print 'oops no route from p1 to p2'
 
-    print "# 2. Add the connection to src node's src->dst route list"
-    getnode('INPUT').route[dname] = path
+
+
+
+
+
+    # FIXME this exact code is repeated elsewhere!!!
+    print "# 2. Add the connection ('path') to src node's src->dst route list 3088"
+
+# add_route(path, 'INPUT'
+# def add_route(path, sname, dname, DBG=0):
+
+
+    if path == False:
+        print 666, "oops hey what. path is false!!?"
+        traceback.print_stack()
+
+
+    # getnode('INPUT').route[dname] = path
+    getnode(sname).route[dname] = path
     if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
        (path, sname, dname)
     # getnode(sname).routed[dname] = True
@@ -3193,9 +3222,8 @@ def place_folded_reg_in_input_tile(dname):
     d_out = place_regop_op(dname, dtileno, d_in, DBG=9)
     getnode(dname).place(dtileno, d_in, d_out, DBG)
 
-    # A lot of this is duplicated from place() :(
-
-    print "# 2. Add the connection to src node's src->dst route list"
+    # FIXME A lot of this is duplicated from place() :(
+    print "# 2. Add the connection to src node's src->dst route list 3200"
     path = '%s -> %s' % (INPUT_WIRE_T, d_in)
     path = [path]
     getnode(sname).route[dname] = path

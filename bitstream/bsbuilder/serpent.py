@@ -4,6 +4,7 @@ import re
 import os
 import traceback
 
+def pstack(): traceback.print_stack(file=sys.stdout)
 
 # Import cgra_info via relative path
 mypath = os.path.realpath(__file__)
@@ -1068,6 +1069,11 @@ class Node:
 
 # FIXME this should be part of cgra_info.connect_within_tile() !!!
 def serpent_connect_within_tile(node, a, b, T, DBG=0):
+
+    # e.g. serpent_connect_within_tile(node, 'T136_in_s1t1', 'T136_op2', 136)?
+    # BUT really should be called only via node.connect('T136_in_s1t1', 'T136_op2', 136) above
+    # Returns False is unsuccessful, otherwise returns a->b path e.g.
+    # ['T118_in_s1t3 -> T118_out_s2t3', 'T118_out_s2t3 -> T118_op1']
 
     DBG = max(0,DBG)
     if a[0] == 'T': T = int(re.search('^T(\d+)', a).group(1))
@@ -3084,10 +3090,16 @@ def place_pe_in_input_tile(dname):
 
 
     # add_route(sname, dname, INPUT_TILE, INPUT_WIRE_T, 'choose_op')
-    # Above assumes can conect input wire to chosen op e.g.
+    # Above assumes can connect input wire to chosen op e.g.
     # 'T21_in_s2t0 -> T21_op2'
     # BUT NO can connect to op1 but not op2 directly
     # how do we check?
+
+# BOOKMARK
+#     # e.g. serpent_connect_within_tile(node, 'T136_in_s1t1', 'T136_op2', 136)?
+#     cend = serpent_connect_within_tile(dnode, endpoint, dstport, dtileno, DBG=DBG)
+
+
 
     sname = 'INPUT'
     p1 = INPUT_WIRE_T
@@ -3109,8 +3121,9 @@ def place_pe_in_input_tile(dname):
 
 
     if path == False:
+        #BOOKMARK
         print 666, "oops hey what. path is false!!?"
-        traceback.print_stack()
+        pstack()
 
 
     # getnode('INPUT').route[dname] = path
@@ -3988,12 +4001,20 @@ def can_connect_end(endpoint, dstport, DBG=0):
 
     dtileno = parseT(endpoint)[0]
     dnode = nodetile(dtileno)
-
+    # DBG=9
     if DBG>1 and (dnode != False):
+        # E.g. 'Can we connect 'T136_in_s1t1' to 'T136_op2' as part of
+        # 'mul_649_649_650$binop' net? (../../serpent.py/2933)
+        # 
         print "Can we connect '%s' to '%s' as part of '%s' net? (%s)"\
               % (endpoint,dstport,dnode.name,where(2933))
 
-    cend = serpent_connect_within_tile(dnode, endpoint, dstport, dtileno, DBG=DBG)
+    if dnode != False:
+        # e.g. dnode.connect('T136_in_s1t1', 'T136_op2')?
+        cend = dnode.connect(endpoint, dstport, DBG=DBG)
+    else:
+        # e.g. serpent_connect_within_tile(node, 'T136_in_s1t1', 'T136_op2', 136)?
+        cend = serpent_connect_within_tile(dnode, endpoint, dstport, dtileno, DBG=DBG)
 
     if not cend:
         if DBG>1: print 'oops no route from p1 to p2'

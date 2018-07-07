@@ -642,19 +642,60 @@ def print_oplist(DBG=0):
                    "That there LUT value 0x%x don't look so good" % lv
 
         elif is_pe(sname):
-            # OLD: addmul = sname[0:3] # 'add' or 'mul'
+            # OLD: opname = sname[0:3] # 'add' or 'mul'
 
             # NEW
-            # E.g. add_721_722_723$binop mul_649_649_650$binop ashr_761_763_765$binop
+            #   add_721_722_723$binop
+            #   mul_649_649_650$binop
+
+            # NEW for harris 7/2018
+            # ashr_761_763_765$binop
+            # sle100_775_792$compop
+            # "slt_790_775_791$comp$compop.data.in.1"
+
             # assert sname[-5:] == binop
             parse = re.search(r'^([^_]+)_', sname)
-            if parse: addmul = parse.group(1)
+            if parse: opname = parse.group(1)
+
+            # Rewrites for harris
+            
+            # "sle100_775_792$compop" -> "bitand_791_792_793$lut$lut.bit.in.1"; # lut_value 0x00
+            if re.search(r'^sle[0-9]', sname): opname = 'sle'
+            if re.search(r'^ule[0-9]', sname): opname = 'ule' # why not
+
+
+
+            # "slt_790_775_791$not$c01" -> "slt_790_775_791$not$lut$lut.bit.in.1";
+            # POSTPONED for now, these bit constants are ignored by serpent :(
+
+            # "slt_790_775_791$not$lut$lut" -> "..."; # lut_value 0x55
+            # already does the right thing elsewhere i guess
+
+            # "slt_790_775_791$comp$compop" -> "foo.bit.in.0"; # lut_value 0x00
+            # "slt_790_775_791$comp$compop":{
+            #     "modargs":{"alu_op":[["BitVector",6],"6'h04"], (6'h04 == GTE!)
+            # reused same not-lut trick as before, see below
+
+
 
             # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; its a uge :o
-            if re.search(r'^ult.*_uge_PE$', sname): addmul = 'uge'
+            if re.search(r'^ult.*_uge_PE$', sname): opname = 'uge'
+
+            # OY!  Mapper turns slt into an slt$compop with code 0x4 (GTE)
+            # followed by slt$not$lut$lut to make SLT
+            # 
+            # NEW tricky.  Mapper uses same trick but w/o the extra clues
+            # It is assumed that the slt will be followed by a NOT-LUT
+            # FIXME could/should use asserts to verify...
+            # 
+            # "slt_790_775_791$comp$compop" -> "slt_790_775_791$not$lut$lut.bit.in.0"; # lut_value 0x00
+            # "slt_790_775_791$not$lut$lut" -> "bitand_791_792_793$lut$lut.bit.in.0"; # lut_value 0x55
+            if re.search(r'^slt.*', sname): opname = 'sge'
 
             # ...I assume the converse will also be true...?
-            if re.search(r'^ugt.*_ule_PE$', sname): addmul = 'ule'
+            if re.search(r'^ugt.*_ule_PE$', sname): opname = 'ule'
+
+
 
             if (src.input0 == False) or (src.input1 == False):
                 print('');
@@ -665,7 +706,7 @@ def print_oplist(DBG=0):
 
             op1 = optype(src.input0)
             op2 = optype(src.input1)
-            opline = 'T%d_%s(%s,%s)' % (src.tileno, addmul, op1, op2)
+            opline = 'T%d_%s(%s,%s)' % (src.tileno, opname, op1, op2)
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
 
@@ -1592,25 +1633,30 @@ def initialize_node_OUTPUT_1bit():
         getnode('OUTPUT_1bit').place(tileno, input, output)
 
 
-def constval(nodename):
-    # OLD: 'const0__334'
-    kval = re.search('const(\d+)', nodename)
-    if kval: return int(kval.group(1))
-    # 
-    kval = re.search('[$]c([0-9]+)$', nodename)
-    if kval: return int(kval.group(1))
-    # 
-    return None
-
-
 def is_const(nodename):
     old_const = (nodename.find('const') == 0)
     # 
     # NEW: 'bitand_791_792_793$c0'
     # FIXME this looks fragile also not sure if 100% correct!
+    # FIXME json should encode the constant as a comment like lut_value
     new_const = (re.search('[$]c[0-9]+$', nodename) != None)
-    # 
+
     return old_const or new_const
+
+
+def constval(nodename):
+    # OLD: 'const0__334'
+    kval = re.search('const(\d+)', nodename)
+    if kval: return int(kval.group(1))
+    #
+    # NEW: slt_790_775_791$not$c0 is 0
+    # NEW: slt_790_775_791$not$c01 is also 0
+    # note $c0, $c01 NOT USED in harris, no need to fix for now :(
+    # FIXME really should get value from json file
+    kval = re.search('[$]c([0-9]+)$', nodename)
+    if kval: return int(kval.group(1))
+    # 
+    return None
 
 
 def is_reg(nodename):
@@ -1821,7 +1867,7 @@ def constant_folding(DBG=0):
 
         op = pe.addop(k.name, 'either')
 
-        # 'input0' is the integer value of theconstant
+        # 'input0' is the integer value of the constant
 #         kval = re.search('const(\d+)', k.name).group(1)
 #         k.input0 = int(kval)
 

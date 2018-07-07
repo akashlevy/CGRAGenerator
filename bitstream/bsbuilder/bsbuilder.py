@@ -709,14 +709,23 @@ op_data['xor']     = 0x00000014
 op_data['lut']   = 0x0000000E # ?? right ??
 
 
-
+# aliases (old)
 # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
 op_data['uge']     = op_data['gte']
-op_data['ule']     = op_data['lte']
 op_data['max']     = op_data['gte']
+op_data['umax']    = op_data['gte']
+
+op_data['ule']     = op_data['lte']
 op_data['min']     = op_data['lte']
-op_data['umax']     = op_data['gte']
-op_data['umin']     = op_data['lte']
+op_data['umin']    = op_data['lte']
+
+# Added for Harris 7/2018, probably should NOT work...
+# FIXME Will have to fix this some day SOON maybe
+# signed, unsigned, who cares!!!???  all map to same FIXME
+op_data['ashr'] = op_data['rshft']
+op_data['smax'] = op_data['gte']
+op_data['sle']  = op_data['lte']
+op_data['sge']  = op_data['gte']
 
 
 # A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2

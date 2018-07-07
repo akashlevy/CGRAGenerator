@@ -601,6 +601,29 @@ def connect_dont_cares(operand, opno, DBG=0):
     else: return (False, operand)
 
 
+def get_opname(sname, DBG=0):
+    # E.g. sname = 'slt_790_775_791$comp$compop.data.in.1' => opname = 'slt'
+
+    # OLD: opname = sname[0:3] # 'add' or 'mul'
+    # add_514_518_519_PE
+
+    # NEW
+    #   add_721_722_723$binop
+    #   mul_649_649_650$binop
+
+    # NEW for harris 7/2018
+    # ashr_761_763_765$binop
+    # sle100_775_792$compop
+    # "slt_790_775_791$comp$compop.data.in.1"
+    # "mux_793_794_795$mux"
+
+    # assert sname[-5:] == binop
+    parse = re.search(r'^([^_]+)_', sname)
+    if parse: opname = parse.group(1)
+    else: assert False
+    return opname
+
+
 def print_oplist(DBG=0):
     oplist = range(cgra_info.ntiles())
     for sname in sorted(nodes):
@@ -615,21 +638,13 @@ def print_oplist(DBG=0):
             (dc,src.bit0) = connect_dont_cares(src.bit0, 0)
             (dc,src.bit1) = connect_dont_cares(src.bit1, 1)
             (dc,src.bit2) = connect_dont_cares(src.bit2, 2)
-            if dc:
-                if DBG:
-                    print("# Fixed dont-care(s) maybe")
-                    src.show()
+            if dc and DBG:
+                print("# Fixed dont-care(s) maybe")
+                src.show()
 
-            if (src.bit0 == False) or (src.bit1 == False) or (src.bit2 == False):
-                if DBG:
-                    print(''); getnode(sname).show(); print('');
-                assert src.bit0 != False, "LUT '%s' has no bit0 operand; why?" % sname
-                assert src.bit1 != False, "LUT '%s' has no bit1 operand; why?" % sname
-                assert src.bit2 != False, "LUT '%s' has no bit2 operand; why?" % sname
-
-            bit0 = optype(src.bit0)
-            bit1 = optype(src.bit1)
-            bit2 = optype(src.bit2)
+            bit0 = optype(src.bit0, 'bit0', DBG)
+            bit1 = optype(src.bit1, 'bit1', DBG)
+            bit2 = optype(src.bit2, 'bit2', DBG)
 
             opline = 'T%d_lut%X(%s,%s,%s)' % (src.tileno, src.lut_value, bit0, bit1, bit2)
             opcomm = '# %s' % sname
@@ -642,20 +657,8 @@ def print_oplist(DBG=0):
                    "That there LUT value 0x%x don't look so good" % lv
 
         elif is_pe(sname):
-            # OLD: opname = sname[0:3] # 'add' or 'mul'
-
-            # NEW
-            #   add_721_722_723$binop
-            #   mul_649_649_650$binop
-
-            # NEW for harris 7/2018
-            # ashr_761_763_765$binop
-            # sle100_775_792$compop
-            # "slt_790_775_791$comp$compop.data.in.1"
-
-            # assert sname[-5:] == binop
-            parse = re.search(r'^([^_]+)_', sname)
-            if parse: opname = parse.group(1)
+            # E.g. sname = 'slt_790_775_791$comp$compop.data.in.1' => opname = 'slt'
+            opname = get_opname(sname)
 
             # Rewrites for harris
             
@@ -695,18 +698,22 @@ def print_oplist(DBG=0):
             # ...I assume the converse will also be true...?
             if re.search(r'^ugt.*_ule_PE$', sname): opname = 'ule'
 
+            op1 = optype(src.input0, 'op1', DBG=1)
+            op2 = optype(src.input1, 'op2', DBG=1)
 
+            # MUX
+            # node='mux_793_794_795$mux'
+            #   input0='False'
+            #   input1='False'
+            #   bit0='T139_bit0'
+            #   bit1='False'
+            #   bit2='False'
+            if opname == 'mux':
+                bit0 = optype(src.bit0, 'bit0', DBG)
+                opline = 'T%d_%s(%s,%s,%s)' % (src.tileno, opname, op1, op2, bit0)
+            else:
+                opline = 'T%d_%s(%s,%s)' % (src.tileno, opname, op1, op2)
 
-            if (src.input0 == False) or (src.input1 == False):
-                print('');
-                getnode(sname).show()
-                print('');
-                assert src.input0 != False, "PE op '%s' has no op1; why?" % sname
-                assert src.input1 != False, "PE op '%s' has no op2; why?" % sname
-
-            op1 = optype(src.input0)
-            op2 = optype(src.input1)
-            opline = 'T%d_%s(%s,%s)' % (src.tileno, opname, op1, op2)
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
 
@@ -741,12 +748,19 @@ def print_memlist():
     print ''
 
 
-def optype(input):
+# E.g.  bit0 = optype(src.bit0, 'bit0')
+# returns e.g. 'wire' or 'const0_0' or 'reg'
+def optype(input, opname, DBG=0):
     '''
     Where input is one of e.g. 'T32_op1', 'const32_32'
     and where 'T32_op1' may or may not be in REGISTERS list.
     Return 'reg', 'wire' or name of const e.g. 'const0_0'
     '''
+
+    if input == False:
+        if DBG: print(''); getnode(sname).show(); print('');
+        assert input != False, "LUT/PE '%s' has no %s operand; why?" % (sname, opname)
+
     if is_const(input):                return input
     elif re.search('op.\(r\)', input): return 'reg'
     elif input in REGISTERS:           return 'reg'

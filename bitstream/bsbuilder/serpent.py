@@ -642,18 +642,19 @@ def print_oplist(DBG=0):
                    "That there LUT value 0x%x don't look so good" % lv
 
         elif is_pe(sname):
-            addmul = sname[0:3] # 'add' or 'mul'
+            # OLD: addmul = sname[0:3] # 'add' or 'mul'
 
-
+            # NEW
+            # E.g. add_721_722_723$binop mul_649_649_650$binop ashr_761_763_765$binop
+            # assert sname[-5:] == binop
+            parse = re.search(r'^([^_]+)_', sname)
+            if parse: addmul = parse.group(1)
 
             # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; its a uge :o
             if re.search(r'^ult.*_uge_PE$', sname): addmul = 'uge'
 
             # ...I assume the converse will also be true...?
             if re.search(r'^ugt.*_ule_PE$', sname): addmul = 'ule'
-
-
-
 
             if (src.input0 == False) or (src.input1 == False):
                 print('');

@@ -443,23 +443,9 @@ def final_check(DBG=0):
     '''Make sure everyone has been allocated to a tile'''
     for sname in sorted(nodes):
         if getnode(sname).tileno == -1:
-
-            # ERROR? Node unassigned (tileno = -1)?
-            # 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0$c0_lutcnst'
-
-            if sname[-7:] == 'lutcnst'\
-               or sname[-5:] == 'cg_en'\
-               or sname[-3:] == 'ren'\
-               or False:
-                pwhere(446, "WARNING ignoring node '%s'" % sname)
-                if DBG>2:
-                    print("WARNING Note I ignore lutcnst b/c it usually drives ren and cg_en")
-                    print("WARNING and also I ignore ren and cg_en too")
-                    print("WARNING oh boy this gonna be trouble one fine day...")
-                    print("")
-            else:
-                errmsg = "\nERROR? Node '%s' unassigned (tileno = -1)?" % sname
-                print errmsg; assert False, errmsg
+            errmsg = "\nERROR? Node '%s' unassigned (tileno = -1)?" % sname
+            print errmsg;
+            assert False, errmsg
 
 
 def final_output(DBG=0):
@@ -728,23 +714,27 @@ def print_oplist(DBG=0):
     for i in WEN_LUT_LIST: print "T%d_lutFF(const0,const0,const0)" % i
     print ''
 
+
 def print_memlist():
     # E.g. prints
     #     'T3_mem_64    # mem_1 fifo_depth=64'
     #     'T17_mem_64   # mem_2 fifo_depth=64'
-    memlist = range(cgra_info.ntiles())
+    memlist = {}
+
     for sname in sorted(nodes):
+        # FIXME Why is this here?  Can we be both const and mem?
         if is_const(sname): continue
         src = getnode(sname)
-        if is_mem(sname):
+
+        if is_mem_node(sname):
+            # print("# Adding mem node", sname)
             opline = 'T%d_mem_%d' % (src.tileno, src.fifo_depth)
             opcomm = '# %s fifo_depth=%d' % (sname, src.fifo_depth)
             memlist[src.tileno] = '%-12s %s' % (opline,opcomm)
 
     # Print in tile order, 0 to 'ntiles'
-    for i in range(cgra_info.ntiles()):
-        if memlist[i] != i: print memlist[i]
-
+    for i in sorted(memlist):
+        print memlist[i]
     print ''
 
 
@@ -1350,7 +1340,6 @@ def build_node(nodes, line, DBG=0):
     # Rewrite to simplify
     # e.g. "INPUT" -> "lb_p4_clamped_stencil_update_stream$mem_1$cgramem"; # fifo_depth 64
     # =>   "INPUT" -> "mem_1"; # fifo_depth 64
-
     line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
     line = re.sub("\$cgramem", "", line)
     if DBG>1:
@@ -1369,17 +1358,31 @@ def build_node(nodes, line, DBG=0):
     # if lhs == "io16in_in_0.out": lhs = "INPUT"
     # if rhs == "io16_out.in"    : rhs = "OUTPUT"
 
-    if DBG>1: print("Building rhs node" + rhs)
+    # Ignore lutcnst driving cg_en, ren, wen e.g.
+    #  "lb_gx2sus$lbmem_1_0$c0_lutcnst" -> "lb_gx2sus$lbmem_1_0$cgramem.cg_en";
+    #  "lb_gx2sus$lbmem_1_0$c1_lutcnst" -> "lb_gx2sus$lbmem_1_0$cgramem.ren";
+    #  "lb_gx2sus_wen1_lutcnst"         -> "lb_gx2sus$lbmem_1_0$cgramem.wen";
+    if (lhs.find('lutcnst') > 0) and re.search(r'[.](cg_en|ren|wen)$', rhs):
+        if DBG: print('# Ignoring connection "%s" -> "%s"' % (lhs,rhs))
+        return
+
+    if DBG>1: print("Building rhs node " + rhs)
     addnode(rhs);
 
+    # FIXME after new regime fully implemented
+    # Backward compatibility---can delete after new regime fully implemented
     # Hm this is kind of terrible maybe FIXME/hack
     # Ignore wen_lut nodes e.g. 'lb_p4_clamped_stencil_update_stream_wen_lut_bitPE'
     if lhs.find('wen_lut') > 0:
+        if DBG: print("Ignoring wen_lut node '%s'" % lhs)
+        return
+
+    # FIXME should this be part of addnode()?  yes i think so...
+    # ALL mem nodes need wen luts....right...?
+    if is_mem_node(rhs):
         # wenlut gets processed separately later i guess
-        assert is_mem_node(rhs), 'oops why does wen_lut not connect to a mem tile!?'
         getnode(rhs).wen_lut = 'needs_wenlut'
         getnode(rhs).show()
-        return
 
     if DBG>1: print("Building lhs node", lhs)
     addnode(lhs)

@@ -1393,6 +1393,13 @@ def build_node(nodes, line, DBG=0):
     # Uhhhh...look for and process fifo_depth comments
     process_fifo_depth_comments(rhs,line,DBG)
 
+    # E.g. 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0'
+    # BUT NOT 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0.wen'
+    if re.search(r'lbmem[^.]*$', rhs) and getnode(rhs).fifo_depth == -1:
+        errmsg = "\nERROR No fifo_depth comment on input line:\n%s\n" % line
+        print errmsg
+        assert False, errmsg
+
     # Uhhhh...look for and process lut_value comments
     process_lut_value_comments(lhs,line,max(0,DBG-1))
 

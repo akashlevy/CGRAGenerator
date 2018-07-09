@@ -318,7 +318,20 @@ def find_cornerconn(end1,begin2,DBG=0):
         # Cannot connect top and bottom halves directly e.g. in_s6 -> out_s3
         # corner: ['T69_in_s6t0 -> T69_out_s3t0'] must change to
         # corner: ['T69_in_s6t0 -> T69_out_s7t0', 'T69_in_s1t0 -> T69_out_s3t0']
+
         if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary" % (side1,side2)
+
+        # BUG connecting T89_in_s7t0 to T89_out_s3t0
+        # yields conn1 'T89_in_s7t0 -> T89_out_s7t0'  *** BAD/IMPOSSIBLE
+
+        if (side1==7):
+            if DBG: print '# OOPS cannot connect mem tile in_s7 to out_s7!'
+            return [False]
+
+        if (side1==1):
+            if DBG: print '# OOPS cannot connect mem tile in_s1 to out_s1!'
+            return [False]
+
         if side1 < 4:
             if DBG>1: print "# Going from top to bottom half"
             mid1 = 'T%d_out_s1t%d' % (tileno1, track1)

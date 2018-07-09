@@ -1195,7 +1195,7 @@ def can_connect_through_intermediary(node, T, a, b, DBG=0):
             # Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly.  BUT
             print "     BUT! Mabye it's this special case with the memory tile"
             
-            # if top/bottom, then corenerconn() turns
+            # if top/bottom, then cornerconn() turns
             # this:      ('T36_in_s5t0', T36_out_s0t0')
             # into this: ['T36_in_s5t0 -> T36_out_s7t0', 'T36_in_s1t0 -> T36_out_s0t0']
             path = CT.find_cornerconn(a,b)

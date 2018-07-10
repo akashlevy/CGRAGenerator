@@ -47,6 +47,11 @@ def test_where():
 
 import packer
 
+# CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+# If it fails it may erroneaousl deallocate sname!
+# FIXME ORIG_ORDER is a very hacky way to address that...
+ORIG_ORDER = False
+
 # well this is awful isn't it
 WEN_LUT_LIST = []
 
@@ -329,8 +334,11 @@ def test_fan_out():
 
 # It's here when we need it I guess
 PREPLACED = {}
+PREPLACED['lb_grad_yy_2_stencil_update_stream$lb1d_0$reg_1'] = (12,2)
+PREPLACED['lb_padded_2_stencil_update_stream$lb1d_1$reg_2']  = (13,3)
+PREPLACED['lb_padded_2_stencil_update_stream$lb1d_1$reg_1'] =  (14,4)
 # PREPLACED['add_644_646_647$binop'] = (10,2) # r10c2, bout halfway down
-# 
+
 def preplaced(nodename, DBG=0):
     '''# Hand placement! ho HO!  how terrible is this?'''
     # Sanity check for preplacement dictionary
@@ -861,6 +869,7 @@ class Node:
         self.fifo_depth = -1
         self.lut_value  = -1
         self.wen_lut    = False
+        self.reg_op     = False
 
         # input/output EXAMPLES (FIXME needs update)
         #            input0/1         output
@@ -923,6 +932,7 @@ class Node:
         # also: is_{const,mem,reg,pe,io}
         # FIXME add the other types, make it a separate func
         print "  type='%s'" % type
+        print "  reg_op='%s'" % self.reg_op
         print "  ----"
         print "  tileno= %s" % self.tileno
         print "  input0='%s'" % self.input0
@@ -1070,6 +1080,22 @@ class Node:
 
         if DBG: print "# 818 Placed '%s' in tile %d at location '%s'" \
            % (name, tileno, input)
+
+
+        # FIXME there should be a better way to do this...!
+        # Oh...maybe that's this.
+        # Ub...better make sure that any reg_op that has this node as its output is also placed!
+        rname = self.reg_op
+        if rname:
+            self.show()
+            if DBG: pwhere(1080, "hey look I have an associated reg_op '%s'" % rname)
+            rnode = getnode(rname)
+            if DBG: rnode.show()
+            if rnode.tileno != tileno:
+                if DBG: print "hey look reg_op is not placed yet and/or is in the wrong place!"
+                rnode.tileno = self.tileno
+                rnode.placed = True
+                if DBG: rnode.show()
 
         if re.search(r'in[0-9]$', name): assert False, 'oops'
 
@@ -2004,6 +2030,9 @@ def register_folding(DBG=9):
         if DBG: print "#   Folded reg '%s' into pe '%s' as '%s'" % \
            (reg_name,pe_name,op)
 
+        # Make a note for later
+        getnode(pe_name).reg_op = reg_name
+
         # Folded 'lb_p3_cim_stencil_update_stream$lb1d_1$reg_2'
         # into pe 'smax_780_781_782$cgramax.data.in.1' as 'data.0'
 
@@ -2598,13 +2627,24 @@ def try_again(sname, dname, dtileno, DBG=0):
 
 
     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
-    packer.unallocate(dtileno, DBG=0)
 
-#     # !!????
-#     if dtileno in packer.EXCEPTIONS:
-#         print "exceptions = ", packer.EXCEPTIONS
-#         pwhere(1614, "OOPS Already tried and failed oh nooooo")
-#         assert False, "Out of options"
+    # CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+    # If it fails it may erroneously deallocate sname!
+    # FIXME ORIG_ORDER is a very hacky way to address that...
+    global ORIG_ORDER
+    if ORIG_ORDER != False:
+        if DBG>2: print("666f Tried and failed to put sname and dname in same tile")
+        if DBG>2: print("666f restoring the natural order...")
+        (oo_tileno, oo_order) = ORIG_ORDER
+        packer.order[oo_tileno] = oo_order
+        ORIG_ORDER = False
+    else:
+        packer.unallocate(dtileno, DBG=0)
+
+    if dtileno in packer.EXCEPTIONS:
+        print "2401 exceptions = ", packer.EXCEPTIONS
+        pwhere(2402, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
+        assert False, "Out of options"
 
     # Add dtileno as an EXCEPTION and try again
     packer.EXCEPTIONS.append(dtileno)
@@ -2755,14 +2795,24 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(2528, "oops source '%s' already adjunct now what!?" % sname)
                 return False
                        
-
-
-
             # Try again, using some dest OTHER THAN dtileno
             rval = try_again(sname, dname, dtileno, DBG)
             # try_again calls place and route, doing the cleanup work below.
             # So we can return immediately
             return rval
+
+        # CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+        # If it fails it may erroneaousl deallocate sname!
+        # FIXME ORIG_ORDER is a very hacky way to address that...
+        global ORIG_ORDER
+        if ORIG_ORDER != False:
+            if DBG>2: print("666f Tried and SUCCEEDED putting put sname and dname in same tile")
+            if DBG>2: print("666f restoring the natural order...")
+            (oo_tileno, oo_order) = ORIG_ORDER
+            packer.order[oo_tileno] = oo_order
+            ORIG_ORDER = False
+
+
 
         print "# Having found the final path,"
         print "# 1. place dname '%s' in dtileno" % dname
@@ -3427,6 +3477,11 @@ def get_nearest_tile(sname, dname, DBG=0):
         if stileno in packer.EXCEPTIONS:
             print "oop no already tried and failed at that"
         else:
+            # CAREFUL! get_nearest_tile() may try to put sname and dname in same tile!
+            # If it fails it may erroneaousl deallocate sname!
+            global ORIG_ORDER
+            ORIG_ORDER = (stileno, packer.order[stileno])
+            if DBG>2: print("666f Try to put sname and dname in same tile")
             return stileno
 
     ########################################################################

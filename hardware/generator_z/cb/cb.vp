@@ -1,10 +1,14 @@
 //; use POSIX;
 //; my $width  = parameter(Name=>'width', val=> 16, doc=>'Bus width for CB');
+//; # num_tracks is a redundant parameter and is unused!! It has been replaced
+//; # with the bit-length of feedthrough_outputs.
 //; my $num_tracks = parameter(Name=>'num_tracks', val=> 10, doc=>'num of tracks for CB'); 
 //; my $feedthrough_outputs = parameter(Name=>'feedthrough_outputs', val=> "1111101111", doc=>'binary vector for specifying tracks that are muxed. MSB corresponds to track 0 eg: 1011 means tracks 0, 2, 3 are muxed to produce output for PE. Length in bits = num_tracks.');
 //; my $has_constant = parameter(Name=>'has_constant', val=> 1, doc=>'set to 1 if the CB has a register to supply a constant '); 
 //; my $default_value = parameter(Name=>'default_value', val=> 0, doc=>'set default cb output value on reset. has_constant should be 1 to enable this feature'); 
 //; my @feedthrough = split('',$feedthrough_outputs);
+//; # NOTE(rsetaluri): num_tracks is overwritten.
+//; $num_tracks = scalar @feedthrough;
 
 
 
@@ -35,13 +39,12 @@ read_data
 
   /* verilator lint_off UNUSED */
   input [31:0] config_addr;
-
-  /* verilator lint_off UNUSED */
-   wire 	    ___genesis_wire_`${default_value}`_`${width}`_`${num_tracks}`_`${feedthrough_outputs}`_`${has_constant}`;   
+  /* verilator lint_on UNUSED */
+  wire ___genesis_wire_`${default_value}`_`${width}`_`${num_tracks}`_`${feedthrough_outputs}`_`${has_constant}`;
 
   output reg [`$width-1`:0] out;
 //; for(my $i=0; $i<$num_tracks; $i++) {
-//;   if ($feedthrough[$i%$num_tracks]==1) {
+//;   if ($feedthrough[ $i ]==1) {
   input [`$width-1`:0] in_`$i`;
 //;   }
 //; }
@@ -50,9 +53,7 @@ read_data
 //; # ############################################
 //; # Setup register for CB mux configuration
 //; # ############################################
-   /* verilator lint_on UNUSED */
 
-   
 //; my $feedthrough_count=$num_tracks;
 //; for(my $i=0; $i< scalar @feedthrough; $i++) { $feedthrough_count -= $feedthrough[$i] }
 
@@ -105,7 +106,7 @@ read_data
   always @(*) begin
     case (config_cb[`$mux_sel_bit_count - 1`:0])
 //; for(my $i=0; $i<$num_tracks; $i++) {
-//;   if ($feedthrough[$i%$num_tracks]==1) {
+//;   if ($feedthrough[ $i ]==1) {
         `$mux_sel_bit_count`'d`$sel`: out = in_`$i`;
 //;     print CBINFO "          <src sel='$sel'>in_$i</src>\n";
 //;     $sel++;

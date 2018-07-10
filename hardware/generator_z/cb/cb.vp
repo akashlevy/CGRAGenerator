@@ -47,7 +47,9 @@ read_data
 //; # ############################################
 //; # Setup register for CB mux configuration
 //; # ############################################
-
+   /* verilator lint_on UNUSED */
+   wire 	    ___genesis_wire_`${default_value}`_`${width}`_`${num_tracks}`_`${feedthrough_outputs}`_`${has_constant}`;
+   
 //; my $feedthrough_count=$num_tracks;
 //; for(my $i=0; $i< scalar @feedthrough; $i++) { $feedthrough_count -= $feedthrough[$i] }
 

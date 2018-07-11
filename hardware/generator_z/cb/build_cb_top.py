@@ -69,8 +69,15 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
 
             config_cb = mantle.Register(config_reg_width,
                                         init=config_reg_reset_bit_vector,
-                                        has_ce=False,
+                                        has_ce=True,
                                         has_reset=True)
+
+            # # create and
+            # # wire and to
+            # config_and_check = mantle.And(2, 1)
+            # wire(config_and_check.I0, m.uint(1, 1))
+            # wire(config_and_check.I1, 
+            m.wire(1, config_cb.CE)
 
             
             return

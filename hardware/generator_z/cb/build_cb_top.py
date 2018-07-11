@@ -40,18 +40,39 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
 
             config_addrs_needed = int(math.ceil(config_bit_count / 32.0))
 
-            init_value = []
+            reset_val = num_tracks - feedthrough_count + has_constant - 1
+            config_reg_reset_bit_vector = []
 
             CONFIG_DATA_WIDTH = 32
             CONFIG_ADDR_WIDTH = 32
-            
-            for i in range(0, CONFIG_DATA_WIDTH):
-                init_value.append(1)
+
+            if (constant_bit_count > 0):
+                print('constant_bit_count =', constant_bit_count)
+
+                reset_bits = m.bitutils.int2seq(default_value, constant_bit_count)
+                default_bits = m.bitutils.int2seq(reset_val, mux_sel_bit_count)
+
+                print('default val bits =', reset_bits)
+                print('reset val bits   =', default_bits)
+
+                # concat before assert
+                config_reg_reset_bit_vector += reset_bits
+                config_reg_reset_bit_vector += default_bits
+
+                config_reg_reset_bit_vector = m.bitutils.seq2int(config_reg_reset_bit_vector)
+                print('reset bit vec as int =', config_reg_reset_bit_vector)
                 
-            config_cb = mantle.Register(CONFIG_DATA_WIDTH,
-                                        init=0,
+                #assert(len(config_reg_reset_bit_vector) == config_reg_width)
+
+            else:
+                config_reg_reset_bit_vector = reset_val
+
+            config_cb = mantle.Register(config_reg_width,
+                                        init=config_reg_reset_bit_vector,
                                         has_ce=False,
                                         has_reset=True)
+
+            
             return
 
     return ConnectBox
@@ -61,7 +82,7 @@ param_width = 16
 param_num_tracks = 10
 param_feedthrough_outputs = "1111101111"
 param_has_constant = 1
-param_default_value = 0
+param_default_value = 7
 
 cb = define_connect_box(param_width, param_num_tracks, param_has_constant, param_default_value, param_feedthrough_outputs)
 m.compile('cb', cb, output='verilog')

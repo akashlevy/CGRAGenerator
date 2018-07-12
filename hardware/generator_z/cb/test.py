@@ -40,7 +40,8 @@ def get_inputs_and_data_width(circuit):
 
 inputs, data_width = get_inputs_and_data_width(genesis_cb)
 
-assert (inputs, data_width) == get_inputs_and_data_width(magma_cb), "Inputs should be the same"
+assert (inputs, data_width) == get_inputs_and_data_width(magma_cb), \
+    "Inputs should be the same"
 
 testvectors = []
 
@@ -62,7 +63,6 @@ for i in range(3):
     testvectors.append([BitVector(i % 2, 1)] + vector)
 
 
-# Generate random inputs, expected output is the first input
 ins = [BitVector(random.randint(0, (1 << data_width) - 1), data_width)
        for _ in range(len(inputs))]
 reset = VCC

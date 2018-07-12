@@ -25,6 +25,8 @@ module top();
       #1 config_addr = 0;
       #1 config_en = 0;
 
+      #1 $display("read data before reset = %b", read_data);
+
       #1 reset = 0;
       #1 reset = 1;
       #1 reset = 0;
@@ -66,7 +68,29 @@ module top();
       #1 clk = 0;
 
       assert(out == 345);
+
+      #1 config_en = 1;
+
+      #1 config_data = 32'd10;
+      #1 config_data[19:4] = 7;
+
+      #1 clk = 0;
+
+      #1 clk = 1;
+      #1 clk = 0;
       
+      #1 config_en = 0;
+
+      #1 config_data = 32'h0;
+
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      $display("read data = %b", read_data);
+      $display("out = %d", out);
+      
+      assert(out == 7);
       
       
       $finish();

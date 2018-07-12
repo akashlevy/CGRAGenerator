@@ -45,6 +45,24 @@ module top();
       #2
 
       assert(out == 4);
+
+      #1 in_9 = 345;
+
+      #1 config_en = 1;
+      #1 config_data = 32'h8;
+      
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      #1 config_en = 0;
+
+      #1 clk = 1;
+      #1 clk = 0;
+
+      assert(out == 345);
+      
+      
       
       $finish();
    end

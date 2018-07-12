@@ -72,14 +72,32 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
                                         has_ce=True,
                                         has_reset=True)
 
-            # # create and
-            # # wire and to
-            # config_and_check = mantle.And(2, 1)
-            # wire(config_and_check.I0, m.uint(1, 1))
-            # wire(config_and_check.I1, 
-            m.wire(1, config_cb.CE)
+            config_addr_zero = mantle.EQ(8)
+            m.wire(m.uint(0, 8), config_addr_zero.I0)
+            m.wire(config_addr_zero.I1, io.config_addr[24:32])
 
-            
+            config_en_set = mantle.And(2, 1)
+            m.wire(config_en_set.I0, m.uint(1, 1))
+            m.wire(config_en_set.I1[0], io.config_en)
+
+
+            config_en_set_and_addr_zero = mantle.And(2, 1)
+            m.wire(config_en_set_and_addr_zero.I0, config_en_set.O)
+            m.wire(config_en_set_and_addr_zero.I1[0], config_addr_zero.O)
+
+            m.wire(config_en_set_and_addr_zero.O[0], config_cb.CE)
+
+            config_set_mux = mantle.Mux(height=2, width=CONFIG_DATA_WIDTH)
+            m.wire(config_set_mux.I0, config_cb.O)
+            m.wire(config_set_mux.I1, io.config_addr)
+            m.wire(config_set_mux.S, config_en_set_and_addr_zero.O[0])
+
+            m.wire(config_cb.RESET, io.reset)
+            m.wire(config_cb.I, io.config_data)
+            m.wire(io.read_data, config_cb.O)
+
+            # NOTE: This is a dummy! fix it later!
+            m.wire(m.uint(0, width), io.out)
             return
 
     return ConnectBox
@@ -98,3 +116,4 @@ os.system('coreir -i ' + cb.name + '.json -o ' + cb.name + '.v')
 os.system('Genesis2.pl -parse -generate -top cb -input cb.vp -parameter cb.width=' + str(param_width) + ' -parameter cb.num_tracks=' + str(param_num_tracks) + ' -parameter cb.has_constant=' + str(param_has_constant) + ' -parameter cb.default_value=' + str(param_default_value) + ' -parameter cb.feedthrough_outputs=' + param_feedthrough_outputs)
 
 os.system('./run_sim.sh')
+

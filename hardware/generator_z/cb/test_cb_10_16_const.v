@@ -49,7 +49,8 @@ module top();
       $finish();
    end
 
-   cb connect_box(.clk(clk), .reset(reset), .config_addr(config_addr), .config_data(config_data), .config_en(config_en),
+   connect_box_width_width_16_num_tracks_10_has_constant1_default_value7_feedthrough_outputs_1111101111
+     connect_box(.clk(clk), .reset(reset), .config_addr(config_addr), .config_data(config_data), .config_en(config_en),
 		  .in_0(in_0),
 		  .in_1(in_1),
 		  .in_2(in_2),

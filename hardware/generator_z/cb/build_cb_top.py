@@ -4,6 +4,9 @@ import mantle as mantle
 
 import magma as m
 
+def power_log(x):
+        return 2**(math.ceil(math.log(x, 2)))
+    
 @m.cache_definition
 def define_connect_box(width, num_tracks, has_constant, default_value, feedthrough_outputs):
     class ConnectBox(m.Circuit):
@@ -96,8 +99,27 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
             m.wire(config_cb.I, io.config_data)
             m.wire(io.read_data, config_cb.O)
 
+            pow_2_tracks = power_log(num_tracks)
+            print('# of tracks =', pow_2_tracks)
+            output_mux = mantle.Mux(height=pow_2_tracks, width=width)
+            m.wire(output_mux.S, config_cb.O[0:math.ceil(math.log(width, 2))])
+
+            # Note: Uncomment this line for select to make the unit test fail!
+            #m.wire(output_mux.S, m.uint(0, math.ceil(math.log(width, 2))))
+
+            for i in range(0, pow_2_tracks):
+                    in_track = 'I' + str(i)
+                    if (i < num_tracks):
+                            if (feedthrough_outputs[i] == '1'):
+                                    m.wire(getattr(output_mux, in_track), getattr(io, 'in_' + str(i)))
+                            else:
+                                    # TODO: Replace this with track blank
+                                    m.wire(getattr(output_mux, in_track), m.uint(0, width))
+                    else:
+                            m.wire(getattr(output_mux, in_track), m.uint(0, width))
+
             # NOTE: This is a dummy! fix it later!
-            m.wire(m.uint(0, width), io.out)
+            m.wire(output_mux.O, io.out)
             return
 
     return ConnectBox

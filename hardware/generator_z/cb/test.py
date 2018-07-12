@@ -1,3 +1,6 @@
+# How to invoke
+# python test.py --genesis-verilog genesis_verif/cb.v --magma-verilog connect_box_width_width_16_num_tracks_10_has_constant1_default_value7_feedthrough_outputs_1111101111.v
+
 import random
 import argparse
 from bit_vector import BitVector
@@ -15,13 +18,7 @@ from build_cb_top import cb as magma_cb
 
 args = parser.parse_args()
 
-genesis_cb = m.DeclareFromVerilogFile(args.genesis_verilog)[-1]
-# cb(clk: In(Bit), reset: In(Bit), in_0: Array(16,In(Bit)), in_1:
-# Array(16,In(Bit)) , in_2: Array(16,In(Bit)), in_3: Array(16,In(Bit)), in_4:
-# Array(16,In(Bit)), in_6 : Array(16,In(Bit)), in_7: Array(16,In(Bit)), in_8:
-# Array(16,In(Bit)), in_9: Arra y(16,In(Bit)), out: Array(16,Out(Bit)),
-# config_addr: Array(32,In(Bit)), config_da ta: Array(32,In(Bit)), config_en:
-# In(Bit), read_data: Array(32,Out(Bit)))
+genesis_cb = m.DefineFromVerilogFile(args.genesis_verilog)[-1]
 
 
 def get_inputs_and_data_width(circuit):

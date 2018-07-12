@@ -79,5 +79,5 @@ from magma.testing.verilator import compile, run_verilator_test
 import shutil
 for cb, file in [(genesis_cb, args.genesis_verilog), (magma_cb, args.magma_verilog)]:
     compile(f"build/test_{cb.name}.cpp", cb, testvectors)
-    shutil.copy(args.genesis_verilog, "build")
+    shutil.copy(file, "build")
     run_verilator_test(cb.name, f"test_{cb.name}", cb.name, ["-Wno-fatal"])

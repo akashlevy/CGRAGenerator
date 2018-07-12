@@ -78,6 +78,6 @@ testvectors.append(vector)
 from magma.testing.verilator import compile, run_verilator_test
 import shutil
 for cb, file in [(genesis_cb, args.genesis_verilog), (magma_cb, args.magma_verilog)]:
-    compile(f"build/test_{cb.name}.cpp", genesis_cb, testvectors)
+    compile(f"build/test_{cb.name}.cpp", cb, testvectors)
     shutil.copy(args.genesis_verilog, "build")
-    run_verilator_test(genesis_cb.name, f"test_{cb.name}", genesis_cb.name, ["-Wno-fatal"])
+    run_verilator_test(cb.name, f"test_{cb.name}", cb.name, ["-Wno-fatal"])

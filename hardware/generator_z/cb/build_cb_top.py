@@ -104,9 +104,13 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
             output_mux = mantle.Mux(height=pow_2_tracks, width=width)
             m.wire(output_mux.S, config_cb.O[0:math.ceil(math.log(width, 2))])
 
+            # TODO: Get the cgrainfo.txt working
+
             # Note: Uncomment this line for select to make the unit test fail!
             #m.wire(output_mux.S, m.uint(0, math.ceil(math.log(width, 2))))
 
+            # This is only here because this is the way the switch box numbers things.
+            # We really should get rid of this feedthrough parameter
             for i in range(0, pow_2_tracks):
                     in_track = 'I' + str(i)
                     if (i < num_tracks):

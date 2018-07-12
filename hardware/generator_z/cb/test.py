@@ -1,3 +1,6 @@
+# How to invoke
+# python test.py --genesis-verilog genesis_verif/cb.v --magma-verilog connect_box_width_width_16_num_tracks_10_has_constant1_default_value7_feedthrough_outputs_1111101111.v
+
 import random
 import argparse
 from bit_vector import BitVector

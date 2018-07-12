@@ -44,11 +44,10 @@ assert (inputs, data_width) == get_inputs_and_data_width(magma_cb), "Inputs shou
 
 testvectors = []
 
-# config_addr = 0
-# config_data = 0
-
 GND = BitVector(0, 1)
 VCC = BitVector(0, 1)
+
+# Generate the configuration sequence
 # Config logic
 ins = [GND for _ in range(len(inputs))]
 reset = VCC
@@ -63,6 +62,7 @@ for i in range(3):
     testvectors.append([BitVector(i % 2, 1)] + vector)
 
 
+# Generate random inputs, expected output is the first input
 ins = [BitVector(random.randint(0, (1 << data_width) - 1), data_width)
        for _ in range(len(inputs))]
 reset = VCC

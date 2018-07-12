@@ -3,6 +3,7 @@ module top();
    reg [31:0] config_addr;
    reg [31:0] config_data;
    reg 	      config_en;
+   reg [31:0] read_data;
    
    reg 	      clk;
    reg 	      reset;
@@ -28,6 +29,9 @@ module top();
       #1 reset = 1;
       #1 reset = 0;
 
+      #1 $display("read data after reset = %b", read_data);
+      
+
       #1 config_en = 1;
       #1 config_data = 32'h1;
       
@@ -41,6 +45,7 @@ module top();
 
       #1 in_1 = 4;
 
+      #1 $display("read data after config loading = %b", read_data);
 
       #2
 
@@ -67,7 +72,8 @@ module top();
       $finish();
    end
 
-   connect_box_width_width_16_num_tracks_10_has_constant1_default_value7_feedthrough_outputs_1111101111
+   //connect_box_width_width_16_num_tracks_10_has_constant1_default_value7_feedthrough_outputs_1111101111
+   cb
      connect_box(.clk(clk), .reset(reset), .config_addr(config_addr), .config_data(config_data), .config_en(config_en),
 		  .in_0(in_0),
 		  .in_1(in_1),
@@ -79,6 +85,8 @@ module top();
 		  .in_7(in_7),
 		  .in_8(in_8),
 		  .in_9(in_9),
+
+		 .read_data(read_data),
 
 		  .out(out));
    

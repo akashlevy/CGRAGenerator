@@ -6,7 +6,14 @@ import magma as m
 
 def power_log(x):
         return 2**(math.ceil(math.log(x, 2)))
-    
+
+def equals_cmp(a, b, width):
+        eqC = mantle.EQ(width)
+        m.wire(eqC.I0, a)
+        m.wire(eqC.I1, b)
+
+        return eqC
+
 @m.cache_definition
 def define_connect_box(width, num_tracks, has_constant, default_value, feedthrough_outputs):
     class ConnectBox(m.Circuit):
@@ -59,8 +66,8 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
                 print('reset val bits   =', default_bits)
 
                 # concat before assert
-                config_reg_reset_bit_vector += reset_bits
                 config_reg_reset_bit_vector += default_bits
+                config_reg_reset_bit_vector += reset_bits
 
                 config_reg_reset_bit_vector = m.bitutils.seq2int(config_reg_reset_bit_vector)
                 print('reset bit vec as int =', config_reg_reset_bit_vector)
@@ -97,7 +104,14 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
 
             m.wire(config_cb.RESET, io.reset)
             m.wire(config_cb.I, io.config_data)
-            m.wire(io.read_data, config_cb.O)
+
+            # Setting read data
+            read_data_mux = mantle.Mux(height=2, width=CONFIG_DATA_WIDTH)
+            m.wire(read_data_mux.S, equals_cmp(io.config_addr[24:32], m.uint(0, 8), 8).O)
+            m.wire(read_data_mux.I1, config_cb.O)
+            m.wire(read_data_mux.I0, m.uint(0, 32))
+
+            m.wire(io.read_data, read_data_mux.O)
 
             pow_2_tracks = power_log(num_tracks)
             print('# of tracks =', pow_2_tracks)

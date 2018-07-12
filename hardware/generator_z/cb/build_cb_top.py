@@ -111,17 +111,19 @@ def define_connect_box(width, num_tracks, has_constant, default_value, feedthrou
 
             # This is only here because this is the way the switch box numbers things.
             # We really should get rid of this feedthrough parameter
+            sel_out = 0
             for i in range(0, pow_2_tracks):
-                    in_track = 'I' + str(i)
-                    if (i < num_tracks):
-                            if (feedthrough_outputs[i] == '1'):
-                                    m.wire(getattr(output_mux, in_track), getattr(io, 'in_' + str(i)))
-                            else:
-                                    # TODO: Replace this with track blank
-                                    m.wire(getattr(output_mux, in_track), m.uint(0, width))
-                    else:
-                            m.wire(getattr(output_mux, in_track), m.uint(0, width))
+                in_track = 'I' + str(i)
+                if (i < num_tracks):
+                        if (feedthrough_outputs[i] == '1'):
+                                m.wire(getattr(output_mux, 'I' + str(sel_out)), getattr(io, 'in_' + str(i)))
+                                sel_out += 1
 
+            while (sel_out < pow_2_tracks):
+                m.wire(getattr(output_mux, 'I' + str(sel_out)), m.uint(0, width))
+                sel_out += 1
+                
+                
             # NOTE: This is a dummy! fix it later!
             m.wire(output_mux.O, io.out)
             return

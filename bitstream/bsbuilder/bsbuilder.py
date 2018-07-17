@@ -729,9 +729,15 @@ op_data['umin']    = op_data['lte']
 # FIXME Will have to fix this some day SOON maybe
 # signed, unsigned, who cares!!!???  all map to same FIXME
 op_data['ashr'] = op_data['rshft']
+# FIXME Dillon added this hack to get harris working
+op_data['ash'] = op_data['rshft']
 op_data['smax'] = op_data['gte']
+# FIXME Dillon added this hack to get harris working
+op_data['sma'] = op_data['gte']
 op_data['sle']  = op_data['lte']
-op_data['sge']  = op_data['gte']
+op_data['sle']  = op_data['lte']
+# FIXME Dillon added this hack to get harris running
+op_data['slt']  = op_data['lte']
 op_data['mux']  = op_data['sel']
 
 

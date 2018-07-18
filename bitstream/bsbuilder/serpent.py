@@ -1,4 +1,5 @@
 #!/usr/bin/python2
+from sets import Set
 import sys
 import re
 import os
@@ -507,6 +508,28 @@ def final_output(DBG=0):
     if want_onebit_output():
         print '# IO'
         print("Tx116_pad(out,1)\n");
+
+
+    print '# Routing duplicates'
+    route_nodes = Set([])
+    for sname in sorted(nodes):
+        print 'sname = ', sname
+        src = getnode(sname)
+        for dname in src.dests:
+            print 'name = ', dname
+            dst = getnode(dname)
+            for c in src.route[dname]:
+                arrow_match = re.match('(.*) -> (.*)', c)
+                if arrow_match:
+                    print 'c = ', c
+                    dest = arrow_match.group(2)
+                    print '\tdest = ', dest
+                    if dest in route_nodes:
+                        print 'Error: ', c, ' is already in route_nodes'
+                        #assert(False)
+                    route_nodes.add(dest)
+                else:
+                    print 'non matching c =', c
 
     # Routing
     print '# ROUTING'

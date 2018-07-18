@@ -734,6 +734,8 @@ op_data['ash'] = op_data['rshft']
 op_data['smax'] = op_data['gte']
 # FIXME Dillon added this hack to get harris working
 op_data['sma'] = op_data['gte']
+# FIXME Dillon added this hack to get harris working
+op_data['sge'] = op_data['gte']
 op_data['sle']  = op_data['lte']
 op_data['sle']  = op_data['lte']
 # FIXME Dillon added this hack to get harris running

@@ -972,6 +972,27 @@ class Node:
         # DBG=9
         if DBG>2: pwhere(386)
 
+
+        ########################################################################
+        # FIXME re-examine / remove this hack!!!
+        # harris hack to get us to the next level
+        # To maintain prior success, restrict tile 111 usage to indicated nodes...
+        if 'lb_grad_yy_2_stencil_update_stream$lb1d_0$reg_1' in nodes:
+            # restrict hack to harris only:
+            # assumes "lb_grad_xy..." nodename is unique to harris
+            if (tileno == 111):
+                if self.name == 'lb_grad_xy_2_stencil_update_stream$lb1d_1$reg_1':
+                    print "AWFUL HARRIS HACK.  HEY REG1 YOU'RE ALL RIGHT!"
+
+                elif self.name == 'add_adj003$binop':
+                    print "AWFUL HARRIS HACK.  HEY ADD_ADJ YOU'RE ALL RIGHT!"
+
+                else:
+                    print "AWFUL HARRIS HACK.  DENIED!"
+                    return False
+        ########################################################################
+
+
         # E.g. resources[T] = ['in_s0t0', 'in_s0t1', ...
         # Can't use a register unless we're specifically looking for a register
         if rname in REGISTERS:

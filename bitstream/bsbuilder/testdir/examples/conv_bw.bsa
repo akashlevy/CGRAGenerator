@@ -49,16 +49,15 @@ FF000016 0002F00B
 # data[(32, 30)] : @ tile (2, 5) connect wire 0 (in_0_BUS1_0_0) to out_0_BUS1_2_0 (REG 01)
 # da99[(32, 32)] : REG_FIELD_HACK (bsbuilder.py) hand-written code above
 
-00020018 00003030
+00020018 00000030
 # data[(5, 4)] : @ tile (2, 5) connect wire 3 (rdata) to out_0_BUS16_S0_T2
-# data[(13, 12)] : @ tile (2, 5) connect wire 3 (rdata) to sb_wire_in_1_BUS16_S3_T1
 
 01020018 00000400
 # data[(42, 42)] : @ tile (2, 5) latch output wire out_0_BUS16_S0_T2
 
-00030018 00800C00
+00030018 00C00C00
 # data[(11, 10)] : @ tile (2, 5) connect wire 3 (rdata) to out_1_BUS16_S1_T0
-# data[(23, 22)] : @ tile (2, 5) connect wire 2 (sb_wire_in_1_BUS16_S3_T1) to out_1_BUS16_S2_T1
+# data[(23, 22)] : @ tile (2, 5) connect wire 3 (rdata) to out_1_BUS16_S2_T1
 # data[(27, 26)] : @ tile (2, 5) connect wire 0 (in_1_BUS16_S0_T3) to out_1_BUS16_S2_T3
 
 00040018 00000204
@@ -251,17 +250,16 @@ FF000037 000AF000
 # data[(32, 30)] : @ tile (4, 5) connect wire 0 (in_0_BUS1_0_0) to out_0_BUS1_2_0 (REG 01)
 # da99[(32, 32)] : REG_FIELD_HACK (bsbuilder.py) hand-written code above
 
-00020039 00230300
+00020039 00200300
 # data[(9, 8)] : @ tile (4, 5) connect wire 3 (rdata) to out_0_BUS16_S0_T4
-# data[(17, 16)] : @ tile (4, 5) connect wire 3 (rdata) to sb_wire_in_1_BUS16_S3_T3
 # data[(21, 20)] : @ tile (4, 5) connect wire 2 (in_0_BUS16_S3_T0) to out_0_BUS16_S2_T0
 # data[(27, 26)] : @ tile (4, 5) connect wire 0 (in_0_BUS16_S0_T3) to out_0_BUS16_S2_T3
 
 01020039 00001000
 # data[(44, 44)] : @ tile (4, 5) latch output wire out_0_BUS16_S0_T4
 
-00030039 08000000
-# data[(27, 26)] : @ tile (4, 5) connect wire 2 (sb_wire_in_1_BUS16_S3_T3) to out_1_BUS16_S2_T3
+00030039 0C000000
+# data[(27, 26)] : @ tile (4, 5) connect wire 3 (rdata) to out_1_BUS16_S2_T3
 
 00040039 00000204
 # data[(1, 0)] : mode = linebuffer

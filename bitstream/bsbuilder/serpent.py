@@ -1234,26 +1234,45 @@ def can_connect_through_intermediary(node, T, a, b, DBG=0):
         print "maybe can connect '%s' to '%s' through an intermediary"\
               % (a,b)
         
-        # a_cgra = to_cgra(a, DBG-1)
-        # aprime = a_cgra
-        (aprime,bprime) = (cgra_info.canon2cgra(a),cgra_info.canon2cgra(b))
+
+
+
+##############################################################################
+##############################################################################
+##############################################################################
+# FIXME refactor as "find_middle()"
+#
+#       return find_middle(a, b, T, DBG)
+# def find_middle(a, b, T, DBG=0):
+#         print "maybe can connect '%s' to '%s' through an intermediary"\
+#               % (a,b)
+
+        # E.g. a = 'T63_out_s1t4' , a_cgra = 'out_BUS16_S1_T4'
+        a_cgra = cgra_info.canon2cgra(a)
+        b_cgra = cgra_info.canon2cgra(b)
+
+        # areach = all ports reachable from a
+        # breach = all ports that can reach b
+        # look for intermediary = intersection of sets a and b
 
         # areach = FO # from just up there
-        # areach = cgra_info.fan_out(to_cgra(a), T, DBG=9)
-        areach = cgra_info.fan_out(aprime, T, DBG-1)
-        print "'%s'/'%s' can a-reach %s" % (a,aprime,areach)
+        areach = cgra_info.fan_out(a_cgra, T, DBG-1)
+        print "'%s'/'%s' can a-reach %s" % (a,a_cgra,areach)
 
-        b_cgra = to_cgra(b, DBG-1)
-        # breach = cgra_info.reachable(bprime, T, DBG=1)
-        breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
-        print "'%s'/'%s' can be b-reached by %s" % (b,bprime,breach)
+        # b_cgra = to_cgra(b, DBG-1)
+        # breach = cgra_info.reachable(b_cgra, T, DBG=1)
+
+        # breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
+        breach = cgra_info.fan_in(b_cgra, T, DBG-1)
+        print "'%s'/'%s' can be b-reached by %s" % (b,b_cgra,breach)
 
         middle = False
         for p in areach:
             print p, breach
             if p in breach:
-                print "WHOOP! There it is:", p
                 middle = p
+                middle_canon = cgra_info.cgra2canon(middle, T)
+                print "WHOOP! There it is:", p, middle_canon
                 break
 
         if middle:
@@ -1278,6 +1297,9 @@ def can_connect_through_intermediary(node, T, a, b, DBG=0):
             print "NO MIDDLE"
             print "no good"
             return False
+##############################################################################
+##############################################################################
+##############################################################################
             
 
 def addT(tileno, r):
@@ -3668,6 +3690,135 @@ def fix_path(path, dname, DBG=0):
     if DBG: print('after: ' + str(path))
 
 
+def rejoin_path(path_nodes):
+    # Given path nodes e.g.
+    # ['T154_out_s3t2', 'T139_in_s1t2', 'T139_out_s0t2', 'T140_in_s2t2']
+    # Return "joined" path
+    # ['T154_out_s3t2 -> T139_in_s1t2', 'T139_out_s0t2 -> T140_in_s2t2']
+
+    assert (len(path_nodes)%2) == 0, 'malformed path'
+
+    joined_path = []
+    while len(path_nodes) >= 2:
+        joined_path.append("%s -> %s" % (path_nodes[0], path_nodes[1]))
+        path_nodes = path_nodes[2:]
+                        
+    assert len(path_nodes) == 0, 'malformed path'
+
+    return joined_path
+
+# TEST
+# p = ['a']
+# p = ['a', 'z']
+# p = ['a', 'b', 'y', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'f', 'z']
+# print p; print rejoin_path(p); print p; print ""
+
+
+def unify_path(snode, path):
+    # Check candidate path "path" (from snode to some dest dnode)
+    # against existing snode->dest routes in snode;
+    # if cand path shares a node with an existing route,
+    # make sure both paths are the same up to and including that node
+
+    # Eg if path = ['T154_out_s3t2 -> T139_in_s1t2', 'T139_out_s0t2 -> T140_in_s2t2']
+    # then ports = ['T154_out_s3t2', 'T139_in_s1t2', 'T139_out_s0t2', 'T140_in_s2t2']
+    ports = CT.allports(path)
+
+    # Want to find the LAST port in cand path that matches in dports, not the first
+    revports = list(ports); revports.reverse()
+
+    for d in snode.dests:
+        dports = CT.allports(snode.route[d])
+
+        for p in revports:
+            # print 68, p; print "FOO looking for '%s' in route '%s'" % (p, d)
+            # print snode.route[d]
+
+            if p in dports:
+                # Found overlap with pre-existing route!
+                # Build prefix based on pre-existing route in snode
+                prefix = []
+                for i in range(len(dports)):
+                    # print i, range(len(dports))
+                    prefix.append(dports[i])
+                    if dports[i] == p: break
+
+                # Build suffix based on divergent end-portion of cand path
+                suffix = []
+                for i in range(len(ports)):
+                    if ports[i] == p:
+                        suffix = ports[i+1:]
+                        break
+
+                # Turn ['a','b'] port list into ['a -> b'] path
+                newports = (prefix + suffix)
+                newpath  = rejoin_path(newports)
+
+                if newpath == path:
+                    if False: print 6666, "SAME"
+                else:
+                    print("")
+                    pwhere(3830, "ALERT!  REWROTE OVERLAPPING PATH!  NOTSAME")
+                    print("  existing path:", snode.route[d])
+                    print("  my orig path: ", path)
+                    print("  rewritten as: ", newpath)
+                    print("")
+                return newpath
+
+    # Return orig path unchanged
+    return path
+
+
+
+
+#                 if False:
+#                     print 6666, ""
+#                     print 6666, ""
+#                     print 6666, "FOUND COMMON NODE"
+#                     print 6666, "existing path:  ", snode.route[d]
+#                     print 6666, "existing ports: ", dports
+#                     print 6666, "candidate path: ", path
+#                     print 6666, "candidate ports:", ports
+#                     print 6666, "common node '%s'" % p
+#                     print 6666, ""
+#                     print 6666, "REWRITING CANDIDATE PATH"
+
+#                     print 6666, "NEW PATH"
+#                     print 6666, 'prefix', prefix
+#                     print 6666, 'suffix', suffix
+#                     print 6666, "orig path: ", path
+#                     print 6666, "new  path: ", newpath
+#                     print 6666, "NOTSAME"
+#                     print 6666, ""
+#                     print 6666, ""
+
+                # return newpath
+
+
+#                 print 6666, "NEW PATH"
+#                 # print 6666, begin
+#                 print 6666, 'prefix', prefix
+#                 print 6666, 'suffix', suffix
+#                 # print 6666, end
+#                 print 6666, "orig path: ", path
+#                 print 6666, "new  path: ", newpath
+#                 if newpath == path: print 6666, "SAME"
+#                 else: print 6666, "NOTSAME"
+#                 print 6666, ""
+#                 print 6666, ""
+# 
+
+# TEST
+# p = ['a', 'z']
+# p = ['a', 'b', 'y', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'f', 'z']
+# print p[0], p[-1], p[1:-2]
+# exit()
+
+
 def eval_path(path, snode, dname, dtileno, DBG=0):
     # Given 'path' from src node 'snode' in stileno
     # to dst node 'dname' in possible dest tile 'dtileno',
@@ -3688,6 +3839,15 @@ def eval_path(path, snode, dname, dtileno, DBG=0):
         # assert False, 'disaster could not find a path (and/or could try again with a different tile?'
         # Dude no need to die, it'll try again...right?
         return False
+
+
+
+
+
+    final_path = unify_path(snode, final_path)
+
+
+
 
     return final_path
 

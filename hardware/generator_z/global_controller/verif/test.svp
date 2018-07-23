@@ -52,7 +52,12 @@ program automatic `mname`(interface ifc);
 	 jdrv.Send(jtag_ofst_trans);
 	 $fdisplay(fd,"%t: %m: Trans 1 (Write):  Address to GC=%d, Data to GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-         assert(top.dut.config_data_out == jtag_ofst_trans.data_in);      
+	 
+	 assert(top.dut.config_data_out == jtag_ofst_trans.data_in);
+	 assert(top.dut.write == 1);
+	 assert(top.dut.read == 0);
+         assert(top.dut.config_addr_out == jtag_ofst_trans.addr);
+	       
 
 
 	 @(posedge ifc.Clk);

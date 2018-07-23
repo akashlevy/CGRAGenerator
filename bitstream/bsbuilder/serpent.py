@@ -2,7 +2,7 @@
 import sys
 import re
 import os
-import traceback
+import traceback # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
 def pstack(): traceback.print_stack(file=sys.stdout)
 
@@ -15,7 +15,6 @@ from lib import cgra_info
 from lib import connect_tiles as CT
 
 
-import traceback # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 def show_trace(nlines=100):
     sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
@@ -1208,120 +1207,101 @@ def serpent_connect_within_tile(node, a, b, T, DBG=0):
     else:
         if DBG: print "     NO"
 
+    # if b[-1] == 'b' and a[-1] != 'b':
+    #     assert False, "\nOOPS SOOOOO looks like we tried to connect bit and non-bit wires4" 
+
     return can_connect_through_intermediary(node, T, a, b, DBG)
 
+
 def can_connect_through_intermediary(node, T, a, b, DBG=0):
-        # (If node == False then tileno T not mapped yet)
+    # Try to find a legal path from a to b within tile T
+    # "Cannot connect 'T21_in_s2t0' to 'T21_op2' directly"
+    #   BUT can connect via  T21_out_s1t0 e.g.
+    #   ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+    # 
+    # (If node == False then tileno T not mapped yet)
 
-        if b[-1] == 'b' and a[-1] != 'b':
-            print "OOPS SOOOOO looks like we tried to connect bit and non-bit wires4"
-            assert False
+    pwhere(469)
+    print("  Cannot connect '%s' to '%s' directly.  BUT" % (a,b))
+    print("  maybe can connect through intermediary?")
 
-        print("     Cannot connect '%s' to '%s' directly.  BUT" % (a,b))
-        print("     maybe can connect through intermediary?")
-        # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
-        # FIXME too many intermediaries?
-        pwhere(469)
-    
-        # FIXME FIXME spaghetti code from here on down... :(
-        # Try to salvage it; e.g. if dest is 'op1' then
-        # 'reachable' list can contain 'out' wires; if
-        # one of the reachable wires can connect to 'op1'
-        # then return both paths
-        #
-        # To test:
-        # - data0 (op1) can only connect to side 2;
-        # - try and connect (in_s3t0) to op1 in tile 0
+    if re.search('(op[12]|bit[012]|mem_in)', b):
+        # "Cannot connect 'T21_in_s2t0' to 'T21_op2' directly BUT"
+        # IN:  ['T21_in_s2t0,                                  'T21_op2']
+        # OUT: ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+        return find_middle(a, b, T, DBG)
 
-        # It only works when dest is op1 or op2 or mem_in, i think
-
-        # FIXME too many intermediaries?
-        if not re.search('(op[12]|bit[012]|mem_in)', b):
-            print "     Nope wrong kind of wire for intermediary..."
-
-            # Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly.  BUT
-            print "     BUT! Mabye it's this special case with the memory tile"
-            
-            # if top/bottom, then cornerconn() turns
-            # this:      ('T36_in_s5t0', T36_out_s0t0')
-            # into this: ['T36_in_s5t0 -> T36_out_s7t0', 'T36_in_s1t0 -> T36_out_s0t0']
-            path = CT.find_cornerconn(a,b)
-            if len(path) == 2:
-                print "     Connecting top and bottom:", path; return path
-            else:
-                print "     No dice.";                         return False
-
-
-        print "maybe can connect '%s' to '%s' through an intermediary"\
-              % (a,b)
-        
-
-
-
-##############################################################################
-##############################################################################
-##############################################################################
-# FIXME refactor as "find_middle()"
-#
-#       return find_middle(a, b, T, DBG)
-# def find_middle(a, b, T, DBG=0):
-#         print "maybe can connect '%s' to '%s' through an intermediary"\
-#               % (a,b)
-
-        # E.g. a = 'T63_out_s1t4' , a_cgra = 'out_BUS16_S1_T4'
-        a_cgra = cgra_info.canon2cgra(a)
-        b_cgra = cgra_info.canon2cgra(b)
-
-        # areach = all ports reachable from a
-        # breach = all ports that can reach b
-        # look for intermediary = intersection of sets a and b
-
-        # areach = FO # from just up there
-        areach = cgra_info.fan_out(a_cgra, T, DBG-1)
-        print "'%s'/'%s' can a-reach %s" % (a,a_cgra,areach)
-
-        # b_cgra = to_cgra(b, DBG-1)
-        # breach = cgra_info.reachable(b_cgra, T, DBG=1)
-
-        # breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
-        breach = cgra_info.fan_in(b_cgra, T, DBG-1)
-        print "'%s'/'%s' can be b-reached by %s" % (b,b_cgra,breach)
-
-        middle = False
-        for p in areach:
-            print p, breach
-            if p in breach:
-                middle = p
-                middle_canon = cgra_info.cgra2canon(middle, T)
-                print "WHOOP! There it is:", p, middle_canon
-                break
-
-        if middle:
-            middle_canon = cgra_info.cgra2canon(middle, T)
-
-            # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
-            if middle_canon not in resources[T]:
-                if DBG: print "Oops middle node is occupied; we will have to try again"
-                # assert self.is_avail(middle_canon)
-                return False
-
-            print "Found double connection QUICKLY."
-            p1 = '%s -> %s' % (a, middle_canon)
-            p2 = '%s -> %s' % (middle_canon, b)
-            pmiddle = [p1,p2]
-
-            print "Found double connection.  What a day!"
-            print "Remember quickfind was", middle, pmiddle
-            return pmiddle
-
+    else:
+        # "Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly BUT"
+        # IN:  ['T36_in_s5t0',                                 T36_out_s0t0']
+        # OUT: ['T36_in_s5t0 -> T36_out_s7t0', 'T36_in_s1t0 -> T36_out_s0t0']
+        path = CT.find_cornerconn(a,b)
+        if len(path) == 2:
+            print "     Connecting top and bottom:", path;
+            return path
         else:
-            print "NO MIDDLE"
-            print "no good"
+            print "     No dice.";
             return False
-##############################################################################
-##############################################################################
-##############################################################################
-            
+
+
+def find_middle(a, b, T, DBG=0):
+    # Find a path from a to b using some intermediate node reachable by both e.g.
+    # IN:  ['T21_in_s2t0,                                  'T21_op2']
+    # OUT: ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+
+    # print "maybe can connect '%s' to '%s' through an intermediary" % (a,b)
+
+    # E.g. a = 'T63_out_s1t4' , a_cgra = 'out_BUS16_S1_T4'
+    a_cgra = cgra_info.canon2cgra(a)
+    b_cgra = cgra_info.canon2cgra(b)
+
+    # areach = all ports reachable from a
+    # breach = all ports that can reach b
+    # look for intermediary = intersection of sets a and b
+
+    # areach = FO # from just up there
+    areach = cgra_info.fan_out(a_cgra, T, DBG-1)
+    print "'%s'/'%s' can a-reach %s" % (a,a_cgra,areach)
+
+    # b_cgra = to_cgra(b, DBG-1)
+    # breach = cgra_info.reachable(b_cgra, T, DBG=1)
+
+    # breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
+    breach = cgra_info.fan_in(b_cgra, T, DBG-1)
+    print "'%s'/'%s' can be b-reached by %s" % (b,b_cgra,breach)
+
+    middle = False
+    for p in areach:
+        print p, breach
+        if p in breach:
+            middle = p
+            middle_canon = cgra_info.cgra2canon(middle, T)
+            print "WHOOP! There it is:", p, middle_canon
+            break
+
+    if middle:
+        middle_canon = cgra_info.cgra2canon(middle, T)
+
+        # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
+        if middle_canon not in resources[T]:
+            if DBG: print "Oops middle node is occupied; we will have to try again"
+            # assert self.is_avail(middle_canon)
+            return False
+
+        print "Found double connection QUICKLY."
+        p1 = '%s -> %s' % (a, middle_canon)
+        p2 = '%s -> %s' % (middle_canon, b)
+        pmiddle = [p1,p2]
+
+        print "Found double connection.  What a day!"
+        print "Remember quickfind was", middle, pmiddle
+        return pmiddle
+
+    else:
+        print "NO MIDDLE"
+        print "no good"
+        return False
+
 
 def addT(tileno, r):
     '''Embed tileno in resource 'r' e.g. "mem_out" => "T3_mem_out"'''

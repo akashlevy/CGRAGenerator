@@ -57,13 +57,12 @@ script:
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
   - ./run_tests.sh
 
-  
   # Redo serpent summary maybe
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
 
 # ##############################################################################
 # # NOTES
-# # 
+# #
 # # Maybe someday we'll want/need:
 # # perl:
 # # - "5.18"

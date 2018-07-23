@@ -46,7 +46,7 @@ script:
   - conda info -a
 
   # Install python dependencies
-  - pip install pytest numpy delegator.py bit_vector==0.25a
+  - pip install pytest numpy delegator.py bit_vector
   - pip install git+git://github.com/phanrahan/pe.git
 
   # Run python based tests

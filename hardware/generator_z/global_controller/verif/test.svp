@@ -95,10 +95,9 @@ program automatic `mname`(interface ifc);
 	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
 	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) @(posedge top.dut.clk_in);
+	 repeat(100) jdrv.Next_tck();
          //Now check clk out and 
          repeat(200) begin
-            @(posedge top.dut.clk_in);
             assert(top.dut.clk_out == top.dut.clk_in); //make sure we've actually switched to the fast clk;
          end
 	 
@@ -120,7 +119,7 @@ program automatic `mname`(interface ifc);
 	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
 	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) @(posedge top.dut.clk_in);
+	 repeat(100) jdrv.Next_tck();
          //Now check clk out and 
          repeat(200) begin
             @( top.dut.clk_in);
@@ -153,7 +152,7 @@ program automatic `mname`(interface ifc);
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
 	 
          check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) @(posedge top.dut.clk_in);
+	 repeat(100) jdrv.Next_tck();
          //Now check clk out and 
          repeat(200) begin
             @( top.dut.clk_in);
@@ -180,7 +179,7 @@ program automatic `mname`(interface ifc);
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
 	 
 	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) @(posedge top.dut.clk_in);
+	 repeat(100) jdrv.Next_tck();
          //Now check clk out and 
          repeat(200) begin
             @(posedge top.dut.clk_in);

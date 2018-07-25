@@ -49,7 +49,7 @@ program automatic `mname`(interface ifc);
 	 $fdisplay(fd,"%t: %m: Trans 1 (Write):  Address to GC=%d, Data to GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
 	 
-         //check_config_write(jtag_trans.addr,jtag_trans.data_in); 
+         check_config_write(jtag_trans.addr,jtag_trans.data_in,1); 
 
 
 	 @(posedge ifc.Clk);
@@ -58,7 +58,7 @@ program automatic `mname`(interface ifc);
 	 jtag_trans.op = read;
 	 ifc.config_data_from_gc = 32'd88;
 	 jdrv.Send(jtag_trans);
-	 check_config_read(jtag_trans.addr);
+	 check_config_read(jtag_trans.addr,1);
 	 jtag_trans = jdrv.GetResult();
 	 assert(jtag_trans.data_out == top.dut.config_data_in);
 	 $fdisplay(fd,"%t: %m: Trans 2 (Read):  Address to GC=%d, Data to GC=%d, Data out from GC=%d",  
@@ -80,7 +80,7 @@ program automatic `mname`(interface ifc);
 	 jtag_trans.done = 0;
          jtag_trans.op = read;
 	 jdrv.Send(jtag_trans);
-         check_config_read(jtag_trans.addr);
+         check_config_read(jtag_trans.addr,1);
 	 jtag_trans = jdrv.GetResult();
 	 $fdisplay(fd,"%t: %m: Trans 3 (Read):  Address to GC=%d, Data to GC=%d, Data out from GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_trans.data_out);
@@ -261,7 +261,7 @@ program automatic `mname`(interface ifc);
 	 jtag_trans.op = read;
 	 ifc.config_data_from_gc = 32'd124;
 	 jdrv.Send(jtag_trans);
-	 check_config_read(jtag_trans.addr);	
+	 check_config_read(jtag_trans.addr,1);	
 	 jtag_trans = jdrv.GetResult();
 	 $fdisplay(fd,"%t: %m: Trans 10 (Read_data):  Address to GC=%d, Data to GC=%d, Data out from GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_trans.data_out);
@@ -325,7 +325,7 @@ program automatic `mname`(interface ifc);
 	 jdrv.Send(jtag_trans);
 	 $fdisplay(fd,"%t: %m: Trans 15 (write):  Address to GC=%d, Data to GC=%d",  
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);	 
-	 check_config_write(jtag_trans.addr,jtag_trans.data_in);
+	 check_config_write(jtag_trans.addr,jtag_trans.data_in,1);
 	 
 	 @(posedge ifc.Clk);
 	 jtag_trans.op = wr_analog_reg;
@@ -399,8 +399,8 @@ program automatic `mname`(interface ifc);
    endtask // init_test
 
 
-   task check_config_write(int config_addr, int config_data);
-      begin /*
+   task check_config_write(int config_addr, int config_data, int on_tck);
+      begin
          assert(top.dut.config_data_out == config_data);
          assert(top.dut.write == 1);
          assert(top.dut.read == 0);
@@ -412,13 +412,16 @@ program automatic `mname`(interface ifc);
             assert(top.dut.write == 1);
             assert(top.dut.read == 0);
             assert(top.dut.config_addr_out == config_addr);
-	    @ (posedge top.dut.clk_in);
-         end */
+	    if(on_tck)
+	       jdrv.Next_tck();
+	    else
+	       @(posedge top.dut.clk_in);
+         end
       end 
    endtask // check_config_write  
    
-   task check_config_read(int config_addr);
-      begin /*
+   task check_config_read(int config_addr, int on_tck);
+      begin 
          assert(top.dut.write == 0);
          assert(top.dut.read == 1);
          assert(top.dut.config_addr_out == config_addr);
@@ -428,8 +431,11 @@ program automatic `mname`(interface ifc);
             assert(top.dut.write == 0);
             assert(top.dut.read == 1);
             assert(top.dut.config_addr_out == config_addr);
-	    @ (posedge top.dut.clk_out);
-         end */
+	    if(on_tck)
+	       jdrv.Next_tck();
+	    else
+	       @ (posedge top.dut.clk_in);
+         end
       end 
    endtask // check_config_read
 

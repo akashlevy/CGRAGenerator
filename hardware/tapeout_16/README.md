@@ -2,14 +2,14 @@
 
 Right now, these instructions will only work on the TSMC16 machine.
 
-Before you start, add the following lines to your .cshrc:
-`source /cad/modules/tcl/init/csh`
-`module load base`
-`module load genesis2`
-`module load incisive/15.20.022`
-`module load lc`
-`module load syn/latest`
-`module load innovus/latest`
+Before you start, add the following lines to your .cshrc:  
+`source /cad/modules/tcl/init/csh`  
+`module load base`  
+`module load genesis2`  
+`module load incisive/15.20.022`  
+`module load lc`  
+`module load syn/latest`  
+`module load innovus/latest`  
 
 ## Synthesis:
 TODO

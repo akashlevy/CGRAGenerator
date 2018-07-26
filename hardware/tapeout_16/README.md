@@ -1,4 +1,4 @@
-#README for backend scripts:
+# README for backend scripts:
 
 Right now, these instructions will only work on the TSMC16 machine.
 
@@ -11,24 +11,24 @@ Before you start, add the following lines to your .cshrc:
 `module load syn/latest`
 `module load innovus/latest`
 
-##Synthesis:
+## Synthesis:
 TODO
 
-##P&R Flow for PE Tile:
+## P&R Flow for PE Tile:
 1. Navigate to CGRAGenerator/hardware/tapeout\_16/synth/pe\_tile\_new\_unq1
 2. Type `innovus` to open the Innovus tool
 3. Type `source ../../scripts/layout\_pe\_tile\_new.tcl` (this will take some time to complete)
 
 After this is complete, type `exit` to exit the Innovus tool.
 
-##P&R Flow for Memory Tile:
+## P&R Flow for Memory Tile:
 1. Navigate to CGRAGenerator/hardware/tapeout\_16/synth/memory\_tile\_unq1
 2. Type `innovus` to open the Innovus tool
 3. Type `source ../../scripts/layout\_memory\_tile.tcl` (this will take some time to complete)
 
 After this is complete, type `exit` to exit the Innovus tool.
 
-##P&R Flow for Top:
+## P&R Flow for Top:
 1. Navigate to CGRAGenerator/hardware/tapeout\_16/synth/top
 2. Type `innovus -stylus` to open the Innovus tool
 3. Type `source ../../scripts/floorplan.tcl`

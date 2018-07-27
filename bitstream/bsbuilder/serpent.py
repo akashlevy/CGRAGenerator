@@ -2,7 +2,7 @@
 import sys
 import re
 import os
-import traceback
+import traceback # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
 def pstack(): traceback.print_stack(file=sys.stdout)
 
@@ -15,7 +15,6 @@ from lib import cgra_info
 from lib import connect_tiles as CT
 
 
-import traceback # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 def show_trace(nlines=100):
     sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
@@ -46,6 +45,11 @@ def test_where():
 # test_where()
 
 import packer
+
+# CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+# If it fails it may erroneaousl deallocate sname!
+# FIXME ORIG_ORDER is a very hacky way to address that...
+ORIG_ORDER = False
 
 # well this is awful isn't it
 WEN_LUT_LIST = []
@@ -329,8 +333,11 @@ def test_fan_out():
 
 # It's here when we need it I guess
 PREPLACED = {}
+PREPLACED['lb_grad_yy_2_stencil_update_stream$lb1d_0$reg_1'] = (12,2)
+PREPLACED['lb_padded_2_stencil_update_stream$lb1d_1$reg_2']  = (13,3)
+PREPLACED['lb_padded_2_stencil_update_stream$lb1d_1$reg_1'] =  (14,4)
 # PREPLACED['add_644_646_647$binop'] = (10,2) # r10c2, bout halfway down
-# 
+
 def preplaced(nodename, DBG=0):
     '''# Hand placement! ho HO!  how terrible is this?'''
     # Sanity check for preplacement dictionary
@@ -443,23 +450,9 @@ def final_check(DBG=0):
     '''Make sure everyone has been allocated to a tile'''
     for sname in sorted(nodes):
         if getnode(sname).tileno == -1:
-
-            # ERROR? Node unassigned (tileno = -1)?
-            # 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0$c0_lutcnst'
-
-            if sname[-7:] == 'lutcnst'\
-               or sname[-5:] == 'cg_en'\
-               or sname[-3:] == 'ren'\
-               or False:
-                pwhere(446, "WARNING ignoring node '%s'" % sname)
-                if DBG>2:
-                    print("WARNING Note I ignore lutcnst b/c it usually drives ren and cg_en")
-                    print("WARNING and also I ignore ren and cg_en too")
-                    print("WARNING oh boy this gonna be trouble one fine day...")
-                    print("")
-            else:
-                errmsg = "\nERROR? Node '%s' unassigned (tileno = -1)?" % sname
-                print errmsg; assert False, errmsg
+            errmsg = "\nERROR? Node '%s' unassigned (tileno = -1)?" % sname
+            print errmsg;
+            assert False, errmsg
 
 
 def final_output(DBG=0):
@@ -601,6 +594,29 @@ def connect_dont_cares(operand, opno, DBG=0):
     else: return (False, operand)
 
 
+def get_opname(sname, DBG=0):
+    # E.g. sname = 'slt_790_775_791$comp$compop.data.in.1' => opname = 'slt'
+
+    # OLD: opname = sname[0:3] # 'add' or 'mul'
+    # add_514_518_519_PE
+
+    # NEW
+    #   add_721_722_723$binop
+    #   mul_649_649_650$binop
+
+    # NEW for harris 7/2018
+    # ashr_761_763_765$binop
+    # sle100_775_792$compop
+    # "slt_790_775_791$comp$compop.data.in.1"
+    # "mux_793_794_795$mux"
+
+    # assert sname[-5:] == binop
+    parse = re.search(r'^([^_]+)_', sname)
+    if parse: opname = parse.group(1)
+    else: assert False
+    return opname
+
+
 def print_oplist(DBG=0):
     oplist = range(cgra_info.ntiles())
     for sname in sorted(nodes):
@@ -615,21 +631,13 @@ def print_oplist(DBG=0):
             (dc,src.bit0) = connect_dont_cares(src.bit0, 0)
             (dc,src.bit1) = connect_dont_cares(src.bit1, 1)
             (dc,src.bit2) = connect_dont_cares(src.bit2, 2)
-            if dc:
-                if DBG:
-                    print("# Fixed dont-care(s) maybe")
-                    src.show()
+            if dc and DBG:
+                print("# Fixed dont-care(s) maybe")
+                src.show()
 
-            if (src.bit0 == False) or (src.bit1 == False) or (src.bit2 == False):
-                if DBG:
-                    print(''); getnode(sname).show(); print('');
-                assert src.bit0 != False, "LUT '%s' has no bit0 operand; why?" % sname
-                assert src.bit1 != False, "LUT '%s' has no bit1 operand; why?" % sname
-                assert src.bit2 != False, "LUT '%s' has no bit2 operand; why?" % sname
-
-            bit0 = optype(src.bit0)
-            bit1 = optype(src.bit1)
-            bit2 = optype(src.bit2)
+            bit0 = optype(src.bit0, 'bit0', DBG)
+            bit1 = optype(src.bit1, 'bit1', DBG)
+            bit2 = optype(src.bit2, 'bit2', DBG)
 
             opline = 'T%d_lut%X(%s,%s,%s)' % (src.tileno, src.lut_value, bit0, bit1, bit2)
             opcomm = '# %s' % sname
@@ -642,29 +650,63 @@ def print_oplist(DBG=0):
                    "That there LUT value 0x%x don't look so good" % lv
 
         elif is_pe(sname):
-            addmul = sname[0:3] # 'add' or 'mul'
+            # E.g. sname = 'slt_790_775_791$comp$compop.data.in.1' => opname = 'slt'
+            opname = get_opname(sname)
+
+            # Rewrites for harris
+            
+            # "sle100_775_792$compop" -> "bitand_791_792_793$lut$lut.bit.in.1"; # lut_value 0x00
+            if re.search(r'^sle[0-9]', sname): opname = 'sle'
+            if re.search(r'^ule[0-9]', sname): opname = 'ule' # why not
+
+
+
+            # "slt_790_775_791$not$c01" -> "slt_790_775_791$not$lut$lut.bit.in.1";
+            # POSTPONED for now, these bit constants are ignored by serpent :(
+
+            # "slt_790_775_791$not$lut$lut" -> "..."; # lut_value 0x55
+            # already does the right thing elsewhere i guess
+
+            # "slt_790_775_791$comp$compop" -> "foo.bit.in.0"; # lut_value 0x00
+            # "slt_790_775_791$comp$compop":{
+            #     "modargs":{"alu_op":[["BitVector",6],"6'h04"], (6'h04 == GTE!)
+            # reused same not-lut trick as before, see below
 
 
 
             # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; its a uge :o
-            if re.search(r'^ult.*_uge_PE$', sname): addmul = 'uge'
+            if re.search(r'^ult.*_uge_PE$', sname): opname = 'uge'
+
+            # OY!  Mapper turns slt into an slt$compop with code 0x4 (GTE)
+            # followed by slt$not$lut$lut to make SLT
+            # 
+            # NEW tricky.  Mapper uses same trick but w/o the extra clues
+            # It is assumed that the slt will be followed by a NOT-LUT
+            # FIXME could/should use asserts to verify...
+            # 
+            # "slt_790_775_791$comp$compop" -> "slt_790_775_791$not$lut$lut.bit.in.0"; # lut_value 0x00
+            # "slt_790_775_791$not$lut$lut" -> "bitand_791_792_793$lut$lut.bit.in.0"; # lut_value 0x55
+            if re.search(r'^slt.*', sname): opname = 'sge'
 
             # ...I assume the converse will also be true...?
-            if re.search(r'^ugt.*_ule_PE$', sname): addmul = 'ule'
+            if re.search(r'^ugt.*_ule_PE$', sname): opname = 'ule'
 
+            op1 = optype(src.input0, 'op1', DBG=1)
+            op2 = optype(src.input1, 'op2', DBG=1)
 
+            # MUX
+            # node='mux_793_794_795$mux'
+            #   input0='False'
+            #   input1='False'
+            #   bit0='T139_bit0'
+            #   bit1='False'
+            #   bit2='False'
+            if opname == 'mux':
+                bit0 = optype(src.bit0, 'bit0', DBG)
+                opline = 'T%d_%s(%s,%s,%s)' % (src.tileno, opname, op1, op2, bit0)
+            else:
+                opline = 'T%d_%s(%s,%s)' % (src.tileno, opname, op1, op2)
 
-
-            if (src.input0 == False) or (src.input1 == False):
-                print('');
-                getnode(sname).show()
-                print('');
-                assert src.input0 != False, "PE op '%s' has no op1; why?" % sname
-                assert src.input1 != False, "PE op '%s' has no op2; why?" % sname
-
-            op1 = optype(src.input0)
-            op2 = optype(src.input1)
-            opline = 'T%d_%s(%s,%s)' % (src.tileno, addmul, op1, op2)
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
 
@@ -679,32 +721,43 @@ def print_oplist(DBG=0):
     for i in WEN_LUT_LIST: print "T%d_lutFF(const0,const0,const0)" % i
     print ''
 
+
 def print_memlist():
     # E.g. prints
     #     'T3_mem_64    # mem_1 fifo_depth=64'
     #     'T17_mem_64   # mem_2 fifo_depth=64'
-    memlist = range(cgra_info.ntiles())
+    memlist = {}
+
     for sname in sorted(nodes):
+        # FIXME Why is this here?  Can we be both const and mem?
         if is_const(sname): continue
         src = getnode(sname)
-        if is_mem(sname):
+
+        if is_mem_node(sname):
+            # print("# Adding mem node", sname)
             opline = 'T%d_mem_%d' % (src.tileno, src.fifo_depth)
             opcomm = '# %s fifo_depth=%d' % (sname, src.fifo_depth)
             memlist[src.tileno] = '%-12s %s' % (opline,opcomm)
 
     # Print in tile order, 0 to 'ntiles'
-    for i in range(cgra_info.ntiles()):
-        if memlist[i] != i: print memlist[i]
-
+    for i in sorted(memlist):
+        print memlist[i]
     print ''
 
 
-def optype(input):
+# E.g.  bit0 = optype(src.bit0, 'bit0')
+# returns e.g. 'wire' or 'const0_0' or 'reg'
+def optype(input, opname, DBG=0):
     '''
     Where input is one of e.g. 'T32_op1', 'const32_32'
     and where 'T32_op1' may or may not be in REGISTERS list.
     Return 'reg', 'wire' or name of const e.g. 'const0_0'
     '''
+
+    if input == False:
+        if DBG: print(''); getnode(sname).show(); print('');
+        assert input != False, "LUT/PE '%s' has no %s operand; why?" % (sname, opname)
+
     if is_const(input):                return input
     elif re.search('op.\(r\)', input): return 'reg'
     elif input in REGISTERS:           return 'reg'
@@ -815,6 +868,7 @@ class Node:
         self.fifo_depth = -1
         self.lut_value  = -1
         self.wen_lut    = False
+        self.reg_op     = False
 
         # input/output EXAMPLES (FIXME needs update)
         #            input0/1         output
@@ -877,6 +931,7 @@ class Node:
         # also: is_{const,mem,reg,pe,io}
         # FIXME add the other types, make it a separate func
         print "  type='%s'" % type
+        print "  reg_op='%s'" % self.reg_op
         print "  ----"
         print "  tileno= %s" % self.tileno
         print "  input0='%s'" % self.input0
@@ -915,6 +970,27 @@ class Node:
         (tileno,r) = parse_resource(rname)
         # DBG=9
         if DBG>2: pwhere(386)
+
+
+        ########################################################################
+        # FIXME re-examine / remove this hack!!!
+        # harris hack to get us to the next level
+        # To maintain prior success, restrict tile 111 usage to indicated nodes...
+        if 'lb_grad_yy_2_stencil_update_stream$lb1d_0$reg_1' in nodes:
+            # restrict hack to harris only:
+            # assumes "lb_grad_xy..." nodename is unique to harris
+            if (tileno == 111):
+                if self.name == 'lb_grad_xy_2_stencil_update_stream$lb1d_1$reg_1':
+                    print "AWFUL HARRIS HACK.  HEY REG1 YOU'RE ALL RIGHT!"
+
+                elif self.name == 'add_adj003$binop':
+                    print "AWFUL HARRIS HACK.  HEY ADD_ADJ YOU'RE ALL RIGHT!"
+
+                else:
+                    print "AWFUL HARRIS HACK.  DENIED!"
+                    return False
+        ########################################################################
+
 
         # E.g. resources[T] = ['in_s0t0', 'in_s0t1', ...
         # Can't use a register unless we're specifically looking for a register
@@ -1025,6 +1101,22 @@ class Node:
         if DBG: print "# 818 Placed '%s' in tile %d at location '%s'" \
            % (name, tileno, input)
 
+
+        # FIXME there should be a better way to do this...!
+        # Oh...maybe that's this.
+        # Ub...better make sure that any reg_op that has this node as its output is also placed!
+        rname = self.reg_op
+        if rname:
+            self.show()
+            if DBG: pwhere(1080, "hey look I have an associated reg_op '%s'" % rname)
+            rnode = getnode(rname)
+            if DBG: rnode.show()
+            if rnode.tileno != tileno:
+                if DBG: print "hey look reg_op is not placed yet and/or is in the wrong place!"
+                rnode.tileno = self.tileno
+                rnode.placed = True
+                if DBG: rnode.show()
+
         if re.search(r'in[0-9]$', name): assert False, 'oops'
 
         return
@@ -1115,98 +1207,101 @@ def serpent_connect_within_tile(node, a, b, T, DBG=0):
     else:
         if DBG: print "     NO"
 
+    # if b[-1] == 'b' and a[-1] != 'b':
+    #     assert False, "\nOOPS SOOOOO looks like we tried to connect bit and non-bit wires4" 
+
     return can_connect_through_intermediary(node, T, a, b, DBG)
 
+
 def can_connect_through_intermediary(node, T, a, b, DBG=0):
-        # (If node == False then tileno T not mapped yet)
+    # Try to find a legal path from a to b within tile T
+    # "Cannot connect 'T21_in_s2t0' to 'T21_op2' directly"
+    #   BUT can connect via  T21_out_s1t0 e.g.
+    #   ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+    # 
+    # (If node == False then tileno T not mapped yet)
 
-        if b[-1] == 'b' and a[-1] != 'b':
-            print "OOPS SOOOOO looks like we tried to connect bit and non-bit wires4"
-            assert False
+    pwhere(469)
+    print("  Cannot connect '%s' to '%s' directly.  BUT" % (a,b))
+    print("  maybe can connect through intermediary?")
 
-        print("     Cannot connect '%s' to '%s' directly.  BUT" % (a,b))
-        print("     maybe can connect through intermediary?")
-        # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
-        # FIXME too many intermediaries?
-        pwhere(469)
-    
-        # FIXME FIXME spaghetti code from here on down... :(
-        # Try to salvage it; e.g. if dest is 'op1' then
-        # 'reachable' list can contain 'out' wires; if
-        # one of the reachable wires can connect to 'op1'
-        # then return both paths
-        #
-        # To test:
-        # - data0 (op1) can only connect to side 2;
-        # - try and connect (in_s3t0) to op1 in tile 0
+    if re.search('(op[12]|bit[012]|mem_in)', b):
+        # "Cannot connect 'T21_in_s2t0' to 'T21_op2' directly BUT"
+        # IN:  ['T21_in_s2t0,                                  'T21_op2']
+        # OUT: ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+        return find_middle(a, b, T, DBG)
 
-        # It only works when dest is op1 or op2 or mem_in, i think
-
-        # FIXME too many intermediaries?
-        if not re.search('(op[12]|bit[012]|mem_in)', b):
-            print "     Nope wrong kind of wire for intermediary..."
-
-            # Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly.  BUT
-            print "     BUT! Mabye it's this special case with the memory tile"
-            
-            # if top/bottom, then corenerconn() turns
-            # this:      ('T36_in_s5t0', T36_out_s0t0')
-            # into this: ['T36_in_s5t0 -> T36_out_s7t0', 'T36_in_s1t0 -> T36_out_s0t0']
-            path = CT.find_cornerconn(a,b)
-            if len(path) == 2:
-                print "     Connecting top and bottom:", path; return path
-            else:
-                print "     No dice.";                         return False
-
-
-        print "maybe can connect '%s' to '%s' through an intermediary"\
-              % (a,b)
-        
-        # a_cgra = to_cgra(a, DBG-1)
-        # aprime = a_cgra
-        (aprime,bprime) = (cgra_info.canon2cgra(a),cgra_info.canon2cgra(b))
-
-        # areach = FO # from just up there
-        # areach = cgra_info.fan_out(to_cgra(a), T, DBG=9)
-        areach = cgra_info.fan_out(aprime, T, DBG-1)
-        print "'%s'/'%s' can a-reach %s" % (a,aprime,areach)
-
-        b_cgra = to_cgra(b, DBG-1)
-        # breach = cgra_info.reachable(bprime, T, DBG=1)
-        breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
-        print "'%s'/'%s' can be b-reached by %s" % (b,bprime,breach)
-
-        middle = False
-        for p in areach:
-            print p, breach
-            if p in breach:
-                print "WHOOP! There it is:", p
-                middle = p
-                break
-
-        if middle:
-            middle_canon = cgra_info.cgra2canon(middle, T)
-
-            # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
-            if middle_canon not in resources[T]:
-                if DBG: print "Oops middle node is occupied; we will have to try again"
-                # assert self.is_avail(middle_canon)
-                return False
-
-            print "Found double connection QUICKLY."
-            p1 = '%s -> %s' % (a, middle_canon)
-            p2 = '%s -> %s' % (middle_canon, b)
-            pmiddle = [p1,p2]
-
-            print "Found double connection.  What a day!"
-            print "Remember quickfind was", middle, pmiddle
-            return pmiddle
-
+    else:
+        # "Cannot connect 'T36_in_s5t0' to 'T36_out_s0t0' directly BUT"
+        # IN:  ['T36_in_s5t0',                                 T36_out_s0t0']
+        # OUT: ['T36_in_s5t0 -> T36_out_s7t0', 'T36_in_s1t0 -> T36_out_s0t0']
+        path = CT.find_cornerconn(a,b)
+        if len(path) == 2:
+            print "     Connecting top and bottom:", path;
+            return path
         else:
-            print "NO MIDDLE"
-            print "no good"
+            print "     No dice.";
             return False
-            
+
+
+def find_middle(a, b, T, DBG=0):
+    # Find a path from a to b using some intermediate node reachable by both e.g.
+    # IN:  ['T21_in_s2t0,                                  'T21_op2']
+    # OUT: ['T21_in_s2t0 -> T21_out_s1t0', 'T21_out_s1t0 -> T21_op2']
+
+    # print "maybe can connect '%s' to '%s' through an intermediary" % (a,b)
+
+    # E.g. a = 'T63_out_s1t4' , a_cgra = 'out_BUS16_S1_T4'
+    a_cgra = cgra_info.canon2cgra(a)
+    b_cgra = cgra_info.canon2cgra(b)
+
+    # areach = all ports reachable from a
+    # breach = all ports that can reach b
+    # look for intermediary = intersection of sets a and b
+
+    # areach = FO # from just up there
+    areach = cgra_info.fan_out(a_cgra, T, DBG-1)
+    print "'%s'/'%s' can a-reach %s" % (a,a_cgra,areach)
+
+    # b_cgra = to_cgra(b, DBG-1)
+    # breach = cgra_info.reachable(b_cgra, T, DBG=1)
+
+    # breach = cgra_info.fan_in(to_cgra(b), T, DBG-1)
+    breach = cgra_info.fan_in(b_cgra, T, DBG-1)
+    print "'%s'/'%s' can be b-reached by %s" % (b,b_cgra,breach)
+
+    middle = False
+    for p in areach:
+        print p, breach
+        if p in breach:
+            middle = p
+            middle_canon = cgra_info.cgra2canon(middle, T)
+            print "WHOOP! There it is:", p, middle_canon
+            break
+
+    if middle:
+        middle_canon = cgra_info.cgra2canon(middle, T)
+
+        # T41_out_s1t0b is not available to node 'bitnot_156_lut_bitPE'
+        if middle_canon not in resources[T]:
+            if DBG: print "Oops middle node is occupied; we will have to try again"
+            # assert self.is_avail(middle_canon)
+            return False
+
+        print "Found double connection QUICKLY."
+        p1 = '%s -> %s' % (a, middle_canon)
+        p2 = '%s -> %s' % (middle_canon, b)
+        pmiddle = [p1,p2]
+
+        print "Found double connection.  What a day!"
+        print "Remember quickfind was", middle, pmiddle
+        return pmiddle
+
+    else:
+        print "NO MIDDLE"
+        print "no good"
+        return False
+
 
 def addT(tileno, r):
     '''Embed tileno in resource 'r' e.g. "mem_out" => "T3_mem_out"'''
@@ -1294,7 +1389,6 @@ def build_node(nodes, line, DBG=0):
     # Rewrite to simplify
     # e.g. "INPUT" -> "lb_p4_clamped_stencil_update_stream$mem_1$cgramem"; # fifo_depth 64
     # =>   "INPUT" -> "mem_1"; # fifo_depth 64
-
     line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
     line = re.sub("\$cgramem", "", line)
     if DBG>1:
@@ -1313,17 +1407,31 @@ def build_node(nodes, line, DBG=0):
     # if lhs == "io16in_in_0.out": lhs = "INPUT"
     # if rhs == "io16_out.in"    : rhs = "OUTPUT"
 
-    if DBG>1: print("Building rhs node" + rhs)
+    # Ignore lutcnst driving cg_en, ren, wen e.g.
+    #  "lb_gx2sus$lbmem_1_0$c0_lutcnst" -> "lb_gx2sus$lbmem_1_0$cgramem.cg_en";
+    #  "lb_gx2sus$lbmem_1_0$c1_lutcnst" -> "lb_gx2sus$lbmem_1_0$cgramem.ren";
+    #  "lb_gx2sus_wen1_lutcnst"         -> "lb_gx2sus$lbmem_1_0$cgramem.wen";
+    if (lhs.find('lutcnst') > 0) and re.search(r'[.](cg_en|ren|wen)$', rhs):
+        if DBG: print('# Ignoring connection "%s" -> "%s"' % (lhs,rhs))
+        return
+
+    if DBG>1: print("Building rhs node " + rhs)
     addnode(rhs);
 
+    # FIXME after new regime fully implemented
+    # Backward compatibility---can delete after new regime fully implemented
     # Hm this is kind of terrible maybe FIXME/hack
     # Ignore wen_lut nodes e.g. 'lb_p4_clamped_stencil_update_stream_wen_lut_bitPE'
     if lhs.find('wen_lut') > 0:
+        if DBG: print("Ignoring wen_lut node '%s'" % lhs)
+        return
+
+    # FIXME should this be part of addnode()?  yes i think so...
+    # ALL mem nodes need wen luts....right...?
+    if is_mem_node(rhs):
         # wenlut gets processed separately later i guess
-        assert is_mem_node(rhs), 'oops why does wen_lut not connect to a mem tile!?'
         getnode(rhs).wen_lut = 'needs_wenlut'
         getnode(rhs).show()
-        return
 
     if DBG>1: print("Building lhs node", lhs)
     addnode(lhs)
@@ -1336,6 +1444,13 @@ def build_node(nodes, line, DBG=0):
 
     # Uhhhh...look for and process fifo_depth comments
     process_fifo_depth_comments(rhs,line,DBG)
+
+    # E.g. 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0'
+    # BUT NOT 'lb_grad_xx_2_stencil_update_stream$lbmem_1_0.wen'
+    if re.search(r'lbmem[^.]*$', rhs) and getnode(rhs).fifo_depth == -1:
+        errmsg = "\nERROR No fifo_depth comment on input line:\n%s\n" % line
+        print errmsg
+        assert False, errmsg
 
     # Uhhhh...look for and process lut_value comments
     process_lut_value_comments(lhs,line,max(0,DBG-1))
@@ -1591,25 +1706,30 @@ def initialize_node_OUTPUT_1bit():
         getnode('OUTPUT_1bit').place(tileno, input, output)
 
 
-def constval(nodename):
-    # OLD: 'const0__334'
-    kval = re.search('const(\d+)', nodename)
-    if kval: return int(kval.group(1))
-    # 
-    kval = re.search('[$]c([0-9]+)$', nodename)
-    if kval: return int(kval.group(1))
-    # 
-    return None
-
-
 def is_const(nodename):
     old_const = (nodename.find('const') == 0)
     # 
     # NEW: 'bitand_791_792_793$c0'
     # FIXME this looks fragile also not sure if 100% correct!
+    # FIXME json should encode the constant as a comment like lut_value
     new_const = (re.search('[$]c[0-9]+$', nodename) != None)
-    # 
+
     return old_const or new_const
+
+
+def constval(nodename):
+    # OLD: 'const0__334'
+    kval = re.search('const(\d+)', nodename)
+    if kval: return int(kval.group(1))
+    #
+    # NEW: slt_790_775_791$not$c0 is 0
+    # NEW: slt_790_775_791$not$c01 is also 0
+    # note $c0, $c01 NOT USED in harris, no need to fix for now :(
+    # FIXME really should get value from json file
+    kval = re.search('[$]c([0-9]+)$', nodename)
+    if kval: return int(kval.group(1))
+    # 
+    return None
 
 
 def is_reg(nodename):
@@ -1820,7 +1940,7 @@ def constant_folding(DBG=0):
 
         op = pe.addop(k.name, 'either')
 
-        # 'input0' is the integer value of theconstant
+        # 'input0' is the integer value of the constant
 #         kval = re.search('const(\d+)', k.name).group(1)
 #         k.input0 = int(kval)
 
@@ -1932,6 +2052,9 @@ def register_folding(DBG=9):
         # if DBG: print "Found foldable reg '%s'" % reg_name
         if DBG: print "#   Folded reg '%s' into pe '%s' as '%s'" % \
            (reg_name,pe_name,op)
+
+        # Make a note for later
+        getnode(pe_name).reg_op = reg_name
 
         # Folded 'lb_p3_cim_stencil_update_stream$lb1d_1$reg_2'
         # into pe 'smax_780_781_782$cgramax.data.in.1' as 'data.0'
@@ -2527,13 +2650,24 @@ def try_again(sname, dname, dtileno, DBG=0):
 
 
     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
-    packer.unallocate(dtileno, DBG=0)
 
-#     # !!????
-#     if dtileno in packer.EXCEPTIONS:
-#         print "exceptions = ", packer.EXCEPTIONS
-#         pwhere(1614, "OOPS Already tried and failed oh nooooo")
-#         assert False, "Out of options"
+    # CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+    # If it fails it may erroneously deallocate sname!
+    # FIXME ORIG_ORDER is a very hacky way to address that...
+    global ORIG_ORDER
+    if ORIG_ORDER != False:
+        if DBG>2: print("666f Tried and failed to put sname and dname in same tile")
+        if DBG>2: print("666f restoring the natural order...")
+        (oo_tileno, oo_order) = ORIG_ORDER
+        packer.order[oo_tileno] = oo_order
+        ORIG_ORDER = False
+    else:
+        packer.unallocate(dtileno, DBG=0)
+
+    if dtileno in packer.EXCEPTIONS:
+        print "2401 exceptions = ", packer.EXCEPTIONS
+        pwhere(2402, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
+        assert False, "Out of options"
 
     # Add dtileno as an EXCEPTION and try again
     packer.EXCEPTIONS.append(dtileno)
@@ -2684,14 +2818,24 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
                 pwhere(2528, "oops source '%s' already adjunct now what!?" % sname)
                 return False
                        
-
-
-
             # Try again, using some dest OTHER THAN dtileno
             rval = try_again(sname, dname, dtileno, DBG)
             # try_again calls place and route, doing the cleanup work below.
             # So we can return immediately
             return rval
+
+        # CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
+        # If it fails it may erroneaousl deallocate sname!
+        # FIXME ORIG_ORDER is a very hacky way to address that...
+        global ORIG_ORDER
+        if ORIG_ORDER != False:
+            if DBG>2: print("666f Tried and SUCCEEDED putting put sname and dname in same tile")
+            if DBG>2: print("666f restoring the natural order...")
+            (oo_tileno, oo_order) = ORIG_ORDER
+            packer.order[oo_tileno] = oo_order
+            ORIG_ORDER = False
+
+
 
         print "# Having found the final path,"
         print "# 1. place dname '%s' in dtileno" % dname
@@ -3356,6 +3500,11 @@ def get_nearest_tile(sname, dname, DBG=0):
         if stileno in packer.EXCEPTIONS:
             print "oop no already tried and failed at that"
         else:
+            # CAREFUL! get_nearest_tile() may try to put sname and dname in same tile!
+            # If it fails it may erroneaousl deallocate sname!
+            global ORIG_ORDER
+            ORIG_ORDER = (stileno, packer.order[stileno])
+            if DBG>2: print("666f Try to put sname and dname in same tile")
             return stileno
 
     ########################################################################
@@ -3542,6 +3691,135 @@ def fix_path(path, dname, DBG=0):
     if DBG: print('after: ' + str(path))
 
 
+def rejoin_path(path_nodes):
+    # Given path nodes e.g.
+    # ['T154_out_s3t2', 'T139_in_s1t2', 'T139_out_s0t2', 'T140_in_s2t2']
+    # Return "joined" path
+    # ['T154_out_s3t2 -> T139_in_s1t2', 'T139_out_s0t2 -> T140_in_s2t2']
+
+    assert (len(path_nodes)%2) == 0, 'malformed path'
+
+    joined_path = []
+    while len(path_nodes) >= 2:
+        joined_path.append("%s -> %s" % (path_nodes[0], path_nodes[1]))
+        path_nodes = path_nodes[2:]
+                        
+    assert len(path_nodes) == 0, 'malformed path'
+
+    return joined_path
+
+# TEST
+# p = ['a']
+# p = ['a', 'z']
+# p = ['a', 'b', 'y', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'f', 'z']
+# print p; print rejoin_path(p); print p; print ""
+
+
+def unify_path(snode, path):
+    # Check candidate path "path" (from snode to some dest dnode)
+    # against existing snode->dest routes in snode;
+    # if cand path shares a node with an existing route,
+    # make sure both paths are the same up to and including that node
+
+    # Eg if path = ['T154_out_s3t2 -> T139_in_s1t2', 'T139_out_s0t2 -> T140_in_s2t2']
+    # then ports = ['T154_out_s3t2', 'T139_in_s1t2', 'T139_out_s0t2', 'T140_in_s2t2']
+    ports = CT.allports(path)
+
+    # Want to find the LAST port in cand path that matches in dports, not the first
+    revports = list(ports); revports.reverse()
+
+    for d in snode.dests:
+        dports = CT.allports(snode.route[d])
+
+        for p in revports:
+            # print 68, p; print "FOO looking for '%s' in route '%s'" % (p, d)
+            # print snode.route[d]
+
+            if p in dports:
+                # Found overlap with pre-existing route!
+                # Build prefix based on pre-existing route in snode
+                prefix = []
+                for i in range(len(dports)):
+                    # print i, range(len(dports))
+                    prefix.append(dports[i])
+                    if dports[i] == p: break
+
+                # Build suffix based on divergent end-portion of cand path
+                suffix = []
+                for i in range(len(ports)):
+                    if ports[i] == p:
+                        suffix = ports[i+1:]
+                        break
+
+                # Turn ['a','b'] port list into ['a -> b'] path
+                newports = (prefix + suffix)
+                newpath  = rejoin_path(newports)
+
+                if newpath == path:
+                    if False: print 6666, "SAME"
+                else:
+                    print("")
+                    pwhere(3830, "ALERT!  REWROTE OVERLAPPING PATH!  NOTSAME")
+                    print("  existing path:", snode.route[d])
+                    print("  my orig path: ", path)
+                    print("  rewritten as: ", newpath)
+                    print("")
+                return newpath
+
+    # Return orig path unchanged
+    return path
+
+
+
+
+#                 if False:
+#                     print 6666, ""
+#                     print 6666, ""
+#                     print 6666, "FOUND COMMON NODE"
+#                     print 6666, "existing path:  ", snode.route[d]
+#                     print 6666, "existing ports: ", dports
+#                     print 6666, "candidate path: ", path
+#                     print 6666, "candidate ports:", ports
+#                     print 6666, "common node '%s'" % p
+#                     print 6666, ""
+#                     print 6666, "REWRITING CANDIDATE PATH"
+
+#                     print 6666, "NEW PATH"
+#                     print 6666, 'prefix', prefix
+#                     print 6666, 'suffix', suffix
+#                     print 6666, "orig path: ", path
+#                     print 6666, "new  path: ", newpath
+#                     print 6666, "NOTSAME"
+#                     print 6666, ""
+#                     print 6666, ""
+
+                # return newpath
+
+
+#                 print 6666, "NEW PATH"
+#                 # print 6666, begin
+#                 print 6666, 'prefix', prefix
+#                 print 6666, 'suffix', suffix
+#                 # print 6666, end
+#                 print 6666, "orig path: ", path
+#                 print 6666, "new  path: ", newpath
+#                 if newpath == path: print 6666, "SAME"
+#                 else: print 6666, "NOTSAME"
+#                 print 6666, ""
+#                 print 6666, ""
+# 
+
+# TEST
+# p = ['a', 'z']
+# p = ['a', 'b', 'y', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'z']
+# p = ['a', 'b', 'c', 'd', 'e', 'f', 'z']
+# print p[0], p[-1], p[1:-2]
+# exit()
+
+
 def eval_path(path, snode, dname, dtileno, DBG=0):
     # Given 'path' from src node 'snode' in stileno
     # to dst node 'dname' in possible dest tile 'dtileno',
@@ -3562,6 +3840,15 @@ def eval_path(path, snode, dname, dtileno, DBG=0):
         # assert False, 'disaster could not find a path (and/or could try again with a different tile?'
         # Dude no need to die, it'll try again...right?
         return False
+
+
+
+
+
+    final_path = unify_path(snode, final_path)
+
+
+
 
     return final_path
 

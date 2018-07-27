@@ -269,8 +269,14 @@ def find_depth(nodename):
     # Insert a fifo_depth comment
     # (for some reason, node name has a '.wdata' on the end)
 
+    # OLD
     parse = re.search('(.*).wdata', nodename)
-    if not parse: assert False
+    if not parse:
+
+        # NEW
+        parse = re.search('^(.*[$]cgramem)$', nodename)
+        if not parse:
+            assert False
 
     k1 = parse.group(1)
     if DBG: print "# FOO found wdata node", k1
@@ -324,11 +330,6 @@ for k in connections:
     u1 = simplify(k[1])
 
     # E.g. "# fifo_depth 10"
-    if re.search('(.*).wdata', k[1]):
-        annotation = find_depth(k[1])
-
-    else:
-        annotation = ''
 
     # Turn "PE_U70.data.out, PE_U8.data.in.1" into "PE_U70, PE_U8"
     from_node = u0
@@ -340,6 +341,12 @@ for k in connections:
     if (tf0 == "to") or (tf1 == "from"):
         from_node = u1
         to_node   = u0
+
+    # if re.search('(.*).wdata', k[1]):
+    if re.search('(.*).wdata', to_node) or re.search(r'.*[$]cgramem$', to_node):
+        annotation = find_depth(to_node)
+    else:
+        annotation = ''
 
 #     # print "  %s" % instances[innode]['modargs']
 # 

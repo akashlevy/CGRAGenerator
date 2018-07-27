@@ -78,14 +78,12 @@ T57_in_s0t0_b0 -> T57_out_s2t0_b0
 T57_out_s2t0_b0 -> T57_wen
 
 # mem_1::mul_3475_348_PE.data.in.0
-T24_mem_out -> T24_out_s1t1
-T24_in_s7t1 -> T24_out_s6t1
+T24_mem_out -> T24_out_s6t1
 T42_in_s0t1 -> T42_out_s2t1
 T42_out_s2t1 -> T42_op1
 
 # mem_2::mul_3423_343_PE.data.in.0
-T57_mem_out -> T57_out_s1t2
-T57_in_s7t2 -> T57_out_s6t2
+T57_mem_out -> T57_out_s6t2
 T74_in_s0t2 -> T74_out_s2t2
 T74_out_s2t2 -> T74_op1
 

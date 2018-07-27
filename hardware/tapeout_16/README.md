@@ -17,14 +17,14 @@ TODO
 ## P&R Flow for PE Tile:
 1. Navigate to CGRAGenerator/hardware/tapeout\_16/synth/pe\_tile\_new\_unq1
 2. Type `innovus` to open the Innovus tool
-3. Type `source ../../scripts/layout\_pe\_tile\_new.tcl` (this will take some time to complete)
+3. Type `source ../../scripts/layout_pe_tile_new.tcl` (this will take some time to complete)
 
 After this is complete, type `exit` to exit the Innovus tool.
 
 ## P&R Flow for Memory Tile:
 1. Navigate to CGRAGenerator/hardware/tapeout\_16/synth/memory\_tile\_unq1
 2. Type `innovus` to open the Innovus tool
-3. Type `source ../../scripts/layout\_memory\_tile.tcl` (this will take some time to complete)
+3. Type `source ../../scripts/layout_memory_tile.tcl` (this will take some time to complete)
 
 After this is complete, type `exit` to exit the Innovus tool.
 

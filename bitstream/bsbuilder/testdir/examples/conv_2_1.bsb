@@ -59,8 +59,7 @@ T36_in_s6t0 -> T36_out_s7t0
 T36_in_s1t0 -> T36_out_s0t0
 
 # mem_1::mul_337_338_339_PE.data.in.0
-T24_mem_out -> T24_out_s1t0
-T24_in_s7t0 -> T24_out_s6t0
+T24_mem_out -> T24_out_s6t0
 T42_in_s0t0 -> T42_out_s2t0
 T42_out_s2t0 -> T42_op1
 

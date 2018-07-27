@@ -29,12 +29,9 @@ FF000015 0002F00B
 # data[(32, 30)] : @ tile (2, 5) connect wire 0 (in_0_BUS1_0_0) to out_0_BUS1_2_0 (REG 01)
 # da99[(32, 32)] : REG_FIELD_HACK (bsbuilder.py) hand-written code above
 
-00020018 00000C00
-# data[(11, 10)] : @ tile (2, 5) connect wire 3 (rdata) to sb_wire_in_1_BUS16_S3_T0
-
-00030018 00200001
+00030018 00300001
 # data[(1, 0)] : @ tile (2, 5) connect wire 1 (in_1_BUS16_S2_T0) to out_1_BUS16_S0_T0
-# data[(21, 20)] : @ tile (2, 5) connect wire 2 (sb_wire_in_1_BUS16_S3_T0) to out_1_BUS16_S2_T0
+# data[(21, 20)] : @ tile (2, 5) connect wire 3 (rdata) to out_1_BUS16_S2_T0
 
 00040018 00000054
 # data[(1, 0)] : mode = linebuffer

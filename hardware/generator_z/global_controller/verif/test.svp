@@ -441,7 +441,7 @@ program automatic `mname`(interface ifc);
       end 
    endtask // check_config_read
 
-   task check_register(input register, int value);
+   task check_register(int register, int value);
       begin
          assert(top.dut.write == 0);
          assert(top.dut.read == 0);

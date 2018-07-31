@@ -44,8 +44,15 @@
 //; # tile node will be X). Multiple spaces are treated as a single space. Do
 //; # not include IO tiles in the basic block.
 //; #
+//; # OLD
+//; # my $basic_block  = "pe pe pe mem\n";
+//; #    $basic_block .= "pe pe pe X  ";
+//; #
+//; # NEW
 //; my $basic_block  = "pe pe pe mem\n";
-//;    $basic_block .= "pe pe pe X  ";
+//;    $basic_block .= "pe pe pe mem";
+//; #
+//; #
 //; #
 //; # Number of times the basic block repeats in the horizontal direction.
 //; #

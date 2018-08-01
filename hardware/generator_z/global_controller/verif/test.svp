@@ -155,10 +155,6 @@ program automatic `mname`(interface ifc);
 	 repeat(3) jdrv.Next_tck();
 	 check_register(top.dut.reset_out,1);
          //TODO: CHECK RESET ASSERTION LENGTH
-
-	 
-	 @(posedge ifc.Clk);
-	 write_config();
       end
    endtask // run_test
 

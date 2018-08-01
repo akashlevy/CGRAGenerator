@@ -34,8 +34,6 @@ program automatic `mname`(interface ifc);
 //;   my $config_addr_width = parameter(name => 'config_addr_width', val=>32);
 //;   my $config_data_width = parameter(name => 'config_data_width', val=>32);
    jtag_regfile_trans_t jtag_trans;
-   logic [`$config_data_width-1`:0] config_data_in = 0;
-   assign top.dut.config_data_in = config_data_in; 
    task run_test;
       begin
 	 jdrv.ReadID(jtag_trans);
@@ -199,7 +197,7 @@ program automatic `mname`(interface ifc);
      jtag_trans.addr = $urandom_range((2 ** `$config_addr_width`)-1);
      jtag_trans.data_in = $urandom_range((2 ** `$config_data_width`)-1);
      jtag_trans.done = 0;
-     config_data_in = $urandom_range((2 ** `$config_data_width`)-1);
+     ifc.config_data_from_gc = $urandom_range((2 ** `$config_data_width`)-1);
      jdrv.Send(jtag_trans);
      check_config_read(jtag_trans.addr,~top.dut.sys_clk_activated);
      config_count++;

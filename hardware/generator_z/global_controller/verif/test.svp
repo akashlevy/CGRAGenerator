@@ -66,21 +66,8 @@ program automatic `mname`(interface ifc);
 	 read_config();
 	
 	 @(posedge ifc.Clk);
-	 jtag_trans.op = switch_clk;
-	 jtag_trans.data_in = 1;
-	 jtag_trans.done = 0;
-	 jdrv.Send(jtag_trans);
-	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 repeat(2) jdrv.Next_tck();
-	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) jdrv.Next_tck();
-         //Now check clk out and 
-         repeat(200) begin
-	    @(posedge ifc.Clk);
-            assert(top.dut.clk_out == top.dut.clk_in); //make sure we've actually switched to the fast clk;
-         end
-	 
+         switch_clk(1); // Switch to fast clk
+ 
 	 @(posedge ifc.Clk);
 	 jtag_trans.op = read_clk_domain;
 	 jtag_trans.data_out = 0;
@@ -92,21 +79,8 @@ program automatic `mname`(interface ifc);
 	 check_register(top.dut.sys_clk_activated,jtag_trans.data_out);
 
 	 @(posedge ifc.Clk);
-	 jtag_trans.op = switch_clk;
-	 jtag_trans.data_in = 0;
-	 jtag_trans.done = 0;
-	 jdrv.Send(jtag_trans);
-	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 @(posedge top.dut.clk_in);
-	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) jdrv.Next_tck();
-         //Now check clk out and 
-         repeat(200) begin
-            @( top.dut.clk_in);
-            assert(top.dut.clk_out == top.dut.tck); //make sure we've actually switched to the slow clk;
-         end
-	 
+	 switch_clk(0); // Switch to slow clock
+ 
 	 @(posedge ifc.Clk);
 	 jtag_trans.op = read_clk_domain;
 	 jtag_trans.data_out = 0;
@@ -126,22 +100,8 @@ program automatic `mname`(interface ifc);
 	 check_register(top.dut.delay_sel,jtag_trans.data_out);
 
 	 @(posedge ifc.Clk);
-	 jtag_trans.op = switch_clk;
-	 jtag_trans.data_in = 1;
-	 jtag_trans.done = 0;
-	 jdrv.Send(jtag_trans);
-	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 
-	 repeat(2) jdrv.Next_tck();
-         check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) jdrv.Next_tck();
-         //Now check clk out and 
-         repeat(200) begin
-            @( top.dut.clk_in);
-            assert(top.dut.clk_out == top.dut.clk_in); //make sure we've actually switched to the fast clk;
-         end
-	 
+	 switch_clk(1); //switch to fast clock 
+
 	 @(posedge ifc.Clk);
 	 jtag_trans.op = read_clk_domain;
 	 jtag_trans.data_out = 0;
@@ -152,22 +112,8 @@ program automatic `mname`(interface ifc);
 		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc, jtag_trans.data_out);
 	 check_register(top.dut.sys_clk_activated,jtag_trans.data_out);
 	 
-
-	 @(posedge ifc.Clk);
-	 jtag_trans.op = switch_clk;
-	 jtag_trans.data_in = 0;
-	 jtag_trans.done = 0;
-	 jdrv.Send(jtag_trans);
-	 $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
-		   $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
-	 @(posedge top.dut.clk_in);
-	 check_register(top.dut.clk_switch_request,jtag_trans.data_in);
-	 repeat(100) jdrv.Next_tck();
-         //Now check clk out and 
-         repeat(200) begin
-            @(posedge top.dut.clk_in);
-            assert(top.dut.clk_out == top.dut.tck); //make sure we've actually switched to the slow clk;
-         end
+         @(posedge ifc.Clk);
+         switch_clk(0); // Switch to slow clock
 	 
 	 @(posedge ifc.Clk);
 	 jtag_trans.op = read_clk_domain;
@@ -375,14 +321,35 @@ program automatic `mname`(interface ifc);
      jtag_trans.done = 0;
      config_data_in = $urandom_range((2 ** `$config_data_width`)-1);
      jdrv.Send(jtag_trans);
+     check_config_read(jtag_trans.addr,~top.dut.sys_clk_activated);
      config_count++;
      jtag_trans = jdrv.GetResult();
      $fdisplay(fd,"%t: %m: Trans %d (Read):  Address to GC=%d, Data to GC=%d, Data from CGRA=%d, Data Read=%d",  
 		   $time, config_count, ifc.config_addr_to_gc, ifc.config_data_to_gc, top.dut.config_data_in, jtag_trans.data_out);
-     check_config_read(jtag_trans.addr,~top.dut.sys_clk_activated);
      end
    endtask //read_config
-   
+  
+   task switch_clk(int data_in);
+     begin
+        jtag_trans.op = switch_clk;
+        jtag_trans.data_in = 1;
+        jtag_trans.done = 0;
+        jdrv.Send(jtag_trans);
+        $fdisplay(fd,"%t: %m: Trans 4 (sys_clk_switch):  Address to GC=%d, Data to GC=%d",  
+                  $time, ifc.config_addr_to_gc, ifc.config_data_to_gc);
+        repeat(2) jdrv.Next_tck();
+        check_register(top.dut.clk_switch_request,jtag_trans.data_in);
+        repeat(100) jdrv.Next_tck();
+        repeat(200) begin
+           @(posedge top.dut.clk_in);
+           if(data_in==1)
+              assert(top.dut.clk_out == top.dut.clk_in); //make sure we've actually switched to the fast clk;
+           else if(data_in==0)
+              assert(top.dut.clk_out == top.dut.tck); //make sure we've actually switched to the fast clk;
+        end
+     end
+   endtask //switch clk
+ 
    
    task init_test();
       begin

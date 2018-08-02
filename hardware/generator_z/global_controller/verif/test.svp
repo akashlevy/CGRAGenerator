@@ -34,6 +34,9 @@ program automatic `mname`(interface ifc);
 //;   my $config_addr_width = parameter(name => 'config_addr_width', val=>32);
 //;   my $config_data_width = parameter(name => 'config_data_width', val=>32);
    jtag_regfile_trans_t jtag_trans;
+
+   //Property assertion
+   assert property (!(top.dut.read && top.dut.write));
    task run_test;
       begin
 	 jdrv.ReadID(jtag_trans);

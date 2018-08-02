@@ -77,7 +77,7 @@ program automatic `mname`(interface ifc);
 	 @(posedge ifc.Clk);
 	 write_gc_reg(wr_delay_sel_reg,32'b10);
 	 repeat(2) jdrv.Next_tck();
-	 check_register(top.dut.delay_sel,jtag_trans.data_out);
+	 check_register(top.dut.delay_sel,jtag_trans.data_in);
 
 	 @(posedge ifc.Clk);
 	 switch_clk(1); //switch to fast clock 

@@ -27,7 +27,7 @@ program automatic `mname`(interface ifc);
    int                           rnd0;
    int 				 fd;
    int				 config_count=0;
-   
+   enum {reading,writing,other} state = other; 
    // Instantiate a jtag driver
    //; my $jtag_drvr_obj = generate_base('JTAGDriver', 'jdrv');
    `$jtag_drvr_obj->instantiate`;
@@ -36,7 +36,47 @@ program automatic `mname`(interface ifc);
    jtag_regfile_trans_t jtag_trans;
 
    //Property assertion
-   assert property (!(top.dut.read && top.dut.write));
+   assert property (!(top.dut.read && top.dut.write)) else $error("read and write both asserted");
+   assert property (!((state==reading) && (top.dut.write))) else $error("write asserted while reading");
+   assert property (!((state==writing) && (top.dut.read))) else $error("read asserted while writing");
+   assert property (!((state==other) && (top.dut.read | top.dut.write))) else $error("r/w asserted while not doing either");
+   
+   //Add assertions for read sequence
+   //At some point during the read, the output address must equal the input address
+   //and the read signal must be asserted
+   sequence begin_read;
+      ~(state==reading) ##1 (state==reading);
+   endsequence
+   
+   sequence assert_read;
+      ##[0:400] ((state==reading) && (top.dut.read==1) && (top.dut.config_addr_out==jtag_trans.addr));
+   endsequence
+   
+   property correct_read;
+      @(posedge ifc.Clk)
+      begin_read |-> assert_read;
+   endproperty
+    
+   assert property(correct_read) else $error("incorrect read sequence");
+   
+   //Add assertions for write sequence
+   //At some point during the write, the output address must equal the input address,
+   //output data must equal input data, and the write signal must be asserted
+   sequence begin_write;
+      ~(state==writing) ##1 (state==writing);
+   endsequence
+   
+   sequence assert_write;
+      ##[0:800] ((state==writing) && (top.dut.write==1) && (top.dut.config_addr_out==jtag_trans.addr) && (top.dut.config_data_out==jtag_trans.data_in));
+   endsequence
+   
+   property correct_write;
+      @(posedge ifc.Clk)
+      begin_write |-> assert_write;
+   endproperty
+    
+   assert property(correct_write) else $error("incorrect write sequence");
+   
    task run_test;
       begin
 	 jdrv.ReadID(jtag_trans);
@@ -181,6 +221,7 @@ program automatic `mname`(interface ifc);
    
    task write_config();
      begin
+     state = writing;
      jtag_trans.op = write;
      jtag_trans.addr = $urandom_range((2 ** `$config_addr_width`)-1);
      jtag_trans.data_in = $urandom_range((2 ** `$config_data_width`)-1);
@@ -190,23 +231,24 @@ program automatic `mname`(interface ifc);
      $fdisplay(fd,"%t: %m: Trans %d (Write):  Address to GC=%d, Data to GC=%d",  
 		   $time, config_count,ifc.config_addr_to_gc, ifc.config_data_to_gc);
      @(posedge ifc.Clk);
-     check_config_write(jtag_trans.addr,jtag_trans.data_in,~top.dut.sys_clk_activated);
+     state = other;
      end
    endtask //write_config
     
    task read_config();
      begin
+     state = reading;
      jtag_trans.op = read;
      jtag_trans.addr = $urandom_range((2 ** `$config_addr_width`)-1);
      jtag_trans.data_in = $urandom_range((2 ** `$config_data_width`)-1);
      jtag_trans.done = 0;
      ifc.config_data_from_gc = $urandom_range((2 ** `$config_data_width`)-1);
      jdrv.Send(jtag_trans);
-     check_config_read(jtag_trans.addr,~top.dut.sys_clk_activated);
      config_count++;
      jtag_trans = jdrv.GetResult();
      $fdisplay(fd,"%t: %m: Trans %d (Read):  Address to GC=%d, Data to GC=%d, Data from CGRA=%d, Data Read=%d",  
 		   $time, config_count, ifc.config_addr_to_gc, ifc.config_data_to_gc, top.dut.config_data_in, jtag_trans.data_out);
+     state = other;
      end
    endtask //read_config
   
@@ -275,46 +317,6 @@ program automatic `mname`(interface ifc);
       end
    endtask // init_test
 
-
-   task check_config_write(int config_addr, int config_data, int on_tck);
-      begin
-         assert(top.dut.config_data_out == config_data) else $display("write: wrong config_data_out");
-         assert(top.dut.write == 1) else $display("write: write != 1");
-         assert(top.dut.read == 0) else $display("write: read != 0"); 
-         assert(top.dut.config_addr_out == config_addr) else $display("write: wrong config_addr_out");
-	 while (top.dut.write == 1) begin
-            //We want to make sure that on every clock edge where write is asserted,
-            //the address and data are what we expect.
-            assert(top.dut.config_data_out == config_data);
-            assert(top.dut.write == 1);
-            assert(top.dut.read == 0);
-            assert(top.dut.config_addr_out == config_addr);
-	    if(on_tck)
-	       jdrv.Next_tck();
-	    else
-	       @(posedge top.dut.clk_in);
-         end
-      end 
-   endtask // check_config_write  
-   
-   task check_config_read(int config_addr, int on_tck);
-      begin 
-         assert(top.dut.write == 0) else $display("read: write!=0");
-         assert(top.dut.read == 1) else $display("read: read!=1");
-         assert(top.dut.config_addr_out == config_addr) else $display("read: wrong config_addr_out");
-	 while (top.dut.read == 1) begin
-            //We want to make sure that on every clock edge where write is asserted,
-            //the address and data are what we expect.
-            assert(top.dut.write == 0);
-            assert(top.dut.read == 1);
-            assert(top.dut.config_addr_out == config_addr);
-	    if(on_tck)
-	       jdrv.Next_tck();
-	    else
-	       @ (posedge top.dut.clk_in);
-         end
-      end 
-   endtask // check_config_read
 
    task check_register(int register, int value);
       begin

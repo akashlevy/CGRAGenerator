@@ -15,28 +15,18 @@ install:
   # - python --version
   # - sudo apt-get install python3
   # - python --version
+
   - pip install --user -U pip
   - pip install --user numpy
   - pip install --user bit_vector
-script:
-  # set -e => exit on failure. "You can sandwich the stuff in script with set -e and set +e."
-  - set -e
-  #
-  #
-  # - cd testdir; make test_all
-  #
-  # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
-  - pushd testdir
-  -   make SILENT=TRUE test_basic
-  -   make SILENT=TRUE test_unit
-  #   make SILENT=TRUE test_serpent_dev
-  -   make SILENT=TRUE test_serpent | tee serpent_results.tmp
-  -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
-  # - make SILENT=TRUE test_all
-  - popd
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+
+  # # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
+  # - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
+  #     --branch master ../TestBenchGenerator
 
   # Install python for testing infrastructure
+  # All this just to get python3 => python3.6 or better
+  # Because TBG needs python 3.6 or better
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -u -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -44,6 +34,45 @@ script:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
+
+  # Needed by TestBenchGenerator
+  - pip install delegator.py
+
+script:
+  # "You can sandwich the stuff in script with set -e and set +e."
+  # set -e => exit on failure.
+  - set -e
+
+  ########################################################################
+  # - cd testdir; make test_all
+  #
+  # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
+  - pushd testdir
+
+
+  #   # Original tests
+  #   -   make SILENT=TRUE test_basic
+  #   -   make SILENT=TRUE test_unit
+  #   -   make SILENT=TRUE test_serpent  RUN=run.csh | tee serpent_results.tmp
+  #   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
+  #   # - make SILENT=TRUE test_all
+
+  #   # Desired target set maybe
+  #   - make SILENT=TRUE test_all
+
+  -   make SILENT=TRUE test_basic
+  -   make SILENT=TRUE test_unit
+  #   make SILENT=TRUE test_serpent_dev
+  -   make SILENT=TRUE test_serpent | tee serpent_results.tmp
+  -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
+
+  - popd
+
+  # Summarize the results here at the end
+  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+
+  ########################################################################
+  # Lenny's tests
 
   # Install python dependencies
   - pip install pytest numpy delegator.py bit_vector
@@ -59,10 +88,3 @@ script:
 
   # Redo serpent summary maybe
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
-
-# ##############################################################################
-# # NOTES
-# #
-# # Maybe someday we'll want/need:
-# # perl:
-# # - "5.18"

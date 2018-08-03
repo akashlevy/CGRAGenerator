@@ -1,4 +1,3 @@
-rm -rf genesis_verif/
 Genesis2.pl -parse -generate -top top -input 		top.svp \
 							JTAGDriver.svp \
 							clocker.svp \

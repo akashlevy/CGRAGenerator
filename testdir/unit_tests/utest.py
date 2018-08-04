@@ -350,6 +350,7 @@ def gen_output_file_cgra(tname, DBG=0):
     output = cwd + cgra_out
     logfile = cwd + "run_tbg_csh.log"
 
+    run_csh = './run_tbg.csh -v'
     run_csh = './run_tbg.csh -v -build'
     cmd = "%s -config %s -input %s -output %s -delay %s"\
           % (run_csh, config, input, output, delay)

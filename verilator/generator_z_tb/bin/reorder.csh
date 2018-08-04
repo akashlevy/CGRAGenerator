@@ -10,9 +10,8 @@ if ($?HELP) then
   exit
 endif
 
-set tmp = /tmp/tmp$$
-grep -v '#' $1 | egrep . > $tmp
-cat $tmp | egrep -v '^..00' > $tmp.1
-cat $tmp | egrep    '^..00' > $tmp.2
-cat $tmp.1 $tmp.2
-rm $tmp $tmp.1 $tmp.2
+grep -v '#' $1 | egrep . > tmp$$
+cat tmp$$ | egrep -v '^..00' > tmp$$.1
+cat tmp$$ | egrep    '^..00' > tmp$$.2
+cat tmp$$.1 tmp$$.2
+

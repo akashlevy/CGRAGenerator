@@ -48,6 +48,7 @@ script:
   #
   # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
   - pushd testdir
+  -   make update_cgra
   -   make SILENT=FALSE test_unit
 
   #   # Original tests

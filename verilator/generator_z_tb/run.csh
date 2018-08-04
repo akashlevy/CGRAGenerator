@@ -3,110 +3,45 @@
 # Can't believe I have to do this...
 set path = (. $path)
 
-set VERBOSE
-
-# Build a tmp space for intermediate files
-set tmpdir = `mktemp -d /tmp/run.csh.XXX`
-# set tmpdir = deleteme;     /bin/rm -rf $tmpdir/* || echo already empty
-# set tmpdir = /tmp/run.csh; /bin/rm -rf $tmpdir/* || echo already empty
-
-if (! -e $tmpdir) then
-  unset ERR
-  mkdir $tmpdir || set ERR
-  if ($?ERR) then
-    echo "Could not make dir '$tmpdir'"
-    exit 99
-  endif
-endif
-
-
-# ALWAYS BE USING MEMORY
-setenv CGRA_GEN_USE_MEM 1
-
-
-# setenv CGRA_GEN_ALL_REG 1
-
-# Travis flow (CGRAFlow/.travis.yml)
-#  travis script calls "generate.csh" to do the initial generate
-#  travis script calls PNR to build map, io info from generated cgra_info.txt
-#  builds the full parrot
-
-# Travis flow (CGRAGenerator/.travis.yml)
-#  travis script calls "generate.csh" to do the initial generate
-#  travis script calls run.csh using pre-built bitstream w/embedded io info
-#  builds small parrot
-
 # Local flow (test):
-#  run.csh calls generate.csh to do the initial generate
-#  run.csh uses pre-built io, map files in bitstream/example3 to build config file
-# builds small parrot
-
-# DEFAULTS
-set testbench = top_tb.cpp
-set GENERATE  = "-gen"
-set BUILD
-
-# Sometimes may need to know what branch we are in
-git branch | grep '^*' >    $tmpdir/tmp
-set branch = `sed 's/^..//' $tmpdir/tmp`
-rm $tmpdir/tmp
-
+# - run.csh calls build_cgra.sh to do the initial generate
+# - run.csh uses pre-built io, map files in bitstream/example3 to build config file
+# - builds small parrot
+# 
+# Travis flow (CGRAFlow/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls PNR to build map, io info from generated cgra_info.txt
+# - builds the full parrot
+# 
+# Travis flow (CGRAGenerator/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls run.csh using pre-built bitstream w/embedded io info
+# - builds small parrot
 
 ########################################################################
-# Detect if running from within travis
-unset TRAVIS
-
-
-# Did this change!!?
-# # Travis branch comes up as 'detached' :(
-# #   * (HEAD detached at a220e19)
-# #     master
-echo $branch
-
-
-# if (`expr "$branch" : ".*detached"`) then
-if ($?TRAVIS_BUILD_DIR) then
-  echo "run.csh: I think we are running from travis"
-  set TRAVIS
-  set branch = `git branch | grep -v '^*' | awk '{print $1}'`
-endif
+# Sometimes may need to know what branch we are in (currently unused)
+set branch = `git rev-parse --abbrev-ref HEAD`
 echo "run.csh: I think we are in branch '$branch'"
 
-
-
-
-
-########################################################################
-# Default configuration bitstream
-# INOUT/tri-state workaround for side 0 output pads
-set config   = ../../bitstream/examples/pw2_16x16.bsa
-
-
-
-
+# DEFAULTS
+set GENERATE  = "-gen"
+set BUILD
 set DELAY = '0,0'
 
-# FIXED maybe
-# # FIXME Yes this WILL bite my ass and very soon, I expect :(
-# if ("$config" == "../../bitstream/examples/pwv2_io.bs") set DELAY = '3,3'
-# 
-# echo .${config}.
-# echo $DELAY
-
-# gray_small (100K cycles) still too big for 16x16
-# set input     = io/gray_small.png
+# Default configuration bitstream: 16x16 pointwise mul-by-two
+set config   = ../../bitstream/examples/pw2_16x16.bsa
 
 # pointwise w/'conv_bw' takes 4000 cycles to complete
 set input     = io/conv_bw_in.png
 
-if ("$branch" == "sixteen") set input = io/input_10x10_1to100.png
-
+# Build a tmp space for intermediate files
+set tmpdir = `mktemp -d /tmp/run.csh.XXX`
 
 set nclocks = "1M"
 set outpad  = 's1t0'
 set output  = $tmpdir/output.raw
 set out1    = $tmpdir/onebit.raw
-unset tracefile
+set tracefile = ""
 
 if ($#argv == 1) then
   if ("$argv[1]" == '--help') then
@@ -148,44 +83,24 @@ endif
 #   if (-e $f) rm -rf $f
 # end
 
-# I GUESS 4x4 vs. 8x8 is implied by presence or absence of CGRA_GEN_USE_MEM (!!???)
-# I can't find anything else that does it :(
-
-
+set VERBOSE
 set VERILATOR_DEBUG = ""
 while ($#argv)
   # echo "Found switch '$1'"
   switch ("$1")
 
-    case '-clean':
-      exit 0;
+    case 'top_tb.cpp':
+      echo "run.csh WARNING deprecated switch '$1', don't need that no more"; breaksw
 
+    ##############################
+    # switches: VERBOSITY
     case '-q':
       unset VERBOSE; breaksw;
     case '-v':
       set VERBOSE; breaksw;
 
-
-
-########################################################################
-    # DEPRECATED SWITCHES
-    case '-4x4':
-    case '-8x8':
-      echo "WARNING Switch '$1' no longer valid"; breaksw
-
-    case -usemem:
-    case -newmem:
-      echo "WARNING Switch '$1' no longer valid"; breaksw
-      # setenv CGRA_GEN_USE_MEM 1; # always set
-      breaksw;
-
-#     case -egregious_conv21_hack:
-#       set EGREGIOUS_CONV21_HACK
-#       breaksw
-########################################################################
-
-
-
+    ##############################
+    # switches: GEN/NOGEN BUILD/NOBUILD
     case '-gen':
       set GENERATE = '-gen'; breaksw;
 
@@ -199,6 +114,8 @@ while ($#argv)
     case '-rebuild':
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 
+    ########################################
+    # Switches: programming the CGRA
     case '-config':
       set config = "$2"; shift; breaksw
 
@@ -209,9 +126,10 @@ while ($#argv)
     case -delay:
       set DELAY = "$2"; shift; breaksw
 
-    case -io:
-      echo "WARNING -io no longer supported; this switch will be ignored."
-      set iofile = "$2"; shift; breaksw
+    ########################################
+    # Switches: I/O     # FIXME looks like -config is in here twice(!)
+    case '-config':
+      set config = "$2"; shift; breaksw
 
     case -input:
       set input = "$2"; shift; breaksw
@@ -224,60 +142,32 @@ while ($#argv)
       set out1   = $2; shift;
       breaksw;
 
-    case -delay:
-      set DELAY = "$2"; shift; breaksw
+    ########################################
+    # Switches: Debugging
 
     case -trace:
       set tracefile = "$2"; shift; breaksw
+
+    case --verilator_debug:
+      set VERILATOR_DEBUG = "--debug"; breaksw
+
+    ########################################
+    # Switches: Misc
 
     case -nclocks:
       # will accept e.g. "1,000,031" or "41K" or "3M"
       set nclocks = $2;
       shift; breaksw
 
-    case -allreg:
-      setenv CGRA_GEN_ALL_REG 1; breaksw
-
-    # Unused / undocumented for now
-    case -oldmem:
-      echo "WARNING Switch '$1' no longer valid"; breaksw
-      unsetenv CGRA_GEN_USE_MEM
-      unsetenv CGRA_GEN_ALL_REG
-      breaksw
-
-    case --verilator_debug:
-      set VERILATOR_DEBUG = "--debug"; breaksw
-
     default:
-      if (`expr "$1" : "-"`) then
         echo ""
         echo "ERROR: Unknown switch '$1'"
         echo ""
         exec $0 --help
         set EXIT13; goto DIE
-      endif
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      echo "WARNING Setting testbench to '$1'; is that what you wanted?"
-      set testbench = "$1";
   endsw
   shift;
 end
-
-if (! -e "$testbench") then
-  echo ""
-  echo "ERROR: Testbench '$testbench' not found."
-  echo ""
-  echo "Maybe try one of these:"
-  foreach f (*tb*.cpp)
-    echo "  $0 $f"
-  end
-  set EXIT13; goto DIE
-endif
-
 
 # if ($?VERBOSE) then
 if (1) then
@@ -315,6 +205,26 @@ if (${config:t:r} == 'onebit_bool') set ONEBIT
 #   echo
 #   exit 13
 # endif
+
+
+########################################################################
+# Detect if running from within travis
+unset TRAVIS
+
+
+# if (`expr "$branch" : ".*detached"`) then
+if ($?TRAVIS_BUILD_DIR) then
+  echo "run.csh: I think we are running from travis"
+  set TRAVIS
+  set branch = `git branch | grep -v '^*' | awk '{print $1}'`
+endif
+echo "run.csh: I think we are in branch '$branch'"
+
+
+
+
+
+
 
 # Can use this to extend time on travis
 if ($?TRAVIS) ./my_travis_wait.csh 15 &
@@ -488,14 +398,9 @@ if ($?FAIL) then
   exit 13
 endif
 
-if ($?tracefile) then
-  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile
-  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench $tracefile || exit 13
-else
-  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench
-  ./build_simulator.csh $VSWITCH $VERILATOR_DEBUG $testbench || exit 13
-endif
-
+  # Builds verilator simulator obj_dir/Vtop
+  echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG top_tb.cpp $tracefile
+  ./bin/build_simulator.csh $VSWITCH $VERILATOR_DEBUG top_tb.cpp $tracefile || exit 13
 
 RUN_SIM:
 echo '------------------------------------------------------------------------'

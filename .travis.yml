@@ -48,7 +48,7 @@ script:
   #
   # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
   - pushd testdir
-  -   make update_cgra
+  # -   make update_cgra
 
   #   # Note cannot do unit tests first unless SILENT=FALSE;
   #   # Otherwise, travis times out waiting for verilog build

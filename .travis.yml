@@ -52,8 +52,8 @@ script:
 
   #   # Note cannot do unit tests first unless SILENT=FALSE;
   #   # Otherwise, travis times out waiting for verilog build
-      make SILENT=FALSE test_unit
-      ls foobarabaz
+  #    make SILENT=FALSE test_unit RUN=run_tbg.csh
+  #    ls foobarabaz
 
   #   # Original tests
   -   make SILENT=TRUE test_basic

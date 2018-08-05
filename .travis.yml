@@ -48,29 +48,15 @@ script:
   #
   # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
   - pushd testdir
-  # -   make update_cgra
-
-  #   # Original tests (note run_tbg is the default I think)
-  #   -   make SILENT=TRUE test_basic    RUN=run.csh
-  #   -   make SILENT=TRUE test_unit     RUN=run.csh
-  #   -   make SILENT=TRUE test_serpent  RUN=run.csh | tee serpent_results.tmp
-  #   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
-  #   # - make SILENT=TRUE test_all
-
-  #   # Desired target set maybe
-  #   - make SILENT=TRUE test_all
-
-  #   # Quick test
-  -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
-  -   STOP_HERE_EXIT_NOW
-
   #   # Current test suite
   -   make SILENT=TRUE test_basic   RUN=run.csh
   -   make SILENT=TRUE test_basic   RUN=run_tbg.csh
   -   make SILENT=TRUE test_unit    RUN=run_tbg.csh
   -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
-
+  #
+  #   # Desired target set maybe
+  #   - make SILENT=TRUE test_all
   - popd
 
   # Summarize the results here at the end

@@ -50,16 +50,9 @@ script:
   - pushd testdir
   # -   make update_cgra
 
-  #   # Note cannot do unit tests first unless SILENT=FALSE;
-  #   # Otherwise, travis times out waiting for verilog build
-  #    make SILENT=FALSE test_unit RUN=run_tbg.csh
-  #    ls foobarabaz
-
-  #   # Original tests
-  #   # Note run_tbg is the default I think
-  -   make SILENT=TRUE test_basic RUN=run.csh
-  -   ls sfjkl
-  #   -   make SILENT=TRUE test_unit
+  #   # Original tests (note run_tbg is the default I think)
+  #   -   make SILENT=TRUE test_basic    RUN=run.csh
+  #   -   make SILENT=TRUE test_unit     RUN=run.csh
   #   -   make SILENT=TRUE test_serpent  RUN=run.csh | tee serpent_results.tmp
   #   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
   #   # - make SILENT=TRUE test_all
@@ -67,7 +60,12 @@ script:
   #   # Desired target set maybe
   #   - make SILENT=TRUE test_all
 
+  #   # Quick test
+  -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
+  -   STOP_HERE_EXIT_NOW
+
   #   # Current test suite
+  -   make SILENT=TRUE test_basic   RUN=run.csh
   -   make SILENT=TRUE test_basic   RUN=run_tbg.csh
   -   make SILENT=TRUE test_unit    RUN=run_tbg.csh
   -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
@@ -77,6 +75,11 @@ script:
 
   # Summarize the results here at the end
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+
+  #   # Note cannot do unit tests first unless SILENT=FALSE;
+  #   # Otherwise, travis times out waiting for verilog build
+  #    make SILENT=FALSE test_unit RUN=run_tbg.csh
+  #    ls foobarabaz
 
   ########################################################################
   # Lenny's tests

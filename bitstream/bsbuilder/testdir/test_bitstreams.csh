@@ -117,7 +117,7 @@ foreach b ($bmarks)
 
 end
 
-grep RESULT $tmpdir/test_results.log
+grep RESULT $tmpdir/test_results.log | sed 's/^/Summary: /'
 
 # Clean up
 # No! Not my job!

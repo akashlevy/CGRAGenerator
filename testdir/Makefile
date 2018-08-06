@@ -78,7 +78,7 @@ test_serpent: $(HARDWARE_TOP)/cgra_info.txt
 #	FIXME Who will delete TEMPDIR?
 
 test_serpent_dev:
-       ../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) pointwise conv_1_2 conv_2_1
+	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) pointwise conv_1_2 conv_2_1
 
 test_standalone:
 # 	pwd; ls

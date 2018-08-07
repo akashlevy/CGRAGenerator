@@ -5,6 +5,7 @@
 //; use POSIX;
 //; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
 //; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
+//; my $include_analog_block = parameter(NAME => 'include_analog_block', val => 0, Min => 0, Max => 1, Step => 1);
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
@@ -445,9 +446,6 @@ wire [31:0] read_data_memory;
 wire [31:0] read_data_io1bit;
 wire [3:0] stall;
 //; my $global_controller_obj = generate("global_controller", "global_controller");
-//; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
-wire [31:0] analog_r`$i`;
-//; }
 //; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
     `$global_controller_obj->instantiate()` 
     (
@@ -466,12 +464,8 @@ wire [31:0] analog_r`$i`;
       .tms(tms),
       .tck(tck),
       .trst_n(trst_n),
-//; for (my $i = 0; $i < $global_controller_obj->get_param('num_analog_regs'); $i++){
-      .analog_r`$i`(analog_r`$i`),
-//; }
       .cgra_stalled(stall),
       .read(config_read),
-      .jm_out(jm_out)
     );
 //; if($connect_GC == 0) {
     //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC
@@ -481,6 +475,8 @@ wire [31:0] analog_r`$i`;
     assign reset = reset_in;
     assign config_write = 1;
 //; }
+//; if ($include_analog_block) {
+  //Instantiate analog block
   mdll_top mdll_top 
   (
     .ext_cki(ext_cki),  // (+) cmos clock   . (reference clock   .)
@@ -558,6 +554,7 @@ wire [31:0] analog_r`$i`;
     .lf_out(lf_out)    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
   );
 //INSTANTIATE ANALOG BLOCK
+//; } #if ($include_analog_block)
 
 
 // FIXME Note there are LOTS of unused wires being created below!

@@ -5,7 +5,6 @@ irun -top top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks -input
 cmd.tcl \
 $RTL_FOLDER/top.sv \
 $RTL_FOLDER/cfg_and_dbg_unq1.sv \
-$RTL_FOLDER/analog_regfile.v \
 $RTL_FOLDER/cfg_ifc_unq1.sv \
 $RTL_FOLDER/clocker_unq1.sv \
 $RTL_FOLDER/flop_unq1.sv \

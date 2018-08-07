@@ -19,7 +19,7 @@ tdi,
 tdo,
 tms,
 tck,
-trst_n,
+trst_n
 );
   
   input  tck;

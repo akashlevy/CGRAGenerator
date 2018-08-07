@@ -255,7 +255,7 @@ program automatic `mname`(interface ifc);
    task switch_clk(int data_in);
      begin
         jtag_trans.op = switch_clk;
-        jtag_trans.data_in = 1;
+        jtag_trans.data_in = data_in;
         jtag_trans.done = 0;
         jdrv.Send(jtag_trans);
         config_count++;

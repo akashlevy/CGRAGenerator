@@ -465,7 +465,7 @@ wire [3:0] stall;
       .tck(tck),
       .trst_n(trst_n),
       .cgra_stalled(stall),
-      .read(config_read),
+      .read(config_read)
     );
 //; if($connect_GC == 0) {
     //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC

@@ -85,7 +85,6 @@ Genesis2.pl -parse -generate -top top -hierarchy top.xml -input\
   ../memory_core/memory_core.vp \
   \
   ../global_controller/global_controller.svp \
-  ../global_controller/analog_regfile.vp \
   \
   ../jtag/jtag.svp \
   ../jtag/Template/src/digital/template_ifc.svp \

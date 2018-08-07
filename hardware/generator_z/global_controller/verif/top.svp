@@ -70,7 +70,7 @@ module `mname`();
    //; my $dut_ifc = clone($dut_ifc_path, 'dut_ifc');
    `$dut_ifc->instantiate` (.Clk(Clk), .Reset(Reset));
    
-   `$dut_obj->instantiate` (.jm_out(19'd220)); //.ifc(`$dut_ifc->iname()`));
+   `$dut_obj->instantiate` (); //.ifc(`$dut_ifc->iname()`));
    //Since we aren't using interface here, assign singals 
    //Inputs
    assign dut.tck = dut_ifc.tck;

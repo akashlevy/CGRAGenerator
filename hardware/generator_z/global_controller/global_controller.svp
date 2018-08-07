@@ -63,8 +63,17 @@ jm_out
   reg sys_clk_act_sync_1;
   reg sys_clk_act_sync_2;
   //separate op out from address field
-`$jtag_ifc -> instantiate` (.Clk(clk), .Reset(reset_in));
-`$jtag_obj -> instantiate` (.ifc(`$jtag_ifc->iname()`),
+`$jtag_obj -> instantiate` (.ifc_trst_n(trst_n),
+			    .ifc_tck(tck),
+			    .ifc_tms(tms),
+			    .ifc_tdi(tdi),
+			    .ifc_tdo(tdo),
+			    .ifc_config_addr_to_gc(config_addr_jtag_out),
+			    .ifc_config_data_from_gc(config_data_jtag_in),
+			    .ifc_config_data_to_gc(config_data_jtag_out),
+			    .ifc_config_op_to_gc(op),
+		      	    .clk(clk),
+			    .reset(reset_in),
 			    .sys_clk_activated(sys_clk_activated),
 			    .bsr_tdi(),
 			    .bsr_sample(),
@@ -75,17 +84,6 @@ jm_out
 		 	    .bsr_shift_dr(),
 			    .bsr_tdo()
 			    );
-
-//Connect signals to jtag_ifc ports
-      assign `$jtag_ifc->iname()`.tck=tck;
-      assign `$jtag_ifc->iname()`.tdi=tdi;
-      assign `$jtag_ifc->iname()`.tms=tms;
-      assign `$jtag_ifc->iname()`.trst_n=trst_n;
-      assign `$jtag_ifc->iname()`.config_data_from_gc=config_data_jtag_in; 
-      assign tdo = `$jtag_ifc->iname()`.tdo;
-      assign config_data_jtag_out = `$jtag_ifc->iname()`.config_data_to_gc;
-      assign config_addr_jtag_out = `$jtag_ifc->iname()`.config_addr_to_gc;
-      assign op = `$jtag_ifc->iname()`.config_op_to_gc;
 
 
 // Internal signals to/from analog registers

@@ -28,7 +28,6 @@ trst_n,
   input  tdi;
   input  tms;
   input  trst_n;
-  input [19:0] jm_out;
   input [`$cfg_bus_width-1`:0] config_data_in;
 
   output reg read;

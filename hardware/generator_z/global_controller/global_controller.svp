@@ -7,7 +7,6 @@
 //; my $jtag_ifc = clone($jtag_ifc_path, 'jtag_ifc');
 module `mname` (
 clk_in, reset_in,
-//; }
 config_data_in,
 config_addr_out,
 config_data_out,

@@ -58,12 +58,12 @@ read_data
   reg out_bus;
   always @(posedge clk or posedge reset) begin
     if (reset==1'b1) begin
-       io_bit = 1'b0;
-       out_bus = 1'b0;
+       io_bit <= 1'b0;
+       out_bus <= 1'b0;
     end else begin
        if (config_en==1'b1) begin
-         io_bit = config_data[0];
-         out_bus = config_data[1];
+         io_bit <= config_data[0];
+         out_bus <= config_data[1];
        end
     end
   end

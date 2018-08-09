@@ -1162,6 +1162,7 @@ class Node:
         return serpent_connect_within_tile(self, a, b, T, DBG)
 
 
+
 # FIXME this should be part of cgra_info.connect_within_tile() !!!
 def serpent_connect_within_tile(node, a, b, T, DBG=0):
 

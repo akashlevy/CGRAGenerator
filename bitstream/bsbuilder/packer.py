@@ -81,6 +81,7 @@ def init_globals(grid_width = 8, grid_height = 8, DBG=0):
 # add it to EXCEPTIONS list, and try again.
 EXCEPTIONS = []
 def is_free(tileno, DBG=0):
+    if DBG>2: print "is_free tileno %d has order %d" % (tileno, order[tileno])
     if tileno in EXCEPTIONS:
         if DBG: print 'Cannot choose tile(s) %s\n' % EXCEPTIONS
         return False

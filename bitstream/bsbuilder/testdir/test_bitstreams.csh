@@ -6,19 +6,27 @@ if ("$1" == "--help") then
   echo 'test_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool'
   echo 'test_bitstreams.csh -trace tmpdir'
   echo 'test_bitstreams.csh -nobuild tmpdir'
+  echo 'test_bitstreams.csh -tbg tmpdir'
   exit
 endif
 
-set buildswitch = ''
+set build_switch = ''
+set RUN = run.csh
+if ("$1" == "-tbg") then
+  set RUN = run_tbg.csh
+  set build_switch = '-build'
+  shift
+endif
+
 if ("$1" == "-nobuild") then
-  set buildswitch = '-nobuild'
+  set build_switch = '-nobuild'
   shift
 endif
 
 unset TRACE
 if ("$1" == "-trace") then
   set TRACE
-  set buildswitch = '-build'
+  set build_switch = '-build'
   shift
 endif
 
@@ -48,9 +56,9 @@ cd $scriptpath
 # Script is maybe in $gen/bitstream/bsbuilder/testdir
 set gen = `(cd ../../..; pwd)`
 set v =  $gen/verilator/generator_z_tb
+set top = $gen/hardware/generator_z/top
 
-
-# DB for delay, extracted below
+# database for delay values, extracted below
 #   - make build/pointwise.correct.txt   DELAY=0,0   
 #   - make build/conv_1_2.correct.txt    DELAY=1,0   
 #   - make build/conv_2_1.correct.txt    DELAY=10,0  
@@ -59,6 +67,9 @@ set v =  $gen/verilator/generator_z_tb
 #   - make build/onebit_bool.correct.txt DELAY=0,0 
 
 if (-e $tmpdir/test_results.log) rm $tmpdir/test_results.log
+
+# Build cgra ONCE
+set gen_switch = '-gen'
 
 foreach b ($bmarks)
   echo "------------------------------------------------------------------------"
@@ -72,12 +83,11 @@ foreach b ($bmarks)
   # Maybe (FIXME)
   set out = $tmpdir/${b}_CGRA_out.raw
 
-  set tswitch = ''
+  set trace_switch = ''
   if ($?TRACE) then
     echo TRACETRACE
-    set tswitch = "-trace $b.vcd"
+    set trace_switch = "-trace $b.vcd"
   endif
-
 
   set out1 = $tmpdir/${b}_CGRA_out1.raw
   set out1sw = ""
@@ -85,13 +95,17 @@ foreach b ($bmarks)
     set out1sw = "-out1 s1t0 $out1"
   endif
   
-
-
   setenv SERPENT_HACK
   (\
    cd $v; \
-   ./run.csh $buildswitch $tswitch -config $bsa -input $input -output $out $out1sw -delay $delay \
+   ./$RUN $build_switch $trace_switch $gen_switch $build_switch\
+       -nogen \
+       -config $bsa -input $input -output $out $out1sw -delay $delay \
   ) || exit 13
+
+  # gen/build ONCE ONLY (except when using tbg :(
+  set gen_switch   = '-nogen'
+  if ($RUN == "run.csh") set build_switch = '-nobuild'
 
 
   echo "FINAL COMPARE FOR SUMMARY"
@@ -103,7 +117,7 @@ foreach b ($bmarks)
 
 end
 
-grep RESULT $tmpdir/test_results.log
+grep RESULT $tmpdir/test_results.log | sed 's/^/Summary: /'
 
 # Clean up
 # No! Not my job!

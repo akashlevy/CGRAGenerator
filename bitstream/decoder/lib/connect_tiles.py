@@ -181,6 +181,8 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
 
+    # if (src==18) and (dst==31): DBG=9
+
     if DBG:
         print "# Connect tile %d (r%d,c%d)" % (src,rsrc,csrc),
         print "to tile %d (r%d,c%d)" % (dst,rdst,cdst),
@@ -190,21 +192,33 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
 
     # No need for a corner if sr, dst are in same row or col
     (cornerconn,path1,path2) = ([],[],[])
-    
+
 
     # FIXME okay maybe this is kinda terrible.
     memstraight = False
+
+    # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
     if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
-        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway)"
+        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 237"
         memstraight = True
 
-    # if rsrc==rdst:
+    # Case 2: hpath *begins* at bottom of mem tile
+    # Hm I wonder what would happen if...
+    elif is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+        if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 243"
+        print 'new stuff bar'
+        memstraight = True
+
     if (rsrc==rdst) or memstraight:
         if DBG: print "# Both tiles are in same row\n# "
         p = connect_tiles_same_row(src,dst,track,DBG=DBG-1)
         (begin,path1,end) = unpack_path(p)
         if DBG: prettyprint_path(dir, begin, path1, cornerconn, path2, end)
+
+        # Note this does not trigger until harris
+        # if is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst): assert False, "well?  how'd we do?"
+
         return pack_path(begin,path1,end)
 
     elif csrc==cdst:
@@ -218,6 +232,11 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
         # First go horizontal (EW), then vertical (NS)
         # Find corner tile: same row as src, same col as dst
         (rcorn,ccorn) = (rsrc,cdst)
+
+        if (src==18) and (dst==31):
+            print("666c RECURSE NOW?")
+            # assert False
+
         p = connect_through_corner(src,dst,rcorn,ccorn,track,dir,DBG)
         return p
 
@@ -240,36 +259,52 @@ def pack_path(begin,path,end):
     return p
 
 def connect_through_corner(src,dst,rcorn,ccorn,track=0,dir='hv',DBG=0):
+    # DBG=9
+    # if (src==18) and (dst==31): print("666d RECURSE NOW?")
+        # assert False
 
-        corn = cgra_info.rc2tileno(rcorn,ccorn)
-        if DBG: print "# Found corner tile %d (r%d,c%d)"\
-           % (corn, rcorn, ccorn)
+    if DBG>2:
+        print (rcorn,ccorn)
+        print 'src=', src
+        print 'dst=', dst
+    
+    corn = cgra_info.rc2tileno(rcorn,ccorn)
+    if DBG: print "# Found corner tile %d (r%d,c%d)"\
+       % (corn, rcorn, ccorn)
+    assert corn > 0
 
-        # horizontal path from src to corn
-        if DBG>1: print "# path1:",
-        p = connect_tiles(src,corn,track,DBG=0)
-        (begin1,path1,end1) = unpack_path(p)
-        if DBG>1: print "# "
+    # horizontal (or vert) path from src to corn
+    p = connect_tiles(src,corn,track,DBG=0)
+    if DBG>1: print "# path1:", p
+    # path1: ['T121_out_s3t4', 'T89_in_s5t4']
 
-        # vert path from corn to dest
-        if DBG>1: print "# path2:",
-        # (begin2,path2,end2) = connect_tiles(corn,dst,track,DBG=DBG-1)
-        p = connect_tiles(corn,dst,track,DBG=0)
-        (begin2,path2,end2) = unpack_path(p)
-        if DBG>1: print "# "
+    (begin1,path1,end1) = unpack_path(p)
+    if DBG>1: print "# "
 
-        # In corner tile, connect end1 to begin2
-        # eg cornerconn = ["%s -> %s"] % (end1,begin2)
-        # or cornerconn = ["%s -> %s", "%s -> %s"] % (end1,mid1,mid2,begin2)]
-        cornerconn = find_cornerconn(end1,begin2,DBG=DBG)
+    # vert (or horiz) path from corn to dest
+    # (begin2,path2,end2) = connect_tiles(corn,dst,track,DBG=DBG-1)
+    p = connect_tiles(corn,dst,track,DBG=0)
+    if DBG>1: print "# path2:", p
+    # path2: ['T89_out_s1t4', 'T89_in_s7t4 -> T89_out_s6t4', 'T106_in_s0t4']
 
-        final_path = path1 + cornerconn + path2
-        if DBG: prettyprint_path(dir, begin1, path1, cornerconn, path2, end2)
-        return pack_path(begin1, final_path, end2)
+    (begin2,path2,end2) = unpack_path(p)
+    if DBG>1: print "# "
+
+    # In corner tile, connect end1 to begin2
+    # eg cornerconn = ["%s -> %s"] % (end1,begin2)
+    # or cornerconn = ["%s -> %s", "%s -> %s"] % (end1,mid1,mid2,begin2)]
+    cornerconn = find_cornerconn(end1,begin2,DBG=DBG)
+
+    final_path = path1 + cornerconn + path2
+    if DBG: prettyprint_path(dir, begin1, path1, cornerconn, path2, end2)
+    return pack_path(begin1, final_path, end2)
 
 
 def find_cornerconn(end1,begin2,DBG=0):
     '''Connect end1 to begin2 in same tile'''
+
+    # Trigger (end1,begin2) = ('T89_in_s5t4','T89_out_s1t4')
+    # if end1 == "T89_in_s5t4": DBG=99
 
     (tileno1, dir1, side1, track1) = cgra_info.parse_canon(end1)
     assert (track1 >=0) and (side1 >= 0), "WHOOPS '%s' does not look like a wire..." % end1
@@ -285,7 +320,20 @@ def find_cornerconn(end1,begin2,DBG=0):
         # Cannot connect top and bottom halves directly e.g. in_s6 -> out_s3
         # corner: ['T69_in_s6t0 -> T69_out_s3t0'] must change to
         # corner: ['T69_in_s6t0 -> T69_out_s7t0', 'T69_in_s1t0 -> T69_out_s3t0']
+
         if DBG>1: print "# OOPS Cannot connect side %d to side %d w/o intermediary" % (side1,side2)
+
+        # BUG connecting T89_in_s7t0 to T89_out_s3t0
+        # yields conn1 'T89_in_s7t0 -> T89_out_s7t0'  *** BAD/IMPOSSIBLE
+
+        if (side1==7):
+            if DBG: print '# OOPS cannot connect mem tile in_s7 to out_s7!'
+            return [False]
+
+        if (side1==1):
+            if DBG: print '# OOPS cannot connect mem tile in_s1 to out_s1!'
+            return [False]
+
         if side1 < 4:
             if DBG>1: print "# Going from top to bottom half"
             mid1 = 'T%d_out_s1t%d' % (tileno1, track1)
@@ -328,27 +376,45 @@ def connect_tiles_same_row(src=0,dst=5,track=0,DBG=0):
     (rsrc,csrc) = cgra_info.tileno2rc(src)
     (rdst,cdst) = cgra_info.tileno2rc(dst)
 
+    # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
     if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
         # Source row matches bottom half of mem tile
         rdst = rdst+1
 
-    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d)" %\
-       (src,rsrc,csrc, dst,rdst,cdst)
+    # Case 2: hpath *begins* at bottom of mem tile
+    start_on_bottom = False
+    if (rsrc+1) == rdst and is_mem_rc(rsrc,csrc):
+        print 'new stuff foo'
+        # Source row matches bottom half of mem tile
+        # rsrc = rsrc+1
+        start_on_bottom = True
 
-    # tiles must be on same row; must be two different tiles
-    assert rsrc == rdst; assert src != dst
+    else:
+        # tiles must be on same row; must be two different tiles
+        # (unless start_on_bottom :o )
+        assert rsrc == rdst, 'foo'
+    assert src != dst, 'bar'
+
+
+    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d) on track %d 336" %\
+       (src,rsrc,csrc, dst,rdst,cdst, track)
+
     
     if cdst>csrc: (inside,outside) = (2,0) # left-to-right
     else:         (inside,outside) = (0,2) # right-to-left
 
-    beginwire = build_wire_rc(rsrc,csrc,'out',outside,track)
-    
     path = []
-
+    if start_on_bottom:
+        # Case 2: hpath *begins* at bottom of mem tile
+        # That's okay!
+        beginwire = build_wire_rc(rsrc,csrc,'out',outside+4,track)
+        rsrc = rsrc+1
+    else:
+        beginwire = build_wire_rc(rsrc,csrc,'out',outside,track)
+    
     if (cdst>=csrc): cols = range(csrc+1,cdst, 1) # left-to-right
     else:            cols = range(csrc-1,cdst,-1) # right-to-left
-    # print cols
 
     for c in cols:
         # Note build_wire will apply mem offset on NS sides
@@ -385,8 +451,8 @@ def connect_tiles_same_col(src,dst,track,DBG=0):
         if (rdst%2==0): rdst = rdst + 1 # Stop when get to *bottom* of dest tile
         else          : rdst = dst%2
 
-    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d)" %\
-       (src,rsrc,csrc,dst,rdst,cdst)
+    if DBG: print "# Connect tile %d (r%d,c%d) to tile %d (r%d,c%d) on track %d 388" %\
+       (src,rsrc,csrc, dst,rdst,cdst, track)
 
     # tiles must be on same col; must be two different tiles
     assert csrc == cdst; assert src != dst
@@ -494,9 +560,8 @@ def parse_resource(r):
 
 
 # lifted from bsview.py
-def find_neighbor(w, DBG=9):
+def find_neighbor(w, DBG=0):
     '''E.g. find_neighbor_wire("T4_in_s1t1") => ("T5_out_s3t1")'''
-
     # FIXME this can all be cleaned up...
 
     if (0):
@@ -514,13 +579,14 @@ def find_neighbor(w, DBG=9):
 
     in_or_out = dir
 
-    # top_or_bottom = parse.group(2)  # 'None', '0' or '1'
-    top_or_bottom = side/4 # '0' or '1'
-
     if (in_or_out=="out"): in_or_out="in"
     else:                  in_or_out="out"
 
     (r,c) = cgra_info.tileno2rc(tileno)
+    if DBG: print("FN: I am '%s' at (r,c) = (%d,%d)" % (w, r,c))
+
+    # top_or_bottom = parse.group(2)  # 'None', '0' or '1'
+    top_or_bottom = side/4 # '0' or '1'
 
     # Adjust for wire in bottom of a memtile
     if (top_or_bottom == '1'): r = r + 1
@@ -540,30 +606,28 @@ def find_neighbor(w, DBG=9):
     if (c < 0): return (False,False)
 
     #   print (r,c,side)
-
+    if DBG: print("FN: My neighbor is (r,c) = (%d,%d)" % (r,c))
     nbr_tileno = cgra_info.rc2tileno(r,c)
     # Note should return 'False' if (r,c) invalid
-    if DBG: print "Found nbr tile number '%s'" % str(nbr_tileno)
+    if DBG: print "Found neighbor tile number '%s'" % str(nbr_tileno)
 
-    top_or_bottom = ''
+    # Adjust for mem tile top/bottom
+    # Even row means top, odd row means bottom
     if (cgra_info.tiletype(nbr_tileno) == "memory_tile"):
         if DBG: print "HO found memory tile.  is it a top or a bottom :)"
-        # '0' means top, '1' means bottom
-        top_or_bottom = str(r % 2)
-        if DBG:
-            if (top_or_bottom): print " It's a bottom"
-            else              : print " You're the top!"
+        if (r%2)==0:
+            if DBG: print " You're the top!"
+        else:
+            if DBG: print " It's a bottom"
+            side = side + 4
 
-    # adj_wire = "%s%s_s%dt%d" % (in_or_out, top_or_bottom, side, track)
-
-    nbr_wire = "T%s_%s%s_s%dt%d" \
-               % (nbr_tileno, in_or_out, top_or_bottom, side, track)
+    nbr_wire = "T%s_%s_s%dt%d" \
+               % (nbr_tileno, in_or_out, side, track)
 
     # if DBG: print "%s on tile %d matches %s on tile %d\n" % (w, tileno, nbr_wire, nbr_tileno)
     if DBG: print "'%s' connects to neighbor '%s'\n" % (w, nbr_wire)
 
     return nbr_wire
-
 
 
 if (DO_TEST): do_test()

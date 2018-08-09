@@ -30,7 +30,7 @@
 /*******************************************************************************
  * Simulation Control Definitions
  ******************************************************************************/
-//; my $max_cyc = parameter(Name=>'MaxCycles', Val=>100000, Min=>1, Step=>1, 
+//; my $max_cyc = parameter(Name=>'MaxCycles', Val=>90000000, Min=>1, Step=>1, 
 //;			    Doc=>'Max number of simulation cycles');
 //; my $design_name = parameter(Name=>'DesignName', Val=>'global_controller', 
 //;				Doc=>'This is a generic top, so what is the design name to use?');
@@ -70,7 +70,7 @@ module `mname`();
    //; my $dut_ifc = clone($dut_ifc_path, 'dut_ifc');
    `$dut_ifc->instantiate` (.Clk(Clk), .Reset(Reset));
    
-   `$dut_obj->instantiate` (.jm_out(19'd220)); //.ifc(`$dut_ifc->iname()`));
+   `$dut_obj->instantiate` (); //.ifc(`$dut_ifc->iname()`));
    //Since we aren't using interface here, assign singals 
    //Inputs
    assign dut.tck = dut_ifc.tck;

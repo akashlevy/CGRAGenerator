@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import sys
 import re
@@ -175,6 +175,12 @@ def main():
             line = parse.group(2)
             if DBG>2: print '# tile_0x%03x  %s' % (tileno,line)
 
+        if bs_mux(tileno,line, max(0,DBG-1)):
+            if DBG: print ''
+            continue
+        elif DBG: print '# > Not a mux'
+
+
         # mul(wire,const15_15)
         # add(wire,wire) 
         # mul(reg,const13_13$1)
@@ -349,6 +355,8 @@ def process_output(line):
           (tileno, r, c, dir, side, track, g)
 
 
+# Every dest must have exactly ONE source
+ALLSOURCES = {}
 def bs_connection(tileno, line, DBG=0):
     DBG= max(0,DBG)
     # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
@@ -382,6 +390,14 @@ def bs_connection(tileno, line, DBG=0):
     # Connect lhs to rhs
     Tlhs = "T%d_%s" % (tileno,lhs)
     Trhs = "T%d_%s" % (tileno,rhs)
+
+    # Make sure that no two guys try to write the same guy.
+    if (Trhs in ALLSOURCES) and (ALLSOURCES[Trhs] != Tlhs):
+        assert False, \
+               "ERROR Uh oh looks like more than one guy wants to write '%s'"\
+               % Trhs
+    ALLSOURCES[Trhs] = Tlhs
+
     cwt = cgra_info.connect_within_tile(tileno, Tlhs, Trhs, max(0,DBG-1))
     if not cwt:
         # Print useful connection hints
@@ -699,14 +715,24 @@ op_data['xor']     = 0x00000014
 op_data['lut']   = 0x0000000E # ?? right ??
 
 
-
+# aliases (old)
 # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
 op_data['uge']     = op_data['gte']
-op_data['ule']     = op_data['lte']
 op_data['max']     = op_data['gte']
+op_data['umax']    = op_data['gte']
+
+op_data['ule']     = op_data['lte']
 op_data['min']     = op_data['lte']
-op_data['umax']     = op_data['gte']
-op_data['umin']     = op_data['lte']
+op_data['umin']    = op_data['lte']
+
+# Added for Harris 7/2018, probably should NOT work...
+# FIXME Will have to fix this some day SOON maybe
+# signed, unsigned, who cares!!!???  all map to same FIXME
+op_data['ashr'] = op_data['rshft']
+op_data['smax'] = op_data['gte']
+op_data['sle']  = op_data['lte']
+op_data['sge']  = op_data['gte']
+op_data['mux']  = op_data['sel']
 
 
 # A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
@@ -802,6 +828,68 @@ def bs_io(tileno, line, DBG=0):
     comment = [
         "data[(0, 0)] : %s # 0x%d" % (c0, b0),
         "data[(1, 1)] : %s # 0x%d" % (c1, b1)
+        ]
+    addbs(addr, data, comment)
+    return True
+
+
+def bs_mux(tileno, line, DBG=0):
+    # IN:
+    # "mux(const0__795,const255__794,wire) # mux_793_794_795$mux"
+    # "sel(const0__795,const255__794,wire) # mux_793_794_795$mux"
+    # OUT: ?
+    #     FF00008B 0200F008
+    #     # data[(5, 0)] : alu_op = mux
+    #     # data[(6, 6)] : unsigned=0x0
+    #     # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
+    #     # data[(17, 16)]: data0: REG_CONST= 0x0
+    #     # data[(19, 18)]: data1: REG_CONST= 0x0
+    #     # data[(25, 24)]:  bit0: REG_BYPASS=0x2
+
+    parse = re.search('(mux|sel)\s*\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)', line)
+    if not parse:
+        if DBG>1: print '# > Not mux or sel (line 836)'
+        return False
+
+    # Note op1==data0, op2==data1
+    op1    = parse.group(2)+"_a"  # 'reg_a' or 'wire_a' or 'const0__795_a'
+    op2    = parse.group(3)+"_b"
+    bit0   = parse.group(4)+"_0"  # 'reg_0' or 'wire_0' or 'const0__795_0'
+
+    # If op is a const, returns 'const_a' or 'const_b' etc
+    # else returns op unchanged (e.g. ('reg_a')
+    # Also: builds the constant e.g.
+    # F1000008 00000002 # data[(15, 0)]=2 : init `b` reg with const `2`
+    # FF000008 0000000B # data[(13,13)]=0 : read from reg `b`
+    op1 = bs_const(tileno,  op1, 'op1')
+    op2 = bs_const(tileno,  op2, 'op2')
+    bit0= bs_const(tileno, bit0, 'bit0')
+
+    # FIXME/TODO should use d0 and d1 instead of a and b maybe
+    assert op1 =='reg_a' or op1 =='wire_a' or op1== 'const_a',op1
+    assert op2 =='reg_b' or op2 =='wire_b' or op2== 'const_b',op2
+    assert bit0=='reg_0' or bit0=='wire_0' or bit0=='const_0',op2
+
+    opname = 'mux'
+    data = op_data[opname] | op_data['pe_flag_pe'] \
+           | op_data[op1] | op_data[op2] | op_data[bit0]
+
+    # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
+    addr = "FF00%04X" % tileno
+
+    # COMMENT
+    # data[(5, 0)] : alu_op = mux (sel)
+    # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
+    # data[(17, 16)] : data0: REG_DELAY
+    # data[(19, 18)] : data1: REG_CONST
+    # data[(25, 24)] : bit0: REG_CONST
+    comment = [
+        "data[(5, 0)] : alu_op = %s" % opname,
+        "data[(6, 6)] : unsigned=0x0",
+        "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
+        "data[(17, 16)]: data0: %s" % regtranslate(op1),
+        "data[(19, 18)]: data1: %s" % regtranslate(op2),
+        "data[(25, 24)]:  bit0: %s" % regtranslate(bit0),
         ]
     addbs(addr, data, comment)
     return True
@@ -1024,10 +1112,26 @@ def bs_const(tileno,op,operand):
         const = 'const_a'
         addr = "F000%04X" % tileno
         comment = "data[(15, 0)] : init `data0` reg with const `%d`" % k
-    else:
+    elif operand=='op2':
         const = 'const_b'
         addr = "F100%04X" % tileno
         comment = "data[(15, 0)] : init `data1` reg with const `%d`" % k
+
+    elif operand=='bit0':
+        const = 'const_0'
+        addr = "F300%04X" % tileno
+        comment = "data[(15, 0)] : init `bit0` reg with const `%d`" % k
+    elif operand=='bit1':
+        const = 'const_1'
+        addr = "F400%04X" % tileno
+        comment = "data[(15, 0)] : init `bit1` reg with const `%d`" % k
+    elif operand=='bit2':
+        const = 'const_2'
+        addr = "F500%04X" % tileno
+        comment = "data[(15, 0)] : init `bit2` reg with const `%d`" % k
+
+    else:
+        assert False, "unknown operand '%s'" % operand
 
     addbs(addr, data, comment)
     return const

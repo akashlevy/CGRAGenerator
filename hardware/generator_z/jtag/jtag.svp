@@ -107,35 +107,56 @@
  //;					      DataWidth => $sc_cfg_bus_width, 
  //;					      AddrWidth => $sc_cfg_addr_width,
  //;					      OpcodeWidth => $sc_cfg_op_width);
- //; my $sc_gc2jtag_ifc = $self->clone_inst($sc_jtag2gc_ifc, 'sc_gc2jtag_ifc'); 
+ //; my $sc_gc2jtag_ifc = $self->clone_inst($sc_jtag2gc_ifc, 'sc_gc2jtag_ifc');
 
 module `$self->get_module_name()`
   (
    // main IOs
-   `$ifc->get_module_name()`.des ifc,
-   input  sys_clk_activated, //Is global controller on sys clk yet?
+//   `$ifc->get_module_name()`.des ifc,
+   output [31:0] ifc_config_addr_to_gc,
+   output [31:0] ifc_config_data_to_gc,
+   input [31:0] ifc_config_data_from_gc,
+   output [4:0]  ifc_config_op_to_gc,
+
+   input 	 ifc_trst_n,
+   input 	 ifc_tck,
+   input 	 ifc_tms,
+   input 	 ifc_tdi,
+   output 	 ifc_tdo,
+   
+   input 	 clk,
+   input 	 reset,
+   input 	 sys_clk_activated, //Is global controller on sys clk yet?
    //Signals for boundary scan register
-   output bsr_tdi,
-   output bsr_sample,
-   output bsr_intest,
-   output bsr_extest,
-   output bsr_update_en,
-   output bsr_capture_en,
-   output bsr_shift_dr,
-   output bsr_tdo
+   output 	 bsr_tdi,
+   output 	 bsr_sample,
+   output 	 bsr_intest,
+   output 	 bsr_extest,
+   output 	 bsr_update_en,
+   output 	 bsr_capture_en,
+   output 	 bsr_shift_dr,
+   output 	 bsr_tdo
    );
 
 
    // Connect Forward the reset and clock inputs to the global controller
-   `$sc_jtag2gc_ifc->get_module_name()` `$sc_jtag2gc_ifc->get_instance_name()`();
-   `$sc_gc2jtag_ifc->get_module_name()` `$sc_gc2jtag_ifc->get_instance_name()`();
-   //The opcode is the upper 3 address bits to the gc
-   assign ifc.config_addr_to_gc = `$sc_jtag2gc_ifc->get_instance_name()`.addr;
-   assign ifc.config_data_to_gc = `$sc_jtag2gc_ifc->get_instance_name()`.data;
-   assign ifc.config_op_to_gc = `$sc_jtag2gc_ifc->get_instance_name()`.op;
-   assign `$sc_gc2jtag_ifc->get_instance_name()`.data = ifc.config_data_from_gc;
-   assign `$sc_gc2jtag_ifc->get_instance_name()`.addr = 0;
-   assign `$sc_gc2jtag_ifc->get_instance_name()`.op = 3;//Set to Bypass so that input data_rd reg is always enabled. Is this ok?
+//   `$sc_jtag2gc_ifc->get_module_name()` `$sc_jtag2gc_ifc->get_instance_name()`();
+   wire [31:0] sc_jtag2gc_ifc_addr;
+   wire [31:0] sc_jtag2gc_ifc_data;
+   wire [4:0] sc_jtag2gc_ifc_op;
+
+   wire [31:0] sc_gc2jtag_ifc_data;
+   wire [31:0] sc_gc2jtag_ifc_addr;
+   wire [4:0] sc_gc2jtag_ifc_op;
+
+//The opcode is the upper 3 address bits to the gc
+   assign ifc_config_addr_to_gc = sc_jtag2gc_ifc_addr; //`$sc_jtag2gc_ifc->get_instance_name()`.addr;
+   assign ifc_config_data_to_gc = sc_jtag2gc_ifc_data; //`$sc_jtag2gc_ifc->get_instance_name()`.data;
+   assign ifc_config_op_to_gc = sc_jtag2gc_ifc_op; //`$sc_jtag2gc_ifc->get_instance_name()`.op;
+//   assign `$sc_gc2jtag_ifc->get_instance_name()`.data = ifc.config_data_from_gc;
+   assign sc_gc2jtag_ifc_data = ifc_config_data_from_gc;
+   assign sc_gc2jtag_ifc_addr = 0;
+   assign sc_gc2jtag_ifc_op = 3;//Set to Bypass so that input data_rd reg is always enabled. Is this ok?
 
    //;
    //;
@@ -145,12 +166,12 @@ module `$self->get_module_name()`
    //;					SC_CFG_BUS => 'yes', 
    //;					TC_CFG_BUS => 'no', SC_CFG_IFC_REF => $sc_jtag2gc_ifc,
    //;					SC_CFG_OPCODES => {nop => 0, write => 1, read => 2, bypass => 3,                                                 
-   //;                                                 wr_A050 => 7, wr_to_TST => 8, rd_TST => 9,
-   //; 						       global_reset => 10, write_stall => 11,read_stall => 12, 
-   //;    					       adv_clk => 13, read_clk_domain => 14, switch_clk => 15,
-   //;						       wr_rd_delay_reg => 16, rd_rd_delay_reg => 17, wr_delay_sel_reg => 18,
-   //;						       rd_delay_sel_reg => 19, wr_analog_reg => 20, rd_analog_reg => 21} 
-   //;					);#Should this really be bypass??
+   //;                                                 wr_A050 => 4, wr_to_TST => 5, rd_TST => 6,
+   //; 						       global_reset => 7, write_stall => 8,read_stall => 9, 
+   //;    					       adv_clk => 10, read_clk_domain => 11, switch_clk => 12,
+   //;						       wr_rd_delay_reg => 13, rd_rd_delay_reg => 14, wr_delay_sel_reg => 15,
+   //;						       rd_delay_sel_reg => 16} 
+   //;					);
    //;
    
    //These signals aren't used. Only included to avoid warnings.			
@@ -159,11 +180,11 @@ module `$self->get_module_name()`
    `$cfg_dbg->get_module_name()` `$cfg_dbg->get_instance_name()`
      (
       // JTAG signals
-      .tms(ifc.tms),
-      .tck(ifc.tck),
-      .trst_n(ifc.trst_n),
-      .tdi(ifc.tdi),
-      .tdo(ifc.tdo),
+      .tms(ifc_tms),
+      .tck(ifc_tck),
+      .trst_n(ifc_trst_n),
+      .tdi(ifc_tdi),
+      .tdo(ifc_tdo),
       .tdo_en(tdo_en), 
       
       // Boundary Scan Signals (not used in this design. Only connected to supress warnings)
@@ -177,10 +198,16 @@ module `$self->get_module_name()`
       .bsr_tdo(bsr_tdo),
 
       // signals to the System-clocked global controller
-      .sc_cfgReq(`$sc_jtag2gc_ifc->get_instance_name()`.cfgOut),
-      .sc_cfgRep(`$sc_gc2jtag_ifc->get_instance_name()`.cfgIn),
-      .Reset(ifc.Reset),
-      .Clk(ifc.Clk),
+      //.sc_cfgReq(`$sc_jtag2gc_ifc->get_instance_name()`.cfgOut),
+      .sc_cfgReq_addr(sc_jtag2gc_ifc_addr),
+      .sc_cfgReq_data(sc_jtag2gc_ifc_data),
+      .sc_cfgReq_op(sc_jtag2gc_ifc_op),
+//      .sc_cfgRep(`$sc_gc2jtag_ifc->get_instance_name()`.cfgIn),
+      .sc_cfgRep_addr(sc_gc2jtag_ifc_addr),
+      .sc_cfgRep_data(sc_gc2jtag_ifc_data),
+      .sc_cfgRep_op(sc_gc2jtag_ifc_op),      
+      .Reset(reset), //ifc.Reset),
+      .Clk(clk), //ifc.Clk),
       .sys_clk_activated(sys_clk_activated)
       );
    

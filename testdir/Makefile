@@ -2,6 +2,13 @@
 # Makefile Definitions
 ################################################################################
 
+# RUN := run.csh
+RUN := run_tbg.csh
+TBG := -tbg
+ifeq ($(RUN), run.csh)
+  TBG :=
+endif
+
 VERILATOR_TOP := ../verilator/generator_z_tb
 HARDWARE_TOP  :=  ../hardware/generator_z/top
 
@@ -35,12 +42,15 @@ test_basic:
 	@echo
 	@./writelog.csh log1 -print
 
-update_cgra:
-	cd $(HARDWARE_TOP); ./run.csh
 
-test_unit:
-#	Doesn't work anyway, may as well comment it out (for now at least)
-#	make update_cgra
+$(HARDWARE_TOP)/cgra_info.txt:
+#	../bin/generate.csh -v
+	cd $(HARDWARE_TOP); export USE_VERILATOR_HACKS=TRUE; ./build_cgra.sh
+	$(HARDWARE_TOP)/bin/show_cgra_info.csh
+
+
+
+test_unit: $(HARDWARE_TOP)/cgra_info.txt
 	./unit_tests/utest $(VSWITCH)
 
 
@@ -61,18 +71,14 @@ test_all:
 	egrep ^hackdiff $(TEMPDIR)/hackdiff_test.log
 
 
+# Note this is where onebit_bool gets testsd
+test_serpent: $(HARDWARE_TOP)/cgra_info.txt
+	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
+	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) $(TEMPDIR)
+#	FIXME Who will delete TEMPDIR?
+
 test_serpent_dev:
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) pointwise conv_1_2 conv_2_1
-	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR) pointwise conv_1_2 conv_2_1
-	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) conv_3_1
-	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR) conv_3_1
-	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) conv_bw
-	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR) conv_bw
-
-test_serpent:
-	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
-	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR)
-#	FIXME Who will delete TEMPDIR?
 
 test_standalone:
 # 	pwd; ls
@@ -103,18 +109,19 @@ hackdiff_test:
 # TODO make it look more like other makefile (cgraflow)
 
 
-test:
+test: $(HARDWARE_TOP)/cgra_info.txt
 	@echo ""
 	@echo "------------------------------------------------------------------------"
 	@echo "BEGIN TEST"
 	@echo "------------------------------------------------------------------------"
 
+#	./run.csh $(QUIET) -gen
 	cd $(VERILATOR_TOP);\
-	./run.csh $(QUIET) -gen top_tb.cpp  \
-	   $(CONFIG)                         \
-	   -input  io/$(IMAGE).png            \
+	./$(RUN) $(QUIET) -gen    \
+	   $(CONFIG)               \
+	   -input  io/$(IMAGE).png \
 	   -output $(TEMPDIR)/$(IMAGE)_out.raw \
-	   -delay $(DELAY) \
+	   -delay $(DELAY)         \
 	   -nclocks 5M || echo FAIL
 
 	cmp $(VERILATOR_TOP)/io/$(IMAGE)_out.raw $(TEMPDIR)/$(IMAGE)_out.raw      \

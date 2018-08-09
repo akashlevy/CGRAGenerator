@@ -1,8 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import sys
 import re
 import os
+
+# little hacky wacky
+USE_TBG = True
 
 # Instead of
 # sts = os.system("mycmd" + " myarg")
@@ -84,6 +87,17 @@ VERILATOR_DIR = ''
 OPTIONS = {}
 
 def caveats():
+
+    # FIXME FIXME FIXME
+    # FIXME instead of doing this, should simply use -build flag later on...
+    if USE_TBG and ("SKIP_RUNCSH_BUILD" in os.environ):
+        # assert False
+        print '''
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+'''
+        
     print '''
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
@@ -327,7 +341,10 @@ def gen_output_file_cgra(tname, DBG=0):
 
     if VERBOSE:
         print "  Will use bsa file '%s.bsa' to generate '%s'" % (tname,cgra_out)
-    if DBG: my_syscall('(cd %s; ls -l run.csh)' % VERILATOR_DIR, 'CONT')
+
+    if DBG:
+        if USE_DBG: my_syscall('(cd %s; ls -l run_tbg.csh)' % VERILATOR_DIR, 'CONT')
+        else:       my_syscall('(cd %s; ls -l run.csh)'     % VERILATOR_DIR, 'CONT')
 
     # Calculate the appropriate delay e.g. '1,0' for PE ops or '9,0' for 9-deep lbuf.
     delay = find_delay(tname, DBG=0)
@@ -336,23 +353,17 @@ def gen_output_file_cgra(tname, DBG=0):
     config = cwd + tname+'.bsa'
     input  = cwd + "test_in.raw"
     output = cwd + cgra_out
-    logfile = cwd + "run_csh.log"
 
-    global GENERATED
-    if OPTIONS['nobuild']: GENERATED=True
-    if OPTIONS['nogen']:   GENERATED=True
+    if USE_TBG: logfile = cwd + "run_tbg_csh.log"
+    else:       logfile = cwd + "run_tbg.log"
 
-#     # GENERATED=True
-#     if not GENERATED: run_csh = './run.csh -v'
-#     else:             run_csh = './run.csh -v -nobuild'
-#     GENERATED=True
-#         
-#     if OPTIONS['trace']: run_csh = run.csh + ' -trace utest.vcd'
+    if USE_TBG:
+        run_csh = './run_tbg.csh -v'
+        run_csh = './run_tbg.csh -v -build'
+    else:
+        run_csh = './run.csh -v'
+        run_csh = './run.csh -v -build'
 
-    run_csh = './run.csh -v'
-    if GENERATED:          run_csh = './run.csh -v -nobuild'
-    elif OPTIONS['trace']: run_csh = './run.csh -v -trace utest.vcd'
-    GENERATED=True
 
     cmd = "%s -config %s -input %s -output %s -delay %s"\
           % (run_csh, config, input, output, delay)
@@ -375,7 +386,9 @@ def gen_output_file_cgra(tname, DBG=0):
     # if not VERBOSE: my_syscall('egrep ^run.csh %s' % logfile)
     sys.stdout.flush()
 
-    if bad_outcome != 0: assert False, "Oops looks like run.csh failed"
+    if bad_outcome != 0:
+        if USE_TBG: assert False, "Oops looks like run_tbg.csh failed"
+        else:       assert False, "Oops looks like run.csh failed"
 
     if VERBOSE:
         print "  CGRA output file '%s':" % cgra_out

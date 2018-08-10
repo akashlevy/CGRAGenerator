@@ -1,11 +1,19 @@
 //; use POSIX
 //; my $num_ios_per_side = parameter(Name => 'num_ios_per_side', val => 16, min => 1, step => 1);
-
+//; my $config_addr_width = parameter(Name => 'config_addr_width', val => 32, min => 1, step =>1);
+//; my $config_data_width = parameter(Name => 'config_data_width', val => 32, min => 1, step =>1);
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 
-module pad_ring(inout [`$num_ios_per_side-1`:0] pads_north,
+module pad_ring(input clk,
+                input reset,
+                input [`$config_data_width-1`:0] config_data,
+                input [`$config_addr_width-1`:0] config_addr
+                input config_read,
+                input config_write,
+                inout [`$num_ios_per_side-1`:0] pads_north,
                 inout [`$num_ios_per_side-1`:0] pads_south,
                 inout [`$num_ios_per_side-1`:0] pads_east,
-                inout [`$num_ios_per_side-1`:0] pads_west);
+                inout [`$num_ios_per_side-1`:0] pads_west,
+                output [`$config_data_width-1`:0] read_data);
 
 

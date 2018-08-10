@@ -1,14 +1,16 @@
 //; use POSIX;
 //; my $side = parameter(Name=>'side', value=>'N', Doc=>"Which side of the chip are we on?", List=>['N','S','E','W']);
 //; my $num_ios = parameter(Name=>'num_ios', value=>16,Min=>1,Step=>1);
+//; my $config_addr_width = parameter(Name => 'config_addr_width', val => 32, min => 1, step =>1);
+//; my $config_data_width = parameter(Name => 'config_data_width', val => 32, min => 1, step =>1);
 
 module io_side(input clk,
                input reset,
-               input config_data,
-               input config_addr,
+               input [`$config_data_width-1`:0] config_data,
+               input [`$config_addr_width-1`:0] config_addr,
                input config_read,
                input config_write,
                input [`$num_ios-1`:0] f2p_wide,
                input f2p_1bit,
                inout [`$num_ios-1`:0] pads,
-               output read_data);
+               output [`$config_data_width-1`:0] read_data);

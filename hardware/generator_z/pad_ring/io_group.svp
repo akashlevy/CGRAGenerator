@@ -22,7 +22,7 @@ input config_write,
 input [`$num_ios-1`:0] f2p_wide_`$side`,
 input [`$num_ios-1`:0] f2p_1bit_`$side`,
 inout [`$num_ios-1`:0] pads_`$side`,
-output [`$num_ios-1`:0] p2f_`$side`
+output [`$num_ios-1`:0] p2f_`$side`,
 output [`$config_data_width-1`:0] read_data
 );
 
@@ -49,3 +49,5 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; }
 
 assign read_data = read_data_tile.or;
+
+endmodule

@@ -1,16 +1,32 @@
 //; use POSIX;
 //; my $side = parameter(Name=>'side', value=>'N', Doc=>"Which side of the chip are we on?", List=>['N','S','E','W']);
 //; my $num_ios = parameter(Name=>'num_ios', value=>16,Min=>1,Step=>1);
-//; my $config_addr_width = parameter(Name => 'config_addr_width', val => 32, min => 1, step =>1);
-//; my $config_data_width = parameter(Name => 'config_data_width', val => 32, min => 1, step =>1);
+//; my $cgra_grid_size = parameter(Name=>'cgra_grid_size', value=>(16, 16), Doc=>'size of CGRA. first entry: num_cols, second entry: num_rows');
+//; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
+//; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
+//; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>0, doc=>'First tile_id to assign');
+//; my $tile_id_incr = parameter(Name=>'tile_id_incr', val=> 1, doc=>'How much should we increment the tile_id by for each io tile instance');
+//; # This is to convert the direction to a side number that the rest of CGRAGenerator uses
+//; my %side_to_side_num = {'N',3,'S',1,'E',0,'W',2}; 
 
-module io_side(input clk,
-               input reset,
-               input [`$config_data_width-1`:0] config_data,
-               input [`$config_addr_width-1`:0] config_addr,
-               input config_read,
-               input config_write,
-               input [`$num_ios-1`:0] f2p_wide,
-               input f2p_1bit,
-               inout [`$num_ios-1`:0] pads,
-               output [`$config_data_width-1`:0] read_data);
+
+
+module `mname` (
+input clk,
+input reset,
+input [`$config_data_width-1`:0] config_data,
+input [`$config_addr_width-1`:0] config_addr,
+input config_read,
+input config_write,
+input [`$num_ios-1`:0] f2p_wide_`$side`,
+input [`$num_ios-1`:0] f2p_1bit_`$side`,
+inout [`$num_ios-1`:0] pads_`$side`,
+output [`$num_ios-1`:0] p2f_`$side`
+output [`$config_data_width-1`:0] read_data
+);
+
+//; my $io1bit_obj = generate("io1bit","io1bit",side=>$side_to_side_num{$side}, io_group=>$side_to_side_num{$side});
+
+//; for (my $i=0; $i < $num_ios; $i++) {
+
+//; }

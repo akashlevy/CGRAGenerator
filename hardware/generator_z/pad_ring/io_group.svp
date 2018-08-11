@@ -2,7 +2,6 @@
 //; my $side = parameter(Name=>'side', value=>'N', Doc=>"Which side of the chip are we on?", List=>['N','S','E','W']);
 //; my $io_group_num = parameter(Name=>'io_group_num', value=>0); 
 //; my $num_ios = parameter(Name=>'num_ios', value=>16,Min=>1,Step=>1);
-//; my $cgra_grid_size = parameter(Name=>'cgra_grid_size', value=>[16, 16], Doc=>'size of CGRA. first entry: num_cols, second entry: num_rows');
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
 //; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>0, doc=>'First tile_id to assign');

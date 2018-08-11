@@ -40,8 +40,8 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
   .config_write(config_write),
   .pad(pad[`$i`]),
   .read_data(read_data_tile[`$i`]),
-  .f2p_16(),
-  .fp2_1(),
+  .f2p_16(f2p_wide),
+  .fp2_1(f2p[`$i`]),
   .tile_id(16'd`$tile_id_offset + ($tile_id_incr * $i)`)
 );
 

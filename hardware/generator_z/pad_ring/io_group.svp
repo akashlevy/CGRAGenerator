@@ -18,10 +18,10 @@ input [`$config_data_width-1`:0] config_data,
 input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
-input [`$num_ios-1`:0] f2p_wide_`$side`,
-input [`$num_ios-1`:0] f2p_1bit_`$side`,
-inout [`$num_ios-1`:0] pads_`$side`,
-output [`$num_ios-1`:0] p2f_`$side`,
+input [`$num_ios-1`:0] f2p_wide,
+input [`$num_ios-1`:0] f2p_1bit,
+inout [`$num_ios-1`:0] pads,
+output [`$num_ios-1`:0] p2f,
 output [`$config_data_width-1`:0] read_data
 );
 

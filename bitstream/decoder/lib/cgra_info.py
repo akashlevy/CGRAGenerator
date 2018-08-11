@@ -31,6 +31,7 @@ import re
 import sys
 
 # Index:
+# def find_tile_by_name(tilename):
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -77,6 +78,20 @@ import sys
 #     if (e == False):      return (False, False)
 #     elif (e.tag != 'sb'): return (False, False)
 #     sb = e
+
+def find_tile_by_name(name):
+    '''Given name e.g. "pad_S0_T7", return id, row, and col'''
+    # E.g. <tile type='io1bit' tile_addr='0xA4' row='9' col='19' name='pad_S0_T7'>
+    # returns (164,9,19)
+    for tile in CGRA.findall('tile'):
+        if 'name' not in tile.attrib: continue
+        if tile.attrib['name'] == name:
+            id  = getnum(tile.attrib['tile_addr'])
+            row = getnum(tile.attrib['row'])
+            col = getnum(tile.attrib['col'])
+            return (id, row, col)
+    assert False, 'ERROR cannot find tile "%s"' % name
+
 
 # def build_mask(bith,bitl):
 def extract_field(dword, bith, bitl):

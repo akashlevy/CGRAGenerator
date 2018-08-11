@@ -4,6 +4,7 @@
 
 VERILATOR_TOP := ../verilator/generator_z_tb
 HARDWARE_TOP  :=  ../hardware/generator_z/top
+CGRA_INFO := $(HARDWARE_TOP)/cgra_info.txt
 
 SILENT := FALSE
 ifeq ($(SILENT), TRUE)
@@ -69,7 +70,11 @@ test_serpent_dev:
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) conv_bw
 	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR) conv_bw
 
-test_serpent:
+
+$(CGRA_INFO):
+	cd $(HARDWARE_TOP); ./build_cgra.sh
+
+test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
 	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TEMPDIR)
 #	FIXME Who will delete TEMPDIR?

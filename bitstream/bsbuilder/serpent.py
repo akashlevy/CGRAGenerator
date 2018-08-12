@@ -100,8 +100,14 @@ def find_input_tile():
 # OUTPUT_TILENO = 0x24         # First (PE or?) mem tile in NW corner
 OUTPUT_TILENO = -1
 
-# FIXME should be calculated, see above.
-OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
+# FIXME this should come from board_info.json etc
+# Use first bit on side 1 (bottom, SW corner) for onebit output
+OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
+
+# Value is calculated later, search below
+# OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
+OUTPUT_TILENO_onebit = -1
+
 
 # Should be the tile ABOVE io1bit tile that is the LSB in first group
 # on side 1 (bottom) e.g.
@@ -366,11 +372,32 @@ def main(DBG=1):
         print "ONE TIME ONLY!  SWIZZLE_TRACKS == TRUE!!!"
         SWIZZLE_TRACKS = True
 
-
-
     print '######################################################'
     print '# serpent.py: Read cgra info'
     cgra_info.read_cgra_info(cgra_filename, verbose=True)
+
+
+    global MEMHEIGHT
+    MEMHEIGHT = cgra_info.mem_tile_height()
+    print "######################################################"
+    print "# Found mem_tile height = %d" % MEMHEIGHT
+    print ""
+
+
+    # Find staging area for onebit-output tile
+    # If io1bit output tile is on side 1 and its location is (r,c),
+    # then staging area is tile (r-2,c).  Right?
+    # E.g. if output pad is 'pad_S1_T0' at (19,2) then staging tile is at (17,2)
+    # OUTPUT_PAD_onebit = 'pad_S1_T0'
+    padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
+    assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
+    (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
+    OUTPUT_TILENO_onebit = padno
+    print "######################################################"
+    print "# Found onebit output          pad %d = 0x%x" % (padno,padno)
+    padno = cgra_info.rc2tileno(padrow-2, padcol)
+    print "# Found onebit output staging tile %d = 0x%x" % (padno,padno)
+
 
     # Find INPUT and OUTPUT tiles heuristically
     find_input_tile()
@@ -504,8 +531,12 @@ def final_output(DBG=0):
 
     # IO
     if want_onebit_output():
+        '''E.g. print("Tx116_pad(out,1)")'''
+        # Currently 0x116 for 16x16 tallmem, 0x136 for shortmem maybe
         print '# IO'
-        print("Tx116_pad(out,1)\n");
+        padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
+        (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
+        print("Tx%X_pad(out,1)\n" % padno);
 
     # Routing
     print '# ROUTING'
@@ -2846,6 +2877,9 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         print "# 4. Remove path resources from the free list"
         print ""
 
+        # First a quick sanity check
+        shortmem_sanity_check(path)
+
         # print 666, dtileno
         # if dtileno == 15: print 666
         print "# 1. place dname in dtileno"
@@ -3820,6 +3854,21 @@ def unify_path(snode, path):
 # exit()
 
 
+def shortmem_sanity_check(path):
+    # if this is a shortmem design, there had better not be
+    # any e.g. side-6 connections :(
+    DBG=9
+    global MEMHEIGHT
+    if MEMHEIGHT == 1:
+        joined_path = ' '.join(path)
+        if DBG>2: print "Checking for bad sides in path '%s'" % joined_path
+        for badside in ['s4t','s5t','s6t','s7t']:
+            if DBG>2: print "Checking for side '%s'" % badside
+            print joined_path.find(badside)
+            assert joined_path.find(badside) == -1,\
+                   "\n\nFound bad side '%s' in path\n'%s'" % (badside,path)
+
+
 def eval_path(path, snode, dname, dtileno, DBG=0):
     # Given 'path' from src node 'snode' in stileno
     # to dst node 'dname' in possible dest tile 'dtileno',
@@ -3841,15 +3890,7 @@ def eval_path(path, snode, dname, dtileno, DBG=0):
         # Dude no need to die, it'll try again...right?
         return False
 
-
-
-
-
     final_path = unify_path(snode, final_path)
-
-
-
-
     return final_path
 
 

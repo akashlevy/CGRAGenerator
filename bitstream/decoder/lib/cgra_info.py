@@ -30,7 +30,13 @@ use the data structure like this sorta
 import re
 import sys
 
+# NOTES
+# Element.find() finds the first child with a particular tag
+# E.g. tile.find('sb') finds first switchbox in 'tile'
+
+
 # Index:
+# def mem_tile_height():
 # def find_tile_by_name(tilename):
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
@@ -78,6 +84,39 @@ import sys
 #     if (e == False):      return (False, False)
 #     elif (e.tag != 'sb'): return (False, False)
 #     sb = e
+
+global MEMTILE_HEIGHT
+MEMTILE_HEIGHT = 0
+def mem_tile_height():
+    '''Find height of mem tile'''
+    # 1. Grab first mem tile you find, set row1 = row
+    # 2. Find next mem tile in same column, set row2 = row
+    # 3. Height is row1-row0, yes?  You such a idiot.  For not getting this sooner.
+
+    # Only ever need to do this ONCE, right?
+    if (MEMTILE_HEIGHT != 0): return MEMTILE_HEIGHT
+
+    row1 = -1
+    for tile in CGRA.findall('tile'):
+        if 'type' not in tile.attrib: continue
+        if tile.attrib['type'] != 'memory_tile': continue
+
+        # id  = getnum(tile.attrib['tile_addr'])
+        # row = getnum(tile.attrib['row'])
+        # col = getnum(tile.attrib['col'])
+        # print "Found memtile 0x%X at (%d,%d)" % (id, row, col)
+
+        if row1 == -1:
+            row1 = getnum(tile.attrib['row'])
+            col1 = getnum(tile.attrib['col'])
+        else:
+            row2 = getnum(tile.attrib['row'])
+            col2 = getnum(tile.attrib['col'])
+            if col2 == col1:
+                return (row2-row1)
+
+    assert False, 'What is memheight?  Could not find two mem tiles in same row maybe?'
+
 
 def find_tile_by_name(name):
     '''Given name e.g. "pad_S0_T7", return id, row, and col'''
@@ -421,6 +460,8 @@ def read_cgra_info(filename='', grid='8x8', verbose=False):
     global CGRA_FILENAME
     CGRA_FILENAME = filename
     
+    global MEMTILE_HEIGHT
+    MEMTILE_HEIGHT = mem_tile_height()
 
 
 global CGRA_FILENAME
@@ -493,6 +534,7 @@ def rc2tileno(row,col):
     '''
     DBG = 0
     # DBG = (row==1 and col==3)
+    global MEMTILE_HEIGHT
     for tile in CGRA.findall('tile'):
         t = getnum(tile.attrib['tile_addr'])
         r = getnum(tile.attrib['row'])
@@ -502,7 +544,10 @@ def rc2tileno(row,col):
             return t
 
         # r might be bottom half of a memtile
-        elif tile.attrib['type'] == 'memory_tile' and (r,c) == (row-row%2, col):
+        elif \
+                 (MEMTILE_HEIGHT == 2)                  and \
+                 (tile.attrib['type'] == 'memory_tile') and \
+                 ((r,c) == (row-row%2, col)):
             if DBG: print "WARNING Specified r,c is bottom half of a memory tile"
             return t
 

@@ -40,7 +40,7 @@ mydir  = os.path.dirname(mypath)
 # print cmd
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
-my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git checkout 97315c3b775a21cca283c30376b9c848ee6d9fcf)" % mydir)
+my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git fetch origin && git checkout 97315c3b775a21cca283c30376b9c848ee6d9fcf)" % mydir)
 # DO THIS IN .travis.yml INSTEAD!
 # # Pat's stuff needs numpy
 # my_syscall("pip list | grep numpy || pip install --upgrade pip")

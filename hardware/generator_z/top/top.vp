@@ -34,6 +34,7 @@
 //; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
 //; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
+//; @IO_count = qw(16 16 16 16);
 //; #
 //; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
 //; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
@@ -50,7 +51,7 @@
 //; #
 //; # NEW
 //; my $basic_block  = "pe pe pe mem\n";
-//;    $basic_block .= "pe pe pe mem";
+//;    $basic_block .= "pe pe pe mem  ";
 //; #
 //; #
 //; #
@@ -66,6 +67,7 @@
 //; if ($grid_size == "64x64") { $basic_block_repeat_x = 16; $basic_block_repeat_y = 32; }
 //; if ($grid_size == "16x16") { $basic_block_repeat_x =  4; $basic_block_repeat_y = 8; }
 //; if ($grid_size == "48x48") { $basic_block_repeat_x = 12; $basic_block_repeat_y = 24; }
+//; $basic_block_repeat_x = 4; $basic_block_repeat_y = 8;
 //; #
 //; #
 //; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
@@ -127,7 +129,8 @@
 //; };
 //; $tile_config->{ 'mem' } = {
 //;       type => 'memory_tile',
-//;       tile_height => 2,
+//;      #tile_height => 2,
+//;       tile_height => 1,
 //;       tile_width => 1,
 //;       gen_mem_for_busname => 'BUS16',
 //;       control_busname => 'BUS1',

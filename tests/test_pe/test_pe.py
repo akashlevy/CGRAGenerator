@@ -13,6 +13,7 @@ for name, op in inspect.getmembers(pe, inspect.isfunction):
     signature = inspect.signature(op)
     if "signed" in signature.parameters:
         signed_ops.append(name)
+        ops.append(name)
     else:
         ops.append(name)
 
@@ -146,7 +147,8 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
     if flag_sel in [0x4, 0x5, 0x6, 0x7, 0xA, 0xB, 0xC, 0xD] and not signed:  # Flag modes with N, V are signed only
         return
     lut_code = 0x00
-    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
+    args = [signed] if op in signed_ops else []
+    _op = getattr(pe, op)(*args).flag(flag_sel).lut(lut_code).signed(signed)
     cfg_d = _op.instruction
 
     if strategy is complete:

@@ -199,13 +199,15 @@ def connect_tiles(src=0,dst=17,track=0,dir='hv',DBG=0):
 
     # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
-    if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
+    # if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
+    if rsrc == (rdst+1) and is_2hi_rc(rdst,cdst):
         if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 237"
         memstraight = True
 
     # Case 2: hpath *begins* at bottom of mem tile
     # Hm I wonder what would happen if...
-    elif is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+    # elif is_mem_rc(rsrc, csrc) and ((rsrc+1) == rdst):
+    elif is_2hi_rc(rsrc, csrc) and ((rsrc+1) == rdst):
         if DBG: print "# connect_tiles.py: Straight enough! (For a memory tile anyway) 243"
         print 'new stuff bar'
         memstraight = True
@@ -378,13 +380,13 @@ def connect_tiles_same_row(src=0,dst=5,track=0,DBG=0):
 
     # Case 1: hpath ends at bottom of mem tile
     # If mem tile is 2 rows high, can match rsrc to either rdst or rdst+1
-    if rsrc == (rdst+1) and is_mem_rc(rdst,cdst):
+    if rsrc == (rdst+1) and is_2hi_rc(rdst,cdst):
         # Source row matches bottom half of mem tile
         rdst = rdst+1
 
     # Case 2: hpath *begins* at bottom of mem tile
     start_on_bottom = False
-    if (rsrc+1) == rdst and is_mem_rc(rsrc,csrc):
+    if (rsrc+1) == rdst and is_2hi_rc(rsrc,csrc):
         print 'new stuff foo'
         # Source row matches bottom half of mem tile
         # rsrc = rsrc+1
@@ -439,14 +441,14 @@ def connect_tiles_same_col(src,dst,track,DBG=0):
 
     # Special case for mem tile DOWN => start in bottom half
     # FIXME may want to rethink this later...
-    if is_mem_rc(rsrc,csrc) and (rdst>rsrc): # down
+    if is_2hi_rc(rsrc,csrc) and (rdst>rsrc): # down
         # print "foo mem tile down"
         if (rsrc%2==0): rsrc = rsrc+1
         else          : rsrc = rsrc%2
 
     # Special case for mem tile UP => end in bottom half
     # FIXME may want to rethink this later...
-    if is_mem_rc(rsrc,csrc) and (rdst<rsrc): # up
+    if is_2hi_rc(rsrc,csrc) and (rdst<rsrc): # up
         # print "foo mem tile up"
         if (rdst%2==0): rdst = rdst + 1 # Stop when get to *bottom* of dest tile
         else          : rdst = dst%2
@@ -487,10 +489,14 @@ def build_wire_rc(r,c,inout,side,track):
     tileno = cgra_info.rc2tileno(r,c)
 
     # Need mem offset if row==odd indicates mem tile bottom-half
-    if is_mem_rc(r,c) and (r%2==1): mo=4
+    if is_2hi_rc(r,c) and (r%2==1): mo=4
     else                          : mo=0
 
     return "T%d_%s_s%dt%d" % (tileno, inout, side+mo, track)
+
+def is_2hi_rc(r,c):
+    if cgra_info.MEMTILE_HEIGHT == 1: return False
+    else:                             return is_mem_rc(r, c)
 
 def is_mem_rc(r,c):
     tileno   = cgra_info.rc2tileno(r,c)

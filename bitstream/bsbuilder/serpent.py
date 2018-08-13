@@ -130,7 +130,7 @@ def find_output_tile():
             if r == 2:
                 OUTPUT_TILENO = i
             elif r > 2:
-                print "I think output tile is T%d (early)" % OUTPUT_TILENO
+                print "I think output tile is T%d (early out)" % OUTPUT_TILENO
                 # Early out
                 return
     print "I think output tile is T%d (late)" % OUTPUT_TILENO
@@ -3864,9 +3864,18 @@ def shortmem_sanity_check(path):
         if DBG>2: print "Checking for bad sides in path '%s'" % joined_path
         for badside in ['s4t','s5t','s6t','s7t']:
             if DBG>2: print "Checking for side '%s'" % badside
-            print joined_path.find(badside)
-            assert joined_path.find(badside) == -1,\
-                   "\n\nFound bad side '%s' in path\n'%s'" % (badside,path)
+            if not (joined_path.find(badside) == -1):
+                pwhere()
+                errmsg = "\n" + \
+                         "WARNING Found bad side '%s' in path" % badside \
+                         + "\n" + \
+                         "WARNING %s" % joined_path \
+                         + "\n" + \
+                         "WARNING Shortmem CGRA should not use side > 3" \
+                         + "\n"
+                print(errmsg)
+                # sys.stderr.write(errmsg + '\n')
+                assert False, errmsg
 
 
 def eval_path(path, snode, dname, dtileno, DBG=0):

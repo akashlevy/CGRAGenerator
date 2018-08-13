@@ -146,6 +146,8 @@ def test_op(strategy, op, flag_sel, signed, worker_id):
         return  # Skip lut, tested separately
     if flag_sel in [0x4, 0x5, 0x6, 0x7, 0xA, 0xB, 0xC, 0xD] and not signed:  # Flag modes with N, V are signed only
         return
+    if op == "abs" and not signed:
+        return  # abs only defined in signed mode
     lut_code = 0x00
     args = [signed] if op in signed_ops else []
     _op = getattr(pe, op)(*args).flag(flag_sel).lut(lut_code).signed(signed)

@@ -1,14 +1,14 @@
 #!/bin/csh -f
 
 if ("$HOME" == "/horowitz/users/steveri") then
-  echo "WARNING Setting tri-hack Because you are steveri"
+  echo "WARNING fix_inouts.csh: Setting tri-hack Because you are steveri"
   setenv VERILATOR_TRI_HACK
 endif
 
 
 unset TRAVIS
 if ($?TRAVIS_BUILD_DIR) then
-  echo "WARNING Setting tri-hack Because we are on travis"
+  echo "WARNING fix_inouts.csh: Setting tri-hack Because we are on travis"
   setenv VERILATOR_TRI_HACK
 endif
 

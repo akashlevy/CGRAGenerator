@@ -315,6 +315,10 @@ def preprocess(input_lines, DBG=0):
         line = line.strip()
         if DBG: print "LINE0", line
 
+        # FIXME/HACK Ignore keyi output paths
+        if   (line == "T37_in_s2t0 -> T37_in"):      continue
+        elif (line == "T20_pe_out -> T20_out_s0t0"): continue
+
         # Maybe this is a bad road
         # # Turn 't0_in_s2t0' into 'T0_in_s2t0'
         # line1 = re.sub(r't(\d+)_(in|out)', r'T\1_', line)
@@ -376,6 +380,7 @@ def bs_connection(tileno, line, DBG=0):
     # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
     # or   line = 'T1_in_s2t0 -> T1_out_s0t0/r'
     # or   line = 'T25_out_s2t0 -> T25_op1 (r)'
+    # or   line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
 
     parse = re.search('(\w+)\s*->\s*(\w+)[^r]*(r)*', line)
     if not parse: return False
@@ -433,12 +438,19 @@ def bs_connection(tileno, line, DBG=0):
 
     # process reg if one exists
     # (note registered ops are taken care of elsewheres)
-    if reg=='r' and not rhs[0:2]=='op':
+    # E.g. if Trhs = "T192_data0" then rhs = "data0" is an input port
+    if reg=='r' and not is_alu_input(rhs):
         # print 'reg %08X %08X' % (ra,rd)
         # print '# ', rcomm, '\n'
         addbs(raddr, rdata, rcomm)
 
     return True
+
+
+def is_alu_input(port):
+    '''E.g. if Trhs = "T192_data0" then rhs = "data0" is an input port'''
+    # E.g. {op1,op2,data0,data1
+    return (port[0:2] == "op") or (port[0:4] == "data")
 
 
 def striptile(r):

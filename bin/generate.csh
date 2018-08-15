@@ -49,47 +49,79 @@ else if ("$1" == "-q") then
   unset VERBOSE
 endif
 
-source $CGROOT/bin/genesis2_setup.csh
-if ($?VERBOSE) then
-  echo -n "generate.csh: "; which Genesis2.pl
-endif
+set topdir = $CGROOT/hardware/generator_z/top
 
-##############################################################################
-# Run the generator, but first clean up from prior runs.  Die if gen error.
+echo ""
+echo ""
+echo "${0:t} WARNING $0:t is deprecated/unnecessary; you should not have to call it"
+echo "${0:t} WARNING $0:t is deprecated/unnecessary; you should not have to call it"
+echo "${0:t} WARNING $0:t is deprecated/unnecessary; you should not have to call it"
+echo ""
+echo "Instead do:"
+echo "  export USE_VERILATOR_HACKS=TRUE"
+echo "  cd $topdir; ./build_cgra.sh"
+echo "  [optional] $topdir/bin/show_cgra_info.csh"
+echo ""
+echo ""
 
-set echo
 # The whole point of this script is to use verilator...right?
 setenv USE_VERILATOR_HACKS "TRUE"
 unset echo
 
+cd $topdir
+  if (-e ./genesis_clean.cmd) ./genesis_clean.cmd
+  ./build_cgra.sh || exit -1
+  if ($?VERBOSE) ./bin/show_cgra_info.csh
 
-# cd hardware/generator_z/top
-cd $CGROOT/hardware/generator_z/top
-    if (-e ./genesis_clean.cmd) ./genesis_clean.cmd
 
-    # NOTE THIS IS THE RUN.CSH IN HARDWARE/GENERATOR_Z
-    set run = run.csh
-    set path = (. $path)
-    
-    if ($?VERBOSE) then
-      echo "";
-      echo "generator.csh: Generator run.csh looks like this:"; 
-      cat run.csh | sed -n '/^Genesis/,/echo/p' | awk '{print "    " $0}';
-      echo ""
-      run.csh -v || exit -1
 
-      ####################################################################
-      # Use resulting top.v to print out information about what was built.
 
-      $CGROOT/bin/find_cgra_info.csh genesis_verif/top.v || exit -1
-      echo
-    else
-      set logfile = /tmp/generate_log.$$
-      echo "Generator output to $logfile"
-      run.csh >& $logfile || exit -1
-    else
-    endif
 
-    # New cgra_info is proof that something happened
-    # ls -l cgra_info.txt examples/*.txt
-    if ($?VERBOSE) ls -l cgra_info.txt
+
+
+# source $CGROOT/bin/genesis2_setup.csh
+# if ($?VERBOSE) then
+#   echo -n "generate.csh: "; which Genesis2.pl
+# endif
+# 
+# ##############################################################################
+# # Run the generator, but first clean up from prior runs.  Die if gen error.
+# 
+# set echo
+# # The whole point of this script is to use verilator...right?
+# setenv USE_VERILATOR_HACKS "TRUE"
+# unset echo
+# 
+# 
+# # cd hardware/generator_z/top
+# cd $CGROOT/hardware/generator_z/top
+#     if (-e ./genesis_clean.cmd) ./genesis_clean.cmd
+# 
+#     # NOTE THIS IS THE RUN.CSH IN HARDWARE/GENERATOR_Z
+#     set run = run.csh
+#     set path = (. $path)
+#     
+#     if ($?VERBOSE) then
+#       echo "";
+#       echo "generate.csh: Generator build_cgra.sh looks like this:"; 
+#       cat build_cgra.sh \
+#         | sed -n '/^Genesis/,/exit/p' \
+#         | awk '{print "#   " $0}'
+#       echo ""
+#       build_cgra.sh -v || exit -1
+# 
+#       ####################################################################
+#       # Use resulting top.v to print out information about what was built.
+# 
+#       $CGROOT/bin/find_cgra_info.csh genesis_verif/top.v || exit -1
+#       echo
+#     else
+#       set logfile = /tmp/generate_log.$$
+#       echo "Generator output to $logfile"
+#       run.csh >& $logfile || exit -1
+#     else
+#     endif
+# 
+#     # New cgra_info is proof that something happened
+#     # ls -l cgra_info.txt examples/*.txt
+#     if ($?VERBOSE) ls -l cgra_info.txt

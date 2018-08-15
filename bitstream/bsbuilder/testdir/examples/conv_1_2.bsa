@@ -34,7 +34,7 @@ FF000016 000AF000
 00080017 00000001
 # data[(1, 0)] : @ tile (2, 4) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
 
-00020018 00000001
+00010018 00000001
 # data[(1, 0)] : @ tile (2, 5) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
 
 00080019 00000001
@@ -46,7 +46,7 @@ FF000016 000AF000
 0008001B 00000001
 # data[(1, 0)] : @ tile (2, 8) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
 
-0002001C 00000001
+0001001C 00000001
 # data[(1, 0)] : @ tile (2, 9) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
 
 0008001D 00000001
@@ -58,7 +58,7 @@ FF000016 000AF000
 0008001F 00000001
 # data[(1, 0)] : @ tile (2, 12) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
 
-00020020 00000001
+00010020 00000001
 # data[(1, 0)] : @ tile (2, 13) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
 
 00080021 00000001
@@ -70,7 +70,7 @@ FF000016 000AF000
 00080023 00000001
 # data[(1, 0)] : @ tile (2, 16) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
 
-00020024 00000001
+00010024 00000001
 # data[(1, 0)] : @ tile (2, 17) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
 
 F1000028 00000005

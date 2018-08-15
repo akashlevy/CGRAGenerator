@@ -309,10 +309,12 @@ def find_cornerconn(end1,begin2,DBG=0):
     # if end1 == "T89_in_s5t4": DBG=99
 
     (tileno1, dir1, side1, track1) = cgra_info.parse_canon(end1)
-    assert (track1 >=0) and (side1 >= 0), "WHOOPS '%s' does not look like a wire..." % end1
+    assert (track1 >=0) and (side1 >= 0), \
+           "WHOOPS '%s' does not look like a wire..." % end1
 
     (tileno2, dir2, side2, track2) = cgra_info.parse_canon(begin2)
-    assert (track2 >=0) and (side2 >= 0), "WHOOPS '%s' does not look like a wire..." % begin2
+    assert (track2 >=0) and (side2 >= 0), \
+           "WHOOPS '%s' does not look like a wire..." % begin2
 
     (half1, half2) = (side1/4,side2/4) # Note '/' div only works for pos ints!!!?
     if half1 == half2:

@@ -1183,8 +1183,8 @@ def canon2cgra(name, DBG=0):
     in_s1t2    => in_BUS16_S1_T2
     T0_in_s1t2 => in_BUS16_S1_T2
     in_s5t2    => in_2_BUS16_S1_T2
-    T3_in_s1t2 => sb_wire_in_1_S3_T2  (if T3 is a mem tile)
-    T3_out_s7t2=> sb_wire_out_1_S3_T2 (if T3 is a mem tile)
+    T3_in_s1t2 => sb_wire_in_1_S3_T2  (if T3 is a *2hi* mem tile)
+    T3_out_s7t2=> sb_wire_out_1_S3_T2 (if T3 is a *2hi* mem tile)
     in_s1t2b    => in_BUS1_S1_T2
     '''
     if DBG>1: print "converting", name
@@ -1204,9 +1204,8 @@ def canon2cgra(name, DBG=0):
 
     else: bus1 = False
 
-
     # E.g. 'T0_in_s1t2' => 'in_BUS16_S1_T2'
-    (T,d,side,t) = parse_canon(name)
+    (T,d,side,t) = parse_canon(name) # e.g. (24,'in', 3, 0)
     # assert T != -1
     if DBG>1: print (T,d,side,t)
     if side == -1:
@@ -1218,8 +1217,13 @@ def canon2cgra(name, DBG=0):
 
         if DBG>2: print T, mem_or_pe(T)
         # if not is_mem_tile(T):
+        global MEMTILE_HEIGHT
         if mem_or_pe(T) != 'mem':
             newname = '%s_BUS16_S%d_T%d' % (d,side,t)
+
+        elif MEMTILE_HEIGHT == 1:
+            assert side < 4 and side >= 0
+            newname = '%s_0_BUS16_S%d_T%d' % (d,side,t)
 
         else:
             # must know if top or bottom

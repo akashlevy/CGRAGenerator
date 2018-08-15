@@ -96,17 +96,22 @@ def find_input_tile():
             print "I think output wire is %s" % INPUT_TILE_PE_OUT
             return i
 
-# This is calculated now
-# OUTPUT_TILENO = 0x24         # First (PE or?) mem tile in NW corner
-OUTPUT_TILENO = -1
+# # Note: FIXME OUTPUT_TILENO is not really the io16 output tileno
+# # It's the PE (or MEM) tile that feeds into the io16 output tile...
+# # OUTPUT_TILENO = 0x24         # First (PE or?) mem tile in NW corner
+# OUTPUT_TILENO = -1
 
 # FIXME this should come from board_info.json etc
 # Use first bit on side 1 (bottom, SW corner) for onebit output
 OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
 
-# Value is calculated later, search below
-# OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
-OUTPUT_TILENO_onebit = -1
+# # Value is calculated later, search below
+# # OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
+# OUTPUT_TILENO_onebit = -1
+# # E.g. OUTPUT_TILENO_onebit = 0x116 # First io1 tile in SW corner
+# # Staging area for 1bit out is calculated elsewhere,
+# # see "staging_area_onebit(), below
+# # OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
 
 
 # Should be the tile ABOVE io1bit tile that is the LSB in first group
@@ -123,7 +128,13 @@ OUTPUT_TILENO_onebit = -1
 # which is the tile above io1bit tile for LSB in first group on side 1 (bottom) (see above)
 
 def find_output_tile():
+
     global OUTPUT_TILENO
+    # Note: FIXME OUTPUT_TILENO is not really the io16 output tileno
+    # It's the PE (or MEM) tile that feeds into the io16 output tile...
+    # We use the first (PE or?) mem tile in NW corner
+    # E.g. for tallmem OUTPUT_TILENO = 0x24
+    # FIXME better would be to calculate it from pad name, like OUTPUT_TILENO_onebit below
     for i in range(1000):
         if is_pe_tile(i) or is_mem_tile(i):
             (r,c) = cgra_info.tileno2rc(i)
@@ -132,9 +143,35 @@ def find_output_tile():
             elif r > 2:
                 print "I think output tile is T%d (early out)" % OUTPUT_TILENO
                 # Early out
-                return
+                break
     print "I think output tile is T%d (late)" % OUTPUT_TILENO
+
+    global OUTPUT_TILENO_onebit
+    # OUTPUT_PAD_onebit = 'pad_S1_T0'
+    padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
+    assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
+    (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
+    OUTPUT_TILENO_onebit = padno
+    print "# Found onebit output pad %d = 0x%x" % (padno,padno)
+    print ""
+
     return
+
+def staging_area_onebit():
+    # Find staging area for onebit-output tile
+    # If io1bit output tile is on side 1 and its location is (r,c),
+    # then staging area is tile (r-2,c).  Right?
+    # E.g. if output pad is 'pad_S1_T0' at (19,2) then staging tile is at (17,2)
+    # Currently 0x116 for 16x16 tallmem, 0x136 for shortmem maybe
+
+    global OUTPUT_TILENO_onebit
+    print OUTPUT_TILENO_onebit
+    (padrow,padcol) = cgra_info.tileno2rc(OUTPUT_TILENO_onebit)
+    padno = cgra_info.rc2tileno(padrow-2, padcol)
+    print "# Found onebit output staging tile %d = 0x%x" % (padno,padno)
+    return padno
+
+
 
 
 # Set this to True if a PE has been placed in the INPUT tile
@@ -376,28 +413,11 @@ def main(DBG=1):
     print '# serpent.py: Read cgra info'
     cgra_info.read_cgra_info(cgra_filename, verbose=True)
 
-
     global MEMHEIGHT
     MEMHEIGHT = cgra_info.mem_tile_height()
     print "######################################################"
     print "# Found mem_tile height = %d" % MEMHEIGHT
     print ""
-
-
-    # Find staging area for onebit-output tile
-    # If io1bit output tile is on side 1 and its location is (r,c),
-    # then staging area is tile (r-2,c).  Right?
-    # E.g. if output pad is 'pad_S1_T0' at (19,2) then staging tile is at (17,2)
-    # OUTPUT_PAD_onebit = 'pad_S1_T0'
-    padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
-    assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
-    (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
-    OUTPUT_TILENO_onebit = padno
-    print "######################################################"
-    print "# Found onebit output          pad %d = 0x%x" % (padno,padno)
-    padno = cgra_info.rc2tileno(padrow-2, padcol)
-    print "# Found onebit output staging tile %d = 0x%x" % (padno,padno)
-
 
     # Find INPUT and OUTPUT tiles heuristically
     find_input_tile()
@@ -534,9 +554,7 @@ def final_output(DBG=0):
         '''E.g. print("Tx116_pad(out,1)")'''
         # Currently 0x116 for 16x16 tallmem, 0x136 for shortmem maybe
         print '# IO'
-        padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
-        (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
-        print("Tx%X_pad(out,1)\n" % padno);
+        print("Tx%X_pad(out,1)\n" % OUTPUT_TILENO_onebit);
 
     # Routing
     print '# ROUTING'
@@ -1091,6 +1109,8 @@ class Node:
             print "#   WARNING %s already placed at %s" % (name, self.tileno)
             print "#   It's okay, probably an alu with two inputs"
             if DBG: self.show()
+            if self.tileno == -1: # Hey, it happened once
+                self.show(); assert False
 
         self.tileno = tileno
 
@@ -1721,18 +1741,21 @@ def initialize_node_OUTPUT():
 
 def initialize_node_OUTPUT_1bit():
     if 'OUTPUT_1bit' in nodes:
-        # assert is_pe_tile(tileno) # not relevant maybe
-        tileno = OUTPUT_TILENO_onebit
 
-        input = False
+        # global OUTPUT_TILENO_onebit
+        # padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
+        # (tileno, row, col) = cgra_info.find_tile_by_name(padname)
+        tileno = staging_area_onebit()
+        # assert is_pe_tile(tileno) # not relevant maybe
+
+        input    = False
 
         # output = False
-        # FIXME here's a mystery: why does pe tile have a side 5??
-        # output = 'foo' # this don't work
         # 'output' only used for no-longer-used output comment i think
-        trackno=0; output = 'T%d_out_s1t%d' % (tileno, trackno) # this works
-        # output = 'T%d_out_s5t%d' % (tileno, trackno) # this works (why?)
         # 0 is only track that goes to io16 output tile, right?
+        trackno=0
+        output   = 'T%d_out_s1t%d' % (tileno, trackno) # this works
+        # output = 'T%d_out_s5t%d' % (tileno, trackno) # this works too (why?)
 
         getnode('OUTPUT_1bit').place(tileno, input, output)
 

@@ -1110,6 +1110,8 @@ def canon2global(name, DBG=0):
     T0_in_s3t0  => wire_m1_0_BUS16_S0_T0
     T0_in_s1t0 =>   wire_1_0_BUS16_S3_T0
     '''
+    if DBG>2: print("# cgra_info.py 1114: parsing name '%s'" % name)
+
     (tileno,dir,side,track) = parse_canon(name)
     (r,c) = tileno2rc(tileno)
 

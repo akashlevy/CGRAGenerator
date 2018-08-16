@@ -39,10 +39,14 @@ test_basic:
 update_cgra:
 	cd $(HARDWARE_TOP); ./run.csh
 
-test_unit: $(CGRA_INFO)
+test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
 #	Doesn't work anyway, may as well comment it out (for now at least)
 #	make update_cgra
 	./unit_tests/utest $(VSWITCH)
+
+$(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
+	echo hey hello hawaya
+	cd $(VERILATOR_TOP); ./run.csh 
 
 
 

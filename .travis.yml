@@ -28,6 +28,11 @@ script:
   #
   # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
   - pushd testdir
+  -   make SILENT=TRUE test_unit
+  - ls exit_now_with_error
+
+
+
   # -   make SILENT=TRUE test_basic NOT (yet) suitable for shortmem!
   -   make SILENT=TRUE test_serpent | tee serpent_results.tmp
   -   make SILENT=TRUE test_unit

@@ -42,7 +42,7 @@ update_cgra:
 test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
 #	Doesn't work anyway, may as well comment it out (for now at least)
 #	make update_cgra
-	./unit_tests/utest --nobuild $(VSWITCH)
+	./unit_tests/utest --nogen $(VSWITCH)
 
 $(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
 	cd $(VERILATOR_TOP); ./run.csh 

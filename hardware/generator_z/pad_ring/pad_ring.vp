@@ -5,6 +5,8 @@
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
 //; my $group = 0;
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
+
+// Currently this only supports 1 IO group perside
 //; my @sides = ('N','S','E','W');
 module `mname` (
 input clk,
@@ -13,18 +15,11 @@ input [`$config_data_width-1`:0] config_data,
 input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
-input [`$num_ios_per_group-1`:0] f2p_wide_N,
-input [`$num_ios_per_group-1`:0] f2p_wide_S,
-input [`$num_ios_per_group-1`:0] f2p_wide_E,
-input [`$num_ios_per_group-1`:0] f2p_wide_W,
-inout [`$num_ios_per_group-1`:0] pads_N,
-inout [`$num_ios_per_group-1`:0] pads_S,
-inout [`$num_ios_per_group-1`:0] pads_E,
-inout [`$num_ios_per_group-1`:0] pads_W,
-output [`$num_ios_per_group-1`:0] p2f_N,
-output [`$num_ios_per_group-1`:0] p2f_S,
-output [`$num_ios_per_group-1`:0] p2f_E,
-output [`$num_ios_per_group-1`:0] p2f_W,
+//; for my $side (@sides) {
+input [`$num_ios_per_group-1`:0] f2p_wide_`$side`,
+inout [`$num_ios_per_group-1`:0] pads_`$side`,
+output [`$num_ios_per_group-1`:0] p2f_`$side`,
+//; }
 output [`$config_data_width-1`:0] read_data
 );
 

@@ -13,15 +13,19 @@ input [`$config_data_width-1`:0] config_data,
 input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
+input [`$num_ios_per_group-1`:0] f2p_wide_N,
+input [`$num_ios_per_group-1`:0] f2p_wide_S,
+input [`$num_ios_per_group-1`:0] f2p_wide_E,
+input [`$num_ios_per_group-1`:0] f2p_wide_W,
 inout [`$num_ios_per_group-1`:0] pads_N,
 inout [`$num_ios_per_group-1`:0] pads_S,
 inout [`$num_ios_per_group-1`:0] pads_E,
 inout [`$num_ios_per_group-1`:0] pads_W,
-output [`$config_data_width-1`:0] read_data,
 output [`$num_ios_per_group-1`:0] p2f_N,
 output [`$num_ios_per_group-1`:0] p2f_S,
 output [`$num_ios_per_group-1`:0] p2f_E,
 output [`$num_ios_per_group-1`:0] p2f_W,
+output [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:0];

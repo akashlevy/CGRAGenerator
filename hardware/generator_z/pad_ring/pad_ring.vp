@@ -3,10 +3,10 @@
 //; my $num_groups_per_side = parameter(Name=>'num_groups_per_side', val=>1, min=>1, step=>1);
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
+//; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>32, min=>0, step=>1);
 //; my $group = 0;
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 
-// Currently this only supports 1 IO group perside
 //; my @sides = ('N','S','E','W');
 module `mname` (
 input clk,
@@ -16,18 +16,21 @@ input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
 //; for my $side (@sides) {
-input [`$num_ios_per_group-1`:0] f2p_wide_`$side`,
-inout [`$num_ios_per_group-1`:0] pads_`$side`,
-output [`$num_ios_per_group-1`:0] p2f_`$side`,
+input [`$num_ios_per_group-1`:0] f2p_wide_`$side` [`$num_groups_per_side-1`:0],
+input [`$num_ios_per_group-1`:0] f2p_1bit_`$side` [`$num_groups_per_side-1`:0],
+inout [`$num_ios_per_group-1`:0] pads_`$side` [`$num_groups_per_side-1`:0],
+output [`$num_ios_per_group-1`:0] p2f_`$side` [`$num_groups_per_side-1`:0],
 //; }
 output [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:0];
+//; my $id_offset = $tile_id_offset;
 //; for my $side (@sides) {
 //;   for (my $i = 0; $i<$num_groups_per_side; $i++) {
-//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,io_group_num=>$group);
+//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,io_group_num=>$group,tile_id_offset=>$id_offset);
 //;     $group++;
+//;     $id_offset += $num_ios_per_group;
   `$io_group_obj->instantiate()` (
   .clk(clk),
   .reset(reset),
@@ -35,10 +38,10 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .config_addr(config_addr),
   .config_read(config_read),
   .config_write(config_write),
-  .f2p_wide(),
-  .f2p_1bit(),
-  .pads(pads_`$side`),
-  .p2f(p2f_`$side`),
+  .f2p_wide(f2p_wide_`$side`[`$i`]),
+  .f2p_1bit(f2p_1bit_`$side`[`$i`]),
+  .pads(pads_`$side`[`$i`]),
+  .p2f(p2f_`$side`[`$i`]),
   .read_data(read_data_group)
   );
 

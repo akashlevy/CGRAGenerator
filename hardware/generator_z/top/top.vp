@@ -324,8 +324,6 @@
 //; #Create verilog
 //; #####################################################
 module top(
-clk_in,
-reset_in,
 //; for (my $side=0; $side<4; $side++) {
 //;   for (my $count=0; $count< $IO_count[$side]; $count++) {
         pad_S`$side`_T`$count`,
@@ -353,6 +351,7 @@ tdo,
 tms,
 tck,
 trst_n,
+//; if($include_analog_block) {
 //PORTS FOR ANALOG BLOCK
 ext_cki,
 ext_ckib,
@@ -371,6 +370,9 @@ frefp_out_jm,
 frefn_out_jm,
 mdllout_pad,
 lf_out
+//; }
+clk_in,
+reset_in
 );
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
@@ -386,6 +388,7 @@ lf_out
   input tck;
   input trst_n;
   output tdo;
+//; if($include_analog_block) {
   //PADS FOR ANALOG BLOCK
   input ext_cki;  // (+) cmos clock input (reference clock input)
   input ext_ckib; // (-) cmos clock input (reference clock input)
@@ -407,6 +410,7 @@ lf_out
   output [3:0] mdllout_pad; // 4-phase MDLL outputs
   wire [19:0] jm_out;   // number of 1's in jitter measurement
   output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
+//; }
    // --------------------------------------
    // PLACEHOLDERS FOR VERILATOR INPUT WIRES
    // --------------------------------------

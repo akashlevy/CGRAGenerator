@@ -39,7 +39,7 @@ test_basic:
 update_cgra:
 	cd $(HARDWARE_TOP); ./run.csh
 
-test_unit:
+test_unit: $(CGRA_INFO)
 #	Doesn't work anyway, may as well comment it out (for now at least)
 #	make update_cgra
 	./unit_tests/utest $(VSWITCH)

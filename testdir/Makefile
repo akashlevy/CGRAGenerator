@@ -45,10 +45,7 @@ test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
 	./unit_tests/utest --nobuild $(VSWITCH)
 
 $(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
-	echo hey hello hawaya
 	cd $(VERILATOR_TOP); ./run.csh 
-
-
 
 test_all:
 	make hackdiff_test 2>&1 | tee $(TEMPDIR)/hackdiff_test.log

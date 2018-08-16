@@ -29,7 +29,11 @@ set BUILD                  # (re)build simulator from scratch
 set DELAY = '0,0'
 
 # Default configuration bitstream: 16x16 pointwise mul-by-two
-set config   = ../../bitstream/examples/pw2_16x16.bsa
+set hwtop = ../../hardware/generator_z/top
+set memtile_height = 1
+cat $hwtop/top.vp | grep tile_height | grep -v # | grep 2 || set memtile_height = 2
+if ($memtile_height == 2) set config   = ../../bitstream/examples/pw2_16x16.bsa
+if ($memtile_height == 1) set config   = ../../bitstream/examples/pw2_16x16_shortmem.bsa
 
 # Note pointwise w/'conv_bw' should take ~4000 cycles to complete
 set input     = io/conv_bw_in.png

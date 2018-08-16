@@ -34,14 +34,13 @@ mydir  = os.path.dirname(mypath)
 # global PYPAT_DIR
 # PYPAT_DIR = mydir + '/../../../pe'
 # sys.path.insert(0, PYPAT_DIR)
-# import pe 
+# import pe
 
 # cmd = "cd %s; test -d pe || echo no pe (yet)" % mydir
 # print cmd
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
-my_syscall("cd %s; test -d pe || git clone https://github.com/phanrahan/pe.git" % mydir)
-
+my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)" % mydir)
 # DO THIS IN .travis.yml INSTEAD!
 # # Pat's stuff needs numpy
 # my_syscall("pip list | grep numpy || pip install --upgrade pip")
@@ -97,7 +96,7 @@ ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
 ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
 ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
 '''
-        
+
     print '''
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
@@ -208,7 +207,7 @@ def print_raw_file_abbrev(label, tname, filename):
     #   print_raw_file_abbrev('GOLD ', 'add', gold_out)       # ('add' d1=1)
     #   print_raw_file_abbrev('CGRA ', 'add', cgra_out)       # ('add' d1=1)
     #
-    #   INPUT   0   1   2   3   4   5   6   7   8   9 
+    #   INPUT   0   1   2   3   4   5   6   7   8   9
     #   GOLD ---->  1   3   5   7   9  11  13  15  17
     #   CGRA ---->  1   3   5   7   9  11  13  15  17
 
@@ -293,7 +292,7 @@ GOLD['lte']   = gold_lte
 ##############################################################################
 
 
-def gen_pixels_binary(tname): 
+def gen_pixels_binary(tname):
     outpixels = []
     for i in range(len(PIXELS)-1):
         # (a,b) = (PIXELS[i], PIXELS[i+1])
@@ -303,7 +302,7 @@ def gen_pixels_binary(tname):
     return outpixels
 
 # Silly rabbit...there's no unary ops
-# def gen_pixels_unary(tname): 
+# def gen_pixels_unary(tname):
 #     outpixels = []
 #     for i in range(len(PIXELS)):
 #         a = PIXELS[i]
@@ -331,7 +330,7 @@ def gen_output_file_gold(tname, DBG=0):
         print ""
 
     return gold_out
-    
+
 
 def gen_output_file_cgra(tname, DBG=0):
 
@@ -348,7 +347,7 @@ def gen_output_file_cgra(tname, DBG=0):
 
     # Calculate the appropriate delay e.g. '1,0' for PE ops or '9,0' for 9-deep lbuf.
     delay = find_delay(tname, DBG=0)
-    
+
     cwd = os.getcwd() + '/'
     config = cwd + tname+'.bsa'
     input  = cwd + "test_in.raw"

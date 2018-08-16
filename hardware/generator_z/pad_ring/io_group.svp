@@ -9,7 +9,7 @@
 //; # This is to convert the direction to a side number that the rest of CGRAGenerator uses
 //; my %side_to_side_num = {'N',3,'S',1,'E',0,'W',2}; 
 
-
+// io group `$io_group_num`
 
 module `mname` (
 input clk,
@@ -26,6 +26,7 @@ output [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
+
 
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 

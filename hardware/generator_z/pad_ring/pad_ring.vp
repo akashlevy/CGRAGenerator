@@ -3,8 +3,8 @@
 //; my $num_groups_per_side = parameter(Name=>'num_groups_per_side', val=>1, min=>1, step=>1);
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
-// This module contains all of the io1bit and io16bit tiles in the CGRA.
 //; my $group = 0;
+// This module contains all of the io1bit and io16bit tiles in the CGRA.
 //; my @sides = ('N','S','E','W');
 module `mname` (
 input clk,
@@ -13,17 +13,21 @@ input [`$config_data_width-1`:0] config_data,
 input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
-inout [`$num_ios_per_group-1`:0] pads_north,
-inout [`$num_ios_per_group-1`:0] pads_south,
-inout [`$num_ios_per_group-1`:0] pads_east,
-inout [`$num_ios_per_group-1`:0] pads_west,
-output [`$config_data_width-1`:0] read_data
+inout [`$num_ios_per_group-1`:0] pads_N,
+inout [`$num_ios_per_group-1`:0] pads_S,
+inout [`$num_ios_per_group-1`:0] pads_E,
+inout [`$num_ios_per_group-1`:0] pads_W,
+output [`$config_data_width-1`:0] read_data,
+output [`$num_ios_per_group-1`:0] p2f_N,
+output [`$num_ios_per_group-1`:0] p2f_S,
+output [`$num_ios_per_group-1`:0] p2f_E,
+output [`$num_ios_per_group-1`:0] p2f_W,
 );
 
 wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:0];
 //; for my $side (@sides) {
 //;   for (my $i = 0; $i<$num_groups_per_side; $i++) {
-//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,group=>$group);
+//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,io_group_num=>$group);
 //;     $group++;
   `$io_group_obj->instantiate()` (
   .clk(clk),
@@ -34,8 +38,8 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .config_write(config_write),
   .f2p_wide(),
   .f2p_1bit(),
-  .pads(),
-  .p2f(),
+  .pads(pads_`$side`),
+  .p2f(p2f_`$side`),
   .read_data(read_data_group)
   );
 

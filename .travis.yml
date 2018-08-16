@@ -22,26 +22,17 @@ install:
 script:
   # set -e => exit on failure. "You can sandwich the stuff in script with set -e and set +e."
   - set -e
-  #
-  #
   # - cd testdir; make test_all
-  #
-  # BASIC TEST for new IO verilog: pointwise only 'pwv2_io.bs'
   - pushd testdir
+  -   make SILENT=TRUE test_basic
   -   make SILENT=TRUE test_unit
-  - ls exit_now_with_error
-
-
-
-  # -   make SILENT=TRUE test_basic NOT (yet) suitable for shortmem!
   -   make SILENT=TRUE test_serpent | tee serpent_results.tmp
   -   make SILENT=TRUE test_unit
-  #   make SILENT=TRUE test_serpent_dev
   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
-  # - make SILENT=TRUE test_all
   - popd
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
 
+  # Lenny's unit tests
   # Install python for testing infrastructure
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -u -b -p $HOME/miniconda
@@ -65,10 +56,3 @@ script:
 
   # Redo serpent summary maybe
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
-
-# ##############################################################################
-# # NOTES
-# #
-# # Maybe someday we'll want/need:
-# # perl:
-# # - "5.18"

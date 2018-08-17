@@ -54,15 +54,21 @@ script:
   #   ten minutes for basic test (pointwise) using tbg (inc first build)
   -   make SILENT=TRUE test_basic   RUN=run_tbg.csh
 
-  #   ten minute for sr unit tests
+  #   ten minutes for sr unit tests
   -   make SILENT=TRUE test_unit    RUN=run_tbg.csh
 
   #   five minutes for serpent-based tests
-  -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
+  #   Note the "tee" command masks make errors :(
+  -   (make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) | tee serpent_results.tmp
 
+  #   check for hidden errors
   -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
+
   - popd
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+
+  ################################################################
+  # Fifteen minutes for LT unit tests
 
   # Install python dependencies
   - pip install pytest numpy delegator.py bit_vector

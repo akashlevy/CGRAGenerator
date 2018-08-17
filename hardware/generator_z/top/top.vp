@@ -14,6 +14,7 @@
 //;    val => 1,
 //;    min=>1, max=>2, step=>1);
 //;
+//; my $include_GST = parameter(NAME => 'include_GST', val => 0, Min => 0, Max => 1, Step => 1);
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
@@ -799,135 +800,139 @@ wire [3:0] stall;
 //;   }
 //; }
 //; #
-//; #####################################################
-//; # Create global wire merge and distribute structure
-//; #####################################################
-//; my $obj = generate("global_signal_tile", "gst", global_signal_count=>$global_signal_count);
-//; my %gst_hash_new;
-//; my %gst_hash_old = %tile_grid;  
-//; my $incr=1;
-//; my $height=$cgra_grid_height;
-//; my $width=$cgra_grid_width;
-//; my $new_tile_addr = $core_tile_addr;
-//; my $last_tile_addr = 0;
-//; ####### tile ordering for connecting global signal tiles
-//; # 0   1
-//; # 3   2
-//; #######
-//; while (1) {
-//; ####### 
-//; ####### instantiate wires for each gst level 
-//; ####### 
-//;   my %wire_hash = ();
-//;   my $next_h=2;
-//;   for (my $h=2; $h<($height/$incr); $h+=2) {
-//;     my $next_w=2;
-//;     for (my $w=2; $w<($width/$incr); $w+=2) {
-//;       for (my $i=0; $i<4; $i++) {
-//;         my $key = "global_wire_h2l_".($incr*2)."_${i}_".(int(floor((${next_w}-2)/2))+2)."_".(int(floor((${next_h}-2)/2))+2);
-//;         $wire_hash{$key} = 1;
-//;       } 
-//;       my $key = "global_wire_l2h_${incr}_${next_w}_${next_h}";
-//;       $wire_hash{$key} = 1;
-//;       $next_w++;
-//;     }
-//;     $next_h++;
-//;   }
-//;   foreach my $w (sort keys(%wire_hash)) {
-//;     if ($incr!=1) {
-    wire `$w`;
-//;     }
-//;   }
-//; ####### 
-//; ####### instantiate all tiles for a gst level 
-//; ####### 
-//;   my $next_h=2;
-//;   for (my $h=2; $h<($height/$incr); $h+=2) {
-//;     my $next_w=2;
-//;     for (my $w=2; $w<($width/$incr); $w+=2) {
-//;       my @keys;
-//;       $keys[0] = (${w}+0)."_".(${h}+0);
-//;       $keys[1] = (${w}+1)."_".(${h}+0);
-//;       $keys[2] = (${w}+1)."_".(${h}+1);
-//;       $keys[3] = (${w}+0)."_".(${h}+1);
-//;       my $found=0;
-//;       my $new_key = "${next_w}_${next_h}";
-//;       $gst_hash_new{ ${new_key} } = "empty";
-//;       for (my $i=0; $i<4; $i++) {
-//;         my $key = $keys[$i];
-//;         my $child_type = $gst_hash_old{ $key };
-//;         if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
-//;           $found = 1;
-//;         }
-//;       }
-//;       if ($found==1) {
-//;         $gst_hash_new{ ${new_key} } = "gst";
-//;         $gst_hash_new{ "${new_key}_addr" } = ${new_tile_addr};
-//;         my $new_tile_addr_hex = sprintf("%X",$new_tile_addr);
-//;         print INFO "  <tile type='gst' tile_addr='0x$new_tile_addr_hex'>\n";
-//;         print INFO "    <controlled_tiles>\n";
-//;         my $inst_obj = clone($obj, "gst_0x${new_tile_addr_hex}");
-    wire [31:0] read_data_`$new_tile_addr_hex`;
-    `$inst_obj->instantiate()` 
-    (
-      .clk(clk),
-      .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_write(config_write),
-      .config_read(config_read),
-      .tile_id(16'h`$new_tile_addr_hex`),
+//; if ($include_GST) {
+//;   #####################################################
+//;   # Create global wire merge and distribute structure
+//;   #####################################################
+//;   my $obj = generate("global_signal_tile", "gst", global_signal_count=>$global_signal_count);
+//;   my %gst_hash_new;
+//;   my %gst_hash_old = %tile_grid;  
+//;   my $incr=1;
+//;   my $height=$cgra_grid_height;
+//;   my $width=$cgra_grid_width;
+//;   my $new_tile_addr = $core_tile_addr;
+//;   my $last_tile_addr = 0;
+//;   ####### tile ordering for connecting global signal tiles
+//;   # 0   1
+//;   # 3   2
+//;   #######
+//;   while (1) {
+//;   ####### 
+//;   ####### instantiate wires for each gst level 
+//;   ####### 
+//;     my %wire_hash = ();
+//;     my $next_h=2;
+//;     for (my $h=2; $h<($height/$incr); $h+=2) {
+//;       my $next_w=2;
+//;       for (my $w=2; $w<($width/$incr); $w+=2) {
 //;         for (my $i=0; $i<4; $i++) {
-//;           my $child_key = $keys[$i];
-//;           my $child_type = $gst_hash_old{ $child_key };
-//;           my $child_addr = $gst_hash_old{ "${child_key}_addr" };
-//;           my $child_addr_hex = sprintf("%X",$child_addr);
-//;   if(($incr*2 >= $cgra_grid_width-4) or (($grid_size eq "48x48") and ($incr*2==32))) {
-      .gin_u_`$i`(stall[`$i`] | global_wire_l2h_`$incr`_`$new_key`),
-//;   }
-//;   else {
-      .gin_u_`$i`(global_wire_h2l_`($incr*2)`_`$i`_`(int(floor((${next_w}-2)/2))+2)`_`(int(floor((${next_h}-2)/2))+2)`), 
-//;   }     
-      .gout_l_`$i`(global_wire_h2l_`$incr`_`$i`_`$new_key`), 
+//;           my $key = "global_wire_h2l_".($incr*2)."_${i}_".(int(floor((${next_w}-2)/2))+2)."_".(int(floor((${next_h}-2)/2))+2);
+//;           $wire_hash{$key} = 1;
+//;         } 
+//;         my $key = "global_wire_l2h_${incr}_${next_w}_${next_h}";
+//;         $wire_hash{$key} = 1;
+//;         $next_w++;
+//;       }
+//;       $next_h++;
+//;     }
+//;     foreach my $w (sort keys(%wire_hash)) {
+//;       if ($incr!=1) {
+      wire `$w`;
+//;       }
+//;     }
+//;   ####### 
+//;   ####### instantiate all tiles for a gst level 
+//;   ####### 
+//;     my $next_h=2;
+//;     for (my $h=2; $h<($height/$incr); $h+=2) {
+//;       my $next_w=2;
+//;       for (my $w=2; $w<($width/$incr); $w+=2) {
+//;         my @keys;
+//;         $keys[0] = (${w}+0)."_".(${h}+0);
+//;         $keys[1] = (${w}+1)."_".(${h}+0);
+//;         $keys[2] = (${w}+1)."_".(${h}+1);
+//;         $keys[3] = (${w}+0)."_".(${h}+1);
+//;         my $found=0;
+//;         my $new_key = "${next_w}_${next_h}";
+//;         $gst_hash_new{ ${new_key} } = "empty";
+//;         for (my $i=0; $i<4; $i++) {
+//;           my $key = $keys[$i];
+//;           my $child_type = $gst_hash_old{ $key };
 //;           if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
-      .gin_l_`$i`(global_wire_l2h_`(floor($incr/2))`_`$child_key`), 
-//;             print INFO "      <tile>0x${child_addr_hex}</tile>\n";
-//;           } else {
-//      .gout_l_`$i`(), 
-//      .gin_u_`$i`(1'b0), 
-      .gin_l_`$i`(1'b0), 
+//;             $found = 1;
 //;           }
 //;         }
-      .gout_u(global_wire_l2h_`$incr`_`$new_key`),
-      .read_data(read_data_`$new_tile_addr_hex`)
-      
-//;         $new_tile_addr++;
-//;         print INFO "    </controlled_tiles>\n";
-//;         print INFO "  </tile>\n";
-    );
-//;  if ($read_data_global eq '') {
-//;    $read_data_global = "read_data_$new_tile_addr_hex";
-//;  } else {
-//;    $read_data_global = $read_data_global . " | read_data_$new_tile_addr_hex";
-//;  }
-//;       }
-//;       $next_w++;
+//;         if ($found==1) {
+//;           $gst_hash_new{ ${new_key} } = "gst";
+//;           $gst_hash_new{ "${new_key}_addr" } = ${new_tile_addr};
+//;           my $new_tile_addr_hex = sprintf("%X",$new_tile_addr);
+//;           print INFO "  <tile type='gst' tile_addr='0x$new_tile_addr_hex'>\n";
+//;           print INFO "    <controlled_tiles>\n";
+//;           my $inst_obj = clone($obj, "gst_0x${new_tile_addr_hex}");
+      wire [31:0] read_data_`$new_tile_addr_hex`;
+      `$inst_obj->instantiate()` 
+      (
+        .clk(clk),
+        .reset(reset),
+        .config_addr(config_addr),
+        .config_data(config_data),
+        .config_write(config_write),
+        .config_read(config_read),
+        .tile_id(16'h`$new_tile_addr_hex`),
+//;           for (my $i=0; $i<4; $i++) {
+//;             my $child_key = $keys[$i];
+//;             my $child_type = $gst_hash_old{ $child_key };
+//;             my $child_addr = $gst_hash_old{ "${child_key}_addr" };
+//;             my $child_addr_hex = sprintf("%X",$child_addr);
+//;     if(($incr*2 >= $cgra_grid_width-4) or (($grid_size eq "48x48") and ($incr*2==32))) {
+        .gin_u_`$i`(stall[`$i`] | global_wire_l2h_`$incr`_`$new_key`),
 //;     }
-//;     $next_h++;
+//;     else {
+        .gin_u_`$i`(global_wire_h2l_`($incr*2)`_`$i`_`(int(floor((${next_w}-2)/2))+2)`_`(int(floor((${next_h}-2)/2))+2)`), 
+//;     }     
+        .gout_l_`$i`(global_wire_h2l_`$incr`_`$i`_`$new_key`), 
+//;             if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
+        .gin_l_`$i`(global_wire_l2h_`(floor($incr/2))`_`$child_key`), 
+//;               print INFO "      <tile>0x${child_addr_hex}</tile>\n";
+//;             } else {
+//        .gout_l_`$i`(), 
+//        .gin_u_`$i`(1'b0), 
+        .gin_l_`$i`(1'b0), 
+//;             }
+//;           }
+        .gout_u(global_wire_l2h_`$incr`_`$new_key`),
+        .read_data(read_data_`$new_tile_addr_hex`)
+        
+//;           $new_tile_addr++;
+//;           print INFO "    </controlled_tiles>\n";
+//;           print INFO "  </tile>\n";
+      );
+//;    if ($read_data_global eq '') {
+//;      $read_data_global = "read_data_$new_tile_addr_hex";
+//;    } else {
+//;      $read_data_global = $read_data_global . " | read_data_$new_tile_addr_hex";
+//;    }
+//;         }
+//;         $next_w++;
+//;       }
+//;       $next_h++;
+//;     }
+//;     foreach my $key (keys %gst_hash_new) {
+//;     }
+//;     %gst_hash_old = %gst_hash_new;
+//;     print INFO "####################GST level: $incr #################\n";
+//;     if (($new_tile_addr - $last_tile_addr)==0 || ($incr >= 1024)) {last;}
+//;     $last_tile_addr = $new_tile_addr;
+//;     $incr*=2;
 //;   }
-//;   foreach my $key (keys %gst_hash_new) {
-//;   }
-//;   %gst_hash_old = %gst_hash_new;
-//;   print INFO "####################GST level: $incr #################\n";
-//;   if (($new_tile_addr - $last_tile_addr)==0 || ($incr >= 1024)) {last;}
-//;   $last_tile_addr = $new_tile_addr;
-//;   $incr*=2;
 //; }
 //; print INFO "</CGRA>\n";
 //; close INFO;
     assign read_data_pe = `$read_data_pe`;
     assign read_data_memory = `$read_data_memory`;
+//; if($include_GST) {
     assign read_data_global = `$read_data_global`;
+//; }
     assign read_data = read_data_pe | read_data_memory | read_data_global;
 
 endmodule

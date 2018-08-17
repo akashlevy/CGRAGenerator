@@ -25,9 +25,16 @@
 //; my $cb_connections = parameter(Name=>'cb_connections', val=> "1111111111", doc=>'binary vector to specify tracks muxed by cb input to memory.length = num_tracks*2');
 
 //; # for layout 
-//; # my $mem_tile_height = parameter(Name=>'mem_tile_height', val=> 2, doc=>'multiple of cgra row height to use as mem_tile height');
-//;   my $mem_tile_height = parameter(Name=>'mem_tile_height', val=> 1, doc=>'multiple of cgra row height to use as mem_tile height');
-
+//; my $mem_tile_height = parameter(Name=>'mem_tile_height', val=> 2, doc=>'multiple of cgra row height to use as mem_tile height');
+//; 
+//; # If parent (i.e. top.vp) has a memheight def, that overrides local
+//;   my $parent = $self->get_parent();
+//;   if ($parent->exists_param('mem_tile_height')) {
+//;      $mem_tile_height = $parent->get_param('mem_tile_height');
+//;   }
+//;   print "// Using mem_tile_height=$mem_tile_height\n";
+//;
+//;
 //; ###########################################################################
 //; #ankitan - Virtualization sel
 //; my $SHIFT_REG_LEN  = parameter(Name=>'SHIFT_REG_LEN',

@@ -31,9 +31,11 @@ set DELAY = '0,0'
 # Default configuration bitstream: 16x16 pointwise mul-by-two
 set hwtop = ../../hardware/generator_z/top
 set memtile_height = 1
-cat $hwtop/top.vp | grep tile_height | grep -v # | grep 2 || set memtile_height = 2
-if ($memtile_height == 2) set config   = ../../bitstream/examples/pw2_16x16.bsa
+cat $hwtop/top.vp | egrep '^[^#].*MEMTILE_HEIGHT[^0-9]*2' && set memtile_height = 2
 if ($memtile_height == 1) set config   = ../../bitstream/examples/pw2_16x16_shortmem.bsa
+if ($memtile_height == 2) set config   = ../../bitstream/examples/pw2_16x16.bsa
+echo "memtile_height=$memtile_height"
+echo""
 
 # Note pointwise w/'conv_bw' should take ~4000 cycles to complete
 set input     = io/conv_bw_in.png

@@ -3,12 +3,22 @@
 //; #//
 //; #//////////////////////////////////////////////////////////////////
 //; use POSIX;
+//; #
 //; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
 //; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
+//;
+//; my $MEMTILE_HEIGHT = 2; # This is so run.csh can auto-detect mem height
+//; my $mem_tile_height = parameter(
+//;    name=>'mem_tile_height',
+//;    #val =>1,
+//;    val => $MEMTILE_HEIGHT,
+//;    doc =>'height of memtile relative to minimum grid height',
+//;    min=>1, max=>2, step=>1);
+//;
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
-
+//; #
 //; # Specify the CGRA grid size as 8x8,16x16, or 64x64. You can generate additional sizes by modifying
 //; # the IO_count and basic_block_repeat_* variables below.
 //; # my $grid_size = "8x8";
@@ -45,16 +55,14 @@
 //; # tile node will be X). Multiple spaces are treated as a single space. Do
 //; # not include IO tiles in the basic block.
 //; #
-//; # OLD
-//; # my $basic_block  = "pe pe pe mem\n";
-//; #    $basic_block .= "pe pe pe X  ";
-//; #
-//; # NEW
 //; my $basic_block  = "pe pe pe mem\n";
+//;    $basic_block .= "pe pe pe X  ";
+//; 
+//; if ($mem_tile_height == 1) {
+//;    $basic_block  = "pe pe pe mem\n";
 //;    $basic_block .= "pe pe pe mem  ";
-//; #
-//; #
-//; #
+//; }
+//;  
 //; # Number of times the basic block repeats in the horizontal direction.
 //; #
 //; my $basic_block_repeat_x = 8;
@@ -129,8 +137,7 @@
 //; };
 //; $tile_config->{ 'mem' } = {
 //;       type => 'memory_tile',
-//;      #tile_height => 2,
-//;       tile_height => 1,
+//;       tile_height => $mem_tile_height,
 //;       tile_width => 1,
 //;       gen_mem_for_busname => 'BUS16',
 //;       control_busname => 'BUS1',

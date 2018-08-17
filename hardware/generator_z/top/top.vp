@@ -1,1 +1,19 @@
 // New Top level that contains CGRA_core module and IO pad_ring module
+
+module `mname` (
+
+);
+
+//; my $cgra_core_obj = generate_base("cgra_core","core");
+
+  `$cgra_core_obj->instantiate()` (
+
+  );
+
+//; my $pad_ring_obj = generate_base("pad_ring", "pads");
+
+  `$pad_ring_obj->instantiate()` (
+
+  );
+
+endmodule

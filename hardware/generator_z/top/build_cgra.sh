@@ -18,6 +18,7 @@ if [ ! -z ${TRAVIS_BUILD_DIR+x} ]; then
   export USE_VERILATOR_HACKS="TRUE"
 fi
 
+
 if [ ! `command -v Genesis2.pl` ]; then
   echo 'build_cgra.sh: Oops cannot find Genesis2.pl; I will try to fix this for you'
   echo 'build_cgra.sh: source ./setup-genesis2.sh'

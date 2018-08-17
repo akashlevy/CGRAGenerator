@@ -270,7 +270,7 @@
 //; #####################################################
 //; #Create verilog
 //; #####################################################
-module top(
+module `mname`(
 //; for (my $side=0; $side<4; $side++) {
 //;   for (my $count=0; $count< $IO_count[$side]; $count++) {
         pad_S`$side`_T`$count`,

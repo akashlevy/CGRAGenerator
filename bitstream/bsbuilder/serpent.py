@@ -1453,7 +1453,8 @@ def build_node(nodes, line, DBG=0):
 
     # NOT harris
     # ...is this a good idea?  Probably not!
-    # line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
+    # Also: probably don't need with new-style mapper...
+    line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
 
     line = re.sub("\$cgramem", "", line)
     if DBG>1:
@@ -1717,7 +1718,8 @@ def is_mem_node(nodename):
     if nodename[0:3] == 'mem': return True
 
     # new style mem node contains '$lbmem' maybe?
-    return (nodename.find('$lbmem') > 0)
+    # Yes, but old style does not; $lbmem got rewritten to just 'lbmem' :(
+    return (nodename.find('lbmem') >= 0)
 
 
 def initialize_node_INPUT():

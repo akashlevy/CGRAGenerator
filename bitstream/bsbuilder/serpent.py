@@ -1450,7 +1450,11 @@ def build_node(nodes, line, DBG=0):
     # Rewrite to simplify
     # e.g. "INPUT" -> "lb_p4_clamped_stencil_update_stream$mem_1$cgramem"; # fifo_depth 64
     # =>   "INPUT" -> "mem_1"; # fifo_depth 64
-    line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
+
+    # NOT harris
+    # ...is this a good idea?  Probably not!
+    # line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
+
     line = re.sub("\$cgramem", "", line)
     if DBG>1:
         print('\n\n'); 
@@ -1555,7 +1559,10 @@ ERROR  "%s"
 
         # assert rhs[0:3] == 'mem', 'oops dunno what mem to config fifo_depth'
         # assert rhs[0:3] == 'mem', errmsg
-        assert is_mem_node(rhs),     errmsg
+        if not is_mem_node(rhs):
+            print "ERROR line='%s'" % line
+            print "ERROR rhs='%s'" % rhs
+            assert is_mem_node(rhs),     errmsg
 
         fifo_depth = parse.group(1)
         getnode(rhs).fifo_depth = int(fifo_depth)

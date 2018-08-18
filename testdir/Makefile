@@ -50,7 +50,9 @@ $(CGRA_INFO):
 $(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
 	cd $(VERILATOR_TOP); ./run.csh 
 
-test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
+# No dependence on Vtop b/c utest.py default is now TBG...right?
+# test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
+test_unit: $(CGRA_INFO)
 	./unit_tests/utest --nogen $(VSWITCH)
 
 test_all:

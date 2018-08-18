@@ -54,7 +54,7 @@ script:
   #   ten minutes for basic test (pointwise) using tbg (inc first build)
   -   make SILENT=TRUE test_basic   RUN=run_tbg.csh
 
-  #   ten minutes for sr unit tests
+  #   twenty minutes for sr unit tests
   -   make SILENT=TRUE test_unit    RUN=run_tbg.csh
 
   #   five minutes for serpent-based tests

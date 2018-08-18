@@ -109,7 +109,7 @@ hackdiff_test:
 # TODO make it look more like other makefile (cgraflow)
 
 
-test:
+test: $(HARDWARE_TOP)/cgra_info.txt
 	@echo ""
 	@echo "------------------------------------------------------------------------"
 	@echo "BEGIN TEST"

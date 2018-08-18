@@ -88,6 +88,17 @@ VERILATOR_DIR = ''
 OPTIONS = {}
 
 def caveats():
+
+    # FIXME FIXME FIXME
+    # FIXME instead of doing this, should simply use -build flag later on...
+    if USE_TBG and ("SKIP_RUNCSH_BUILD" in os.environ):
+        # assert False
+        print '''
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+'''
+
     print '''
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
@@ -347,9 +358,8 @@ def gen_output_file_cgra(tname, DBG=0):
     if USE_TBG: logfile = cwd + "run_tbg_csh.log"
     else:       logfile = cwd + "run_tbg.log"
 
-    global GENERATED
-    if OPTIONS['nobuild']: GENERATED=True
-    if OPTIONS['nogen']:   GENERATED=True
+    if USE_TBG: logfile = cwd + "run_tbg_csh.log"
+    else:       logfile = cwd + "run_tbg.log"
 
     if USE_TBG:
         run_csh = './run_tbg.csh -v'
@@ -381,7 +391,9 @@ def gen_output_file_cgra(tname, DBG=0):
     # if not VERBOSE: my_syscall('egrep ^run.csh %s' % logfile)
     sys.stdout.flush()
 
-    if bad_outcome != 0: assert False, "Oops looks like run.csh failed"
+    if bad_outcome != 0:
+        if USE_TBG: assert False, "Oops looks like run_tbg.csh failed"
+        else:       assert False, "Oops looks like run.csh failed"
 
     if VERBOSE:
         print "  CGRA output file '%s':" % cgra_out

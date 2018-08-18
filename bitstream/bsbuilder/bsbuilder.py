@@ -812,7 +812,6 @@ def bs_mem(tileno, line, DBG=0):
     fd = int(parse.group(1))
     # print '666foo found mem w/fd=%s' % fd
 
-    # addr = 0x00040000 | tileno
     if cgra_info.MEMTILE_HEIGHT == 1:
         addr = 0x00020000 | tileno
     else:

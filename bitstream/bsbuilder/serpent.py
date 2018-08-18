@@ -723,8 +723,17 @@ def print_oplist(DBG=0):
 
 
 
-            # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; its a uge :o
-            if re.search(r'^ult.*_uge_PE$', sname): opname = 'uge'
+            # # OLD
+            # # TRICKY! Node 'ult_152_147_153_uge_PE' is NOT a ult; it's a uge :o
+            # if re.search(r'^ult.*_uge_PE$', sname): opname = 'uge'
+
+
+            # NEW
+            # TRICKY! Node 'ult_324_327_328$comp$compop' is NOT a ult; it's a uge :o
+            # (Note this is a superset of prev hack, above)
+            if re.search(r'^ult.*$', sname): opname = 'uge'
+
+
 
             # OY!  Mapper turns slt into an slt$compop with code 0x4 (GTE)
             # followed by slt$not$lut$lut to make SLT
@@ -4237,8 +4246,8 @@ def find_outport(tileno, nodename, DBG=0):
 
         return only_dest
 
-    # OLD: parse = re.search(r'PE.in(\d)', nodename)
-    # NEW: 'ult_152_147_153_uge_PE.data.in.0'
+    # OLD: ...PE.in1       => parse = re.search(r'PE.in(\d)', nodename)
+    # NEW: ...PE.data.in.0 e.g. 'ult_152_147_153_uge_PE.data.in.0'
     parse = re.search(r'PE\.data\.in\.(\d)', nodename)
     if parse:
         if DBG>1: 'Found a pe'

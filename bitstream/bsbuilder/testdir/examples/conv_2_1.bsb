@@ -16,17 +16,17 @@ T42_mul(wire,const7__338)  # mul_337_338_339$binop
 T25_lutFF(const0,const0,const0)
 
 # MEM tiles
-T24_mem_10   # lb$lbmem_1_0$cgramem fifo_depth=10
+T24_mem_10   # lb_p4csus$lbmem_1_0$cgramem fifo_depth=10
 
 # ROUTING
 
-# INPUT::lb$lbmem_1_0$cgramem
+# INPUT::lb_p4csus$lbmem_1_0$cgramem
 T21_in_s2t0 -> T21_out_s0t0
 T22_in_s2t0 -> T22_out_s0t0
 T23_in_s2t0 -> T23_out_s0t0
 T24_in_s2t0 -> T24_mem_in
 
-# wen_lut::lb$lbmem_1_0$cgramem
+# wen_lut::lb_p4csus$lbmem_1_0$cgramem
 T25_pe_out_b0 -> T25_out_s2t0_b0
 T24_in_s0t0_b0 -> T24_out_s2t0_b0
 T24_out_s2t0_b0 -> T24_wen
@@ -58,7 +58,7 @@ T51_in_s2t0 -> T51_out_s0t0
 T36_in_s6t0 -> T36_out_s7t0
 T36_in_s1t0 -> T36_out_s0t0
 
-# lb$lbmem_1_0$cgramem::mul_337_338_339$binop.data.in.0
+# lb_p4csus$lbmem_1_0$cgramem::mul_337_338_339$binop.data.in.0
 T24_mem_out -> T24_out_s6t0
 T42_in_s0t0 -> T42_out_s2t0
 T42_out_s2t0 -> T42_op1

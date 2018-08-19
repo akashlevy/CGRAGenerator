@@ -38,21 +38,21 @@ T25_lutFF(const0,const0,const0)
 T58_lutFF(const0,const0,const0)
 
 # MEM tiles
-T24_mem_64   # lb$lbmem_1_0$cgramem fifo_depth=64
-T57_mem_64   # lb$lbmem_2_0$cgramem fifo_depth=64
+T24_mem_64   # lb_p4csus$lbmem_1_0$cgramem fifo_depth=64
+T57_mem_64   # lb_p4csus$lbmem_2_0$cgramem fifo_depth=64
 
 # ROUTING
 
-# INPUT::lb$lb1d_0$reg_1
+# INPUT::lb_p4csus$lb1d_0$reg_1
 T21_in_s2t0 -> T21_out_s1t0 (r)
 
-# INPUT::lb$lbmem_1_0$cgramem
+# INPUT::lb_p4csus$lbmem_1_0$cgramem
 T21_in_s2t0 -> T21_out_s0t0
 T22_in_s2t0 -> T22_out_s0t0
 T23_in_s2t0 -> T23_out_s0t0
 T24_in_s2t0 -> T24_mem_in
 
-# wen_lut::lb$lbmem_1_0$cgramem
+# wen_lut::lb_p4csus$lbmem_1_0$cgramem
 T25_pe_out_b0 -> T25_out_s2t0_b0
 T24_in_s0t0_b0 -> T24_out_s2t0_b0
 T24_out_s2t0_b0 -> T24_wen
@@ -125,13 +125,13 @@ T69_in_s1t0 -> T69_out_s3t0
 T36_in_s5t0 -> T36_out_s7t0
 T36_in_s1t0 -> T36_out_s0t0
 
-# lb$lb1d_0$reg_1::lb$lb1d_0$reg_2
+# lb_p4csus$lb1d_0$reg_1::lb_p4csus$lb1d_0$reg_2
 T40_in_s3t0 -> T40_out_s0t0
 T41_in_s2t0 -> T41_out_s3t0
 T22_in_s1t0 -> T22_out_s2t0
 T22_out_s2t0 -> T22_op1 (r)
 
-# lb$lb1d_0$reg_1::mul_510_511_512$binop.data.in.0
+# lb_p4csus$lb1d_0$reg_1::mul_510_511_512$binop.data.in.0
 T40_in_s3t0 -> T40_out_s0t0
 T41_in_s2t0 -> T41_out_s1t0
 T55_in_s3t0 -> T55_out_s1t0
@@ -139,57 +139,57 @@ T73_in_s3t0 -> T73_out_s1t0
 T87_in_s3t0 -> T87_out_s2t0
 T87_out_s2t0 -> T87_op1
 
-# lb$lb1d_0$reg_2::mul_504_505_506$binop.data.in.0
+# lb_p4csus$lb1d_0$reg_2::mul_504_505_506$binop.data.in.0
 # T22_op1 (r) 
 
-# lb$lb1d_1$reg_1::lb$lb1d_1$reg_2
+# lb_p4csus$lb1d_1$reg_1::lb_p4csus$lb1d_1$reg_2
 T25_in_s2t2 -> T25_out_s1t2
 T43_in_s3t2 -> T43_out_s2t2
 T43_out_s2t2 -> T43_op1 (r)
 
-# lb$lb1d_1$reg_1::mul_492_493_494$binop.data.in.0
+# lb_p4csus$lb1d_1$reg_1::mul_492_493_494$binop.data.in.0
 T25_in_s2t2 -> T25_out_s1t2
 T43_in_s3t2 -> T43_out_s0t2
 T44_in_s2t2 -> T44_op1
 
-# lb$lb1d_1$reg_2::mul_486_487_488$binop.data.in.0
+# lb_p4csus$lb1d_1$reg_2::mul_486_487_488$binop.data.in.0
 # T43_op1 (r) 
 
-# lb$lb1d_2$reg_1::lb$lb1d_2$reg_2
+# lb_p4csus$lb1d_2$reg_1::lb_p4csus$lb1d_2$reg_2
 T58_in_s2t4 -> T58_out_s1t4
 T75_in_s3t4 -> T75_out_s2t4
 T75_out_s2t4 -> T75_op1 (r)
 
-# lb$lb1d_2$reg_1::mul_474_475_476$binop.data.in.0
+# lb_p4csus$lb1d_2$reg_1::mul_474_475_476$binop.data.in.0
 T58_in_s2t4 -> T58_out_s1t4
 T75_in_s3t4 -> T75_out_s0t4
 T76_in_s2t4 -> T76_op1
 
-# lb$lb1d_2$reg_2::mul_468_469_470$binop.data.in.0
+# lb_p4csus$lb1d_2$reg_2::mul_468_469_470$binop.data.in.0
 # T75_op1 (r) 
 
-# lb$lbmem_1_0$cgramem::lb$lb1d_1$reg_1
+# lb_p4csus$lbmem_1_0$cgramem::lb_p4csus$lb1d_1$reg_1
 T24_mem_out -> T24_out_s0t2 (r)
 
-# lb$lbmem_1_0$cgramem::lb$lbmem_2_0$cgramem
+# lb_p4csus$lbmem_1_0$cgramem::lb_p4csus$lbmem_2_0$cgramem
 T24_mem_out -> T24_out_s5t0
 T57_in_s3t0 -> T57_out_s2t0
 T57_out_s2t0 -> T57_mem_in
 
-# wen_lut::lb$lbmem_2_0$cgramem
+# wen_lut::lb_p4csus$lbmem_2_0$cgramem
 T58_pe_out_b0 -> T58_out_s2t0_b0
 T57_in_s0t0_b0 -> T57_out_s2t0_b0
 T57_out_s2t0_b0 -> T57_wen
 
-# lb$lbmem_1_0$cgramem::mul_498_499_500$binop.data.in.0
+# lb_p4csus$lbmem_1_0$cgramem::mul_498_499_500$binop.data.in.0
 T24_mem_out -> T24_out_s6t1
 T42_in_s0t1 -> T42_out_s2t1
 T42_out_s2t1 -> T42_op1
 
-# lb$lbmem_2_0$cgramem::lb$lb1d_2$reg_1
+# lb_p4csus$lbmem_2_0$cgramem::lb_p4csus$lb1d_2$reg_1
 T57_mem_out -> T57_out_s0t4 (r)
 
-# lb$lbmem_2_0$cgramem::mul_480_481_482$binop.data.in.0
+# lb_p4csus$lbmem_2_0$cgramem::mul_480_481_482$binop.data.in.0
 T57_mem_out -> T57_out_s6t3
 T74_in_s0t3 -> T74_out_s2t3
 T74_out_s2t3 -> T74_op1

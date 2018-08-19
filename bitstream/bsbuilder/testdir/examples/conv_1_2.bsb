@@ -18,7 +18,7 @@ T41_add(wire,wire)         # add_311_315_316$binop
 
 # ROUTING
 
-# INPUT::lb$lb1d_0$reg_1
+# INPUT::lb_p4csus$lb1d_0$reg_1
 T21_in_s2t0 -> T21_op1 (r)
 
 # INPUT::mul_313_314_315$binop.data.in.0
@@ -49,7 +49,7 @@ T51_in_s2t0 -> T51_out_s0t0
 T36_in_s6t0 -> T36_out_s7t0
 T36_in_s1t0 -> T36_out_s0t0
 
-# lb$lb1d_0$reg_1::mul_307_308_309$binop.data.in.0
+# lb_p4csus$lb1d_0$reg_1::mul_307_308_309$binop.data.in.0
 # T21_op1 (r) 
 
 # mul_307_308_309$binop::add_305_309_310$binop.data.in.1

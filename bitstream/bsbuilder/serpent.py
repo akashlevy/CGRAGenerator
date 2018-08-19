@@ -1451,26 +1451,21 @@ def build_node(nodes, line, DBG=0):
     # e.g. "INPUT" -> "lb_p4_clamped_stencil_update_stream$mem_1$cgramem"; # fifo_depth 64
     # =>   "INPUT" -> "mem_1"; # fifo_depth 64
 
-    # NOT harris
-    # ...is this a good idea?  Probably not!
-    # Also: probably don't need with new-style mapper...
-
-    # E.g. "lb_p4_clamped_stencil_update_stream$lb1d_0$reg_1" -> "mul_307_308_309$binop.data.in.0"
-    # ->   "reg_1" -> "mul_307_308_309$binop.data.in.0"
-
-    #    "INPUT" -> "lb_p4_clamped_stencil_update_stream$lbmem_1_0$cgramem"
-    # -> "INPUT" -> "lb_p4_clamped_stencil_update_stream$lbmem_1_0$cgramem"
-
     if DBG>1:
         print('\n\n'); 
         pwhere(1466, "# Building node for input line '%s'" % line)
 
-    # re.sub('lb_p4_clamped_stencil_update_stream.*\$', "", line)
-    line = re.sub('lb[\w\$]*\$reg', "reg", line)
-    # line = re.sub("\$cgramem", "", line)
 
-    if DBG>1:
-        pwhere(1474, "# Post-xform line: '%s'" % line)
+    # NODE SIMPLIFICATION
+    # I dunno this might be a bad idea; but it makes debugging more readable...?
+    # E.g. "lb_p4_clamped_stencil_update_stream$lb1d_0$reg_1" -> "mul_307_308_309$binop.data.in.0"
+    # ->   "lp4csus$reg_1" -> "mul_307_308_309$binop.data.in.0"
+    line = re.sub('_p4_clamped_stencil_update_stream', '_p4csus', line)
+
+    #    "INPUT" -> "lb_p4_clamped_stencil_update_stream$lbmem_1_0$cgramem"
+    # -> "INPUT" -> "lb_p4csus$lbmem_1_0$cgramem"
+
+    if DBG>1: pwhere(1474, "# Post-xform line: '%s'" % line)
 
     parse = re.search('["]([^"]+)["][^"]+["]([^"]+)["]', line)
     if not parse:
@@ -1730,7 +1725,13 @@ def is_mem_node(nodename):
 
     # new style mem node contains '$lbmem' maybe?
     # Yes, but old style does not; $lbmem got rewritten to just 'lbmem' :(
-    return (nodename.find('lbmem') >= 0)
+    c1 = (nodename.find('lbmem') >= 0)
+
+    # ERROR rhs[0:3] should be mem tile but rhs is actually:
+    # ERROR  "lb_p4_clamped_stencil_update_stream$mem_1$cgramem"
+    c2 = (nodename.find('$cgramem') == (len(nodename) - len('$cgramem')))
+
+    return c1 or c2
 
 
 def initialize_node_INPUT():
@@ -3446,7 +3447,7 @@ def check_for_double_destination(sname,dname,DBG=0):
 
 
 def place_folded_reg_in_input_tile(dname):
-    assert False, 'Note this routine has never been tried in combat and will probably fail...'
+    # assert False, 'Note this routine has never been tried in combat and will probably fail...'
 
     DBG=1
     sname = 'INPUT'
@@ -3463,9 +3464,19 @@ def place_folded_reg_in_input_tile(dname):
     assert getnode('INPUT').tileno == INPUT_TILE
 
     dnode = getnode(dname) # The register, e.g. 'reg_op_1'
-    
     dtileno = INPUT_TILENO
-    d_in = 'T%d_%s' % (dtileno,dnode.input0) # E.g. 'T0_op1'
+
+
+    # FIXME this is terrible; translates e.g. data.in.0 into op1
+    # BOOKMARK PROBLEM IS HERE e.g. when input0 == 'in.0' get T21_in.0 and thatsa no good
+    input0 = dnode.input0
+    if   input0 == 'in.0': input0 = 'op1'
+    elif input0 == 'in.1': input0 = 'op2'
+    elif input0 == 'in.2': input0 = 'op3'
+    # etc.
+
+
+    d_in = 'T%d_%s' % (dtileno,input0) # E.g. 'T0_op1'
     d_out = place_regop_op(dname, dtileno, d_in, DBG=9)
     getnode(dname).place(dtileno, d_in, d_out, DBG)
 

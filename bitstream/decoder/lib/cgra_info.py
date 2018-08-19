@@ -30,7 +30,14 @@ use the data structure like this sorta
 import re
 import sys
 
+# NOTES
+# Element.find() finds the first child with a particular tag
+# E.g. tile.find('sb') finds first switchbox in 'tile'
+
+
 # Index:
+# def mem_tile_height():
+# def find_tile_by_name(tilename):
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -77,6 +84,53 @@ import sys
 #     if (e == False):      return (False, False)
 #     elif (e.tag != 'sb'): return (False, False)
 #     sb = e
+
+global MEMTILE_HEIGHT
+MEMTILE_HEIGHT = 0
+def mem_tile_height():
+    '''Find height of mem tile'''
+    # 1. Grab first mem tile you find, set row1 = row
+    # 2. Find next mem tile in same column, set row2 = row
+    # 3. Height is row1-row0, yes?  You such a idiot.  For not getting this sooner.
+
+    # Only ever need to do this ONCE, right?
+    if (MEMTILE_HEIGHT != 0): return MEMTILE_HEIGHT
+
+    row1 = -1
+    for tile in CGRA.findall('tile'):
+        if 'type' not in tile.attrib: continue
+        if tile.attrib['type'] != 'memory_tile': continue
+
+        # id  = getnum(tile.attrib['tile_addr'])
+        # row = getnum(tile.attrib['row'])
+        # col = getnum(tile.attrib['col'])
+        # print "Found memtile 0x%X at (%d,%d)" % (id, row, col)
+
+        if row1 == -1:
+            row1 = getnum(tile.attrib['row'])
+            col1 = getnum(tile.attrib['col'])
+        else:
+            row2 = getnum(tile.attrib['row'])
+            col2 = getnum(tile.attrib['col'])
+            if col2 == col1:
+                return (row2-row1)
+
+    assert False, 'What is memheight?  Could not find two mem tiles in same row maybe?'
+
+
+def find_tile_by_name(name):
+    '''Given name e.g. "pad_S0_T7", return id, row, and col'''
+    # E.g. <tile type='io1bit' tile_addr='0xA4' row='9' col='19' name='pad_S0_T7'>
+    # returns (164,9,19)
+    for tile in CGRA.findall('tile'):
+        if 'name' not in tile.attrib: continue
+        if tile.attrib['name'] == name:
+            id  = getnum(tile.attrib['tile_addr'])
+            row = getnum(tile.attrib['row'])
+            col = getnum(tile.attrib['col'])
+            return (id, row, col)
+    assert False, 'ERROR cannot find tile "%s"' % name
+
 
 # def build_mask(bith,bitl):
 def extract_field(dword, bith, bitl):
@@ -406,6 +460,8 @@ def read_cgra_info(filename='', grid='8x8', verbose=False):
     global CGRA_FILENAME
     CGRA_FILENAME = filename
     
+    global MEMTILE_HEIGHT
+    MEMTILE_HEIGHT = mem_tile_height()
 
 
 global CGRA_FILENAME
@@ -478,6 +534,7 @@ def rc2tileno(row,col):
     '''
     DBG = 0
     # DBG = (row==1 and col==3)
+    global MEMTILE_HEIGHT
     for tile in CGRA.findall('tile'):
         t = getnum(tile.attrib['tile_addr'])
         r = getnum(tile.attrib['row'])
@@ -487,7 +544,10 @@ def rc2tileno(row,col):
             return t
 
         # r might be bottom half of a memtile
-        elif tile.attrib['type'] == 'memory_tile' and (r,c) == (row-row%2, col):
+        elif \
+                 (MEMTILE_HEIGHT == 2)                  and \
+                 (tile.attrib['type'] == 'memory_tile') and \
+                 ((r,c) == (row-row%2, col)):
             if DBG: print "WARNING Specified r,c is bottom half of a memory tile"
             return t
 
@@ -1050,6 +1110,8 @@ def canon2global(name, DBG=0):
     T0_in_s3t0  => wire_m1_0_BUS16_S0_T0
     T0_in_s1t0 =>   wire_1_0_BUS16_S3_T0
     '''
+    if DBG>2: print("# cgra_info.py 1114: parsing name '%s'" % name)
+
     (tileno,dir,side,track) = parse_canon(name)
     (r,c) = tileno2rc(tileno)
 
@@ -1107,6 +1169,7 @@ def special_wirenames(d, name):
         "data0", "data1",
         "ren", "wen",
         "waddr", "wdata",
+        "rdata",
         "read_data"
         ]:
         newname = d
@@ -1123,8 +1186,8 @@ def canon2cgra(name, DBG=0):
     in_s1t2    => in_BUS16_S1_T2
     T0_in_s1t2 => in_BUS16_S1_T2
     in_s5t2    => in_2_BUS16_S1_T2
-    T3_in_s1t2 => sb_wire_in_1_S3_T2  (if T3 is a mem tile)
-    T3_out_s7t2=> sb_wire_out_1_S3_T2 (if T3 is a mem tile)
+    T3_in_s1t2 => sb_wire_in_1_S3_T2  (if T3 is a *2hi* mem tile)
+    T3_out_s7t2=> sb_wire_out_1_S3_T2 (if T3 is a *2hi* mem tile)
     in_s1t2b    => in_BUS1_S1_T2
     '''
     if DBG>1: print "converting", name
@@ -1144,9 +1207,8 @@ def canon2cgra(name, DBG=0):
 
     else: bus1 = False
 
-
     # E.g. 'T0_in_s1t2' => 'in_BUS16_S1_T2'
-    (T,d,side,t) = parse_canon(name)
+    (T,d,side,t) = parse_canon(name) # e.g. (24,'in', 3, 0)
     # assert T != -1
     if DBG>1: print (T,d,side,t)
     if side == -1:
@@ -1158,8 +1220,13 @@ def canon2cgra(name, DBG=0):
 
         if DBG>2: print T, mem_or_pe(T)
         # if not is_mem_tile(T):
+        global MEMTILE_HEIGHT
         if mem_or_pe(T) != 'mem':
             newname = '%s_BUS16_S%d_T%d' % (d,side,t)
+
+        elif MEMTILE_HEIGHT == 1:
+            assert side < 4 and side >= 0
+            newname = '%s_0_BUS16_S%d_T%d' % (d,side,t)
 
         else:
             # must know if top or bottom

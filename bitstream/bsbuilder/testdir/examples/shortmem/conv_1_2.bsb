@@ -1,0 +1,62 @@
+
+# CONSTANTS
+# const0__304::add_305_309_310_PE.data.in.0 T41_op2
+# const5__308::mul_307_308_309_PE.data.in.1 T40_op2
+# const5__308$1::mul_312_308_313_PE.data.in.1 T21_op2
+
+# REGISTERS ['T40_op1']
+
+# PE tiles
+T21_mul(wire,const5__308$1) # mul_312_308_313_PE
+T22_add(wire,wire)         # add_305_313_314_PE
+T40_mul(reg,const5__308)   # mul_307_308_309_PE
+T41_add(wire,const0__304)  # add_305_309_310_PE
+
+# LUT tiles for wen_lut's []
+
+# MEM tiles
+
+# ROUTING
+
+# INPUT::reg_0_1
+T21_in_s2t0 -> T21_out_s1t0
+T40_in_s3t0 -> T40_out_s2t0
+T40_out_s2t0 -> T40_op1 (r)
+
+# INPUT::mul_312_308_313_PE.data.in.0
+T21_in_s2t0 -> T21_op1
+
+# add_305_309_310_PE::add_305_313_314_PE.data.in.0
+T41_pe_out -> T41_out_s3t2
+T22_in_s1t2 -> T22_op2
+
+# add_305_313_314_PE::OUTPUT
+T22_pe_out -> T22_out_s0t0
+T23_in_s2t0 -> T23_out_s0t0
+T24_in_s2t0 -> T24_out_s0t0
+T25_in_s2t0 -> T25_out_s0t0
+T26_in_s2t0 -> T26_out_s0t0
+T27_in_s2t0 -> T27_out_s0t0
+T28_in_s2t0 -> T28_out_s0t0
+T29_in_s2t0 -> T29_out_s0t0
+T30_in_s2t0 -> T30_out_s0t0
+T31_in_s2t0 -> T31_out_s0t0
+T32_in_s2t0 -> T32_out_s0t0
+T33_in_s2t0 -> T33_out_s0t0
+T34_in_s2t0 -> T34_out_s0t0
+T35_in_s2t0 -> T35_out_s0t0
+T36_in_s2t0 -> T36_out_s0t0
+
+# mul_307_308_309_PE::add_305_309_310_PE.data.in.1
+T40_pe_out -> T40_out_s0t1
+T41_in_s2t1 -> T41_op1
+
+# mul_312_308_313_PE::add_305_313_314_PE.data.in.1
+T21_pe_out -> T21_out_s0t0
+T22_in_s2t0 -> T22_op1
+
+# reg_0_1::mul_307_308_309_PE.data.in.0
+# T40_op1 (r) 
+
+# INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
+# OUTPUT tile  36 ( 2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0

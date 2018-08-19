@@ -11,6 +11,7 @@ endif
 
 VERILATOR_TOP := ../verilator/generator_z_tb
 HARDWARE_TOP  :=  ../hardware/generator_z/top
+CGRA_INFO := $(HARDWARE_TOP)/cgra_info.txt
 
 SILENT := FALSE
 ifeq ($(SILENT), TRUE)
@@ -42,18 +43,17 @@ test_basic:
 	@echo
 	@./writelog.csh log1 -print
 
-
-$(HARDWARE_TOP)/cgra_info.txt:
-#	../bin/generate.csh -v
-	cd $(HARDWARE_TOP); export USE_VERILATOR_HACKS=TRUE; ./build_cgra.sh
+$(CGRA_INFO):
+	cd $(HARDWARE_TOP); ./build_cgra.sh
 	$(HARDWARE_TOP)/bin/show_cgra_info.csh
 
+$(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
+	cd $(VERILATOR_TOP); ./run.csh 
 
-
-test_unit: $(HARDWARE_TOP)/cgra_info.txt
-	./unit_tests/utest $(VSWITCH)
-
-
+# No dependence on Vtop b/c utest.py default is now TBG...right?
+# test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
+test_unit: $(CGRA_INFO)
+	./unit_tests/utest --nogen $(VSWITCH)
 
 test_all:
 	make hackdiff_test 2>&1 | tee $(TEMPDIR)/hackdiff_test.log
@@ -72,7 +72,7 @@ test_all:
 
 
 # Note this is where onebit_bool gets testsd
-test_serpent: $(HARDWARE_TOP)/cgra_info.txt
+test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
 	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) $(TEMPDIR)
 #	FIXME Who will delete TEMPDIR?

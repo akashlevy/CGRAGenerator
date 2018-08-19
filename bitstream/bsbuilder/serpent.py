@@ -1454,12 +1454,23 @@ def build_node(nodes, line, DBG=0):
     # NOT harris
     # ...is this a good idea?  Probably not!
     # Also: probably don't need with new-style mapper...
-    line = re.sub('lb_p4_clamped_stencil_update_stream\$', "", line)
 
-    line = re.sub("\$cgramem", "", line)
+    # E.g. "lb_p4_clamped_stencil_update_stream$lb1d_0$reg_1" -> "mul_307_308_309$binop.data.in.0"
+    # ->   "reg_1" -> "mul_307_308_309$binop.data.in.0"
+
+    #    "INPUT" -> "lb_p4_clamped_stencil_update_stream$lbmem_1_0$cgramem"
+    # -> "INPUT" -> "lb_p4_clamped_stencil_update_stream$lbmem_1_0$cgramem"
+
     if DBG>1:
         print('\n\n'); 
-        pwhere(1201, "# Building node for input line '%s'" % line)
+        pwhere(1466, "# Building node for input line '%s'" % line)
+
+    # re.sub('lb_p4_clamped_stencil_update_stream.*\$', "", line)
+    line = re.sub('lb[\w\$]*\$reg', "reg", line)
+    # line = re.sub("\$cgramem", "", line)
+
+    if DBG>1:
+        pwhere(1474, "# Post-xform line: '%s'" % line)
 
     parse = re.search('["]([^"]+)["][^"]+["]([^"]+)["]', line)
     if not parse:

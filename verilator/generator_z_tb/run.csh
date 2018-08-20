@@ -1,5 +1,10 @@
 #!/bin/csh -f
 
+echo "run.csh: DO NOT USE run.csh; use run_tbg.csh instead!!!"
+echo "run.csh: I will redirect you :)"
+exec ./run_tbg.csh $*:q
+exit 13
+
 # Can't believe I have to do this...
 set path = (. $path)
 
@@ -21,21 +26,39 @@ set path = (. $path)
 ########################################################################
 # Sometimes may need to know what branch we are in (currently unused)
 set branch = `git rev-parse --abbrev-ref HEAD`
-echo "run.csh: I think we are in branch '$branch'"
+echo "${0:t}: I think we are in branch '$branch'"
 
 # DEFAULTS
 set GENERATE  = "-gen"     # Generate CGRA from scratch
 set BUILD                  # (re)build simulator from scratch
 set DELAY = '0,0'
 
-# Default configuration bitstream: 16x16 pointwise mul-by-two
 set hwtop = ../../hardware/generator_z/top
+
+########################################################################
+# FIND MEMTILE HEIGHT; top.v will have e.g.
+# 
+# // Parameter mem_tile_height 	= 1
+# // mem_tile_height (_GENESIS2_EXTERNAL_XML_PRIORITY_) = 1
+# 
+# Assumes height must be either 1 or 2
 set memtile_height = 1
-cat $hwtop/top.vp | egrep '^[^#].*MEMTILE_HEIGHT[^0-9]*2' && set memtile_height = 2
-if ($memtile_height == 1) set config   = ../../bitstream/examples/pw2_16x16_shortmem.bsa
-if ($memtile_height == 2) set config   = ../../bitstream/examples/pw2_16x16.bsa
-echo "memtile_height=$memtile_height"
-echo""
+echo ""
+echo "top.v:"
+grep mem_tile_height $hwtop/genesis_verif/top.v
+grep mem_tile_height $hwtop/genesis_verif/top.v \
+  | tail -n 1 \
+  | egrep 'mem_tile_height[^0-9]*2$' \
+  && set memtile_height = 2
+
+########################################################################
+# Default configuration bitstream: 16x16 pointwise mul-by-two
+# 
+set b = ../../bitstream/examples
+if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
+if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
+echo "run.csh: Looks like memtile_height is $memtile_height"
+echo ""
 
 # Note pointwise w/'conv_bw' should take ~4000 cycles to complete
 set input     = io/conv_bw_in.png
@@ -96,7 +119,7 @@ while ($#argv)
   switch ("$1")
 
     case 'top_tb.cpp':
-      echo "run.csh WARNING deprecated switch '$1', don't need that no more"; breaksw
+      echo "${0:t} WARNING deprecated switch '$1', don't need that no more"; breaksw
 
     ##############################
     # switches: VERBOSITY
@@ -179,6 +202,20 @@ end
 if   ($?VERBOSE) set VSWITCH = '-v'
 if (! $?VERBOSE) set VSWITCH = '-q'
 
+unset ONEBIT
+if (${config:t:r} == 'onebit_bool') set ONEBIT
+
+# Need this on more than one path...
+set io_config = `pwd`/io/s2in_s0out.io.json
+echo ""
+echo "${0:t}: Using standard io file '$io_config:t'"
+
+if ($?ONEBIT) then
+  set io_config = `pwd`/io/s2in_s1t0out.io.json
+  echo -n "$0:t aha it's the onebit thing - "
+  echo    "i will try using $io_config instead"
+endif
+
 # if ($?VERBOSE) then
 if (1) then
   # Backslashes line up better when printed...
@@ -199,7 +236,7 @@ if (1) then
 endif
 
 if (! -e $config) then
-  echo "run.csh: ERROR Cannot find config file '$config'"
+  echo "${0:t}: ERROR Cannot find config file '$config'"
   exit 13
 endif
 
@@ -207,7 +244,7 @@ endif
 # Detect if running from within travis
 unset TRAVIS
 if ($?TRAVIS_BUILD_DIR) then
-  echo "run.csh: I think we are running from travis"
+  echo "${0:t}: I think we are running from travis"
   set TRAVIS
 
   # Use this to extend time on travis
@@ -219,9 +256,6 @@ set nclocks = `echo $nclocks | sed 's/,//g' | sed 's/K/000/' | sed 's/M/000000/'
 set nclocks = "-nclocks $nclocks"
 
 # Process config file here, then only have to do it ONCE
-
-  unset ONEBIT
-  if (${config:t:r} == 'onebit_bool') set ONEBIT
 
   # Clean up config file for verilator use
   grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
@@ -242,6 +276,11 @@ set nclocks = "-nclocks $nclocks"
   # Quick check of goodness in config file (again)
   # Early out before waste time simulating
   ./verify_bitstream_goodness.csh $config || exit 13
+
+  # Filenames must be absolute, not relative
+  if (! `expr "$config" : /`) set config = "`pwd`/$config"
+  if (! `expr "$input"  : /`) set input  = "`pwd`/$input"
+  if (! `expr "$output" : /`) set output = "`pwd`/$output"
 
 if (! $?BUILD) then
   echo ""
@@ -273,12 +312,6 @@ GENERATE:
   else
     # echo "run.csh: Building CGRA because you asked for it with '-gen'..."
     echo "run.csh: Building CGRA because it's the default..."
-
-#     if ($?VERBOSE) echo "run.csh: ../../bin/generate.csh $VSWITCH"
-#     # ../../bin/generate.csh $VSWITCH || set EXIT13
-#     ../../bin/generate.csh -v || set EXIT13
-#     if ($?EXIT13) goto DIE
-
     setenv USE_VERILATOR_HACKS "TRUE"
     if ($?VERBOSE) echo "run.csh: build_cgra.sh"
     pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null

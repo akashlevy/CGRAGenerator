@@ -1,11 +1,27 @@
 #!/bin/csh -f
 
-# Can't believe I have to do this...
-set path = (. $path)
-
 # This is tbg.csh
 # It replaces run.csh (eventually maybe)
 
+
+
+# Can't believe I have to do this...
+set path = (. $path)
+
+# Local flow (test):
+# - run.csh calls build_cgra.sh to do the initial generate
+# - run.csh uses pre-built io, map files in bitstream/example3 to build config file
+# - builds small parrot
+# 
+# Travis flow (CGRAFlow/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls PNR to build map, io info from generated cgra_info.txt
+# - builds the full parrot
+# 
+# Travis flow (CGRAGenerator/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls run.csh using pre-built bitstream w/embedded io info
+# - builds small parrot
 
 ########################################################################
 # Sometimes may need to know what branch we are in (currently unused)
@@ -17,8 +33,32 @@ set GENERATE  = "-gen"     # Generate CGRA from scratch
 set BUILD                  # (re)build simulator from scratch
 set DELAY = '0,0'
 
+set hwtop = ../../hardware/generator_z/top
+
+########################################################################
+# FIND MEMTILE HEIGHT; top.v will have e.g.
+# 
+# // Parameter mem_tile_height 	= 1
+# // mem_tile_height (_GENESIS2_EXTERNAL_XML_PRIORITY_) = 1
+# 
+# Assumes height must be either 1 or 2
+set memtile_height = 1
+echo ""
+echo "top.v:"
+grep mem_tile_height $hwtop/genesis_verif/top.v
+grep mem_tile_height $hwtop/genesis_verif/top.v \
+  | tail -n 1 \
+  | egrep 'mem_tile_height[^0-9]*2$' \
+  && set memtile_height = 2
+
+########################################################################
 # Default configuration bitstream: 16x16 pointwise mul-by-two
-set config   = ../../bitstream/examples/pw2_16x16.bsa
+# 
+set b = ../../bitstream/examples
+if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
+if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
+echo "run.csh: Looks like memtile_height is $memtile_height"
+echo ""
 
 # Note pointwise w/'conv_bw' should take ~4000 cycles to complete
 set input     = io/conv_bw_in.png
@@ -170,15 +210,10 @@ set io_config = `pwd`/io/s2in_s0out.io.json
 echo ""
 echo "${0:t}: Using standard io file '$io_config:t'"
 
-
 if ($?ONEBIT) then
-  # echo "ERROR $0:t cannot handle onebit output (yet)"
-  # exit 13
-
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
-
 endif
 
 # if ($?VERBOSE) then
@@ -276,10 +311,12 @@ GENERATE:
   else
     # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
     echo "${0:t}: Building CGRA because it's the default..."
+
     if ($?VERBOSE) echo "${0:t}: ../../bin/generate.csh $VSWITCH"
     # ../../bin/generate.csh $VSWITCH || set EXIT13
     ../../bin/generate.csh -v || set EXIT13
     if ($?EXIT13) goto DIE
+
   endif
 
 AFTER_GENERATE:

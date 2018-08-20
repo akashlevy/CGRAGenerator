@@ -48,8 +48,9 @@ fi
 # Generate #############################################################
 ########################################################################
 
-Genesis2.pl -parse -generate -top top -hierarchy top.xml -input\
-  top.vp \
+Genesis2.pl -parse -generate -top top -hierarchy top.xml \
+  -xml ./bin/shortmem.xml \
+  -input top.vp \
   \
   ../sb/sb.vp \
   ../cb/cb.vp \

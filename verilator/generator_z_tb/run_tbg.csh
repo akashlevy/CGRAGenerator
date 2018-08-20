@@ -312,11 +312,11 @@ GENERATE:
     # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
     echo "${0:t}: Building CGRA because it's the default..."
 
-    if ($?VERBOSE) echo "${0:t}: ../../bin/generate.csh $VSWITCH"
-    # ../../bin/generate.csh $VSWITCH || set EXIT13
-    ../../bin/generate.csh -v || set EXIT13
-    if ($?EXIT13) goto DIE
 
+    if ($?VERBOSE) echo "${0:t}: $gbuild/build_cgra.sh"
+    pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null
+    if ($?VERBOSE) $gbuild/bin/show_cgra_info.csh
+    if ($?EXIT13) goto DIE
   endif
 
 AFTER_GENERATE:
@@ -330,21 +330,22 @@ AFTER_GENERATE:
     goto RUN_SIM
   endif
 
-#   # Oops no this does not fly w/tbg; must recompile when bitstream changes
-# 
-#   # How about skip verilator build if
-#   # running on travis AND already built obj_dir/Vtop
-#   #
-#   if ($?TRAVIS) then
-#     if (-e obj_dir/Vtop) then
-#       echo '##################################'
-#       echo  I am in a travis script AND
-#       echo  I found an existing obj_dir/Vtop
-#       echo  Therefore skipping verilator build
-#       echo '##################################'
-#       goto RUN_SIM
-#     endif
-#   endif
+  # Oops no this does not fly w/tbg; must recompile when bitstream changes
+  if ("${0:t}" == run_tbg.csh) goto BUILD_SIM
+
+  # How about skip verilator build if
+  # running on travis AND already built obj_dir/Vtop
+  #
+  if ($?TRAVIS) then
+    if (-e obj_dir/Vtop) then
+      echo '##################################'
+      echo  I am in a travis script AND
+      echo  I found an existing obj_dir/Vtop
+      echo  Therefore skipping verilator build
+      echo '##################################'
+      goto RUN_SIM
+    endif
+  endif
 
 
 BUILD_SIM:
@@ -380,6 +381,25 @@ RUN_SIM:
     set trace = "-trace $tracefile"
   endif
 
+
+
+
+
+
+
+
+
+
+  # For 'quiet' execution, use these two filters to limit output;
+  # Otherwise just cat everything to stdout
+  if (! $?VERBOSE) then
+    set quietfilter = (egrep -v "Cycle: [1-9]00")
+    set qf2 = (grep -v "^000[23456789].*Two times")
+  else
+    set quietfilter = (cat)
+    set qf2         = (cat)
+  endif
+
   ########################################################################
   if ($?VERBOSE) then
     echo
@@ -387,20 +407,21 @@ RUN_SIM:
     cat $config
   endif
 
+# # If no output requested, simulator will not create an output file.
+# set out = ''
+# if ($?output) then
+#     set out = "-output $output"
+# endif
+
   echo ''
   echo "${0:t}: TIME NOW: `date`"
-  # echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
+# echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
 
 set TestBenchGenerator = `cd ../../../TestBenchGenerator; pwd`
 pushd build >& /dev/null
   # What does this do?  Turn png into raw maybe?
   # Hm looks like it adds zeroes to end of input file according to DELAY value
   echo python3 $TestBenchGenerator/process_input.py $io_config $input $DELAY
-
-#   echo ""
-#   echo od -t u1 $input
-#   od -t u1 $input
-#   echo ""
 
   python3 $TestBenchGenerator/process_input.py $io_config $input $DELAY
 
@@ -410,7 +431,7 @@ pushd build >& /dev/null
 #   echo ""
 
   # Cut down 10x on "Cycle" output thingies
-  ./Vtop | egrep -v '^Cycle.*[1-9]0$' \
+  ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
       | tee $tmpdir/run.log.$$
 
   # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
@@ -442,13 +463,11 @@ popd >& /dev/null
   echo "# ${0:t}: Reminder config was $config:t:r"
   echo "# Show output vs. input; output should be 2x input for most common testbench"
 
-  # if ($?input) then
   if (! $?input) echo "what?  how?"
   if (1) then
     echo ''
 #     ls -l $input
 #     ls -l $output
-#     echo ''
 
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
@@ -506,14 +525,13 @@ if (! `expr $pwd : /home/travis`) then
   set gbuild = ../../hardware/generator_z/top
   cat << eof
 
-  ************************************************************************
+  ********************************************************************
   NOTE: If you want to clean up after yourself you'll want to do this:
   
     ./${0:t} -clean
     pushd $gbuild; ./genesis_clean.cmd; popd
   
-  ************************************************************************
-
+  ********************************************************************
 eof
 endif
 
@@ -536,9 +554,3 @@ DIE:
     echo oops 768 looks like something bad must have happened
     exit 13
   endif
-
-
-
-
-
-

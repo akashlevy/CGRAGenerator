@@ -293,27 +293,27 @@ GENERATE:
   # How about skip generator if
   # running on travis AND already built cgra_info.txt
   #
-  set gbuild = ../../hardware/generator_z/top
   if ($?TRAVIS) then
+    set gbuild = ../../hardware/generator_z/top
     if (-e $gbuild/cgra_info.txt) then
-      echo '####################################'
-      echo  run.csh: I am in a travis script AND
-      echo  I found an existing cgra_info.txt
+      echo '#####################################################################'
+      echo  ${0:t}: I am in a travis script AND I found an existing cgra_info.txt
       echo  Therefore skipping generator step
-      echo '####################################'
+      echo '#####################################################################'
       goto AFTER_GENERATE
     endif
   endif
 
   echo
   if ("$GENERATE" == "-nogen") then
-    echo "run.csh: No generate!"
-    echo "run.csh: Not building CGRA because you set '-nogen'..."
+    echo "${0:t}: No generate!"
+    echo "${0:t}: Not building CGRA because you set '-nogen'..."
   else
-    # echo "run.csh: Building CGRA because you asked for it with '-gen'..."
-    echo "run.csh: Building CGRA because it's the default..."
+    # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
+    echo "${0:t}: Building CGRA because it's the default..."
+
     setenv USE_VERILATOR_HACKS "TRUE"
-    if ($?VERBOSE) echo "run.csh: build_cgra.sh"
+    if ($?VERBOSE) echo "${0:t}: $gbuild/build_cgra.sh"
     pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null
     if ($?VERBOSE) $gbuild/bin/show_cgra_info.csh
     if ($?EXIT13) goto DIE
@@ -329,6 +329,9 @@ AFTER_GENERATE:
     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
     goto RUN_SIM
   endif
+
+  # Oops no this does not fly w/tbg; must recompile when bitstream changes
+  if ("${0:t}" == run_tbg.csh) goto BUILD_SIM
 
   # How about skip verilator build if
   # running on travis AND already built obj_dir/Vtop
@@ -348,7 +351,7 @@ AFTER_GENERATE:
 BUILD_SIM:
   echo ''
   echo '------------------------------------------------------------------------'
-  echo "run.csh: Building the verilator simulator executable..."
+  echo "${0:t}: Building the verilator simulator executable..."
 
   # Builds verilator simulator obj_dir/Vtop
   echo build_simulator.csh $VSWITCH $VERILATOR_DEBUG top_tb.cpp $tracefile
@@ -356,9 +359,11 @@ BUILD_SIM:
 
 
 
+
+
 RUN_SIM:
   echo '------------------------------------------------------------------------'
-  echo "run.csh: Run the simulator..."
+  echo "${0:t}: Run the simulator..."
   echo ''
 
   if ($?VERBOSE) echo '  First prepare input and output files...'
@@ -369,12 +374,6 @@ RUN_SIM:
 
   set t = `io/process_input.csh $VSWITCH $input $tmpdir | tail -1`
   set input = $t
-
-  # If no output requested, simulator will not create an output file.
-  set out = ''
-  if ($?output) then
-      set out = "-output $output"
-  endif
 
   # If no trace requested, simulator will not create a waveform file.
   set trace = ''
@@ -408,15 +407,15 @@ RUN_SIM:
     cat $config
   endif
 
-  echo ''
-  echo "run.csh: TIME NOW: `date`"
-  echo "run.csh: Vtop -output $output:t -out1 $outpad $out1:t"
+  # If no output requested, simulator will not create an output file.
+  set out = ''
+  if ($?output) then
+      set out = "-output $output"
+  endif
 
-  # Ummmm this got fixed with the mytravis hack above, yes?
-  # # OOPS big parrot won't work in travis if output gets filtered...
-  # # Must have the printf every 10K cycles
-  # set quietfilter = (cat)
-  # set qf2         = (cat)
+  echo ''
+  echo "${0:t}: TIME NOW: `date`"
+  echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
 
   # FIXME note the '|| EXIT13" below is USELESS (why?)
   if ($?VERBOSE) set echo
@@ -434,30 +433,39 @@ RUN_SIM:
   unset echo >& /dev/null
   if ($?EXIT13) goto DIE
 
+
+
+
+
+
+  if ($?VERBOSE) then
+    echo ""
+    echo "ub.  so i guess i built this maybe:"
+    ls -l $output
+    echo ""
+  endif
+
   echo -n " TIME NOW: "; date
-
-
 
   unset FAIL
   # Hm I think this ALWAYS fails if test is not pointwise!!?
   # grep FAIL   $tmpdir/run.log.$$ && set FAIL
   grep %Error $tmpdir/run.log.$$ && set FAIL
 
-
-
   if ($?FAIL) then
-    echo run.csh 676 oops looks like something bad must have happened
+    echo ${0:t} 676 oops looks like something bad must have happened
     cat $tmpdir/run.log.$$
     # set EXIT13
     # goto DIE
   endif
 
   echo
-  echo "# run.csh: Reminder config was $config:r"
+  echo "# ${0:t}: Reminder config was $config:t:r"
   echo "# Show output vs. input; output should be 2x input for most common testbench"
 
   if ($?input) then
-    echo
+
+    echo ''
     ls -l $input
     ls -l $output
 
@@ -500,7 +508,7 @@ RUN_SIM:
   endif
 
   if ($?FAIL) then
-    echo run.csh 720 oops looks like something bad must have happened
+    echo ${0:t} 720 oops looks like something bad must have happened
     set EXIT13
     goto DIE
   endif
@@ -512,12 +520,13 @@ if (! `expr $pwd : /home/travis`) then
   set gbuild = ../../hardware/generator_z/top
   cat << eof
 
-************************************************************************
+  ********************************************************************
   NOTE: If you want to clean up after yourself you'll want to do this:
-
-    ./run.csh -clean
+  
+    ./${0:t} -clean
     pushd $gbuild; ./genesis_clean.cmd; popd
-************************************************************************
+  
+  ********************************************************************
 eof
 endif
 

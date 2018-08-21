@@ -1,7 +1,24 @@
 // New Top level that contains CGRA_core module and IO pad_ring module
+//; #TOP LEVEL PARAMS
+//; my $num_ios_per_side = parameter(name=>'num_ios_per_side', val=>16, min=>16, step=>16);
+//; #Other values
+//; my $num_ios_per_group = 16;
+//; my $groups_per_side = $num_ios_per_side/$num_ios_per_group;
+//; my @sides = ('N','S','E','W');
 
 module `mname` (
-
+  //pads [bit number within group][group number within side]
+  inout [`$num_ios_per_group-1`:0] pads_N [`$num_groups_per_side-1`:0],
+  inout [`$num_ios_per_group-1`:0] pads_S [`$num_groups_per_side-1`:0],
+  inout [`$num_ios_per_group-1`:0] pads_E [`$num_groups_per_side-1`:0],
+  inout [`$num_ios_per_group-1`:0] pads_W [`$num_groups_per_side-1`:0],
+  input tck,
+  input tms,
+  input trst_n,
+  input tdi,
+  output tdo,
+  input clk,
+  input reset
 );
 
 //; my $cgra_core_obj = generate_base("cgra_core","core");

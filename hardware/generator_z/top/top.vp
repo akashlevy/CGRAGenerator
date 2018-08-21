@@ -7,11 +7,13 @@
 //; my @sides = ('N','S','E','W');
 
 module `mname` (
-  //pads [bit number within group][group number within side]
-  inout [`$num_ios_per_group-1`:0] pads_N [`$num_groups_per_side-1`:0],
-  inout [`$num_ios_per_group-1`:0] pads_S [`$num_groups_per_side-1`:0],
-  inout [`$num_ios_per_group-1`:0] pads_E [`$num_groups_per_side-1`:0],
-  inout [`$num_ios_per_group-1`:0] pads_W [`$num_groups_per_side-1`:0],
+  //pads_{side}_{group_num_within_side} [bit number within group]
+//; for (my $i=0; $i<$groups_per_side; $i++) {
+  inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_E_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_W_`$i`,
+//; {
   input tck,
   input tms,
   input trst_n,
@@ -24,13 +26,30 @@ module `mname` (
 //; my $cgra_core_obj = generate_base("cgra_core","core");
 
   `$cgra_core_obj->instantiate()` (
+    .wide_IO_N(),
+    .wide_IO_S(),
+    .wide_IO_E(),
+    .wide_IO_W(),
+    .clk(clk),
+    .reset(reset)
 
   );
 
 //; my $pad_ring_obj = generate_base("pad_ring", "pads");
 
   `$pad_ring_obj->instantiate()` (
-
+    .pads_N(pads_N),
+    .pads_S(pads_S),
+    .pads_E(pads_E),
+    .pads_W(pads_W),
+    .
+    .config_data(),
+    .config_addr(),
+    .config_read(),
+    .config_write(),
+    .read_data(),
+    .clk(clk),
+    .reset(reset)
   );
 
 endmodule

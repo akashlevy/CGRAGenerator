@@ -15,11 +15,13 @@ input [`$config_data_width-1`:0] config_data,
 input [`$config_addr_width-1`:0] config_addr,
 input config_read,
 input config_write,
-//; for my $side (@sides) {
-input [`$num_ios_per_group-1`:0] f2p_wide_`$side` [`$num_groups_per_side-1`:0],
-input [`$num_ios_per_group-1`:0] f2p_1bit_`$side` [`$num_groups_per_side-1`:0],
-inout [`$num_ios_per_group-1`:0] pads_`$side` [`$num_groups_per_side-1`:0],
-output [`$num_ios_per_group-1`:0] p2f_`$side` [`$num_groups_per_side-1`:0],
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for my $side (@sides) {
+input [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`,
+input [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`,
+inout [`$num_ios_per_group-1`:0] pads_`$side`_`$i`,
+output [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`,
+//;   }
 //; }
 output [`$config_data_width-1`:0] read_data
 );

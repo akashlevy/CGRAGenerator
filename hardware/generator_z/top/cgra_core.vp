@@ -226,9 +226,9 @@
 //; #####################################################
 //; my %tile_grid;
 //; # CGRA grid width = (block_width * blocks_repeat_x) + 2 IO cols on left + 2 IO cols on right
-//; my $cgra_grid_width = ($basic_block_width * $basic_block_repeat_x) ;
+//; my $cgra_grid_width = ($basic_block_width * $basic_block_repeat_x) + 2;
 //; #
-//; my $cgra_grid_height = ($basic_block_height * $basic_block_repeat_y);
+//; my $cgra_grid_height = ($basic_block_height * $basic_block_repeat_y) + 2;
 //; # 
 //; # Default all cgra grid nodes to empty tile
 //; for (my $w=0; $w<$cgra_grid_width; $w++) {
@@ -239,10 +239,11 @@
 //; }
 //;
 //; # Instantiate nonIO part of the grid using basic block
-//; for (my $w=0; $w<($cgra_grid_width); $w++) {
-//;   for (my $h=0; $h<($cgra_grid_height); $h++) {
+//; for (my $w=1; $w<($cgra_grid_width-1); $w++) {
+//;   for (my $h=1; $h<($cgra_grid_height-1); $h++) {
+//;     my $wa = $w-1; my $ha = $h-1;
 //;     my $cgra_key = "${w}_${h}";
-//;     my $basic_block_key = ($w % $basic_block_width) . "_" . ($h % $basic_block_height); 
+//;     my $basic_block_key = ($wa % $basic_block_width) . "_" . ($ha % $basic_block_height); 
 //;     $tile_grid{$cgra_key} = $basic_block_hash{$basic_block_key};
 //;   }
 //; }

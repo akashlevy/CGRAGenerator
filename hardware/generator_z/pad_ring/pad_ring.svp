@@ -44,10 +44,12 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .f2p_1bit(f2p_1bit_`$side`[`$i`]),
   .pads(pads_`$side`[`$i`]),
   .p2f(p2f_`$side`[`$i`]),
-  .read_data(read_data_group)
+  .read_data(read_data_group[`$group`])
   );
 
 //;   }
 //; }
+
+  assign read_data = read_data_group.or();
 
 endmodule

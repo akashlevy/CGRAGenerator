@@ -169,7 +169,6 @@ function undo_tristates_if_using_verilator {
   fi
 }
 function set_short_or_tall {
-  set -v
   # Default is shortmem
   short_or_tall="short"
 

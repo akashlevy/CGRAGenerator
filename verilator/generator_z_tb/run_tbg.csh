@@ -293,8 +293,8 @@ GENERATE:
   # How about skip generator if
   # running on travis AND already built cgra_info.txt
   #
+  set gbuild = ../../hardware/generator_z/top
   if ($?TRAVIS) then
-    set gbuild = ../../hardware/generator_z/top
     if (-e $gbuild/cgra_info.txt) then
       echo '#####################################################################'
       echo  ${0:t}: I am in a travis script AND I found an existing cgra_info.txt
@@ -324,10 +324,15 @@ AFTER_GENERATE:
   # Build or not build?
 
   if ($?SKIP_RUNCSH_BUILD) then
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    goto RUN_SIM
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    unset SKIP_RUNCSH_BUILD
+
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     goto RUN_SIM
   endif
 
   # Oops no this does not fly w/tbg; must recompile when bitstream changes

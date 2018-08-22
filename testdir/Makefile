@@ -14,6 +14,7 @@ MEMHEIGHT := short
 VERILATOR_TOP := ../verilator/generator_z_tb
 HARDWARE_TOP  :=  ../hardware/generator_z/top
 CGRA_INFO := $(HARDWARE_TOP)/cgra_info.txt
+SIMULATOR := $(VERILATOR_TOP)/build/Vtop
 
 SILENT := FALSE
 ifeq ($(SILENT), TRUE)
@@ -67,13 +68,13 @@ test_all:
 
 # Twenty-minute (ish) tests for travis
 travis_system_tests:
-	@echo ten minutes for basic test (pointwise) using tbg (inc first build)
+	@echo "ten minutes for basic test (pointwise) + tbg first build"
 	make SILENT=TRUE test_basic   RUN=run_tbg.csh
 
-	@echo twenty minutes for sr unit tests
+	@echo "ten minutes for sr unit tests"
 	make SILENT=TRUE test_unit    RUN=run_tbg.csh
 
-	@echo five minutes for serpent-based tests
+	@echo "five minutes for serpent-based tests"
         # Note the "tee" command masks make errors :(
 	(make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) \
 	  | tee serpent_results.tmp

@@ -44,7 +44,7 @@ script:
   - set -e
 
   ########################################################################
-  # Thirty-five minutes for travis system tests
+  # Twenty-five minutes for travis system tests
   - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
 
   ################################################################

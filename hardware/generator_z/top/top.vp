@@ -5,7 +5,7 @@
 //; use POSIX;
 //; #
 //; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
-//; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
+//; my $connect_GC = parameter(NAME => 'connect_GC', val => 1, Min => 0, Max => 1, Step => 1); 
 //; my $include_analog_block = parameter(NAME => 'include_analog_block', val => 0, Min => 0, Max => 1, Step => 1);
 //;
 //; my $mem_tile_height = parameter(

@@ -82,6 +82,7 @@ travis_system_tests:
         # check for hidden errors
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
 	grep RESULT serpent_results.tmp
+	$(HARDWARE_TOP)/bin/show_cgra_info.csh | grep memtile_height
 
 
 # Note this is where onebit_bool gets testsd

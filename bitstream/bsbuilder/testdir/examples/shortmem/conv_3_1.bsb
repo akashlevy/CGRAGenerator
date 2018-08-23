@@ -20,18 +20,18 @@ T25_lutFF(const0,const0,const0)
 T44_lutFF(const0,const0,const0)
 
 # MEM tiles
-T24_mem_10   # mem_1 fifo_depth=10
-T43_mem_10   # mem_2 fifo_depth=10
+T24_mem_10   # lb_p4csus$mem_1$cgramem fifo_depth=10
+T43_mem_10   # lb_p4csus$mem_2$cgramem fifo_depth=10
 
 # ROUTING
 
-# INPUT::mem_1
+# INPUT::lb_p4csus$mem_1$cgramem
 T21_in_s2t0 -> T21_out_s0t0
 T22_in_s2t0 -> T22_out_s0t0
 T23_in_s2t0 -> T23_out_s0t0
 T24_in_s2t0 -> T24_mem_in
 
-# wen_lut::mem_1
+# wen_lut::lb_p4csus$mem_1$cgramem
 T25_pe_out_b0 -> T25_out_s2t0_b0
 T24_in_s0t0_b0 -> T24_out_s2t0_b0
 T24_out_s2t0_b0 -> T24_wen
@@ -68,23 +68,23 @@ T34_in_s2t0 -> T34_out_s0t0
 T35_in_s2t0 -> T35_out_s0t0
 T36_in_s2t0 -> T36_out_s0t0
 
-# mem_1::mem_2
+# lb_p4csus$mem_1$cgramem::lb_p4csus$mem_2$cgramem
 T24_mem_out -> T24_out_s1t0
 T43_in_s3t0 -> T43_out_s2t0
 T43_out_s2t0 -> T43_mem_in
 
-# wen_lut::mem_2
+# wen_lut::lb_p4csus$mem_2$cgramem
 T44_pe_out_b0 -> T44_out_s2t0_b0
 T43_in_s0t0_b0 -> T43_out_s2t0_b0
 T43_out_s2t0_b0 -> T43_wen
 
-# mem_1::mul_3475_348_PE.data.in.0
+# lb_p4csus$mem_1$cgramem::mul_3475_348_PE.data.in.0
 T24_mem_out -> T24_out_s1t1
 T43_in_s3t1 -> T43_out_s2t1
 T42_in_s0t1 -> T42_out_s2t1
 T42_out_s2t1 -> T42_op1
 
-# mem_2::mul_3423_343_PE.data.in.0
+# lb_p4csus$mem_2$cgramem::mul_3423_343_PE.data.in.0
 T43_mem_out -> T43_out_s1t2
 T61_in_s3t2 -> T61_out_s0t2
 T62_in_s2t2 -> T62_op1

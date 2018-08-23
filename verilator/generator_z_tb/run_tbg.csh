@@ -36,6 +36,7 @@ set DELAY = '0,0'
 set hwtop = ../../hardware/generator_z/top
 
 ########################################################################
+# Also see $hwtop/bin/show_cgra_info.csh
 # FIND MEMTILE HEIGHT; top.v will have e.g.
 # 
 # // Parameter mem_tile_height 	= 1
@@ -262,7 +263,8 @@ set nclocks = "-nclocks $nclocks"
   set config = $tmpdir/${config:t:r}.bs
 
   # Here's some terrible hackiness
-  if ($?ONEBIT) then
+  # if ($?ONEBIT) then
+  if (1) then
     echo ''
     echo 'HACK WARNING found onebit_bool config'
     echo 'HACK WARNING found onebit_bool config'

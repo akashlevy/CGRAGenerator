@@ -19,7 +19,7 @@ else
 endif
 
 # I think I live in $topdir/bin/
-# set topdir = $scriptpath/..
+set topdir = $scriptpath/..
 set topdir = `cd $topdir; pwd`
 set top = $topdir/genesis_verif/top.v
 if (! -e $top) then

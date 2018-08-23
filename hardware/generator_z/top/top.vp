@@ -3,12 +3,12 @@
 //; my $num_ios_per_side = parameter(name=>'num_ios_per_side', val=>16, min=>16, step=>16);
 //; #Other values
 //; my $num_ios_per_group = 16;
-//; my $groups_per_side = $num_ios_per_side/$num_ios_per_group;
+//; my $num_groups_per_side = $num_ios_per_side/$num_ios_per_group;
 //; my @sides = ('N','S','E','W');
 
 module `mname` (
   //pads_{side}_{group_num_within_side} [bit number within group]
-//; for (my $i=0; $i<$groups_per_side; $i++) {
+//; for (my $i=0; $i<$num_groups_per_side; $i++) {
   inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_E_`$i`,

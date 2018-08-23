@@ -1,11 +1,27 @@
 #!/bin/csh -f
 
-# Can't believe I have to do this...
-set path = (. $path)
-
 # This is tbg.csh
 # It replaces run.csh (eventually maybe)
 
+
+
+# Can't believe I have to do this...
+set path = (. $path)
+
+# Local flow (test):
+# - run.csh calls build_cgra.sh to do the initial generate
+# - run.csh uses pre-built io, map files in bitstream/example3 to build config file
+# - builds small parrot
+# 
+# Travis flow (CGRAFlow/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls PNR to build map, io info from generated cgra_info.txt
+# - builds the full parrot
+# 
+# Travis flow (CGRAGenerator/.travis.yml)
+# - travis script calls "build_cgra.sh" to do the initial generate
+# - travis script calls run.csh using pre-built bitstream w/embedded io info
+# - builds small parrot
 
 ########################################################################
 # Sometimes may need to know what branch we are in (currently unused)
@@ -17,8 +33,33 @@ set GENERATE  = "-gen"     # Generate CGRA from scratch
 set BUILD                  # (re)build simulator from scratch
 set DELAY = '0,0'
 
+set hwtop = ../../hardware/generator_z/top
+
+########################################################################
+# Also see $hwtop/bin/show_cgra_info.csh
+# FIND MEMTILE HEIGHT; top.v will have e.g.
+# 
+# // Parameter mem_tile_height 	= 1
+# // mem_tile_height (_GENESIS2_EXTERNAL_XML_PRIORITY_) = 1
+# 
+# Assumes height must be either 1 or 2
+set memtile_height = 1
+echo ""
+echo "top.v:"
+grep mem_tile_height $hwtop/genesis_verif/top.v
+grep mem_tile_height $hwtop/genesis_verif/top.v \
+  | tail -n 1 \
+  | egrep 'mem_tile_height[^0-9]*2$' \
+  && set memtile_height = 2
+
+########################################################################
 # Default configuration bitstream: 16x16 pointwise mul-by-two
-set config   = ../../bitstream/examples/pw2_16x16.bsa
+# 
+set b = ../../bitstream/examples
+if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
+if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
+echo "run.csh: Looks like memtile_height is $memtile_height"
+echo ""
 
 # Note pointwise w/'conv_bw' should take ~4000 cycles to complete
 set input     = io/conv_bw_in.png
@@ -170,15 +211,10 @@ set io_config = `pwd`/io/s2in_s0out.io.json
 echo ""
 echo "${0:t}: Using standard io file '$io_config:t'"
 
-
 if ($?ONEBIT) then
-  # echo "ERROR $0:t cannot handle onebit output (yet)"
-  # exit 13
-
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
-
 endif
 
 # if ($?VERBOSE) then
@@ -227,7 +263,8 @@ set nclocks = "-nclocks $nclocks"
   set config = $tmpdir/${config:t:r}.bs
 
   # Here's some terrible hackiness
-  if ($?ONEBIT) then
+  # if ($?ONEBIT) then
+  if (1) then
     echo ''
     echo 'HACK WARNING found onebit_bool config'
     echo 'HACK WARNING found onebit_bool config'
@@ -258,8 +295,8 @@ GENERATE:
   # How about skip generator if
   # running on travis AND already built cgra_info.txt
   #
+  set gbuild = ../../hardware/generator_z/top
   if ($?TRAVIS) then
-    set gbuild = ../../hardware/generator_z/top
     if (-e $gbuild/cgra_info.txt) then
       echo '#####################################################################'
       echo  ${0:t}: I am in a travis script AND I found an existing cgra_info.txt
@@ -276,9 +313,11 @@ GENERATE:
   else
     # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
     echo "${0:t}: Building CGRA because it's the default..."
-    if ($?VERBOSE) echo "${0:t}: ../../bin/generate.csh $VSWITCH"
-    # ../../bin/generate.csh $VSWITCH || set EXIT13
-    ../../bin/generate.csh -v || set EXIT13
+
+
+    if ($?VERBOSE) echo "${0:t}: $gbuild/build_cgra.sh"
+    pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null
+    if ($?VERBOSE) $gbuild/bin/show_cgra_info.csh
     if ($?EXIT13) goto DIE
   endif
 
@@ -287,27 +326,33 @@ AFTER_GENERATE:
   # Build or not build?
 
   if ($?SKIP_RUNCSH_BUILD) then
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-    goto RUN_SIM
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
+    unset SKIP_RUNCSH_BUILD
+
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
+#     goto RUN_SIM
   endif
 
-#   # Oops no this does not fly w/tbg; must recompile when bitstream changes
-# 
-#   # How about skip verilator build if
-#   # running on travis AND already built obj_dir/Vtop
-#   #
-#   if ($?TRAVIS) then
-#     if (-e obj_dir/Vtop) then
-#       echo '##################################'
-#       echo  I am in a travis script AND
-#       echo  I found an existing obj_dir/Vtop
-#       echo  Therefore skipping verilator build
-#       echo '##################################'
-#       goto RUN_SIM
-#     endif
-#   endif
+  # Oops no this does not fly w/tbg; must recompile when bitstream changes
+  if ("${0:t}" == run_tbg.csh) goto BUILD_SIM
+
+  # How about skip verilator build if
+  # running on travis AND already built obj_dir/Vtop
+  #
+  if ($?TRAVIS) then
+    if (-e obj_dir/Vtop) then
+      echo '##################################'
+      echo  I am in a travis script AND
+      echo  I found an existing obj_dir/Vtop
+      echo  Therefore skipping verilator build
+      echo '##################################'
+      goto RUN_SIM
+    endif
+  endif
 
 
 BUILD_SIM:
@@ -343,6 +388,25 @@ RUN_SIM:
     set trace = "-trace $tracefile"
   endif
 
+
+
+
+
+
+
+
+
+
+  # For 'quiet' execution, use these two filters to limit output;
+  # Otherwise just cat everything to stdout
+  if (! $?VERBOSE) then
+    set quietfilter = (egrep -v "Cycle: [1-9]00")
+    set qf2 = (grep -v "^000[23456789].*Two times")
+  else
+    set quietfilter = (cat)
+    set qf2         = (cat)
+  endif
+
   ########################################################################
   if ($?VERBOSE) then
     echo
@@ -350,20 +414,21 @@ RUN_SIM:
     cat $config
   endif
 
+# # If no output requested, simulator will not create an output file.
+# set out = ''
+# if ($?output) then
+#     set out = "-output $output"
+# endif
+
   echo ''
   echo "${0:t}: TIME NOW: `date`"
-  # echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
+# echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
 
 set TestBenchGenerator = `cd ../../../TestBenchGenerator; pwd`
 pushd build >& /dev/null
   # What does this do?  Turn png into raw maybe?
   # Hm looks like it adds zeroes to end of input file according to DELAY value
   echo python3 $TestBenchGenerator/process_input.py $io_config $input $DELAY
-
-#   echo ""
-#   echo od -t u1 $input
-#   od -t u1 $input
-#   echo ""
 
   python3 $TestBenchGenerator/process_input.py $io_config $input $DELAY
 
@@ -373,7 +438,7 @@ pushd build >& /dev/null
 #   echo ""
 
   # Cut down 10x on "Cycle" output thingies
-  ./Vtop | egrep -v '^Cycle.*[1-9]0$' \
+  ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
       | tee $tmpdir/run.log.$$
 
   # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
@@ -405,13 +470,11 @@ popd >& /dev/null
   echo "# ${0:t}: Reminder config was $config:t:r"
   echo "# Show output vs. input; output should be 2x input for most common testbench"
 
-  # if ($?input) then
   if (! $?input) echo "what?  how?"
   if (1) then
     echo ''
 #     ls -l $input
 #     ls -l $output
-#     echo ''
 
     if ("$output:t" == "conv_1_2_CGRA_out.raw") then
       # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
@@ -469,14 +532,13 @@ if (! `expr $pwd : /home/travis`) then
   set gbuild = ../../hardware/generator_z/top
   cat << eof
 
-  ************************************************************************
+  ********************************************************************
   NOTE: If you want to clean up after yourself you'll want to do this:
   
     ./${0:t} -clean
     pushd $gbuild; ./genesis_clean.cmd; popd
   
-  ************************************************************************
-
+  ********************************************************************
 eof
 endif
 
@@ -499,9 +561,3 @@ DIE:
     echo oops 768 looks like something bad must have happened
     exit 13
   endif
-
-
-
-
-
-

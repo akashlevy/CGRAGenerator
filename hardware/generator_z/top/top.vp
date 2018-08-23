@@ -8,12 +8,10 @@
 //; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
 //; my $include_analog_block = parameter(NAME => 'include_analog_block', val => 0, Min => 0, Max => 1, Step => 1);
 //;
-//; my $MEMTILE_HEIGHT = 2; # This is so run.csh can auto-detect mem height
 //; my $mem_tile_height = parameter(
+//;    doc => 'height of memtile relative to minimum grid height',
 //;    name=>'mem_tile_height',
-//;    #val =>1,
-//;    val => $MEMTILE_HEIGHT,
-//;    doc =>'height of memtile relative to minimum grid height',
+//;    val => 2,
 //;    min=>1, max=>2, step=>1);
 //;
 //; #########################################

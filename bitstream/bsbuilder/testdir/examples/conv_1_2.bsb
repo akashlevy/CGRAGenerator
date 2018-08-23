@@ -32,22 +32,22 @@ T41_in_s3t1 -> T41_out_s2t1
 T41_out_s2t1 -> T41_op1
 
 # add_311_315_316$binop::OUTPUT
-T41_pe_out -> T41_out_s0t0
-T42_in_s2t0 -> T42_out_s0t0
-T24_in_s6t0 -> T24_out_s4t0
-T43_in_s2t0 -> T43_out_s0t0
-T44_in_s2t0 -> T44_out_s0t0
-T45_in_s2t0 -> T45_out_s0t0
-T28_in_s6t0 -> T28_out_s4t0
-T46_in_s2t0 -> T46_out_s0t0
-T47_in_s2t0 -> T47_out_s0t0
-T48_in_s2t0 -> T48_out_s0t0
-T32_in_s6t0 -> T32_out_s4t0
-T49_in_s2t0 -> T49_out_s0t0
-T50_in_s2t0 -> T50_out_s0t0
-T51_in_s2t0 -> T51_out_s0t0
-T36_in_s6t0 -> T36_out_s7t0
-T36_in_s1t0 -> T36_out_s0t0
+T41_pe_out -> T41_out_s3t0
+T22_in_s1t0 -> T22_out_s0t0
+T23_in_s2t0 -> T23_out_s0t0
+T24_in_s2t0 -> T24_out_s0t0
+T25_in_s2t0 -> T25_out_s0t0
+T26_in_s2t0 -> T26_out_s0t0
+T27_in_s2t0 -> T27_out_s0t0
+T28_in_s2t0 -> T28_out_s0t0
+T29_in_s2t0 -> T29_out_s0t0
+T30_in_s2t0 -> T30_out_s0t0
+T31_in_s2t0 -> T31_out_s0t0
+T32_in_s2t0 -> T32_out_s0t0
+T33_in_s2t0 -> T33_out_s0t0
+T34_in_s2t0 -> T34_out_s0t0
+T35_in_s2t0 -> T35_out_s0t0
+T36_in_s2t0 -> T36_out_s0t0
 
 # lb_p4csus$lb1d_0$reg_1::mul_307_308_309$binop.data.in.0
 # T21_op1 (r) 

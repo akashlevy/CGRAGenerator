@@ -1,5 +1,7 @@
 #!/bin/csh -f
 
+# FIXME need better argswitch processing
+
 if ("$1" == "--help") then
   echo 'test_bitstreams.csh tmpdir'
   echo 'test_bitstreams.csh tmpdir pointwise'
@@ -20,6 +22,11 @@ endif
 
 if ("$1" == "-nobuild") then
   set build_switch = '-nobuild'
+  shift
+endif
+
+if ("$1" == "-build") then
+  set build_switch = '-build'
   shift
 endif
 

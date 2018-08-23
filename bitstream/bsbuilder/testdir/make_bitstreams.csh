@@ -1,5 +1,7 @@
 #!/bin/csh -f
 
+# FIXME need better arg processing
+
 if ($#argv == 0) then
   echo 'Where should I put the bsa output files?'
   echo "Example: $0:t /tmp/build42/"
@@ -11,6 +13,10 @@ if ("$1" == "--help") then
   echo 'make_bitstreams.csh tmpdir pointwise'
   echo 'make_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool'
   exit
+endif
+
+if ("$1" == "--shortmem") then
+  shift
 endif
 
 if (! -d $1) then

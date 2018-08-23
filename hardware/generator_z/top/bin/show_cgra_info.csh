@@ -20,17 +20,17 @@ endif
 
 # I think I live in $topdir/bin/
 set topdir = $scriptpath/..
+set topdir = `cd $topdir; pwd`
 set top = $topdir/genesis_verif/top.v
 if (! -e $top) then
   echo "Cannot find TOP '$top'"
   exit -1
 endif
 
-
 # set topdir = $top:h
 # set work = $topdir/../genesis_work
 
-echo "find_cgra_info.csh: built $top"
+echo "${0:t}: built $top"
 echo "--------------------------------------------------------------------"
 echo "Here is what I built (it's supposed to look like an array of tiles)."
 echo
@@ -48,6 +48,15 @@ egrep '^//(io1|[.][.][.])' $top | expand \
 
 
 echo "--------------------------------------------------------------------"
+
+# memtile height, e.g.
+#   // Parameter mem_tile_height    = 1
+#   // mem_tile_height (_GENESIS2_EXTERNAL_XML_PRIORITY_) = 1
+echo ""
+grep mem_tile_height $top
+exit
+##############################################################################
+
 
 # E.g.
 #     --------------------------------------------

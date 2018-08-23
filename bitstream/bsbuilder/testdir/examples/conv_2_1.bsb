@@ -43,23 +43,24 @@ T40_out_s2t2 -> T40_op1
 T40_pe_out -> T40_out_s0t0
 T41_in_s2t0 -> T41_out_s0t0
 T42_in_s2t0 -> T42_out_s0t0
-T24_in_s6t0 -> T24_out_s4t0
 T43_in_s2t0 -> T43_out_s0t0
 T44_in_s2t0 -> T44_out_s0t0
 T45_in_s2t0 -> T45_out_s0t0
-T28_in_s6t0 -> T28_out_s4t0
 T46_in_s2t0 -> T46_out_s0t0
 T47_in_s2t0 -> T47_out_s0t0
 T48_in_s2t0 -> T48_out_s0t0
-T32_in_s6t0 -> T32_out_s4t0
 T49_in_s2t0 -> T49_out_s0t0
 T50_in_s2t0 -> T50_out_s0t0
 T51_in_s2t0 -> T51_out_s0t0
-T36_in_s6t0 -> T36_out_s7t0
+T52_in_s2t0 -> T52_out_s0t0
+T53_in_s2t0 -> T53_out_s0t0
+T54_in_s2t0 -> T54_out_s0t0
+T55_in_s2t0 -> T55_out_s3t0
 T36_in_s1t0 -> T36_out_s0t0
 
 # lb_p4csus$lbmem_1_0$cgramem::mul_337_338_339$binop.data.in.0
-T24_mem_out -> T24_out_s6t0
+T24_mem_out -> T24_out_s1t0
+T43_in_s3t0 -> T43_out_s2t0
 T42_in_s0t0 -> T42_out_s2t0
 T42_out_s2t0 -> T42_op1
 

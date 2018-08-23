@@ -1170,6 +1170,7 @@ def special_wirenames(d, name):
         "ren", "wen",
         "waddr", "wdata",
         "rdata",
+        "valid",
         "read_data"
         ]:
         newname = d

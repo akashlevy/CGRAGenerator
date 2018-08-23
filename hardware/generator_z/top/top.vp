@@ -40,7 +40,7 @@ module `mname` (
 //;   for my $side (@sides) {
     .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
-    .p2f_`$side`_`$i`(),
+    .p2f_`$side`_`$i`(p2f`$side`_`$i`),
 //;   }
 //; }
     .clk(clk),

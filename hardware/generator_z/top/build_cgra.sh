@@ -17,6 +17,10 @@ function main {
   Genesis2.pl -parse -generate -top top -hierarchy top.xml \
     -xml ./bin/${short_or_tall}mem.xml \
     -input top.vp \
+    cgra_core.vp \
+    \
+    ../pad_ring/pad_ring.svp \
+    ../pad_ring/io_group.svp \
     \
     ../sb/sb.vp \
     ../cb/cb.vp \

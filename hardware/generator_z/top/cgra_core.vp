@@ -14,7 +14,7 @@
 //;    val => 1,
 //;    min=>1, max=>2, step=>1);
 //;
-//; my $include_GST = parameter(NAME => 'include_GST', val => 0, Min => 0, Max => 1, Step => 1);
+//; my $include_GST = parameter(NAME => 'include_GST', val => 1, Min => 0, Max => 1, Step => 1);
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 

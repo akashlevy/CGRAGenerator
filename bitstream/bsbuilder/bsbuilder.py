@@ -1013,11 +1013,10 @@ def bs_lut(tileno, line, DBG=0):
     bit1   = parse.group(3)       # 'const0' (e.g.)
     bit2   = parse.group(4)       # 'const0' (e.g.)
 
-
     # !!!!!
+    # FIXME this needs more explainos
     # assert bit0 != 'wire', "Weird bug: bit0 cannot be wire/REG_BYPASS"
     # !!!!!
-
 
     # load lut reg with lut value
     lutval = int(lutval,16)
@@ -1092,11 +1091,13 @@ def lut_const(bitno, kstring, tileno):
     regno = 0xF3 + bitno
 
     # addr = "F300%04X" % tileno; data = 0
-    addr = (regno<<24) | tileno; data = 0
+    # addr = (regno<<24) | tileno; data = 0
+    # data = 0!!?  WTF dude!
+    addr = (regno<<24) | tileno; data = k
+    assert data==1 or data==0
 
     comment = "data[(0, 0)] : init `bit%d` reg with const `%d`" % (bitno, k)
     addbs(addr, data, comment)
-
 
 
 def regtranslate(op):

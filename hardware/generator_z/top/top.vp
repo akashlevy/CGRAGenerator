@@ -5,7 +5,10 @@
 //; my $num_ios_per_group = 16;
 //; my $num_groups_per_side = $num_ios_per_side/$num_ios_per_group;
 //; my @sides = ('N','S','E','W');
-
+//; my $connect_GC = parameter(name=>'connect_GC', val=>0, min=>0, max=>1, step=>1);
+//; my $config_addr_width = parameter(name=>'config_addr_width', val=>32, min=>1, step=>1);
+//; my $config_data_width = parameter(name=>'config_data_width', val=>32, min=>1, step=>1);
+//; my $num_stall_domains = parameter(name=>'num_stall_domains', val=>4, min=>1, step=>1);
 module `mname` (
   //pads_{side}_{group_num_within_side} [bit number within group]
 //; for (my $i=0; $i<$num_groups_per_side; $i++) {
@@ -14,14 +17,54 @@ module `mname` (
   inout [`$num_ios_per_group-1`:0] pads_E_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_W_`$i`,
 //; }
+//; if ($connect_GC == 0) {
+  input [`$config_data_width-1`:0] config_data,
+  input [`$config_addr_width-1`:0] config_addr,
+//; }
   input tck,
   input tms,
   input trst_n,
   input tdi,
   output tdo,
-  input clk,
-  input reset
+  input clk_in,
+  input reset_in
 );
+
+wire clk;
+wire reset;
+wire config_read;
+wire config_write;
+wire [`$config_data_width-1`:0] read_data;
+wire [`$num_stall_domains-1`:0] stall;
+
+//; my $global_controller_obj = generate("global_controller", "global_controller");
+    `$global_controller_obj->instantiate()`
+    (
+      .clk_in(clk_in),
+      .reset_in(reset_in),
+//; if($connect_GC == 1) {
+      .clk_out(clk),
+      .reset_out(reset),
+      .config_addr_out(config_addr),
+      .config_data_out(config_data),
+      .write(config_write),
+//; }
+      .config_data_in(read_data),
+      .tdi(tdi),
+      .tdo(tdo),
+      .tms(tms),
+      .tck(tck),
+      .trst_n(trst_n),
+      .cgra_stalled(stall),
+      .read(config_read)
+    );
+
+
+//; if($connect_GC == 0) {
+assign clk = clk_in;
+assign reset = reset_in;
+assign config_write = 1;
+//; }
 
 
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
@@ -44,8 +87,13 @@ module `mname` (
 //;   }
 //; }
     .clk(clk),
-    .reset(reset)
-
+    .reset(reset),
+    .read_data(),
+    .config_addr(),
+    .config_data(),
+    .config_read(),
+    .config_write(),
+    .stall()
   );
 
 //; my $pad_ring_obj = generate_base("pad_ring", "pads");

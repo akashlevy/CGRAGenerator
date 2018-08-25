@@ -296,15 +296,10 @@ p2f_`$side`_`$i`,
 // VERILATOR_PORT7
 // VERILATOR_PORT8
 // -------------------------------------
-//; if($connect_GC==0){
-config_addr_in,
-config_data_in,
-//;}
-tdi,
-tdo,
-tms,
-tck,
-trst_n,
+config_addr,
+config_data,
+config_read,
+config_write,
 //; if($include_analog_block) {
 //PORTS FOR ANALOG BLOCK
 ext_cki,
@@ -325,23 +320,23 @@ frefn_out_jm,
 mdllout_pad,
 lf_out
 //; }
-clk_in,
-reset_in
+clk,
+reset,
+stall,
+read_data
 );
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
 //;print INFO "<CGRA>\n";
-//; if($connect_GC==0){
-  input [31:0] config_addr_in;
-  input [31:0] config_data_in;
-//; }
-  input clk_in;
-  input reset_in;
-  input tdi;
-  input tms;
-  input tck;
-  input trst_n;
-  output tdo;
+  input [31:0] config_addr;
+  input [31:0] config_data;
+  input clk;
+  input reset;
+  input [3:0] stall;
+  input config_read;
+  input config_write;
+  output [31:0] read_data;
+
 //; if($include_analog_block) {
   //PADS FOR ANALOG BLOCK
   input ext_cki;  // (+) cmos clock input (reference clock input)
@@ -394,48 +389,10 @@ reset_in
 
 //; ###################################################################################
 
-wire [31:0] config_addr;
-wire [31:0] config_data;
-wire clk;
-wire reset;
-wire config_read;
-wire config_write;
-wire [31:0] read_data;
 wire [31:0] read_data_pe;
 wire [31:0] read_data_global;
 wire [31:0] read_data_memory;
 wire [31:0] read_data_io1bit;
-wire [3:0] stall;
-//; my $global_controller_obj = generate("global_controller", "global_controller");
-//; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
-    `$global_controller_obj->instantiate()` 
-    (
-      .clk_in(clk_in),
-      .reset_in(reset_in),
-//; if($connect_GC == 1) {
-      .clk_out(clk),
-      .reset_out(reset),
-      .config_addr_out(config_addr),
-      .config_data_out(config_data),
-      .write(config_write),
-//; }
-      .config_data_in(read_data),
-      .tdi(tdi),
-      .tdo(tdo),
-      .tms(tms),
-      .tck(tck),
-      .trst_n(trst_n),
-      .cgra_stalled(stall),
-      .read(config_read)
-    );
-//; if($connect_GC == 0) {
-    //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC
-    assign config_addr = config_addr_in;
-    assign config_data = config_data_in;
-    assign clk = clk_in;
-    assign reset = reset_in;
-    assign config_write = 1;
-//; }
 //; if ($include_analog_block) {
   //Instantiate analog block
   mdll_top mdll_top 

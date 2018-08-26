@@ -33,7 +33,25 @@ python  --version |& awk '{print "  python  version " $2}'
 python3 --version |& awk '{print "  python3 version " $2}'
 echo ""
 
-set TestBenchGenerator = `cd ../../../TestBenchGenerator; pwd`
+set TBG_DIR=`pwd`/../../../TestBenchGenerator
+if (! -d $TBG_DIR) then
+  echo ""
+  echo "ERROR I expected to find TestBenchGenerator here:"
+  echo "  $TBG_DIR"
+  echo ""
+  echo "Maybe you started ${0:t} from the wrong directory?"
+  echo "Or you may need to do something like this:"
+  echo "  % git clone https://github.com/StanfordAHA/TestBenchGenerator.git $TBG_DIR"
+  echo ""
+  echo "Or if you are on kiwi you can probably get away with:"
+  set d = `cd ../../..; pwd`
+  echo "  % cd $d"
+  echo "  % ln -s /nobackup/steveri/github/TestBenchGenerator"
+  echo ""
+  exit 13
+endif
+
+set TestBenchGenerator = `cd $TBG_DIR; pwd`
 python3 $TestBenchGenerator/generate_harness.py \
 	--pnr-io-collateral $io_config \
 	--bitstream $config \

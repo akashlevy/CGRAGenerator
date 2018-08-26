@@ -1,9 +1,26 @@
 #!/bin/csh -f
 
-echo "run.csh: DO NOT USE run.csh; use run_tbg.csh instead!!!"
+  echo ''
+echo "run.csh: DO NOT USE run.csh; use run_tbg.csh instead"
 echo "run.csh: I will redirect you :)"
+
+if (`expr "$*" : ".* -trace"`) then
+  echo ''
+  echo '- Oops no looks like you wanted a trace file'
+  echo "- I don't know how to do that with run_tbg (yet)..."
+  echo '- Will not redirect after all (for now)...'
+  echo ''
+  goto DO_IT_ANYWAY
+endif
+
+echo no found trace
+exit
+
 exec ./run_tbg.csh $*:q
 exit 13
+
+DO_IT_ANYWAY:
+exit
 
 # Can't believe I have to do this...
 set path = (. $path)

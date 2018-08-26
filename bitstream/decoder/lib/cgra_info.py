@@ -856,6 +856,9 @@ def encode_parms(parms, DBG=0):
     if configl == -1: configl=0
     if configr == -1: configr=0
 
+    assert configh < 64 and configh >= 0
+    assert configl < 64 and configl >= 0
+
     # ?? not sure what this is all about ??
     # some kinda sanity check i guess?
     # mask = (1<< (1+configh-configl)) - 1
@@ -875,7 +878,7 @@ def encode_parms(parms, DBG=0):
     if regh != regl:
         haddr = '%02X%02X%04X' % (regh, fa, tileno)
         haddr = int(haddr, 16)
-        hdata = (sel >> (configh-31))
+        hdata = (sel << configl) >> configh
         assert haddr != laddr
         if DBG: print('ovfw address is %08X' % getnum(haddr))
         if DBG: print('ovfw data is    %08X\n' % hdata)

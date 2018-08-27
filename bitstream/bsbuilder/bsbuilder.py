@@ -204,6 +204,7 @@ def main():
         elif DBG: print '# > Not a mem'
 
         # Tx116_pad(out,1)
+        # Tx15_pad(in,1)
         if bs_io(tileno, line, DBG-1):
             if DBG: print ''
             continue
@@ -835,6 +836,11 @@ def bs_io(tileno, line, DBG=0):
       00000116 00000003
       # io1_116
       # data[(0, 0)] : output  # 0x1
+      # data[(1, 1)] : one-bit # 0x1
+    E.g. tileno = 0x15, line = "pad(in,1)" =>
+      00000015 00000002
+      # io1_116
+      # data[(0, 0)] : output  # 0x0
       # data[(1, 1)] : one-bit # 0x1
     '''
     parse = re.search('pad[(](in|out),(1|16)', line)

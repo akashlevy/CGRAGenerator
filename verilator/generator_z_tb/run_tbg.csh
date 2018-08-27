@@ -3,7 +3,7 @@
 # This is tbg.csh
 # It replaces run.csh (eventually maybe)
 
-
+unset TWO_IN_TWO_OUT
 
 # Can't believe I have to do this...
 set path = (. $path)
@@ -215,6 +215,12 @@ if ($?ONEBIT) then
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
+endif
+
+if ($?TWO_IN_TWO_OUT) then
+  set io_config = `pwd`/io/2in2out.io.json
+  echo -n "$0:t oh wait it's 2in2out okay..."
+  echo    "i will use '$io_config' for io config"
 endif
 
 # if ($?VERBOSE) then

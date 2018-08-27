@@ -41,6 +41,8 @@ mydir  = os.path.dirname(mypath)
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
 my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)" % mydir)
+
+
 # DO THIS IN .travis.yml INSTEAD!
 # # Pat's stuff needs numpy
 # my_syscall("pip list | grep numpy || pip install --upgrade pip")
@@ -86,17 +88,6 @@ VERILATOR_DIR = ''
 OPTIONS = {}
 
 def caveats():
-
-    # FIXME FIXME FIXME
-    # FIXME instead of doing this, should simply use -build flag later on...
-    if USE_TBG and ("SKIP_RUNCSH_BUILD" in os.environ):
-        # assert False
-        print '''
-ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-'''
-
     print '''
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
@@ -106,6 +97,20 @@ CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
   'gte/lte' model broken(?) in 'isa.py'; wrote my own instead (utest.py/FIXME)
   'sel' - no test yet b/c needs 'd' input
 '''
+# 
+# haha we don't do this no more (right?)
+#     # FIXME FIXME FIXME
+#     # FIXME instead of doing this, should simply use -build flag later on...
+#     if USE_TBG and ("SKIP_RUNCSH_BUILD" in os.environ):
+#         # assert False
+#         print '''
+# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
+# '''
+
+
+
 def main():
     caveats()
     DBG=0
@@ -342,7 +347,7 @@ def gen_output_file_cgra(tname, DBG=0):
         print "  Will use bsa file '%s.bsa' to generate '%s'" % (tname,cgra_out)
 
     if DBG:
-        if USE_DBG: my_syscall('(cd %s; ls -l run_tbg.csh)' % VERILATOR_DIR, 'CONT')
+        if USE_TBG: my_syscall('(cd %s; ls -l run_tbg.csh)' % VERILATOR_DIR, 'CONT')
         else:       my_syscall('(cd %s; ls -l run.csh)'     % VERILATOR_DIR, 'CONT')
 
     # Calculate the appropriate delay e.g. '1,0' for PE ops or '9,0' for 9-deep lbuf.
@@ -356,13 +361,17 @@ def gen_output_file_cgra(tname, DBG=0):
     if USE_TBG: logfile = cwd + "run_tbg_csh.log"
     else:       logfile = cwd + "run_tbg.log"
 
+    if USE_TBG: logfile = cwd + "run_tbg_csh.log"
+    else:       logfile = cwd + "run_tbg.log"
+
     if USE_TBG:
         run_csh = './run_tbg.csh -v'
         run_csh = './run_tbg.csh -v -build'
     else:
         run_csh = './run.csh -v'
-        run_csh = './run.csh -v -build'
-
+        if GENERATED:          run_csh = './run.csh -v -nobuild'
+        elif OPTIONS['trace']: run_csh = './run.csh -v -trace utest.vcd'
+        GENERATED=True
 
     cmd = "%s -config %s -input %s -output %s -delay %s"\
           % (run_csh, config, input, output, delay)

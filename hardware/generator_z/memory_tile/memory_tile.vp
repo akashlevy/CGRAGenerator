@@ -26,7 +26,15 @@
 
 //; # for layout 
 //; my $mem_tile_height = parameter(Name=>'mem_tile_height', val=> 2, doc=>'multiple of cgra row height to use as mem_tile height');
-
+//; 
+//; # If parent (i.e. top.vp) has a memheight def, that overrides local
+//;   my $parent = $self->get_parent();
+//;   if ($parent->exists_param('mem_tile_height')) {
+//;      $mem_tile_height = $parent->get_param('mem_tile_height');
+//;   }
+//;   print "// Using mem_tile_height=$mem_tile_height\n";
+//;
+//;
 //; ###########################################################################
 //; #ankitan - Virtualization sel
 //; my $SHIFT_REG_LEN  = parameter(Name=>'SHIFT_REG_LEN',

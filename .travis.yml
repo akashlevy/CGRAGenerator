@@ -26,7 +26,7 @@ install:
 
   # Install python for testing infrastructure
   # All this just to get python3 => python3.6 or better
-  # Because TBG needs python 3.6 or better
+  # Because TBG (and LT unit tests) need python 3.6 or better
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -u -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -44,32 +44,11 @@ script:
   - set -e
 
   ########################################################################
-  # - cd testdir; make test_all
-  #
-  - pushd testdir
+  # Twenty-five minutes for travis system tests
+  - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
 
-  #   ten minutes for basic test (pointwise) using sr simulator
-  -   make SILENT=TRUE test_basic   RUN=run.csh
-
-  #   ten minutes for basic test (pointwise) using tbg (inc first build)
-  -   make SILENT=TRUE test_basic   RUN=run_tbg.csh
-
-  #   ten minutes for sr unit tests
-  -   make SILENT=TRUE test_unit    RUN=run_tbg.csh
-
-  #   five minutes for serpent-based tests
-  -   make SILENT=TRUE test_serpent RUN=run_tbg.csh | tee serpent_results.tmp
-  -   grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
-
-  #   # Desired target set maybe
-  #   - make SILENT=TRUE test_all
-  - popd
-
-  # Summarize the results here at the end
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v Summary
-
-  ########################################################################
-  # Lenny's tests (ten minutes)
+  ################################################################
+  # Fifteen minutes for LT unit tests
 
   # Install python dependencies
   - pip install pytest numpy delegator.py bit_vector
@@ -85,4 +64,4 @@ script:
 
   ########################################################################
   # Redo serpent summary maybe
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v Summary
+  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp

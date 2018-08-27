@@ -9,8 +9,12 @@ ifeq ($(RUN), run.csh)
   TBG :=
 endif
 
+MEMHEIGHT := short
+
 VERILATOR_TOP := ../verilator/generator_z_tb
 HARDWARE_TOP  :=  ../hardware/generator_z/top
+CGRA_INFO := $(HARDWARE_TOP)/cgra_info.txt
+SIMULATOR := $(VERILATOR_TOP)/build/Vtop
 
 SILENT := FALSE
 ifeq ($(SILENT), TRUE)
@@ -25,14 +29,6 @@ endif
 TEMPDIR := $(shell mktemp -d /tmp/gentest-XXX)
 DELAY = 0,0
 
-pw_gray_small_8x8:
-	make test TEMPDIR=$(TEMPDIR) IMAGE="gray_small" \
-	CONFIG="-config ../../bitstream/examples/pw1009.bsa"
-
-pw_gray_8x8:
-	make test TEMPDIR=$(TEMPDIR) IMAGE="gray" \
-	CONFIG="-config ../../bitstream/examples/pwv2.bs"
-
 test_basic:
 #	# Use run.csh built-in default config
 	@./writelog.csh log1 -init
@@ -42,18 +38,17 @@ test_basic:
 	@echo
 	@./writelog.csh log1 -print
 
-
-$(HARDWARE_TOP)/cgra_info.txt:
-#	../bin/generate.csh -v
-	cd $(HARDWARE_TOP); export USE_VERILATOR_HACKS=TRUE; ./build_cgra.sh
+$(CGRA_INFO):
+	cd $(HARDWARE_TOP); ./build_cgra.sh --$(MEMHEIGHT)mem
 	$(HARDWARE_TOP)/bin/show_cgra_info.csh
 
+$(VERILATOR_TOP)/obj_dir/Vtop: $(CGRA_INFO)
+	cd $(VERILATOR_TOP); ./run.csh 
 
-
-test_unit: $(HARDWARE_TOP)/cgra_info.txt
-	./unit_tests/utest $(VSWITCH)
-
-
+# No dependence on Vtop b/c utest.py default is now TBG...right?
+# test_unit: $(CGRA_INFO) $(VERILATOR_TOP)/obj_dir/Vtop
+test_unit: $(CGRA_INFO)
+	./unit_tests/utest --nogen $(VSWITCH)
 
 test_all:
 	make hackdiff_test 2>&1 | tee $(TEMPDIR)/hackdiff_test.log
@@ -71,31 +66,33 @@ test_all:
 	egrep ^hackdiff $(TEMPDIR)/hackdiff_test.log
 
 
+# Twenty-minute (ish) tests for travis
+travis_system_tests:
+	@echo "ten minutes for basic test (pointwise) + tbg first build"
+	make SILENT=TRUE test_basic   RUN=run_tbg.csh
+
+	@echo "ten minutes for sr unit tests"
+	make SILENT=TRUE test_unit    RUN=run_tbg.csh
+
+	@echo "five minutes for serpent-based tests"
+        # Note the "tee" command masks make errors :(
+	(make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) \
+	  | tee serpent_results.tmp
+
+        # check for hidden errors
+	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
+	grep RESULT serpent_results.tmp
+	$(HARDWARE_TOP)/bin/show_cgra_info.csh | grep mem_tile_height
+
+
 # Note this is where onebit_bool gets testsd
-test_serpent: $(HARDWARE_TOP)/cgra_info.txt
+test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
 	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) $(TEMPDIR)
 #	FIXME Who will delete TEMPDIR?
 
 test_serpent_dev:
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR) pointwise conv_1_2 conv_2_1
-
-test_standalone:
-# 	pwd; ls
-	./writelog.csh log1 -init TEST SUMMARY BEGIN `date`
-
-        # Note: Results go to 'log1'
-	make pw_gray_small_8x8
-#	make pw_gray_8x8
-# 	# make gray_small_4x4
-# 	# make gray_4x4
-
-# Probably want to restore the more-challenging conv_bw test, once smoke has cleared.
-# hackdiff_test:
-# 	cd ../bitstream; \
-# 	decoder/hackdiff.csh \
-# 	  examples/conv_bw.bs examples/conv_bw.bsa \
-# 	  -cgra examples/cgra_configs/cgra_info_8x8.txt
 
 hackdiff_test:
 	cd ../bitstream; \

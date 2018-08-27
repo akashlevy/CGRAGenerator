@@ -267,27 +267,41 @@ def main():
     return
 
 def configure_output_pads():
-    print '''
+    b = '''
 # Configure side 0 (right side) io1bit tiles as 16bit output bus;
 # assumes output is tile 36 (io16bit_0x24)
 
-00000026 00000001
-00000034 00000001
-00000046 00000001
-00000054 00000001
-00000066 00000001
-00000074 00000001
-00000086 00000001
-00000094 00000001
-000000A6 00000001
-000000B4 00000001
-000000C6 00000001
-000000D4 00000001
-000000E6 00000001
-000000F4 00000001
-00000106 00000001
-00000114 00000001
 '''
+    for padname in [\
+    'pad_S0_T0',  'pad_S0_T1',  'pad_S0_T2',  'pad_S0_T3',
+    'pad_S0_T4',  'pad_S0_T5',  'pad_S0_T6',  'pad_S0_T7',
+    'pad_S0_T8',  'pad_S0_T9',  'pad_S0_T10', 'pad_S0_T11',
+    'pad_S0_T12', 'pad_S0_T13', 'pad_S0_T14', 'pad_S0_T15'
+    ]:
+        (id, row, col) = cgra_info.find_tile_by_name(padname)
+        b = b + "%08X 00000001\n" % id
+    print b
+    return b
+
+    # E.g.
+    # 00000026 00000001
+    # 00000034 00000001
+    # 00000046 00000001
+    # 00000054 00000001
+    # 00000066 00000001
+    # 00000074 00000001
+    # 00000086 00000001
+    # 00000094 00000001
+    # 000000A6 00000001
+    # 000000B4 00000001
+    # 000000C6 00000001
+    # 000000D4 00000001
+    # 000000E6 00000001
+    # 000000F4 00000001
+    # 00000106 00000001
+    # 00000114 00000001
+
+
 
 def preprocess(input_lines, DBG=0):
     # For lazy programmers:
@@ -300,6 +314,10 @@ def preprocess(input_lines, DBG=0):
     for line in input_lines:
         line = line.strip()
         if DBG: print "LINE0", line
+
+        # FIXME/HACK Ignore keyi output paths
+        if   (line == "T37_in_s2t0 -> T37_in"):      continue
+        elif (line == "T20_pe_out -> T20_out_s0t0"): continue
 
         # Maybe this is a bad road
         # # Turn 't0_in_s2t0' into 'T0_in_s2t0'
@@ -362,6 +380,7 @@ def bs_connection(tileno, line, DBG=0):
     # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
     # or   line = 'T1_in_s2t0 -> T1_out_s0t0/r'
     # or   line = 'T25_out_s2t0 -> T25_op1 (r)'
+    # or   line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
 
     parse = re.search('(\w+)\s*->\s*(\w+)[^r]*(r)*', line)
     if not parse: return False
@@ -419,12 +438,19 @@ def bs_connection(tileno, line, DBG=0):
 
     # process reg if one exists
     # (note registered ops are taken care of elsewheres)
-    if reg=='r' and not rhs[0:2]=='op':
+    # E.g. if Trhs = "T192_data0" then rhs = "data0" is an input port
+    if reg=='r' and not is_alu_input(rhs):
         # print 'reg %08X %08X' % (ra,rd)
         # print '# ', rcomm, '\n'
         addbs(raddr, rdata, rcomm)
 
     return True
+
+
+def is_alu_input(port):
+    '''E.g. if Trhs = "T192_data0" then rhs = "data0" is an input port'''
+    # E.g. {op1,op2,data0,data1
+    return (port[0:2] == "op") or (port[0:4] == "data")
 
 
 def striptile(r):
@@ -786,7 +812,11 @@ def bs_mem(tileno, line, DBG=0):
     fd = int(parse.group(1))
     # print '666foo found mem w/fd=%s' % fd
 
-    addr = 0x00040000 | tileno
+    if cgra_info.MEMTILE_HEIGHT == 1:
+        addr = 0x00020000 | tileno
+    else:
+        addr = 0x00040000 | tileno
+        
     data = 0x00000004 | (fd<<3)
     comment = [
         "data[(1, 0)] : mode = linebuffer",
@@ -983,11 +1013,10 @@ def bs_lut(tileno, line, DBG=0):
     bit1   = parse.group(3)       # 'const0' (e.g.)
     bit2   = parse.group(4)       # 'const0' (e.g.)
 
-
     # !!!!!
+    # FIXME this needs more explainos
     # assert bit0 != 'wire', "Weird bug: bit0 cannot be wire/REG_BYPASS"
     # !!!!!
-
 
     # load lut reg with lut value
     lutval = int(lutval,16)
@@ -1062,11 +1091,13 @@ def lut_const(bitno, kstring, tileno):
     regno = 0xF3 + bitno
 
     # addr = "F300%04X" % tileno; data = 0
-    addr = (regno<<24) | tileno; data = 0
+    # addr = (regno<<24) | tileno; data = 0
+    # data = 0!!?  WTF dude!
+    addr = (regno<<24) | tileno; data = k
+    assert data==1 or data==0
 
     comment = "data[(0, 0)] : init `bit%d` reg with const `%d`" % (bitno, k)
     addbs(addr, data, comment)
-
 
 
 def regtranslate(op):
@@ -1267,7 +1298,6 @@ def myparse(line, regexp):
 #     if VERBOSE: print("I think I am here:\n  %s" % mydir)
 #     if VERBOSE: print("Default cgra_info file is\n  %s" % cgra_filename)
 #     return cgra_filename
-
 
 input_lines = []
 def process_args():

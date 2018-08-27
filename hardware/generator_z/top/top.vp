@@ -3,13 +3,21 @@
 //; #//
 //; #//////////////////////////////////////////////////////////////////
 //; use POSIX;
+//; #
 //; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
 //; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
 //; my $include_analog_block = parameter(NAME => 'include_analog_block', val => 0, Min => 0, Max => 1, Step => 1);
+//;
+//; my $mem_tile_height = parameter(
+//;    doc => 'height of memtile relative to minimum grid height',
+//;    name=>'mem_tile_height',
+//;    val => 2,
+//;    min=>1, max=>2, step=>1);
+//;
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
-
+//; #
 //; # Specify the CGRA grid size as 8x8,16x16, or 64x64. You can generate additional sizes by modifying
 //; # the IO_count and basic_block_repeat_* variables below.
 //; # my $grid_size = "8x8";
@@ -35,6 +43,7 @@
 //; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
 //; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
+//; @IO_count = qw(16 16 16 16);
 //; #
 //; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
 //; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
@@ -47,7 +56,12 @@
 //; #
 //; my $basic_block  = "pe pe pe mem\n";
 //;    $basic_block .= "pe pe pe X  ";
-//; #
+//; 
+//; if ($mem_tile_height == 1) {
+//;    $basic_block  = "pe pe pe mem\n";
+//;    $basic_block .= "pe pe pe mem  ";
+//; }
+//;  
 //; # Number of times the basic block repeats in the horizontal direction.
 //; #
 //; my $basic_block_repeat_x = 8;
@@ -60,6 +74,7 @@
 //; if ($grid_size == "64x64") { $basic_block_repeat_x = 16; $basic_block_repeat_y = 32; }
 //; if ($grid_size == "16x16") { $basic_block_repeat_x =  4; $basic_block_repeat_y = 8; }
 //; if ($grid_size == "48x48") { $basic_block_repeat_x = 12; $basic_block_repeat_y = 24; }
+//; $basic_block_repeat_x = 4; $basic_block_repeat_y = 8;
 //; #
 //; #
 //; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
@@ -121,7 +136,7 @@
 //; };
 //; $tile_config->{ 'mem' } = {
 //;       type => 'memory_tile',
-//;       tile_height => 2,
+//;       tile_height => $mem_tile_height,
 //;       tile_width => 1,
 //;       gen_mem_for_busname => 'BUS16',
 //;       control_busname => 'BUS1',
@@ -324,8 +339,6 @@
 //; #Create verilog
 //; #####################################################
 module top(
-clk_in,
-reset_in,
 //; for (my $side=0; $side<4; $side++) {
 //;   for (my $count=0; $count< $IO_count[$side]; $count++) {
         pad_S`$side`_T`$count`,
@@ -353,6 +366,7 @@ tdo,
 tms,
 tck,
 trst_n,
+//; if($include_analog_block) {
 //PORTS FOR ANALOG BLOCK
 ext_cki,
 ext_ckib,
@@ -371,6 +385,9 @@ frefp_out_jm,
 frefn_out_jm,
 mdllout_pad,
 lf_out
+//; }
+clk_in,
+reset_in
 );
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
@@ -386,6 +403,7 @@ lf_out
   input tck;
   input trst_n;
   output tdo;
+//; if($include_analog_block) {
   //PADS FOR ANALOG BLOCK
   input ext_cki;  // (+) cmos clock input (reference clock input)
   input ext_ckib; // (-) cmos clock input (reference clock input)
@@ -407,6 +425,7 @@ lf_out
   output [3:0] mdllout_pad; // 4-phase MDLL outputs
   wire [19:0] jm_out;   // number of 1's in jitter measurement
   output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
+//; }
    // --------------------------------------
    // PLACEHOLDERS FOR VERILATOR INPUT WIRES
    // --------------------------------------

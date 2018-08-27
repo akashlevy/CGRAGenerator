@@ -5,6 +5,31 @@
 
 unset TWO_IN_TWO_OUT
 
+
+
+
+
+
+
+
+
+
+# (run.csh compatibility section)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Can't believe I have to do this...
 set path = (. $path)
 
@@ -81,6 +106,7 @@ if ($#argv == 1) then
     echo "        -config <config_filename.bs>"
     echo "        -input   <input_filename.png>"
     echo "        -output <output_filename.raw>"
+    echo "        -in1  s3t0 <1bitin_filename>",
     echo "        -out1 s1t0 <1bitout_filename>",
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
@@ -170,6 +196,11 @@ while ($#argv)
     case -out1:
       set outpad = $2; shift;
       set out1   = $2; shift;
+      breaksw;
+
+    case -in1:
+      set inpad = $2; shift;
+      set in1   = $2; shift;
       breaksw;
 
     ########################################
@@ -336,11 +367,6 @@ AFTER_GENERATE:
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     unset SKIP_RUNCSH_BUILD
-
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     goto RUN_SIM
   endif
 
   # Oops no this does not fly w/tbg; must recompile when bitstream changes

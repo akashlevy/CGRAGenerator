@@ -61,6 +61,7 @@ set DELAY = '0,0'
 set hwtop = ../../hardware/generator_z/top
 
 ########################################################################
+# Also see $hwtop/bin/show_cgra_info.csh
 # FIND MEMTILE HEIGHT; top.v will have e.g.
 # 
 # // Parameter mem_tile_height 	= 1
@@ -202,7 +203,6 @@ while ($#argv)
       set in1   = $2; shift;
       breaksw;
 
-
     ########################################
     # Switches: Debugging
 
@@ -302,7 +302,8 @@ set nclocks = "-nclocks $nclocks"
   set config = $tmpdir/${config:t:r}.bs
 
   # Here's some terrible hackiness
-  if ($?ONEBIT) then
+  # if ($?ONEBIT) then
+  if (1) then
     echo ''
     echo 'HACK WARNING found onebit_bool config'
     echo 'HACK WARNING found onebit_bool config'
@@ -333,8 +334,8 @@ GENERATE:
   # How about skip generator if
   # running on travis AND already built cgra_info.txt
   #
+  set gbuild = ../../hardware/generator_z/top
   if ($?TRAVIS) then
-    set gbuild = ../../hardware/generator_z/top
     if (-e $gbuild/cgra_info.txt) then
       echo '#####################################################################'
       echo  ${0:t}: I am in a travis script AND I found an existing cgra_info.txt
@@ -352,7 +353,7 @@ GENERATE:
     # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
     echo "${0:t}: Building CGRA because it's the default..."
 
-    setenv USE_VERILATOR_HACKS "TRUE"
+
     if ($?VERBOSE) echo "${0:t}: $gbuild/build_cgra.sh"
     pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null
     if ($?VERBOSE) $gbuild/bin/show_cgra_info.csh

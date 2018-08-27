@@ -370,7 +370,7 @@ int main(int argc, char **argv, char **env) {
                     config_data = config_data_i;
 
                     // inbit must be ZERO up until input starts coming
-                    inbit = 0;
+                    inbit = 1;
 
                 } else {
                     tile_config_done = 1;
@@ -390,7 +390,7 @@ int main(int argc, char **argv, char **env) {
 
                 // Laziness hack; ignore input file and use inbit as a "pixel-ready" signal
                 // FIXME BUT IT REALLY SHOULD COME FROM INBIT_FILE!!
-                inbit = 1;
+                inbit = 0;
 
                 if (feof(input_file)) {
                     if (final_delay_so_far == delay_out) {

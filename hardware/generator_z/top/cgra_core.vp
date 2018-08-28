@@ -387,15 +387,6 @@ assign f2p_wide_S_`$i` = wire_`($cgra_grid_width-2) - $incr`_`($cgra_grid_height
 assign f2p_wide_E_`$i` = wire_`($cgra_grid_width-2)`_`($cgra_grid_height-2) - $incr`_BUS16_S0_T0;
 //; }
 
-// assign wide p2f inputs (one tile -> all pads in a group)
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//; my $incr = $i * $num_ios_per_group;
-assign p2f_wide_N_`$i` = wire_0_`1 + $incr`_BUS16_S1_T0;
-assign p2f_wide_W_`$i` = wire_`1 + $incr`_0_BUS16_S0_T0;
-assign p2f_wide_S_`$i` = wire_`($cgra_grid_height-1)`_`($cgra_grid_width-2) - $incr`_BUS16_S3_T0;
-assign p2f_wide_E_`$i` = wire_`($cgra_grid_height-2) - $incr`_`($cgra_grid_width-1)`_BUS16_S2_T0;
-//; }
-
 // assign 1bit f2p outputs
 //North side
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
@@ -419,8 +410,15 @@ assign f2p_1bit_W_`$i`[`$bit`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
 assign f2p_1bit_E_`$i`[`$bit`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T0;
 //;   }
 //; }
-//TODO: FILL IN ASSIGNMENTS TO PAD FRAME SIGNALS
 
+// assign wide p2f inputs (all pads in a group -> a single tile)
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; my $incr = $i * $num_ios_per_group;
+assign wire_0_`1 + $incr`_BUS16_S1_T0 = p2f_N_`$i`
+assign wire_`1 + $incr`_0_BUS16_S0_T0 = p2f_W_`$i` ;
+assign wire_`($cgra_grid_height-1)`_`($cgra_grid_width-2) - $incr`_BUS16_S3_T0 = p2f_S_`$i`;
+assign wire_`($cgra_grid_height-2) - $incr`_`($cgra_grid_width-1)`_BUS16_S2_T0 = p2f_E_`$i`;
+//; }
 
 
    // ---------------------------------------

@@ -49,7 +49,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");
 //; }
 
-assign read_data = read_data_tile.or;
+// SV equivalent: assign read_data = read_data_tile.or();
 always @(*) begin
   read_data = 0;
   for (integer i=0; i < `$num_ios`; i++)

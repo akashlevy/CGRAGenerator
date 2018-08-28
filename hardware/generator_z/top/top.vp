@@ -35,7 +35,11 @@ wire reset;
 wire config_read;
 wire config_write;
 wire [`$config_data_width-1`:0] read_data;
+wire [`$config_data_width-1`:0] read_data_core;
+wire [`$config_data_width-1`:0] read_data_pads;
 wire [`$num_stall_domains-1`:0] stall;
+
+assign read_data = read_data_core | read_data_pads;
 
 //; my $global_controller_obj = generate("global_controller", "global_controller");
     `$global_controller_obj->instantiate()`
@@ -88,12 +92,12 @@ assign config_write = 1;
 //; }
     .clk(clk),
     .reset(reset),
-    .read_data(),
-    .config_addr(),
-    .config_data(),
-    .config_read(),
-    .config_write(),
-    .stall()
+    .config_addr(config_addr),
+    .config_data(config_data),
+    .config_read(config_read),
+    .config_write(config_write),
+    .stall(stall),
+    .read_data(read_data_core)
   );
 
 //; my $pad_ring_obj = generate_base("pad_ring", "pads");
@@ -108,11 +112,11 @@ assign config_write = 1;
     .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
 //;   }
 //; }
-    .config_data(),
-    .config_addr(),
-    .config_read(),
-    .config_write(),
-    .read_data(),
+    .config_data(config_data),
+    .config_addr(config_addr),
+    .config_read(config_read),
+    .config_write(config_write),
+    .read_data(read_data_pads),
     .clk(clk),
     .reset(reset)
   );

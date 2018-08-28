@@ -378,71 +378,6 @@ read_data
 //;   }
 //; }
 
-// assign wide f2p outputs (one tile -> all pads in a group)
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//; my $incr = $i * $num_ios_per_group;
-assign f2p_wide_N_`$i` = wire_`1 + $incr`_1_BUS16_S3_T0;
-assign f2p_wide_W_`$i` = wire_1_`1 + $incr`_BUS16_S2_T0;
-assign f2p_wide_S_`$i` = wire_`($cgra_grid_width-2) - $incr`_`($cgra_grid_height-2)`_BUS16_S1_T0;
-assign f2p_wide_E_`$i` = wire_`($cgra_grid_width-2)`_`($cgra_grid_height-2) - $incr`_BUS16_S0_T0;
-//; }
-
-// assign 1bit f2p outputs
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//North side
-//; my $offset = $i * $num_ios_per_group;
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_N_`$i`[`$bit`] = wire_1_`1+$offset+$bit`_BUS1_S3_T0;
-//;   }
-
-//South side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_S_`$i`[`$bit`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_S1_T0;
-//;   }
-
-//West side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_W_`$i`[`$bit`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
-//;   }
-
-//East side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_E_`$i`[`$bit`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T0;
-//;   }
-//; }
-
-// assign wide p2f inputs (all pads in a group -> a single tile)
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//; my $incr = $i * $num_ios_per_group;
-assign wire_0_`1 + $incr`_BUS16_S1_T0 = p2f_N_`$i`;
-assign wire_`1 + $incr`_0_BUS16_S0_T0 = p2f_W_`$i`;
-assign wire_`($cgra_grid_height-1)`_`($cgra_grid_width-2) - $incr`_BUS16_S3_T0 = p2f_S_`$i`;
-assign wire_`($cgra_grid_height-2) - $incr`_`($cgra_grid_width-1)`_BUS16_S2_T0 = p2f_E_`$i`;
-//; }
-
-// assign 1 bit p2f inputs (each pad goes to a single tile)
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//North side
-//; my $offset = $i * $num_ios_per_group;
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign wire_0_`1 + $offset + $bit`_BUS1_S1_T0 = p2f_N_`$i`[`$bit`];
-//;   }
-
-//South side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign wire_`($cgra_grid_height-1)`_`1 + $offset + $bit`_BUS1_S3_T0 = p2f_S_`$i`[`$bit`];
-//;   }
-
-//West side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign wire_`1 + $offset + $bit`_0_BUS1_S0_T0 = p2f_N_`$i`[`$bit`];
-//;   }
-
-//East side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T0 = p2f_S_`$i`[`$bit`];
-//;   }
-//; }
 
 
 
@@ -591,6 +526,85 @@ wire [31:0] read_data_io1bit;
 //; my $tile_hash_ref;
 //; my $io1bit_num_tracks = $bus_num_tracks_hash{ 'BUS1' };
 //; my $io16bit_num_tracks = $bus_num_tracks_hash{ 'BUS16' };
+
+// ASSIGN all signals to/from IO padsi
+
+// assign wide f2p outputs (one tile -> all pads in a group)
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; my $incr = $i * $num_ios_per_group;
+assign f2p_wide_N_`$i` = wire_`1 + $incr`_1_BUS16_S3_T0;
+assign f2p_wide_W_`$i` = wire_1_`1 + $incr`_BUS16_S2_T0;
+assign f2p_wide_S_`$i` = wire_`($cgra_grid_width-2) - $incr`_`($cgra_grid_height-2)`_BUS16_S1_T0;
+assign f2p_wide_E_`$i` = wire_`($cgra_grid_width-2)`_`($cgra_grid_height-2) - $incr`_BUS16_S0_T0;
+//; }
+
+// assign 1bit f2p outputs
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//North side
+//; my $offset = $i * $num_ios_per_group;
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign f2p_1bit_N_`$i`[`$bit`] = wire_1_`1+$offset+$bit`_BUS1_S3_T0;
+//;   }
+
+//South side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign f2p_1bit_S_`$i`[`$bit`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_S1_T0;
+//;   }
+
+//West side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign f2p_1bit_W_`$i`[`$bit`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
+//;   }
+
+//East side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign f2p_1bit_E_`$i`[`$bit`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T0;
+//;   }
+//; }
+
+// assign wide p2f inputs (all pads in a group -> a single tile)
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; my $incr = $i * $num_ios_per_group;
+//;   for (my $t=0; $t < $io16bit_num_tracks; $t++) {
+assign wire_0_`1 + $incr`_BUS16_S1_T`$t` = p2f_N_`$i`;
+assign wire_`1 + $incr`_0_BUS16_S0_T`$t` = p2f_W_`$i`;
+assign wire_`($cgra_grid_height-1)`_`($cgra_grid_width-2) - $incr`_BUS16_S3_T`$t` = p2f_S_`$i`;
+assign wire_`($cgra_grid_height-2) - $incr`_`($cgra_grid_width-1)`_BUS16_S2_T`$t` = p2f_E_`$i`;
+//;   }
+//; }
+
+// assign 1 bit p2f inputs (each pad goes to a single tile)
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for (my $t=0; $t < $io1bit_num_tracks; $t++) {
+//North side
+//;     my $offset = $i * $num_ios_per_group;
+//;     for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign wire_0_`1 + $offset + $bit`_BUS1_S1_T`$t` = p2f_N_`$i`[`$bit`];
+//;     }
+
+//South side
+//;     for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign wire_`($cgra_grid_height-1)`_`1 + $offset + $bit`_BUS1_S3_T`$t` = p2f_S_`$i`[`$bit`];
+//;     }
+
+//West side
+//;     for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign wire_`1 + $offset + $bit`_0_BUS1_S0_T`$t` = p2f_N_`$i`[`$bit`];
+//;     }
+
+//East side
+//;     for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`$i`[`$bit`];
+//;     }
+//;   }
+//; }
+
+
+
+
+
+
+
 //#####################################################
 //#Instantiate components
 //#####################################################

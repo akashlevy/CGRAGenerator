@@ -50,6 +50,11 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
 //;   }
 //; }
 
-  assign read_data = read_data_group.or();
+  // System Verilog equivalent: assign read_data = read_data_group.or();
+always @(*) begin
+  read_data = 0;
+  for (integer i=0; i < `$num_groups_per_side * 4`; i++)
+    read_data = read_data | read_data_group[i];
+end
 
 endmodule

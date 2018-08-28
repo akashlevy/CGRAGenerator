@@ -50,5 +50,10 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; }
 
 assign read_data = read_data_tile.or;
+always @(*) begin
+  read_data = 0;
+  for (integer i=0; i < `$num_ios`; i++)
+    read_data = read_data | read_data_tile[i];
+end
 
 endmodule

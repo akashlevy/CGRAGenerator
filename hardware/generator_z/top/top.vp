@@ -69,7 +69,7 @@ assign clk = clk_in;
 assign reset = reset_in;
 assign config_write = 1;
 //; }
-
+//; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
 
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {

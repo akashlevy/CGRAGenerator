@@ -28,7 +28,6 @@ exec ./run_tbg.csh $*:q
 exit 13
 
 DO_IT_ANYWAY:
-exit
 
 # Can't believe I have to do this...
 set path = (. $path)

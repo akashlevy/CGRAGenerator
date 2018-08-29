@@ -969,7 +969,7 @@ end
 //;    while (<INP>) {
 //;      my $line = $_;
 //;      $line=~s/OUTNAME/$value->{'out'}/g;
-//;      foreach my $find (keys %{$rename_hash}) { my $replace = %{$rename_hash}{$find};
+//;      while ( my ($find, $replace) = each($rename_hash) ) {
 //;         $line=~s/>$find</>$replace</g;
 //;         $line=~s/'$find'/'$replace'/g;
 //;      }
@@ -984,7 +984,7 @@ end
 //;    while (<INP>) {
 //;      my $line = $_;
 //;      $line=~s/OUTNAME/$value->{'out'}/g;
-//;      foreach my $find (keys %{$rename_hash}) { my $replace = %{$rename_hash}{$find};
+//;      while ( my ($find, $replace) = each($rename_hash) ) {
 //;         $line=~s/>$find</>$replace</g;
 //;         $line=~s/'$find'/'$replace'/g;
 //;      }

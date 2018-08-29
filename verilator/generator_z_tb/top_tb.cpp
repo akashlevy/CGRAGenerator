@@ -28,22 +28,14 @@ int main(int argc, char **argv, char **env) {
     char  *input_filename = NULL;
     char *output_filename = NULL;
     char  *trace_filename = NULL;
-
-    // One-bit output
     char *outbit_filename = NULL; // eg "onebit_bool.raw"
     char *outbit_padname  = NULL; // eg "s1t0" => pad_S1_T0
-
-    // One-bit input "io1_in_0_0.raw"
-    // E.g. "-in1 s3t0 io1_in_0_0.raw"
-    char *inbit_filename = NULL; // eg "cascade_1bit_in.raw"
-    char *inbit_padname  = NULL; // eg "s3t0" => pad_S3_T0
 
     char default_trace_filename[128] = "top_tb.vcd";
 
     FILE *input_file = NULL;
     FILE *output_file = NULL;
     FILE *outbit_file = NULL; // eg "onebit_bool.raw"
-    FILE *inbit_file = NULL;  // eg "io1_in_0_0.raw"
 
     // Run simulation for NCLOCKS clock periods (default = 40)
     int NCLOCKS = 40;
@@ -72,18 +64,10 @@ int main(int argc, char **argv, char **env) {
         else if (! strcmp(argv[i], "-input" ))  { input_filename  = argv[++i]; }
         else if (! strcmp(argv[i], "-output" )) { output_filename = argv[++i]; }
         else if (! strcmp(argv[i], "-out1" )) {
-            // eg "-out1 s1t0 onebit_bool.raw"
+            // eg "--out1 s1t0 onebit_bool.raw"
             outbit_padname  = argv[++i];
             outbit_filename = argv[++i];
         }
-        else if (! strcmp(argv[i], "-in1" )) {
-            // eg "-in1 s1t0 onebit_bool.raw"
-            inbit_padname  = argv[++i];
-            inbit_filename = argv[++i];
-        }
-
-
-
         else if (! strcmp(argv[i], "-trace" ))  { trace_filename  = argv[++i]; }
         else if (! strcmp(argv[i], "-nclocks")) { 
                 sscanf(argv[++i], "%d", &NCLOCKS);
@@ -150,21 +134,6 @@ int main(int argc, char **argv, char **env) {
             exit(13);
         }
     }
-    if (inbit_filename != NULL) {
-        printf("  - Found filename for onebit input '%s'\n", inbit_filename);
-        printf("  - '%s' will contain input from pad '%s'\n", inbit_filename, inbit_padname);
-        if (strcmp(inbit_padname, "s3t0") != 0) {
-            printf("\n\nERROR haha for now can only input from pad 's3t0' sorry!\n\n");
-            exit(13);
-        }
-        inbit_file = fopen(inbit_filename, "w");
-        if (inbit_file == NULL) {
-            fflush(stdout);
-            fprintf(stderr,"\n\nERROR: Could not create onebit input file '%s'\n\n", inbit_filename);
-            exit(13);
-        }
-    }
-
 
 #if VM_TRACE > 0
     if (trace_filename == NULL) {
@@ -243,7 +212,6 @@ int main(int argc, char **argv, char **env) {
     unsigned int pads_in;  // 16-bit  input value
     unsigned int pads_out; // 16-bit output value
     unsigned int outbit;   //  1-bit output value
-    unsigned int inbit;    //  1-bit  input value
 
     int tile_config_done;
 
@@ -368,10 +336,6 @@ int main(int argc, char **argv, char **env) {
 
                     config_addr = config_addr_i;
                     config_data = config_data_i;
-
-                    // inbit must be ZERO up until input starts coming
-                    inbit = 1;
-
                 } else {
                     tile_config_done = 1;
                 }
@@ -388,17 +352,12 @@ int main(int argc, char **argv, char **env) {
                 pads_in = (unsigned int)fgetc(input_file);
                 // printf("Scanned input data %04x\n", pads_in);
 
-                // Laziness hack; ignore input file and use inbit as a "pixel-ready" signal
-                // FIXME BUT IT REALLY SHOULD COME FROM INBIT_FILE!!
-                inbit = 0;
-
                 if (feof(input_file)) {
                     if (final_delay_so_far == delay_out) {
                         printf("\nINFO Simulation ran for %d cycles (349)\n\n", i);
                         if (input_file)       { fclose(input_file ); }
                         if (output_file)      { fclose(output_file); }
                         if (outbit_file)      { fclose(outbit_file); }
-                        if (inbit_file)       { fclose(inbit_file);  }
                         if (config_data_file) { fclose(config_data_file); }
                         CLOSETRACE // YES!
                         exit(0);
@@ -465,8 +424,6 @@ int main(int argc, char **argv, char **env) {
             top->pad_S2_T15_in = (pads_in & 0x01) ? 1 : 0;
             ///////////////////////////////////////////////////////////////////
 
-            // One-bit input...okay?
-            top->pad_S3_T0_in = inbit;
 
 
             ///always @(posedge clk) begin
@@ -528,7 +485,7 @@ int main(int argc, char **argv, char **env) {
 
             if (outbit_file != NULL) {
                 if (outbit_padname == NULL) {
-                    printf("\n\nERROR no onebit-output padname specified on cmd line\n\n");
+                    printf("\n\nERROR no padname specified on cmd line\n\n");
                     exit(13);
                 }
                 if (! strcmp(outbit_padname, "s1t0")) {
@@ -538,20 +495,6 @@ int main(int argc, char **argv, char **env) {
                     exit(13);
                 }
             }
-            if (inbit_file != NULL) {
-                if (inbit_padname == NULL) {
-                    printf("\n\nERROR no onebit-input padname specified on cmd line\n\n");
-                    exit(13);
-                }
-                if (! strcmp(inbit_padname, "s3t0")) {
-                    inbit = top->pad_S1_T0_in;
-                } else { 
-                    printf("\n\nERROR haha for now can only input from pad 's3t0' sorry!\n\n");
-                    exit(13);
-                }
-            }
-
-
         } // for (clk)
 
         if (!reset && tile_config_done) {
@@ -604,7 +547,6 @@ int main(int argc, char **argv, char **env) {
                     if (input_file)       { fclose(input_file ); }
                     if (output_file)      { fclose(output_file); }
                     if (outbit_file)      { fclose(outbit_file); }
-                    if (inbit_file)       { fclose(inbit_file);  }
                     if (config_data_file) { fclose(config_data_file); }
                     CLOSETRACE
                     exit(0);
@@ -622,7 +564,6 @@ int main(int argc, char **argv, char **env) {
         if (input_file)       { fclose(input_file ); }
         if (output_file)      { fclose(output_file); }
         if (outbit_file)      { fclose(outbit_file); }
-        if (inbit_file)       { fclose( inbit_file); }
         if (config_data_file) { fclose(config_data_file); }
         CLOSETRACE
         exit(0);

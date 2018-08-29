@@ -18,11 +18,11 @@ module  `mname`  #(
 //;}
   input                  dir_left,
 
-  input  [DataWidth-1:0] a,
+  input signed [DataWidth-1:0] a,
 //; if($en_double) {
-  input  [DataWidth-1:0] a_shift,
+  input signed [DataWidth-1:0] a_shift,
 //;}
-  input  [B_MSB:0]       b,
+  input signed [B_MSB:0]       b,
 
   output logic [DataWidth-1:0] res
 );
@@ -92,7 +92,7 @@ assign rshift_val = (b[B_MSB] | ~double_mode | (~|b[B_MSB-1:0])) ? rsh_res : (rs
 //; } elsif($en_double) {
 //;   if($is_msb) {
 
-logic [2*DataWidth-1:0] shift_inp;
+logic signed [2*DataWidth-1:0] shift_inp;
 logic [2*DataWidth-1:0] shift_res;
 logic [2*DataWidth-1:0] shift_res_sign;
 logic [2*DataWidth-1:0] a_reverse;
@@ -113,7 +113,7 @@ generate
 endgenerate
 
 //;   } else {
-logic [2*DataWidth-1:0] shift_inp;
+logic signed [2*DataWidth-1:0] shift_inp;
 logic [2*DataWidth-1:0] shift_res_sign;
 logic [2*DataWidth-1:0] shift_res;
 logic [2*DataWidth-1:0] a_reverse;
@@ -135,7 +135,7 @@ endgenerate
 
 //;   }
 //; } else {
-logic [DataWidth-1:0] shift_inp;
+logic signed [DataWidth-1:0] shift_inp;
 logic [DataWidth-1:0] shift_res;
 logic [DataWidth-1:0] a_reverse;
 

@@ -654,7 +654,8 @@ wire [3:0] stall;
 //;     my $tile_id = sprintf("%s_0x%s", $tile_type, $tile_addr_hex);
 //;#Add PE specific parameters from the tile config to the generate command
 //;#All paramters in the tile_config hash except type, tile_height/width are passed to the generator
-//;     while( my ($f, $v) = each $tile_config->{ $tile_type } ) {
+//;     my %hhash = %{$tile_config->{ $tile_type }};
+//;     foreach my $f (keys %hhash) { my $v = %hhash{$f};
 //;#       print "$f : $v\n";
 //;       if (($f!~m/type/) && ($f!~m/tile_height/) && ($f!~m/tile_width/)) {
 //;         $options .= " $f => \"$v\",";
@@ -665,7 +666,8 @@ wire [3:0] stall;
 //;       my $sb_feedthrough = "";
 //;       my $sb_registered = "";
 //;       my $tile_x = $w;
-//;       while( my ($bus, $width) = each %bus_width_hash ) {
+//;
+//;       foreach my $bus (keys %bus_width_hash) { my $width = %bus_width_hash{$bus}; 
 //;         $sb_feedthrough .= " $bus:";
 //;         $sb_registered .= " $bus:";
 //;         foreach my $seg_info (split(':', $bus_segment_hash{$bus})) {

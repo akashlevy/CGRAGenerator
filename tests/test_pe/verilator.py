@@ -22,7 +22,7 @@ def testsource(tests):
     for test in tests:
         testvector = ', '.join([to_string(t.value) for t in test])
         source += '''\
-        {{ {} }}, 
+        {{ {} }},
 '''.format(testvector)
 
     source += '''\
@@ -41,14 +41,14 @@ def bodysource(tests):
             inputs.append(val)
             body += "        top->{key} = test[{i}];\n".format(key=val.name, i=i)
 
-    input_printf_string = "\"[Test Iteration %d] Inputs: {inputs}\\n\", ".format(inputs=", ".join("{name}=%x".format(name=val.name) for val in inputs))
+    input_printf_string = "\"[Test Iteration %d] Inputs: {inputs}\\n\", ".format(inputs=", ".join("{name}=%04x".format(name=val.name) for val in inputs))
     input_printf_string += "i, "
     input_printf_string += ", ".join("test[{i}]".format(i=i) for i in range(len(inputs)))
 
     output_string = ""
     for i, output in enumerate(tests[0]):
         if isinstance(output, test_output):
-            output_string += "        printf(\"    expected_{name}=%x, actual_{name}=%x\\n\", test[{i}], top->{name});\n".format(name=output.name, i=i)
+            output_string += "        printf(\"    expected_{name}=%04x, actual_{name}=%04x\\n\", test[{i}], top->{name});\n".format(name=output.name, i=i)
             output_string += "        assert(top->{name} == test[{i}]);\n".format(name=output.name, i=i)
 
     return body + '''
@@ -89,6 +89,7 @@ int main(int argc, char **argv, char **env) {{
     {test}
 
     top->op_code = {op};
+    printf("opcode=%04x", {op});
 
     {body}
 

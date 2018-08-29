@@ -3,6 +3,31 @@
 # This is tbg.csh
 # It replaces run.csh (eventually maybe)
 
+unset TWO_IN_TWO_OUT
+
+
+
+
+
+
+
+
+
+
+# (run.csh compatibility section)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Can't believe I have to do this...
@@ -81,6 +106,7 @@ if ($#argv == 1) then
     echo "        -config <config_filename.bs>"
     echo "        -input   <input_filename.png>"
     echo "        -output <output_filename.raw>"
+    echo "        -in1  s3t0 <1bitin_filename>",
     echo "        -out1 s1t0 <1bitout_filename>",
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
@@ -172,6 +198,11 @@ while ($#argv)
       set out1   = $2; shift;
       breaksw;
 
+    case -in1:
+      set inpad = $2; shift;
+      set in1   = $2; shift;
+      breaksw;
+
     ########################################
     # Switches: Debugging
 
@@ -215,6 +246,12 @@ if ($?ONEBIT) then
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
+endif
+
+if ($?TWO_IN_TWO_OUT) then
+  set io_config = `pwd`/io/2in2out.io.json
+  echo -n "$0:t oh wait it's 2in2out okay..."
+  echo    "i will use '$io_config' for io config"
 endif
 
 # if ($?VERBOSE) then
@@ -330,11 +367,6 @@ AFTER_GENERATE:
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     unset SKIP_RUNCSH_BUILD
-
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     goto RUN_SIM
   endif
 
   # Oops no this does not fly w/tbg; must recompile when bitstream changes

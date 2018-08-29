@@ -22,7 +22,9 @@ module  `mname`  #(
 //; if($en_double) {
   input signed [DataWidth-1:0] a_shift,
 //;}
-  input [B_MSB:0]       b,
+
+  input signed [B_MSB:0]       b,
+
 
   output logic [DataWidth-1:0] res
 );
@@ -112,6 +114,7 @@ endgenerate
 
 //;   } else {
 logic signed [2*DataWidth-1:0] shift_inp;
+
 logic [2*DataWidth-1:0] shift_res;
 logic [2*DataWidth-1:0] a_reverse;
 

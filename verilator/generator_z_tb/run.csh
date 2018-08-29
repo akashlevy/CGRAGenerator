@@ -1,8 +1,16 @@
 #!/bin/csh -f
 
-  echo ''
+echo ''
 echo "run.csh: DO NOT USE run.csh; use run_tbg.csh instead"
 echo "run.csh: I will redirect you :)"
+
+unset TWO_IN_TWO_OUT
+if ("$1" == "-in1') then
+  echo "oops so you wanted onebit input"
+  echo "FOR NOW 'in1' means we do not redirect to run_tbg.csh"
+  set TWO_IN_TWO_OUT
+  goto DO_IT_ANYWAY
+endif  
 
 if (`expr "$*" : ".* -trace"`) then
   echo ''
@@ -20,7 +28,6 @@ exec ./run_tbg.csh $*:q
 exit 13
 
 DO_IT_ANYWAY:
-exit
 
 # Can't believe I have to do this...
 set path = (. $path)
@@ -53,6 +60,7 @@ set DELAY = '0,0'
 set hwtop = ../../hardware/generator_z/top
 
 ########################################################################
+# Also see $hwtop/bin/show_cgra_info.csh
 # FIND MEMTILE HEIGHT; top.v will have e.g.
 # 
 # // Parameter mem_tile_height 	= 1
@@ -97,6 +105,7 @@ if ($#argv == 1) then
     echo "        -config <config_filename.bs>"
     echo "        -input   <input_filename.png>"
     echo "        -output <output_filename.raw>"
+    echo "        -in1  s3t0 <1bitin_filename>",
     echo "        -out1 s1t0 <1bitout_filename>",
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
@@ -188,6 +197,11 @@ while ($#argv)
       set out1   = $2; shift;
       breaksw;
 
+    case -in1:
+      set inpad = $2; shift;
+      set in1   = $2; shift;
+      breaksw;
+
     ########################################
     # Switches: Debugging
 
@@ -232,6 +246,14 @@ if ($?ONEBIT) then
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
 endif
+
+if ($?TWO_IN_TWO_OUT) then
+  set io_config = `pwd`/io/2in2out.io.json
+  echo -n "$0:t oh wait it's 2in2out okay..."
+  echo    "i will use '$io_config' for io config"
+endif
+
+
 
 # if ($?VERBOSE) then
 if (1) then
@@ -279,7 +301,8 @@ set nclocks = "-nclocks $nclocks"
   set config = $tmpdir/${config:t:r}.bs
 
   # Here's some terrible hackiness
-  if ($?ONEBIT) then
+  # if ($?ONEBIT) then
+  if (1) then
     echo ''
     echo 'HACK WARNING found onebit_bool config'
     echo 'HACK WARNING found onebit_bool config'
@@ -310,8 +333,8 @@ GENERATE:
   # How about skip generator if
   # running on travis AND already built cgra_info.txt
   #
+  set gbuild = ../../hardware/generator_z/top
   if ($?TRAVIS) then
-    set gbuild = ../../hardware/generator_z/top
     if (-e $gbuild/cgra_info.txt) then
       echo '#####################################################################'
       echo  ${0:t}: I am in a travis script AND I found an existing cgra_info.txt
@@ -329,7 +352,7 @@ GENERATE:
     # echo "${0:t}: Building CGRA because you asked for it with '-gen'..."
     echo "${0:t}: Building CGRA because it's the default..."
 
-    setenv USE_VERILATOR_HACKS "TRUE"
+
     if ($?VERBOSE) echo "${0:t}: $gbuild/build_cgra.sh"
     pushd $gbuild >& /dev/null; ./build_cgra.sh || set EXIT13; popd >& /dev/null
     if ($?VERBOSE) $gbuild/bin/show_cgra_info.csh

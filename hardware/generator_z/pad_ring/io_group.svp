@@ -22,7 +22,7 @@ input [`$num_ios-1`:0] f2p_wide,
 input [`$num_ios-1`:0] f2p_1bit,
 inout [`$num_ios-1`:0] pads,
 output [`$num_ios-1`:0] p2f,
-output [`$config_data_width-1`:0] read_data
+output reg [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];

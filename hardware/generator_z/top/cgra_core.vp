@@ -334,7 +334,7 @@ read_data
   input [3:0] stall;
   input config_read;
   input config_write;
-  output [31:0] read_data;
+  output reg [31:0] read_data;
 
 //; if($include_analog_block) {
   //PADS FOR ANALOG BLOCK

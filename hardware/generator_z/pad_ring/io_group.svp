@@ -38,7 +38,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
   .config_addr(config_addr),
   .config_read(config_read),
   .config_write(config_write),
-  .pad(pad[`$i`]),
+  .pad(pads[`$i`]),
   .read_data(read_data_tile[`$i`]),
   .f2p_16(f2p_wide),
   .f2p_1(f2p[`$i`]),

@@ -88,7 +88,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
   .pad(pads[`$i`]),
   .read_data(read_data_tile[`$i`]),
   .f2p_16(f2p_wide),
-  .f2p_1(f2p[`$i`]),
+  .f2p_1(f2p_1bit[`$i`]),
   .p2f(p2f[`$i`]),
   .tile_id(16'd`$tile_id_offset + ($tile_id_incr * $i)`)
 );

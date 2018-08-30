@@ -110,6 +110,7 @@ assign config_write = 1;
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
     .pads_`$side`_`$i`(pads_`$side`_`$i`),
     .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
+
 //;   }
 //; }
     .config_data(config_data),
@@ -120,5 +121,19 @@ assign config_write = 1;
     .clk(clk),
     .reset(reset)
   );
+
+//;open(INFO, ">>cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
+//; for my $side (1,2,3,4) {
+//;    my $fname = "TILEio_group_unq$side";
+    // $fname
+//;    open(INP, "<$fname") or die "Couldn't open file $fname, $!";
+//;    while (<INP>) { print INFO $_; }
+//;    close INP;
+//; }
+//; print INFO "</CGRA>\n";
+//; close INFO;
+
+
+
 
 endmodule

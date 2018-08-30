@@ -327,6 +327,8 @@ read_data
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
 //;print INFO "<CGRA>\n";
+
+
   input [31:0] config_addr;
   input [31:0] config_data;
   input clk;
@@ -825,7 +827,10 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //; #
 //;    }
 
-//;   
+
+
+
+
 //;   # cgra_info/io1bit tiles
 //;   { 
 //;     # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
@@ -849,6 +854,10 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;     my $bitnum = $tile_config->{ 'io1' }{ 'bit_pos' };
 //;     if ($tile_type eq "io1") { print INFO "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->\n"; }
 //;   } 
+
+
+
+
 //;   # cgra_info/empty tiles
 //;   if ($tile_type ne "empty") {
 //;     open (INP, "<TILE".$inst_obj->mname()) or die "Couldn't open file TILE$inst_obj->mname(), $!";
@@ -998,7 +1007,7 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;     $incr*=2;
 //;   }
 //; }
-//; print INFO "</CGRA>\n";
+//; # print INFO "</CGRA>\n";
 //; close INFO;
     assign read_data_pe = `$read_data_pe`;
     assign read_data_memory = `$read_data_memory`;

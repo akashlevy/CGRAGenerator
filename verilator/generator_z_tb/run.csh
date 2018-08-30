@@ -5,7 +5,7 @@ echo "run.csh: DO NOT USE run.csh; use run_tbg.csh instead"
 echo "run.csh: I will redirect you :)"
 
 unset TWO_IN_TWO_OUT
-if ("$1" == "-in1') then
+if ("$1" == "-in1") then
   echo "oops so you wanted onebit input"
   echo "FOR NOW 'in1' means we do not redirect to run_tbg.csh"
   set TWO_IN_TWO_OUT
@@ -20,9 +20,6 @@ if (`expr "$*" : ".* -trace"`) then
   echo ''
   goto DO_IT_ANYWAY
 endif
-
-echo no found trace
-exit
 
 exec ./run_tbg.csh $*:q
 exit 13

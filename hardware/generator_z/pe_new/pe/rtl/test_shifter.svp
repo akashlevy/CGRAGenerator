@@ -22,7 +22,7 @@ module  `mname`  #(
 //; if($en_double) {
   input signed [DataWidth-1:0] a_shift,
 //;}
-  input signed [B_MSB:0]       b,
+  input [B_MSB:0]       b,
 
   output logic [DataWidth-1:0] res
 );
@@ -33,10 +33,10 @@ logic [DataWidth-1:0] rshift_val;
 //; if($en_opt == 0) {
 //;   if($en_double & $is_msb) {
   assign lshift_val = {a, (a_shift & {DataWidth{double_mode}}) } << b;
-  assign rshift_val = is_signed ? (a >>> b) : (a >> b);
+  assign rshift_val = is_signed ? a >>> b) : (a >> b);
 //;   } elsif($en_double & ($is_msb==0)) {
   assign lshift_val = a << b;
-  assign rshift_val = is_signed ? ({(a_shift & {DataWidth{double_mode}}), a} >>> b) :
+  assign rshift_val = is_signed ? ({(a_shift & {DataWidth{double_mode}}, a}) >>> b) :
                                   ({(a_shift & {DataWidth{double_mode}}), a} >> b);
 //;   } else {
   assign lshift_val = a << b;
@@ -94,12 +94,10 @@ assign rshift_val = (b[B_MSB] | ~double_mode | (~|b[B_MSB-1:0])) ? rsh_res : (rs
 
 logic signed [2*DataWidth-1:0] shift_inp;
 logic [2*DataWidth-1:0] shift_res;
-logic [2*DataWidth-1:0] shift_res_sign;
 logic [2*DataWidth-1:0] a_reverse;
 
 assign shift_inp = dir_left ? a_reverse : {{DataWidth{1'b0}},a};
-assign shift_res_sign = shift_inp >>> b[B_MSB:0];
-assign shift_res      = is_signed ? shift_res_sign : (shift_inp >> b[B_MSB:0]);
+assign shift_res      = (is_signed & !dir_left) ? shift_inp >>> b[B_MSB:0] : (shift_inp >> b[B_MSB:0]);
 
 assign rshift_val = shift_res[DataWidth-1:0];//(a >> b);
 
@@ -114,13 +112,11 @@ endgenerate
 
 //;   } else {
 logic signed [2*DataWidth-1:0] shift_inp;
-logic [2*DataWidth-1:0] shift_res_sign;
 logic [2*DataWidth-1:0] shift_res;
 logic [2*DataWidth-1:0] a_reverse;
 
 assign shift_inp = dir_left ? a_reverse : {{DataWidth{1'b0}},a};
-assign shift_res_sign = shift_inp >>> b[B_MSB:0];
-assign shift_res      = is_signed ? shift_res_sign : (shift_inp >> b[B_MSB:0]);
+assign shift_res  = (is_signed & !dir_left) ? shift_inp >>> b[B_MSB:0] : (shift_inp >> b[B_MSB:0]);
 
 assign rshift_val = shift_res[DataWidth-1:0];//(a >> b);
 
@@ -141,9 +137,9 @@ logic [DataWidth-1:0] a_reverse;
 
 
 assign shift_inp = dir_left ? a_reverse : a;
-assign shift_res =  is_signed ? (shift_inp >>> b): (shift_inp >> b);//(shift_inp >> b);
+assign shift_res =  (is_signed & !dir_left)  ? (shift_inp >>> b): (shift_inp >> b);
 
-assign rshift_val = shift_res;//(a >> b);
+assign rshift_val = shift_res; //(a >> b);
 
 genvar g_i;
 generate

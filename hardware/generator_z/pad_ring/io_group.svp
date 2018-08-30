@@ -7,7 +7,7 @@
 //; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>0, doc=>'First tile_id to assign');
 //; my $tile_id_incr = parameter(Name=>'tile_id_incr', val=> 1, doc=>'How much should we increment the tile_id by for each io tile instance');
 //; # This is to convert the direction to a side number that the rest of CGRAGenerator uses
-//; my %side_to_side_num = {'N',3,'S',1,'E',0,'W',2}; 
+//; my %side_to_side_num = ('N',3,  'S',1,  'E',0,  'W',2);
 
 // io group `$io_group_num`
 
@@ -31,6 +31,28 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 
 //; for (my $i=0; $i < $num_ios; $i++) {
+
+
+//;  # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
+//;  my $hex_id = sprintf("0x%x", $tile_id_offset + ($tile_id_incr * $i));
+//;  my ($row,$col) = (-1,-1,-1);
+//; 
+//;  if    ($side eq "N") { $row = 2; }
+//;  elsif ($side eq "E") { $row = 2+$i; }
+//;  elsif ($side eq "W") { $row = 2+$i; }
+//;  elsif ($side eq "S") { $row = 2+$num_ios-1; }
+//;
+//;  if    ($side eq "N") { $col = 2+$i; }
+//;  elsif ($side eq "E") { $col = 2+$num_ios-1; }
+//;  elsif ($side eq "W") { $row = 2; }
+//;  elsif ($side eq "S") { $row = 2+$i; }
+//;
+//;  my $padside = %side_to_side_num{$side};
+
+// FOO `$side`
+// FOO <tile type='io1bit' tile_addr='`$hex_id`' row='`$row`' col='`$col`' tracks='BUS1:1 BUS16:0' name='pad_S`$padside`_T`$i`'>
+
+
   `$io1bit_obj->instantiate()` (
   .clk(clk),
   .reset(reset),

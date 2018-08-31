@@ -20,12 +20,12 @@
 // in a genesis type parameterization.
 ////////////////////////////////////////////////////////////////////////////////
 //; my $num_tracks = $self->get_top_param('num_tracks');
-//; my $use_bs = parameter(NAME => 'use_bs', val => 1);
-//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 1);
+//; my $use_bs = parameter(NAME => 'use_bs', val => 0);
+//; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
 //; my $config_bs = parameter(NAME => 'config_bs', val => '/horowitz/users/ajcars/CGRAGenerator/hardware/generator_z/top/ncsim_verif/cascade_reordered.bs', DOC => "Bitstream to configure CGRA");
 //; my $input_file = parameter(NAME => 'input', val => '/horowitz/users/ajcars/CGRAGenerator/hardware/generator_z/top/ncsim_verif/cascade_input.raw', DOC => "Input image to use for test");
 //; my $halide_out_file = parameter(NAME => 'halide_out', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_bw/conv_bw_halide_out.raw', DOC => "Output image to test against");
-//; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
+//; my $do_config_test = parameter(NAME => 'do_config_test', val => 1);
 //; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
 //; my $crop = 0;
 program automatic `mname`(
@@ -38,15 +38,15 @@ program automatic `mname`(
    parameter io_delay = 260;
    parameter io1bit_num_features=1;
    parameter io16bit_num_features=1;
-   parameter mem_num_features=17;
+   parameter mem_num_features=15;
    parameter pe_num_features=11;
-   parameter low_sram_feature=5;
-   parameter high_sram_feature=8;
+   parameter low_sram_feature=3;
+   parameter high_sram_feature=6;
    parameter gout_sel_feature = 10;
    parameter mem_low_sb_unq3_feature=0;
-   parameter mem_high_sb_unq3_feature=1;
-   parameter mem_low_sb_unq1_feature = 2;
-   parameter mem_high_sb_unq1_feature = 3;
+   parameter mem_high_sb_unq3_feature=0;
+   parameter mem_low_sb_unq1_feature = 1;
+   parameter mem_high_sb_unq1_feature = 1;
    parameter pe_low_sb_feature = 8;
    parameter pe_high_sb_feature = 9;
    // some variables to control the test

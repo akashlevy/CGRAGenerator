@@ -30,6 +30,11 @@ module `mname` (
   input reset_in
 );
 
+
+//; if ($connect_GC == 1) {
+wire [`$config_data_width-1`:0] config_data;
+wire [`$config_addr_width-1`:0] config_addr;
+//; }
 wire clk;
 wire reset;
 wire config_read;
@@ -87,7 +92,7 @@ assign config_write = 1;
 //;   for my $side (@sides) {
     .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
-    .p2f_`$side`_`$i`(p2f`$side`_`$i`),
+    .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
 //;   }
 //; }
     .clk(clk),

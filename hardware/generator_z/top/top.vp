@@ -148,7 +148,7 @@ assign config_write = 1;
 //;# //; print INFO2 "<CGRA>\n";
 //;# //; for my $i (0 .. $#top::CGRA_INFO) {
 //;# //;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
-//;# //;     print INFO2 @top::CGRA_INFO[$i] . "\n";
+//;# //;     print INFO2 @top::CGRA_INFO[$i];
 //;# //;     # FIXME/TODO if no info, emit an empty tile
 //;# //; }
 //;# //; print INFO2 "</CGRA>\n";
@@ -161,25 +161,26 @@ assign config_write = 1;
 
 //; # First sixteen tiles are IO
 //; for my $i (0 .. 15) {
-//;     print INFO2 @top::CGRA_INFO[$i] . "\n";
+//;     print INFO2 @top::CGRA_INFO[$i];
 //; }
+//; my ($n_begin,$e_begin,$s_begin,$w_begin) = (0,16,32,48);
 //; # Then sixteen rows of main grid bounded by IO
 //; for my $a (0 .. 15) {
 //;    my $i;
 //;    for my $b (0..17) {
-//;       if ($b == 0) { $i = $a + 16; }           # west side pads
-//;       elsif ($b == 17) { $i = $a + 48; }       # east side pads
+//;       if ($b == 0) { $i = $a + $w_begin; }           # west side pads
+//;       elsif ($b == 17) { $i = $a + $e_begin; }       # east side pads
 //;       else { $i = (4*16) + (16*$a) + ($b-1); } # pe/mem tiles
-//;       print INFO2 @top::CGRA_INFO[$i] . "\n";
+//;       print INFO2 @top::CGRA_INFO[$i];
 //;    }
 //; }
 //; # Final sixteen tiles are IO (south side pads)
-//; for my $i (32 .. 47) {
-//;     print INFO2 @top::CGRA_INFO[$i] . "\n";
+//; for my $i ($s_begin .. ($s_begin+15)) {
+//;     print INFO2 @top::CGRA_INFO[$i];
 //; }
 //; # Remaining tiles (gst)
 //; for my $i ((4*16+16*16) .. $#top::CGRA_INFO) {
-//;     print INFO2 @top::CGRA_INFO[$i] . "\n";
+//;     print INFO2 @top::CGRA_INFO[$i];
 //; }
 
 //; print INFO2 "</CGRA>\n";

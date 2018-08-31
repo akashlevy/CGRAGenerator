@@ -31,7 +31,6 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
 //; for my $side (@sides) {
 //;   for (my $i = 0; $i<$num_groups_per_side; $i++) {
 //;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,io_group_num=>$group,tile_id_offset=>$id_offset);
-//;     $group++;
 //;     $id_offset += $num_ios_per_group;
   `$io_group_obj->instantiate()` (
   .clk(clk),
@@ -40,13 +39,14 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .config_addr(config_addr),
   .config_read(config_read),
   .config_write(config_write),
-  .f2p_wide(f2p_wide_`$side`[`$i`]),
-  .f2p_1bit(f2p_1bit_`$side`[`$i`]),
-  .pads(pads_`$side`[`$i`]),
-  .p2f(p2f_`$side`[`$i`]),
+  .f2p_wide(f2p_wide_`$side`_`$i`),
+  .f2p_1bit(f2p_1bit_`$side`_`$i`),
+  .pads(pads_`$side`_`$i`),
+  .p2f(p2f_`$side`_`$i`),
   .read_data(read_data_group[`$group`])
   );
 
+//;     $group++;
 //;   }
 //; }
 

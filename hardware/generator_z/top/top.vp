@@ -1,4 +1,4 @@
-/;; # Experimenting with globals
+//; # Experimenting with globals
 //; our @CGRA_INFO;
 
 // New Top level that contains CGRA_core module and IO pad_ring module

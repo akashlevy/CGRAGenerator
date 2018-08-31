@@ -851,7 +851,6 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;       }
 //;     }
 //;     print INFO "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'$pn>\n";
-//; 
 //;     # Note spurious tile info will get overwritten by io_group.svp
 //;     @top::CGRA_INFO[$tile_addr] .= "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'$pn>\n";
 //; 
@@ -867,6 +866,7 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;     open (INP, "<TILE".$inst_obj->mname()) or die "Couldn't open file TILE$inst_obj->mname(), $!";
 //;     while (<INP>) {
 //;       print INFO $_;
+//;       @top::CGRA_INFO[$tile_addr] .= $_;
 //;     }
 //;     close INP;
 //;   	if ($tile_type eq "io1") {
@@ -983,7 +983,8 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
         .gout_l_`$i`(global_wire_h2l_`$incr`_`$i`_`$new_key`), 
 //;             if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
         .gin_l_`$i`(global_wire_l2h_`(floor($incr/2))`_`$child_key`), 
-//;               print INFO "      <tile>0x${child_addr_hex}</tile>\n";
+//;               print INFO                         "      <tile>0x${child_addr_hex}</tile>\n";
+//;               @top::CGRA_INFO[$new_tile_addr] .= "      <tile>0x${child_addr_hex}</tile>\n";
 //;             } else {
 //        .gout_l_`$i`(), 
 //        .gin_u_`$i`(1'b0), 
@@ -994,8 +995,10 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
         .read_data(read_data_`$new_tile_addr_hex`)
         
 //;           $new_tile_addr++;
-//;           print INFO "    </controlled_tiles>\n";
-//;           print INFO "  </tile>\n";
+//;           print INFO                         "    </controlled_tiles>\n";
+//;           @top::CGRA_INFO[$new_tile_addr] .= "    </controlled_tiles>\n";
+//;           print INFO                         "  </tile>\n";
+//;           @top::CGRA_INFO[$new_tile_addr] .= "  </tile>\n";
       );
 //;    if ($read_data_global eq '') {
 //;      $read_data_global = "read_data_$new_tile_addr_hex";
@@ -1010,7 +1013,8 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;     foreach my $key (keys %gst_hash_new) {
 //;     }
 //;     %gst_hash_old = %gst_hash_new;
-//;     print INFO "####################GST level: $incr #################\n";
+//;     print INFO                         "####################GST level: $incr #################\n";
+//;     @top::CGRA_INFO[$new_tile_addr] .= "####################GST level: $incr #################\n";
 //;     if (($new_tile_addr - $last_tile_addr)==0 || ($incr >= 1024)) {last;}
 //;     $last_tile_addr = $new_tile_addr;
 //;     $incr*=2;

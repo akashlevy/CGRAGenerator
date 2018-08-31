@@ -7,7 +7,9 @@
 //; my $group = 0;
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 
-//; my @sides = ('N','S','E','W');
+//; # my @sides = ('N','S','E','W');
+//; # I need this order for debugging; we can change it back later if you like...
+//; my @sides = ('N','E','S','W');
 module `mname` (
 input clk,
 input reset,

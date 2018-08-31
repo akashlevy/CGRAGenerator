@@ -48,8 +48,9 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;  elsif ($side eq "S") { $row = 2+$i; }
 //;
 //;  my $padside = %side_to_side_num{$side};
+//;  my $portside = ($padside+2)%4;
 //; 
-//;  my $bitnum = $i % 16;
+//;  my $bitnum = 15-($i % 16);
 //;  my @collateral = (
 //; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' tracks='BUS1:1 BUS16:0' name='pad_S${padside}_T${i}'>",
 //; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
@@ -62,12 +63,12 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; "        <src sel='0'>16</src> <!-- 16 bit mode -->",
 //; "        <src sel='1'>1</src>  <!--  1 bit mode -->",
 //; "    </mux>",
-//; "    <input>in_1BIT_S${side}_T0</input>",
-//; "    <output>out_1BIT_S${side}_T0</output>",
-//; "    <output>out_1BIT_S${side}_T1</output>",
-//; "    <output>out_1BIT_S${side}_T2</output>",
-//; "    <output>out_1BIT_S${side}_T3</output>",
-//; "    <output>out_1BIT_S${side}_T4</output>",
+//; "    <input>in_1BIT_S${portside}_T0</input>",
+//; "    <output>out_1BIT_S${portside}_T0</output>",
+//; "    <output>out_1BIT_S${portside}_T1</output>",
+//; "    <output>out_1BIT_S${portside}_T2</output>",
+//; "    <output>out_1BIT_S${portside}_T3</output>",
+//; "    <output>out_1BIT_S${portside}_T4</output>",
 //; "  </tile>\n");
 //; 
 //; print "// ".join("\n// ", @collateral);

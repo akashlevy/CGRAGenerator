@@ -70,18 +70,16 @@ module `mname`();
     * Instantiate DUT interface and DUT
     * *************************************************************************/
    //; # We use generate_base when there is for sure just one of X
-   //; my $dut_obj = generate_base($design_name, 'dut');
+   //; my $dut_obj = generate_base($design_name, 'dut', connect_GC=>1);
    //; my $dut_ifc_path = $dut_obj->get_param('IFC');
    //; my $dut_ifc = clone($dut_ifc_path, 'dut_ifc');
    `$dut_ifc->instantiate` (.Clk(Clk), .Reset(Reset));
 
    `$dut_obj->instantiate` (
-	//input pads
-//;for(my $side = 0; $side < 4; $side++){
-//;	for(my $track = 0; $track < $num_tracks; $track++){
-	.pad_S`$side`_T`$track`(pads_S`$side`[`$track`]),
-//;	}
-//;}	
+	.pads_N_0(pads_S3),
+	.pads_S_0(pads_S1),
+	.pads_E_0(pads_S0),
+	.pads_W_0(pads_S2),
 	.clk_in(Clk),
 	.reset_in(Reset)
    );

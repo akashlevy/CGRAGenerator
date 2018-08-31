@@ -1,3 +1,6 @@
+/;; # Experimenting with globals
+//; our @CGRA_INFO;
+
 // New Top level that contains CGRA_core module and IO pad_ring module
 //; #TOP LEVEL PARAMS
 //; my $num_ios_per_side = parameter(name=>'num_ios_per_side', val=>16, min=>16, step=>16);
@@ -132,6 +135,20 @@ assign config_write = 1;
 //; }
 //; print INFO "</CGRA>\n";
 //; close INFO;
+
+
+
+
+//; open(INFO2, ">tmp.txt") or die "Couldn't open file tmp.txt, $!";
+//; print INFO2 "<CGRA>\n";
+//; for my $i (0 .. $#top::CGRA_INFO) {
+//;     print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
+//; }
+//; print INFO2 "</CGRA>\n";
+//; close INFO2;
+
+
+
 
 
 

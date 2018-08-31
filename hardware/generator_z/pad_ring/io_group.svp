@@ -31,9 +31,9 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 
 //; for (my $i=0; $i < $num_ios; $i++) {
-
-
+//;
 //;  # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
+//;  my $id = $tile_id_offset + ($tile_id_incr * $i);
 //;  my $hex_id = sprintf("0x%X", $tile_id_offset + ($tile_id_incr * $i));
 //;  my ($row,$col) = (-1,-1,-1);
 //; 
@@ -48,10 +48,10 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;  elsif ($side eq "S") { $row = 2+$i; }
 //;
 //;  my $padside = %side_to_side_num{$side};
-
+//; 
 //;  my $bitnum = $i % 16;
 //;  my @collateral = (
-//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' tracks='BUS1:1 BUS16:0' name='pad_S${padside}_T{$i}'>",
+//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' tracks='BUS1:1 BUS16:0' name='pad_S${padside}_T${i}'>",
 //; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
 //; "    <io_group>$io_group_num</io_group>",
 //; "    <tri feature_address='0' reg_address='0' bitl='0' bith='0'>",
@@ -71,12 +71,14 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; "  </tile>\n");
 //; 
 //; print "// ".join("\n// ", @collateral);
+//; @top::CGRA_INFO[$id] = join("\n", @collateral);
+//; 
 //;
 //;my $filename = "TILE".$self->mname();
 //;open(TILEINFO, ">$filename") or die "Couldn't open file $filename, $!";
 //;print TILEINFO join("\n", @collateral);
 //;close TILEINFO;
-
+//;print @top::CGRA_INFO;
 
   `$io1bit_obj->instantiate()` (
   .clk(clk),

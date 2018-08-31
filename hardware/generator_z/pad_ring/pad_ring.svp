@@ -3,7 +3,7 @@
 //; my $num_groups_per_side = parameter(Name=>'num_groups_per_side', val=>1, min=>1, step=>1);
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
-//; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>0, min=>0, step=>1);
+//; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>400, min=>0, step=>1);
 //; my $group = 0;
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 

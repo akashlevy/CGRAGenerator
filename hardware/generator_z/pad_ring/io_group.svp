@@ -31,7 +31,35 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 
 //;   my $padside;
-//;   $padside = %side_to_side_num{$side};
+//;   $padside = $side_to_side_num{$side};
+//;   my $portside = ($padside+2)%4;
 
+//; for (my $i=0; $i < $num_ios; $i++) {
+//; 
+//;   # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
+//;   my $id = $tile_id_offset + ($tile_id_incr * $i);
+//;   my $hex_id = sprintf("0x%X", $tile_id_offset + ($tile_id_incr * $i));
+//;   my ($row,$col) = (-1,-1);
+//; 
+//;   print "// $i";
+//;   my $filename = "TILE".$self->mname();
+//;   open(TILEINFO, ">>$filename") or die "Couldn't open file $filename, $!";
+//;   print TILEINFO "foo";
+//;   close TILEINFO;
+//; }
+
+//; for (my $i=0; $i < $num_ios; $i++) {
+  `$io1bit_obj->instantiate()` (
+);
+//; 
+//;   $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");
+//; }
+
+// SV equivalent: assign read_data = read_data_tile.or();
+always @(*) begin
+  read_data = 0;
+  for (integer i=0; i < `$num_ios`; i++)
+    read_data = read_data | read_data_tile[i];
+end
 
 endmodule

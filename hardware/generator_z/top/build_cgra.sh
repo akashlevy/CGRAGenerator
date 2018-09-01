@@ -1,22 +1,6 @@
 #!/bin/bash
 
-perl --version | grep version
-cat -n ../pad_ring/io_group.svp | tail -n 60
-
-function main {
-
-  # PREAMBLE
-  cleanup_from_prev_builds
-  register_all_switchbox_outputs
-  use_verilator_hacks_if_travis
-  find_or_install_genesis2
-  undo_tristates_if_using_verilator
-  set_short_or_tall $* || echo 13
-
-  ########################################################################
-  # Generate #############################################################
-  ########################################################################
-
+function do_genesis {
   Genesis2.pl -parse -generate -top top -hierarchy top.xml \
     -xml ./bin/${short_or_tall}mem.xml \
     -input top.vp \
@@ -69,8 +53,20 @@ function main {
     ../jtag/Template/src/digital/reg_file.svp \
     ../jtag/Template/src/digital/cfg_and_dbg.svp \
     || exit 13
+}
 
+function main {
 
+  # PREAMBLE
+  cleanup_from_prev_builds
+  register_all_switchbox_outputs
+  use_verilator_hacks_if_travis
+  find_or_install_genesis2
+  undo_tristates_if_using_verilator
+  set_short_or_tall $* || echo 13
+
+  # GENERATE
+  do_genesis
 
   ########################################################################
   # Post-process #########################################################
@@ -93,7 +89,7 @@ function main {
   source remove_genesis_wires.csh
 
   # SR 3/29
-  # If using verilator, change inouts to separate ins and outs (part 2)
+  # If using verilator, change pad inouts to separate ins and outs (part 2)
   # See 'fix_inouts.csh' code for details
   # Note fix_inouts is supposed to DO NOTHING if it detects a no-verilator run
   ./fix_inouts.csh top
@@ -163,7 +159,7 @@ function find_or_install_genesis2 {
 }
 function undo_tristates_if_using_verilator {
   # SR 3/29/2018
-  # If using verilator, change inouts to separate ins and outs (part 1)
+  # If using verilator, change pad inouts to separate ins and outs (part 1)
   # i.e. use ../io1bit/verilator_hack/io1bit.vp instead of ../io1bit/io1bit.vp
   #
   ./fix_inouts.csh io1bit | sed '$d'
@@ -171,7 +167,7 @@ function undo_tristates_if_using_verilator {
     echo '  Note: not using verilator tri/inout hack';
     io1bit=../io1bit/io1bit.vp;
   else
-    echo "  Verilator hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
+    echo "  Verilator pad tristate inout hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
     io1bit=../io1bit/verilator_hack/io1bit.vp;
   fi
 }

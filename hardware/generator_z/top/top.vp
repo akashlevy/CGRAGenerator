@@ -12,17 +12,34 @@
 //; my $config_addr_width = parameter(name=>'config_addr_width', val=>32, min=>1, step=>1);
 //; my $config_data_width = parameter(name=>'config_data_width', val=>32, min=>1, step=>1);
 //; my $num_stall_domains = parameter(name=>'num_stall_domains', val=>4, min=>1, step=>1);
+//; 
+//; # my $tristate_supported = parameter(name=>'tristate_supported', val=>0, list=>[0,1]);
+//; my $tristate_supported = 1;
+//; if (exists $ENV{"TRISTATE_UNAVAILABLE"}) { $tristate_supported = 0; }
+//; 
 module `mname` (
   //pads_{side}_{group_num_within_side} [bit number within group]
 //; for (my $i=0; $i<$num_groups_per_side; $i++) {
+//;   if ($tristate_supported) {
   inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_E_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_W_`$i`,
+//;   } else {
+  input [`$num_ios_per_group-1`:0] pads_N_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_S_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_E_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_W_`$i`_in,
+
+  output [`$num_ios_per_group-1`:0] pads_N_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_S_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_E_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_W_`$i`_out,
+//;   }
 //; }
 //; if ($connect_GC == 0) {
-  input [`$config_data_width-1`:0] config_data,
-  input [`$config_addr_width-1`:0] config_addr,
+  input [`$config_data_width-1`:0] config_data_in,
+  input [`$config_addr_width-1`:0] config_addr_in,
 //; }
   input tck,
   input tms,
@@ -35,9 +52,11 @@ module `mname` (
 
 
 //; if ($connect_GC == 1) {
-wire [`$config_data_width-1`:0] config_data;
-wire [`$config_addr_width-1`:0] config_addr;
+wire [`$config_data_width-1`:0] config_data_in;
+wire [`$config_addr_width-1`:0] config_addr_in;
 //; }
+
+
 wire clk;
 wire reset;
 wire config_read;
@@ -57,8 +76,8 @@ assign read_data = read_data_core | read_data_pads;
 //; if($connect_GC == 1) {
       .clk_out(clk),
       .reset_out(reset),
-      .config_addr_out(config_addr),
-      .config_data_out(config_data),
+      .config_addr_out(config_addr_in),
+      .config_data_out(config_data_in),
       .write(config_write),
 //; }
       .config_data_in(read_data),
@@ -100,8 +119,8 @@ assign config_write = 1;
 //; }
     .clk(clk),
     .reset(reset),
-    .config_addr(config_addr),
-    .config_data(config_data),
+    .config_addr(config_addr_in),
+    .config_data(config_data_in),
     .config_read(config_read),
     .config_write(config_write),
     .stall(stall),
@@ -116,13 +135,17 @@ assign config_write = 1;
 //;   for my $side (@sides) {
     .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
+//;     if ($tristate_supported) {
     .pads_`$side`_`$i`(pads_`$side`_`$i`),
+//;     } else {
+    .pads_`$side`_`$i`_in(pads_`$side`_`$i`_in),
+    .pads_`$side`_`$i`_out(pads_`$side`_`$i`_out),
+//;   }
     .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
-
 //;   }
 //; }
-    .config_data(config_data),
-    .config_addr(config_addr),
+    .config_data(config_data_in),
+    .config_addr(config_addr_in),
     .config_read(config_read),
     .config_write(config_write),
     .read_data(read_data_pads),

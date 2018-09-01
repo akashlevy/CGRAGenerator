@@ -6,23 +6,33 @@
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
 //; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>0, doc=>'First tile_id to assign');
 //; my $tile_id_incr = parameter(Name=>'tile_id_incr', val=> 1, doc=>'How much should we increment the tile_id by for each io tile instance');
+//; 
+//; # my $tristate_supported = parameter(name=>'tristate_supported', val=>0, list=>[0,1]);
+//; my $tristate_supported = 1;
+//; if (exists $ENV{"TRISTATE_UNAVAILABLE"}) { $tristate_supported = 0; }
+//; 
 //; # This is to convert the direction to a side number that the rest of CGRAGenerator uses
 //; my %side_to_side_num = ('N',3,  'S',1,  'E',0,  'W',2);
 
 // io group `$io_group_num`
 
 module `mname` (
-input clk,
-input reset,
-input [`$config_data_width-1`:0] config_data,
-input [`$config_addr_width-1`:0] config_addr,
-input config_read,
-input config_write,
-input [`$num_ios-1`:0] f2p_wide,
-input [`$num_ios-1`:0] f2p_1bit,
-inout [`$num_ios-1`:0] pads,
-output [`$num_ios-1`:0] p2f,
-output reg [`$config_data_width-1`:0] read_data
+  input clk,
+  input reset,
+  input [`$config_data_width-1`:0] config_data,
+  input [`$config_addr_width-1`:0] config_addr,
+  input config_read,
+  input config_write,
+  input [`$num_ios-1`:0] f2p_wide,
+  input [`$num_ios-1`:0] f2p_1bit,
+//; if ($tristate_supported) {
+  inout [`$num_ios-1`:0] pads,
+//; } else {
+  input  [`$num_ios-1`:0] pads_in,
+  output [`$num_ios-1`:0] pads_out,
+//; }
+  output [`$num_ios-1`:0] p2f,
+  output reg [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
@@ -86,7 +96,12 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
   .config_addr(config_addr),
   .config_read(config_read),
   .config_write(config_write),
+//;   if ($tristate_supported) {
   .pad(pads[`$i`]),
+//;   } else {
+  .pad_in(pads_in[`$i`]),
+  .pad_out(pads_out[`$i`]),
+//;   }
   .read_data(read_data_tile[`$i`]),
   .f2p_16(f2p_wide[`$i`]),
   .f2p_1(f2p_1bit[`$i`]),

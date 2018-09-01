@@ -14,7 +14,6 @@ if (`expr "$*" : ".* -trace"`) then
 endif
 
 echo no found trace
-exit
 
 exec ./run_tbg.csh $*:q
 exit 13

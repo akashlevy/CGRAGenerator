@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function do_genesis {
+  export TRISTATE_UNAVAILABLE=TRUE
   Genesis2.pl -parse -generate -top top -hierarchy top.xml \
     -xml ./bin/${short_or_tall}mem.xml \
     -input top.vp \

@@ -142,6 +142,10 @@ while ($#argv)
 
     case '-build':
     case '-rebuild':
+        echo WARNING You asked for it with -build
+        echo WARNING Will rebuild Vtop from scratch...
+        echo "rm build/*"
+        if (-d build) rm build/*
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 
     ########################################

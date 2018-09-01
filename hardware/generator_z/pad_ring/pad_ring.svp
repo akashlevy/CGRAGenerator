@@ -4,37 +4,51 @@
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
 //; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>400, min=>0, step=>1);
+//; 
+//; # my $tristate_supported = parameter(name=>'tristate_supported', val=>0, list=>[0,1]);
+//; my $tristate_supported = 1;
+//; if (exists $ENV{"TRISTATE_UNAVAILABLE"}) { $tristate_supported = 0; }
+//; 
 //; my $group = 0;
+//; 
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 
 //; # my @sides = ('N','S','E','W');
 //; # I need this order for debugging; we can change it back later if you like...
 //; my @sides = ('N','E','S','W');
 module `mname` (
-input clk,
-input reset,
-input [`$config_data_width-1`:0] config_data,
-input [`$config_addr_width-1`:0] config_addr,
-input config_read,
-input config_write,
+  input clk,
+  input reset,
+  input [`$config_data_width-1`:0] config_data,
+  input [`$config_addr_width-1`:0] config_addr,
+  input config_read,
+  input config_write,
+
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {
-input [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`,
-input [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`,
-inout [`$num_ios_per_group-1`:0] pads_`$side`_`$i`,
-output [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`,
+  input  [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`,
+  input  [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`,
+//;     if ($tristate_supported) {
+  inout  [`$num_ios_per_group-1`:0] pads_`$side`_`$i`,
+//;     } else {
+  input  [`$num_ios_per_group-1`:0] pads_`$side`_`$i`_in,
+  output [`$num_ios_per_group-1`:0] pads_`$side`_`$i`_out,
+//;     }
+  output [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`,
 //;   }
+
 //; }
-output reg [`$config_data_width-1`:0] read_data
+  output reg [`$config_data_width-1`:0] read_data
 );
 
 wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:0];
+
 //; my $id_offset = $tile_id_offset;
 //; for my $side (@sides) {
 //;   for (my $i = 0; $i<$num_groups_per_side; $i++) {
 //;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${group}",side=>$side,io_group_num=>$group,tile_id_offset=>$id_offset);
 //;     $id_offset += $num_ios_per_group;
-  `$io_group_obj->instantiate()` (
+`$io_group_obj->instantiate()` (
   .clk(clk),
   .reset(reset),
   .config_data(config_data),
@@ -43,10 +57,15 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .config_write(config_write),
   .f2p_wide(f2p_wide_`$side`_`$i`),
   .f2p_1bit(f2p_1bit_`$side`_`$i`),
+//;     if ($tristate_supported) {
   .pads(pads_`$side`_`$i`),
+//;     } else {
+  .pads_in(pads_`$side`_`$i`_in),
+  .pads_out(pads_`$side`_`$i`_out),
+//;     }
   .p2f(p2f_`$side`_`$i`),
   .read_data(read_data_group[`$group`])
-  );
+);
 
 //;     $group++;
 //;   }

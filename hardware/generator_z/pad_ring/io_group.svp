@@ -32,54 +32,24 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 
 //; for (my $i=0; $i < $num_ios; $i++) {
 //;
-//;  # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;  my $id = $tile_id_offset + ($tile_id_incr * $i);
-//;  my $hex_id = sprintf("0x%X", $tile_id_offset + ($tile_id_incr * $i));
-//;  my ($row,$col) = (-1,-1);
+//;   # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
+//;   my $id = $tile_id_offset + ($tile_id_incr * $i);
+//;   my $hex_id = sprintf("0x%X", $tile_id_offset + ($tile_id_incr * $i));
+//;   my ($row,$col) = (-1,-1);
 //; 
-//;  if    ($side eq "N") { $row = 0; }
-//;  elsif ($side eq "E") { $row = 2+$i; }
-//;  elsif ($side eq "W") { $row = 2+$i; }
-//;  elsif ($side eq "S") { $row = 2+$num_ios-1; }
+//;   if    ($side eq "N") { $row = 0; }
+//;   elsif ($side eq "E") { $row = 2+$i; }
+//;   elsif ($side eq "W") { $row = 2+$i; }
+//;   elsif ($side eq "S") { $row = 2+$num_ios-1; }
 //;
-//;  if    ($side eq "N") { $col = 2+$i; }
-//;  elsif ($side eq "E") { $col = 2+$num_ios-1; }
-//;  elsif ($side eq "W") { $col = 0; }
-//;  elsif ($side eq "S") { $col = 2+$i; }
+//;   if    ($side eq "N") { $col = 2+$i; }
+//;   elsif ($side eq "E") { $col = 2+$num_ios-1; }
+//;   elsif ($side eq "W") { $col = 0; }
+//;   elsif ($side eq "S") { $col = 2+$i; }
 //;
-//;  my $padside = %side_to_side_num{$side};
-//;  my $portside = ($padside+2)%4;
+//;   my $padside = %side_to_side_num{$side};
+//;   my $portside = ($padside+2)%4;
 //; 
-//;  my $bitnum = 15-($i % 16);
-//;  my $tracknum = $i % 5;
-//;  my @collateral = (
-//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' tracks='BUS1:1 BUS16:0' name='pad_S${padside}_T${i}'>",
-//; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
-//; "    <io_group>$io_group_num</io_group>",
-//; "    <tri feature_address='0' reg_address='0' bitl='0' bith='0'>",
-//; "        <direction sel='0'>in</direction>  <!--input-->",
-//; "        <direction sel='1'>out</direction> <!--output-->",
-//; "    </tri>",
-//; "    <mux feature_address='0' reg_address='0' bitl='1' bith='1'>",
-//; "        <src sel='0'>16</src> <!-- 16 bit mode -->",
-//; "        <src sel='1'>1</src>  <!--  1 bit mode -->",
-//; "    </mux>",
-//; "    <input>in_1BIT_S${portside}_T${tracknum}</input>",
-//; "    <output>out_1BIT_S${portside}_T0</output>",
-//; "    <output>out_1BIT_S${portside}_T1</output>",
-//; "    <output>out_1BIT_S${portside}_T2</output>",
-//; "    <output>out_1BIT_S${portside}_T3</output>",
-//; "    <output>out_1BIT_S${portside}_T4</output>",
-//; "  </tile>\n");
-//; 
-//; print "// ".join("\n// ", @collateral);
-//; @top::CGRA_INFO[$id] = join("\n", @collateral);
-//; 
-//;
-//;my $filename = "TILE".$self->mname();
-//;open(TILEINFO, ">$filename") or die "Couldn't open file $filename, $!";
-//;print TILEINFO join("\n", @collateral);
-//;close TILEINFO;
 
   `$io1bit_obj->instantiate()` (
   .clk(clk),
@@ -96,7 +66,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
   .tile_id(16'd`$tile_id_offset + ($tile_id_incr * $i)`)
 );
 
-//; $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");
+//;   $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");
 //; }
 
 // SV equivalent: assign read_data = read_data_tile.or();

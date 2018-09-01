@@ -1,5 +1,8 @@
 #!/bin/bash
 
+perl --version | grep version
+cat -n ../pad_ring/io_group.svp | tail -n 60
+
 function main {
 
   # PREAMBLE

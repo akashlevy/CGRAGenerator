@@ -31,31 +31,15 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 
 //; for (my $i=0; $i < $num_ios; $i++) {
-//;
-//;   my $padside;
-//;   # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;   my $id = $tile_id_offset + ($tile_id_incr * $i);
-//;   my $hex_id = sprintf("0x%X", $tile_id_offset + ($tile_id_incr * $i));
-//;   my ($row,$col) = (-1,-1);
 //; 
-//;   if    ($side eq "N") { $row = 0; }
-//;   elsif ($side eq "E") { $row = 2+$i; }
-//;   elsif ($side eq "W") { $row = 2+$i; }
-//;   elsif ($side eq "S") { $row = 2+$num_ios-1; }
-//;
-//;   if    ($side eq "N") { $col = 2+$i; }
-//;   elsif ($side eq "E") { $col = 2+$num_ios-1; }
-//;   elsif ($side eq "W") { $col = 0; }
-//;   elsif ($side eq "S") { $col = 2+$i; }
-//;
-//;   $padside = %side_to_side_num{$side};
-//;   my $portside = ($padside+2)%4;
-//; 
+//;   print "// $i";
 //;   my $filename = "TILE".$self->mname();
 //;   open(TILEINFO, ">>$filename") or die "Couldn't open file $filename, $!";
 //;   print TILEINFO "foo";
 //;   close TILEINFO;
+//; }
 
+//; for (my $i=0; $i < $num_ios; $i++) {
   `$io1bit_obj->instantiate()` (
 );
 //; 

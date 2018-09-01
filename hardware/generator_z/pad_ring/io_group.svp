@@ -30,10 +30,10 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 
 //; my $io1bit_obj = generate("io1bit", "io1bit_0", side=>$side_to_side_num{$side}, io_group=>$io_group_num);
 
-//; for (my $i=0; $i < $num_ios; $i++) {
-//; 
 //;   my $padside = %side_to_side_num{$side};
 //;   my $portside = ($padside+2)%4;
+
+//; for (my $i=0; $i < $num_ios; $i++) {
 //; 
 //;   print "// $i";
 //;   my $filename = "TILE".$self->mname();

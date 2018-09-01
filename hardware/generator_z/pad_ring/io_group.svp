@@ -50,6 +50,10 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   my $padside = %side_to_side_num{$side};
 //;   my $portside = ($padside+2)%4;
 //; 
+//;   my $filename = "TILE".$self->mname();
+//;   open(TILEINFO, ">>$filename") or die "Couldn't open file $filename, $!";
+//;   print TILEINFO "foo";
+//;   close TILEINFO;
 
   `$io1bit_obj->instantiate()` (
   .clk(clk),

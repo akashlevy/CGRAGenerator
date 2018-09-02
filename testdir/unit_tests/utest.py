@@ -366,7 +366,7 @@ def gen_output_file_cgra(tname, DBG=0):
 
     if USE_TBG:
         # run_csh = './run_tbg.csh -v -build'  # NO!!!! What are you *thinking*??
-        run_csh = './run_tbg.csh -v'
+        run_csh = './run_tbg.csh -v -nogen'
     else:
         run_csh = './run.csh -v'
         if GENERATED:          run_csh = './run.csh -v -nobuild'

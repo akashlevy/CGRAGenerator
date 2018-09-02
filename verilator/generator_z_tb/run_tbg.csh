@@ -168,6 +168,10 @@ while ($#argv)
 
     case '-build':
     case '-rebuild':
+        echo WARNING You asked for it with -build
+        echo WARNING Will rebuild Vtop from scratch...
+        echo "rm build/*"
+        if (-d build) rm build/*
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 
     ########################################
@@ -251,6 +255,17 @@ endif
 if ($?TWO_IN_TWO_OUT) then
   set io_config = `pwd`/io/2in2out.io.json
   echo -n "$0:t oh wait it's 2in2out okay..."
+  echo    "i will use '$io_config' for io config"
+endif
+
+# From Lenny, for cascade
+unset CASCADE
+# if (${config:t:r} == 'cascade') set CASCADE
+# works for e.g. "cascade" or "cascade_keyi"
+if `expr "${config:t:r}" : 'cascade'` set CASCADE
+if ($?CASCADE) then
+  set io_config = `pwd`/io/cascade_fixed.bsb.json
+  echo -n "$0:t oh wait it's cascade"
   echo    "i will use '$io_config' for io config"
 endif
 

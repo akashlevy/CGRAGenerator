@@ -16,7 +16,7 @@ set build_switch = ''
 set RUN = run.csh
 if ("$1" == "-tbg") then
   set RUN = run_tbg.csh
-  set build_switch = '-build'
+  # set build_switch = '-build' # What? No!
   shift
 endif
 

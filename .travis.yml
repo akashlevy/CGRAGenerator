@@ -22,7 +22,7 @@ install:
 
   # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
   - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
-      --branch master ../TestBenchGenerator
+      --branch io-reset ../TestBenchGenerator
 
   # Install python for testing infrastructure
   # All this just to get python3 => python3.6 or better

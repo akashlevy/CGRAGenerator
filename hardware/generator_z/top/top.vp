@@ -668,7 +668,8 @@ wire [3:0] stall;
 //;       my $sb_registered = "";
 //;       my $tile_x = $w;
 //;
-//;       foreach my $bus (keys %bus_width_hash) { my $width = %bus_width_hash{$bus}; 
+//;       foreach my $bus (keys %bus_width_hash) { 
+//;         my $width = $bus_width_hash{$bus}; 
 //;         $sb_feedthrough .= " $bus:";
 //;         $sb_registered .= " $bus:";
 //;         foreach my $seg_info (split(':', $bus_segment_hash{$bus})) {

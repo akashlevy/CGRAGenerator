@@ -100,7 +100,7 @@ travis_test_end:
 	$(HARDWARE_TOP)/bin/show_cgra_info.csh | grep mem_tile_height
 
 cascade: $(CGRA_INFO)
-	cd $(VERILATOR_TOP); run_tbg.csh \
+	cd $(VERILATOR_TOP); ./run_tbg.csh \
 	  -config ../../bitstream/examples/cascade_keyi.bsa \
 	  -input  ../../bitstream/bsbuilder/testdir/examples/cascade_input.raw \
 	  -output cascade_CGRA_out.raw \

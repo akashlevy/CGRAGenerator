@@ -32,8 +32,11 @@ def main():
                         continue
                     halide_byte = ord(halide_f.read(1))
                     if design_byte != halide_byte:
-                        print("design:", design_byte, file=sys.stderr, end="    ")
-                        print("halide:", halide_byte, file=sys.stderr)
+                        # pos in 7-digit ocatal to match od output
+                        print("pos: %07o"          % pos,         file=sys.stderr)
+                        print("skipped_pos: %07ox" % skipped_pos, file=sys.stderr)
+                        print("design:",           design_byte,   file=sys.stderr)
+                        print("halide:",           halide_byte,   file=sys.stderr)
                         raise Exception("Error at pos " + str(pos))
 
     compared_size = pos - skipped_pos

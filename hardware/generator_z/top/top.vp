@@ -153,6 +153,7 @@ assign config_write = 1;
     .reset(reset)
   );
 
+//; if (0) {
 //;open(INFO, ">>cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
 //; for my $side (1,2,3,4) {
 //;    my $fname = "TILEio_group_unq$side";
@@ -163,25 +164,25 @@ assign config_write = 1;
 //; }
 //; print INFO "</CGRA>\n";
 //; close INFO;
+//; }
 
 
 
-
-//;# //; open(INFO2, ">tmp.txt") or die "Couldn't open file tmp.txt, $!";
-//;# //; print INFO2 "<CGRA>\n";
-//;# //; for my $i (0 .. $#top::CGRA_INFO) {
-//;# //;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
-//;# //;     print INFO2 @top::CGRA_INFO[$i];
-//;# //;     # FIXME/TODO if no info, emit an empty tile
-//;# //; }
-//;# //; print INFO2 "</CGRA>\n";
-//;# //; close INFO2;
-
-
-
-//; open(INFO2, ">tmp.txt") or die "Couldn't open file tmp.txt, $!";
+//; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
 //; print INFO2 "<CGRA>\n";
+//; for my $i (0 .. $#top::CGRA_INFO) {
+//;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
+//;     print INFO2 @top::CGRA_INFO[$i];
+//;     # FIXME/TODO if no info, emit an empty tile
+//; }
+//; print INFO2 "</CGRA>\n";
+//; close INFO2;
 
+
+//; if (0) {
+//; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
+//; print INFO2 "<CGRA>\n";
+//; 
 //; # First sixteen tiles are IO
 //; for my $i (0 .. 15) {
 //;     print INFO2 @top::CGRA_INFO[$i];
@@ -205,11 +206,9 @@ assign config_write = 1;
 //; for my $i ((4*16+16*16) .. $#top::CGRA_INFO) {
 //;     print INFO2 @top::CGRA_INFO[$i];
 //; }
-
+//; 
 //; print INFO2 "</CGRA>\n";
 //; close INFO2;
-
-
-
+//; }
 
 endmodule

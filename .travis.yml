@@ -49,9 +49,10 @@ script:
 
   - pushd testdir
   -   make travis_test_basic   SILENT=TRUE MEMHEIGHT=short TIME=10m
+  -   make travis_test_cascade SILENT=TRUE MEMHEIGHT=short TIME=03m
+  -   ls error_and_fail_here
   -   make travis_test_unit    SILENT=TRUE MEMHEIGHT=short TIME=10m
   -   make travis_test_serpent SILENT=TRUE MEMHEIGHT=short TIME=05m
-  -   make travis_test_cascade SILENT=TRUE MEMHEIGHT=short TIME=03m
   -   make travis_test_end     SILENT=TRUE MEMHEIGHT=short TIME=00m
   - popd
 

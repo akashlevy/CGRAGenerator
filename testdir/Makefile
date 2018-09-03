@@ -107,9 +107,10 @@ cascade: $(CGRA_INFO)
 	  -out1 s1t0 cascade_CGRA_out1.raw \
 	  -delay 260,0 -nclocks 1M || exit 13
 	cd $(VERILATOR_TOP); \
-	  ls -l cascade_CGRA_out.raw cascade_CGRA_out1.raw; \
-	  od -t u1 cascade_CGRA_out.raw; \
-	  od -t u1 cascade_CGRA_out1.raw
+	  ls -l cascade_CGRA_out.raw build/*.raw; \
+	  od -t u1 cascade_CGRA_out.raw | head; \
+	  od -t u1 build/io1_out_0_0.raw | head; \
+	  od -t u1 ../../bitstream/bsbuilder/testdir/examples/cascade_halide_out.raw | head;
 	cd $(VERILATOR_TOP); python \
 	  ./bin/keyi_cascade_compare.py  \
 	  cascade_CGRA_out.raw build/io1_out_0_0.raw \

@@ -106,9 +106,9 @@ cascade: $(CGRA_INFO)
 	  -output cascade_CGRA_out.raw \
 	  -out1 s1t0 cascade_CGRA_out1.raw \
 	  -delay 260,0 -nclocks 1M || exit 13
-	lcd $(VERILATOR_TOP); \
-	  ls -l cascade_CGRA_out.raw cascade_CGRA_out1.raw \
-	  od -t u1 cascade_CGRA_out.raw \
+	cd $(VERILATOR_TOP); \
+	  ls -l cascade_CGRA_out.raw cascade_CGRA_out1.raw; \
+	  od -t u1 cascade_CGRA_out.raw; \
 	  od -t u1 cascade_CGRA_out1.raw
 	cd $(VERILATOR_TOP); python \
 	  ./bin/keyi_cascade_compare.py  \

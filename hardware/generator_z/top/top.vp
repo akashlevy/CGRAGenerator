@@ -619,6 +619,8 @@ wire [3:0] stall;
 //; }
 /* verilator lint_on UNUSED */
 
+    // FIXME little temporary hacky wack to make 1-bit input work
+    assign wire_1_2_BUS1_S1_T0 = wire_0_2_BUS1_S1_T0;
 
 //; my $tile_hash_ref;
 //; my $io1bit_num_tracks = $bus_num_tracks_hash{ 'BUS1' };

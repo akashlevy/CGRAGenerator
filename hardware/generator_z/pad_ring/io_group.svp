@@ -59,10 +59,12 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   elsif ($side eq "W") { $col = 0; }
 //;   elsif ($side eq "S") { $col = 2+$i; }
 //;
-//;   my $bitnum = 15-($i % 16);
+//;   #my $bitnum = 15-($i % 16);
+//;   my $bitnum = ($i % 16);
 //;   my $tracknum = $i % 5;
 //;   my @collateral = (
-//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' tracks='BUS1:1 BUS16:0' name='pad_S${padside}_T${i}'>",
+//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' ".
+//;         "tracks='BUS1:1 BUS16:0' name='io_side_${side}_gr_${io_group_num}[$bitnum]'>",
 //; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
 //; "    <io_group>$io_group_num</io_group>",
 //; "    <tri feature_address='0' reg_address='0' bitl='0' bith='0'>",

@@ -59,6 +59,7 @@ function do_genesis {
 function main {
 
   # PREAMBLE
+  cgra_info_link_hack
   cleanup_from_prev_builds
   register_all_switchbox_outputs
   use_verilator_hacks_if_travis
@@ -129,6 +130,18 @@ function main {
     echo xmllint --noout cgra_info.txt
     xmllint --noout cgra_info.txt 2>&1 | head -n 20
   fi
+}
+
+function cgra_info_link_hack {
+  echo ""
+  echo "WARNING cgra_info.txt no longer exists; building symlink cgra_info.txt => cgra_info.xml"
+  echo "WARNING cgra_info.txt no longer exists; building symlink cgra_info.txt => cgra_info.xml"
+  echo "WARNING cgra_info.txt no longer exists; building symlink cgra_info.txt => cgra_info.xml"
+  echo ""
+  if [ -e cgra_info.txt ]; then /bin/rm cgra_info.txt; fi
+  ln -s cgra_info.xml cgra_info.txt
+  ls -l  cgra_info.txt
+  echo ""
 }
 
 function cleanup_from_prev_builds {

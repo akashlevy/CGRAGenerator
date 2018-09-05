@@ -1,9 +1,6 @@
 #!/bin/csh -f
 
-# This is tbg.csh
-# It replaces run.csh (eventually maybe)
-
-
+# This is tbg.csh. It replaces run.csh (eventually maybe)
 
 # Can't believe I have to do this...
 set path = (. $path)

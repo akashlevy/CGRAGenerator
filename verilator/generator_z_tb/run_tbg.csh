@@ -56,8 +56,21 @@ grep mem_tile_height $hwtop/genesis_verif/top.v \
 # Default configuration bitstream: 16x16 pointwise mul-by-two
 # 
 set b = ../../bitstream/examples
+
 if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
 if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
+
+
+if ($memtile_height == 1) set config = $b/pw_padring_shortmem.bsa
+if ($memtile_height == 2) then
+  set config = sorry_no_tallmem_config_exists_yet
+  echo ""
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo ""
+endif
+
 echo "run.csh: Looks like memtile_height is $memtile_height"
 echo ""
 
@@ -211,7 +224,7 @@ unset ONEBIT
 if (${config:t:r} == 'onebit_bool') set ONEBIT
 
 # Need this on more than one path...
-set io_config = `pwd`/io/s2in_s0out.io.json
+set io_config = `pwd`/io/2in2out.json
 echo ""
 echo "${0:t}: Using standard io file '$io_config:t'"
 
@@ -219,6 +232,25 @@ if ($?ONEBIT) then
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
+endif
+
+# This is the default now...
+# if ($?TWO_IN_TWO_OUT) then
+#   set io_config = `pwd`/io/2in2out.io.json
+#   echo -n "$0:t oh wait it's 2in2out okay..."
+#   echo    "i will use '$io_config' for io config"
+# endif
+
+# Note I think the new default works for cascade as well, but it's not yet been tested...
+# From Lenny, for cascade
+unset CASCADE
+# if (${config:t:r} == 'cascade') set CASCADE
+# works for e.g. "cascade" or "cascade_keyi"
+if `expr "${config:t:r}" : 'cascade'` set CASCADE
+if ($?CASCADE) then
+  set io_config = `pwd`/io/cascade_fixed.bsb.json
+  echo -n "$0:t oh wait it's cascade"
+  echo    "i will use '$io_config' for io config"
 endif
 
 # if ($?VERBOSE) then
@@ -446,7 +478,19 @@ pushd build >& /dev/null
       | tee $tmpdir/run.log.$$
 
   # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
+  echo python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
   python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
+
+
+  if ($?ONEBIT) then
+    set echo
+    ls -lt *.raw | head
+    cp io16in_in_arg_1_0_0.raw $output 
+    cp io1_out_0_0.raw $out1
+    unset echo
+  endif
+
+
 popd >& /dev/null
 
   if ($?VERBOSE) then
@@ -510,11 +554,12 @@ popd >& /dev/null
       echo output = $output:t
       (cd $output:h; ls -l $output:t $out1:t || echo oop)
       
-      echo ''
-      # TBG produced $output (I think) but tb will compare to $out1 (I think)
-      echo cp $output $out1
-      cp $output $out1
-      (cd $output:h; ls -l $output:t $out1:t || echo oop)
+#       echo ''
+#       # TBG produced $output (I think) but tb will compare to $out1 (I think)
+#       echo cp $output $out1
+#       cp $output $out1
+#       (cd $output:h; ls -l $output:t $out1:t || echo oop)
+
     endif
 
     echo ''

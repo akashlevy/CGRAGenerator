@@ -1,0 +1,134 @@
+F1000002 00000002
+# data[(15, 0)] : init `data1` reg with const `2`
+
+FF000002 0002F00B
+# data[(5, 0)] : alu_op = mul
+# data[(6, 6)] : unsigned=0x0
+# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
+# data[(17, 16)]: data0: REG_BYPASS=0x2
+# data[(19, 18)]: data1: REG_CONST= 0x0
+
+00020002 00000000
+# data[(3, 0)] : @ tile (1, 1) connect wire 0 (in_BUS16_S2_T0) to data0
+
+00080002 00000003
+# data[(1, 0)] : @ tile (1, 1) connect wire 3 (pe_out_res) to out_BUS16_S0_T0
+
+00080003 00000001
+# data[(1, 0)] : @ tile (1, 2) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00080004 00000001
+# data[(1, 0)] : @ tile (1, 3) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00010005 00000001
+# data[(1, 0)] : @ tile (1, 4) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
+
+00080006 00000001
+# data[(1, 0)] : @ tile (1, 5) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00080007 00000001
+# data[(1, 0)] : @ tile (1, 6) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00080008 00000001
+# data[(1, 0)] : @ tile (1, 7) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00010009 00000001
+# data[(1, 0)] : @ tile (1, 8) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
+
+0008000A 00000001
+# data[(1, 0)] : @ tile (1, 9) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+0008000B 00000001
+# data[(1, 0)] : @ tile (1, 10) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+0008000C 00000001
+# data[(1, 0)] : @ tile (1, 11) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+0001000D 00000001
+# data[(1, 0)] : @ tile (1, 12) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S0_T0
+
+0008000E 00000001
+# data[(1, 0)] : @ tile (1, 13) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+0008000F 00000001
+# data[(1, 0)] : @ tile (1, 14) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+00080010 00000001
+# data[(1, 0)] : @ tile (1, 15) connect wire 1 (in_BUS16_S2_T0) to out_BUS16_S0_T0
+
+
+# oops now it has to turn and go all the way down...
+#         <mux snk='out_0_BUS16_S1_T0' reg_address='0' bith='11' bitl='10' default='3'>
+#           <src sel='0'>in_0_BUS16_S0_T0</src>
+#           <src sel='1'>in_0_BUS16_S2_T0</src> ***
+#           <src sel='2'>in_0_BUS16_S3_T0</src>
+#           <src sel='3'>rdata</src>
+#         </mux>
+
+00010011 00000400
+# data[(11, 10)] : @ tile (1, 16) connect wire 1 (in_0_BUS16_S2_T0) to out_0_BUS16_S1_T0
+
+
+# ...and now we have to go all the way downnnn
+#   <tile type='memory_tile' tile_addr='0x21' row='2' col='16' tracks='BUS1:5 BUS16:5 '>
+#   <tile type='memory_tile' tile_addr='0x31' row='3' col='16' tracks='BUS1:5 BUS16:5 '>
+#    ...
+#   <tile type='memory_tile' tile_addr='0x101' row='16' col='16' tracks='BUS1:5 BUS16:5 '>
+
+
+00010021 00000800
+# data[(11, 10)] : @ tile (2, 16) connect wire 3 (in_0_BUS16_S3_T0) to out_0_BUS16_S1_T0
+
+00010031 00000800
+00010041 00000800
+00010051 00000800
+00010061 00000800
+00010071 00000800
+00010081 00000800
+00010091 00000800
+000100A1 00000800
+000100B1 00000800
+000100C1 00000800
+000100D1 00000800
+000100E1 00000800
+000100F1 00000800
+
+# and then here at the end it needs to turn and go east again
+#         <mux snk='out_0_BUS16_S0_T0' reg_address='0' bith='1' bitl='0' default='3'>
+#           <src sel='0'>in_0_BUS16_S1_T0</src>
+#           <src sel='1'>in_0_BUS16_S2_T0</src>
+#           <src sel='2'>in_0_BUS16_S3_T0</src>
+#           <src sel='3'>rdata</src>
+#         </mux>
+
+
+00010101 00000002
+# data[(1, 0)] : @ tile (16, 16) connect wire 2 (in_0_BUS16_S3_T0) to out_0_BUS16_S0_T0
+
+
+# INPUT  tile  21 ( 2, 2) / in_BUS16_S2_T0 / wire_2_1_BUS16_S0_T0
+# OUTPUT tile  36 ( 2,17) / out_0_BUS16_S0_T0 / wire_2_17_BUS16_S0_T0
+
+# Configure side 0 (right side) io1bit tiles as 16bit output bus;
+# assumes output is tile 36 (io16bit_0x24)
+
+# assign f2p_wide_E_0 = wire_16_16_BUS16_S0_T0;
+
+
+000001A0 00000001
+000001A1 00000001
+000001A2 00000001
+000001A3 00000001
+000001A4 00000001
+000001A5 00000001
+000001A6 00000001
+000001A7 00000001
+000001A8 00000001
+000001A9 00000001
+000001AA 00000001
+000001AB 00000001
+000001AC 00000001
+000001AD 00000001
+000001AE 00000001
+000001AF 00000001
+

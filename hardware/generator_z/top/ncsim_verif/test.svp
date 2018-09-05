@@ -219,17 +219,14 @@ program automatic `mname`(
 	 out = 0;
 	 while( in[8:0] != 9'h1FF )begin
 		@(posedge ifc.Clk);
-		S1_in[7:0] = 'h0;
-		//REVERSE THE BITS
-		for(i=0; i<8; i++)
-			S1_in[15-i] = in[i];	
+		S1_in[7:0] = in[7:0];
+		S1_in[15-i] = 'h0;	
 		@(negedge ifc.Clk);
 		if(io_delay_count!=io_delay) 
 			io_delay_count++;
 		else begin
 		if((out_count%64!=62) && (out_count%64!=63)) begin
-			for(i=0; i<8; i++)
-				out[i] = pads_S0[15-i];
+			out[7:0] = pads_S0[7:0];
 			$fwrite(output_file, "%c", out[7:0]);
 			gold_out[7:0] = $fgetc(halide_out);
 			if(out[7:0]!=gold_out[7:0]) begin
@@ -245,14 +242,13 @@ program automatic `mname`(
 	/* while (io_delay_count > 0) begin
 		@(negedge ifc.Clk);
 		io_delay_count--;
-		for(i=0; i<8; i++)
-			out[i] = pads_S0[15-i];
+		out[7:0] = pads_S0[7:0];
 		$fwrite(output_file,"%x",out[7:0]);
-			gold_out[7:0] = $fgetc(halide_out);
-			if(out[7:0]!=gold_out[7:0]) begin
-				$display("ERROR: Input: %d, CGRA out: %d, Halide out %d",in[7:0],out[7:0],gold_out[7:0]);
-				$fwrite(fd, "ERROR: ");
-			end
+		gold_out[7:0] = $fgetc(halide_out);
+		if(out[7:0]!=gold_out[7:0]) begin
+			$display("ERROR: Input: %d, CGRA out: %d, Halide out %d",in[7:0],out[7:0],gold_out[7:0]);
+			$fwrite(fd, "ERROR: ");
+		end
 		$fwrite(fd,"Input: %d, CGRA out: %d   Halide out: %d\n",in[7:0],out[7:0],gold_out[7:0]);
 		
 	 end*/
@@ -262,8 +258,7 @@ program automatic `mname`(
 		@(posedge ifc.Clk);
 		in = $urandom_range(65535,0);
                 in = 0;
-		for(i=0; i<`$num_tracks`; i++)
-			S2_in[`$num_tracks-1`-i] = in[i];	
+		S2_in[`$num_tracks-1`:0] = in[`$num_tracks-1`:0];	
 	 end
 //; }
       end

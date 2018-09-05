@@ -232,6 +232,7 @@ unset CASCADE
 # if (${config:t:r} == 'cascade') set CASCADE
 # works for e.g. "cascade" or "cascade_keyi"
 if `expr "${config:t:r}" : 'cascade'` set CASCADE
+if `expr "${config:t:r}" : 'harris'` set CASCADE
 if ($?CASCADE) then
   set io_config = `pwd`/io/cascade_fixed.bsb.json
   echo -n "$0:t oh wait it's cascade"

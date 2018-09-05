@@ -608,8 +608,9 @@ end
 //;    open (INP, "<$filename") or die "Couldn't open file $filename, $!";
 //;    while (<INP>) {
 //;      my $line = $_;
-//;      while ( my ($find, $replace) = each($rename_hash->{$feature}) ) {
-//;#         print TILEINFO "$find###$replace###$line\n";
+//;      foreach my $find (keys %{$rename_hash->{$feature}}) {
+//;         my $replace = ${$rename_hash->{$feature}}{$find};
+//;#        print TILEINFO "$find###$replace###$line\n";
 //;         $line=~s/>$find</>$replace</g;
 //;         $line=~s/='$find'>/='$replace'>/g;
 //;      }
@@ -625,8 +626,9 @@ end
 //;    open (INP, "<$filename") or die "Couldn't open file $filename, $!";
 //;    while (<INP>) {
 //;      my $line = $_;
-//;      while ( my ($find, $replace) = each($rename_hash->{$feature}) ) {
-//;#         print TILEINFO "$find###$replace###$line\n";
+//;      foreach my $find (keys %{$rename_hash->{$feature}}) {
+//;         my $replace = ${$rename_hash->{$feature}}{$find};
+//;#        print TILEINFO "$find###$replace###$line\n";
 //;         $line=~s/>$find</>$replace</g;
 //;         $line=~s/'$find'/'$replace'/g;
 //;      }

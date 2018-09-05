@@ -619,6 +619,9 @@ wire [3:0] stall;
 //; }
 /* verilator lint_on UNUSED */
 
+    // FIXME little temporary hacky wack to make 1-bit input work
+    // NECESSARY for cascade to work, it has one-bit input (only one so far)
+    assign wire_1_2_BUS1_S1_T0 = wire_0_2_BUS1_S1_T0;
 
 //; my $tile_hash_ref;
 //; my $io1bit_num_tracks = $bus_num_tracks_hash{ 'BUS1' };
@@ -650,8 +653,10 @@ wire [3:0] stall;
 //;     my $tile_id = sprintf("%s_0x%s", $tile_type, $tile_addr_hex);
 //;#Add PE specific parameters from the tile config to the generate command
 //;#All paramters in the tile_config hash except type, tile_height/width are passed to the generator
-//;     while( my ($f, $v) = each $tile_config->{ $tile_type } ) {
-//;#       print "$f : $v\n";
+//;     # my %hhash = %{$tile_config->{ $tile_type }}; # This cmd increases compile time 15x!!!
+//;     foreach my $f (keys %{ $tile_config->{ $tile_type } }) {
+//;       my $v = $tile_config->{ $tile_type }{ $f };
+//;       # print "$f : $v\n";
 //;       if (($f!~m/type/) && ($f!~m/tile_height/) && ($f!~m/tile_width/)) {
 //;         $options .= " $f => \"$v\",";
 //;       }
@@ -661,7 +666,9 @@ wire [3:0] stall;
 //;       my $sb_feedthrough = "";
 //;       my $sb_registered = "";
 //;       my $tile_x = $w;
-//;       while( my ($bus, $width) = each %bus_width_hash ) {
+//;
+//;       foreach my $bus (keys %bus_width_hash) { 
+//;         my $width = $bus_width_hash{$bus}; 
 //;         $sb_feedthrough .= " $bus:";
 //;         $sb_registered .= " $bus:";
 //;         foreach my $seg_info (split(':', $bus_segment_hash{$bus})) {

@@ -142,6 +142,10 @@ while ($#argv)
 
     case '-build':
     case '-rebuild':
+        echo WARNING You asked for it with -build
+        echo WARNING Will rebuild Vtop from scratch...
+        echo "rm build/*"
+        if (-d build) rm build/*
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 
     ########################################
@@ -215,6 +219,23 @@ if ($?ONEBIT) then
   set io_config = `pwd`/io/s2in_s1t0out.io.json
   echo -n "$0:t aha it's the onebit thing - "
   echo    "i will try using $io_config instead"
+endif
+
+if ($?TWO_IN_TWO_OUT) then
+  set io_config = `pwd`/io/2in2out.io.json
+  echo -n "$0:t oh wait it's 2in2out okay..."
+  echo    "i will use '$io_config' for io config"
+endif
+
+# From Lenny, for cascade
+unset CASCADE
+# if (${config:t:r} == 'cascade') set CASCADE
+# works for e.g. "cascade" or "cascade_keyi"
+if `expr "${config:t:r}" : 'cascade'` set CASCADE
+if ($?CASCADE) then
+  set io_config = `pwd`/io/cascade_fixed.bsb.json
+  echo -n "$0:t oh wait it's cascade"
+  echo    "i will use '$io_config' for io config"
 endif
 
 # if ($?VERBOSE) then
@@ -442,7 +463,19 @@ pushd build >& /dev/null
       | tee $tmpdir/run.log.$$
 
   # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
+  echo python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
   python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
+
+
+  if ($?ONEBIT) then
+    set echo
+    ls -lt *.raw | head
+    cp io16in_in_arg_1_0_0.raw $output 
+    cp io1_out_0_0.raw $out1
+    unset echo
+  endif
+
+
 popd >& /dev/null
 
   if ($?VERBOSE) then
@@ -506,11 +539,12 @@ popd >& /dev/null
       echo output = $output:t
       (cd $output:h; ls -l $output:t $out1:t || echo oop)
       
-      echo ''
-      # TBG produced $output (I think) but tb will compare to $out1 (I think)
-      echo cp $output $out1
-      cp $output $out1
-      (cd $output:h; ls -l $output:t $out1:t || echo oop)
+#       echo ''
+#       # TBG produced $output (I think) but tb will compare to $out1 (I think)
+#       echo cp $output $out1
+#       cp $output $out1
+#       (cd $output:h; ls -l $output:t $out1:t || echo oop)
+
     endif
 
     echo ''

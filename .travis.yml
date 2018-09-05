@@ -22,7 +22,7 @@ install:
 
   # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
   - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
-      --branch master ../TestBenchGenerator
+      --branch io-reset ../TestBenchGenerator
 
   # Install python for testing infrastructure
   # All this just to get python3 => python3.6 or better
@@ -45,7 +45,15 @@ script:
 
   ########################################################################
   # Twenty-five minutes for travis system tests
-  - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
+  # - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
+
+  - pushd testdir
+  -   make travis_test_basic   SILENT=TRUE MEMHEIGHT=short TIME=10m
+  -   make travis_test_unit    SILENT=TRUE MEMHEIGHT=short TIME=10m
+  -   make travis_test_serpent SILENT=TRUE MEMHEIGHT=short TIME=05m
+  -   make travis_test_cascade SILENT=TRUE MEMHEIGHT=short TIME=03m
+  -   make travis_test_end     SILENT=TRUE MEMHEIGHT=short TIME=00m
+  - popd
 
   ################################################################
   # Fifteen minutes for LT unit tests
@@ -60,6 +68,7 @@ script:
   - export GENESIS_HOME=/tmp/Genesis2/Genesis2Tools
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
+  - echo Fifteen minutes for LT unit tests
   - ./run_tests.sh
 
   ########################################################################

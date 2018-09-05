@@ -68,22 +68,48 @@ test_all:
 
 # Twenty-minute (ish) tests for travis
 travis_system_tests:
+	make travis_test_basic
+	make travis_test_unit
+	make travis_test_serpent
+	make travis_test_cascade
+	make travis_test_end
+
+travis_test_basic:
 	@echo "ten minutes for basic test (pointwise) + tbg first build"
 	make SILENT=TRUE test_basic   RUN=run_tbg.csh
 
+travis_test_unit:
 	@echo "ten minutes for sr unit tests"
 	make SILENT=TRUE test_unit    RUN=run_tbg.csh
 
+travis_test_serpent:
 	@echo "five minutes for serpent-based tests"
         # Note the "tee" command masks make errors :(
 	(make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) \
 	  | tee serpent_results.tmp
 
+travis_test_cascade:
+	@echo "cascade!"
+	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
+	  | tee -a serpent_results.tmp
+
+travis_test_end:
         # check for hidden errors
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
 	grep RESULT serpent_results.tmp
 	$(HARDWARE_TOP)/bin/show_cgra_info.csh | grep mem_tile_height
 
+cascade: $(CGRA_INFO)
+	cd $(VERILATOR_TOP); ./run_tbg.csh \
+	  -config ../../bitstream/examples/cascade_keyi.bsa \
+	  -input  ../../bitstream/bsbuilder/testdir/examples/cascade_input.raw \
+	  -output cascade_CGRA_out.raw \
+	  -out1 s1t0 cascade_CGRA_out1.raw \
+	  -delay 260,0 -nclocks 1M || exit 13
+	cd $(VERILATOR_TOP); python ./bin/keyi_cascade_compare.py  \
+	  cascade_CGRA_out.raw build/io1_out_0_0.raw \
+	  ../../bitstream/bsbuilder/testdir/examples/cascade_halide_out.raw \
+          && echo TEST RESULT cascade PASSED || exit 13
 
 # Note this is where onebit_bool gets testsd
 test_serpent: $(CGRA_INFO)

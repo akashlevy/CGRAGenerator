@@ -542,24 +542,36 @@ assign f2p_wide_E_`$i` = wire_`1 + $i`_`($cgra_grid_width-2)`_BUS16_S0_T0;
 // assign 1bit f2p outputs
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //North side
+//; my $track = 0;
 //; my $offset = $i * $num_ios_per_group;
 //;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_N_`$i`[`$bit`] = wire_1_`1+$offset+$bit`_BUS1_S3_T0;
+assign f2p_1bit_N_`$i`[`$bit`] = wire_1_`1+$offset+$bit`_BUS1_S3_T`$track`;
+//; $track++;
+//; $track = $track % $io1bit_num_tracks;
 //;   }
 
 //South side
+//; $track = 0;
 //;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_S_`$i`[`$bit`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_S1_T0;
+assign f2p_1bit_S_`$i`[`$bit`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_S1_T`$track`;
+//; $track++;
+//; $track = $track % $io1bit_num_tracks;
 //;   }
 
 //West side
+//; $track = 0;
 //;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_W_`$i`[`$bit`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
+assign f2p_1bit_W_`$i`[`$bit`] = wire_`1+$offset+$bit`_1_BUS1_S2_T`$track`;
+//; $track++;
+//; $track = $track % $io1bit_num_tracks;
 //;   }
 
 //East side
+//; $track = 0;
 //;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
-assign f2p_1bit_E_`$i`[`$bit`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T0;
+assign f2p_1bit_E_`$i`[`$bit`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T`$track`;
+//; $track++;
+//; $track = $track % $io1bit_num_tracks;
 //;   }
 //; }
 

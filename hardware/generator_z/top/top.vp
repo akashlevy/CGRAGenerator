@@ -142,6 +142,7 @@ assign config_write = 1;
     .pads_`$side`_`$i`_out(pads_`$side`_`$i`_out),
 //;   }
     .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
+
 //;   }
 //; }
     .config_data(config_data_in),

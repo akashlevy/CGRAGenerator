@@ -93,6 +93,11 @@ travis_test_cascade:
 	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
 	  | tee -a serpent_results.tmp
 
+travis_test_harris:
+	@echo "harris!"
+	(make SILENT=TRUE harris RUN=run_tbg.csh || echo FAIL) \
+	  | tee -a serpent_results.tmp
+
 travis_test_end:
         # check for hidden errors
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
@@ -110,6 +115,18 @@ cascade: $(CGRA_INFO)
 	  cascade_CGRA_out.raw build/io1_out_0_0.raw \
 	  ../../bitstream/bsbuilder/testdir/examples/cascade_halide_out.raw \
           && echo TEST RESULT cascade PASSED || exit 13
+
+harris: $(CGRA_INFO)
+	cd $(VERILATOR_TOP); ./run_tbg.csh \
+	  -config ../../bitstream/examples/harris_keyi.bsa \
+	  -input  ../../bitstream/bsbuilder/testdir/examples/harris_input.raw \
+	  -output harris_CGRA_out.raw \
+	  -out1 s1t0 harris_CGRA_out1.raw \
+	  -delay 260,0 -nclocks 1M || exit 13
+	cd $(VERILATOR_TOP); python ./bin/keyi_cascade_compare.py  \
+	  harris_CGRA_out.raw build/io1_out_0_0.raw \
+	  ../../bitstream/bsbuilder/testdir/examples/harris_halide_out.raw \
+          && echo TEST RESULT harris PASSED || exit 13
 
 # Note this is where onebit_bool gets testsd
 test_serpent: $(CGRA_INFO)

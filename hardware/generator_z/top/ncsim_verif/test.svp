@@ -119,7 +119,7 @@ program automatic `mname`(
 		else if(feat==gout_sel_feature)
 			write_config(id,feat,8'h0,(id+feat)%4);
 		else
-			write_config(id,feat,8'h0,(id+feat));
+			write_config(id,feat,8'h0,$urandom_range(15,65536));
          end
 	 status = $fscanf(pe_IDs,"%x", id);
 	 for(int feat=0; feat<pe_num_features; feat++) begin

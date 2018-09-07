@@ -125,7 +125,9 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   # $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");
 //; 
 //;   my $side_num = $side_to_side_num{$side};
-//;   print_io_collateral($i, $id, $hex_id, $row, $col, $io_group_num, $side, $side_num);
+//;   # FIXME what's up with group nums?
+//;   # print_io_collateral($i, $id, $hex_id, $row, $col, $io_group_num, $side, $side_num);
+//;   print_io_collateral($i, $id, $hex_id, $row, $col, 0, $side, $side_num);
 //; }
 
 // SV equivalent: assign read_data = read_data_tile.or();

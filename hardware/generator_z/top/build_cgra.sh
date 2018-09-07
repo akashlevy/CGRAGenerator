@@ -65,7 +65,8 @@ function main {
   use_verilator_hacks_if_travis
   find_or_install_genesis2
   undo_tristates_if_using_verilator
-  set_short_or_tall $* || echo 13
+  short_or_tall=`short_or_tall $* | tail -n 1`
+  echo NOTICE Building ${short_or_tall}mem design
 
   # GENERATE
   do_genesis
@@ -185,7 +186,7 @@ function undo_tristates_if_using_verilator {
     io1bit=../io1bit/verilator_hack/io1bit.vp;
   fi
 }
-function set_short_or_tall {
+function short_or_tall {
   # Default is shortmem
   short_or_tall="short"
 
@@ -193,7 +194,7 @@ function set_short_or_tall {
   if expr "$1" : "tallmem" > /dev/null; then
     short_or_tall="tall"
   fi
-  echo NOTICE Building ${short_or_tall}mem design
+  echo $short_or_tall
 }
 
 main $*

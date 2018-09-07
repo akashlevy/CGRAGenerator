@@ -1,6 +1,6 @@
 {
     "reset_in_pad": {
-        "pad_bus" : "pads_E_1",
+        "pad_bus" : "pads_E_0",
         "bits": {
             "0": { "pad_bit":"0" }
         },
@@ -13,12 +13,12 @@
         "width": 16
     },
     "io16_out_0_0": {
-        "pad_bus" : "pads_E_1",
+        "pad_bus" : "pads_E_0",
         "mode": "out",
         "width": 16
     },
     "io1_out_0_0": {
-        "pad_bus" : "pads_S_2",
+        "pad_bus" : "pads_S_0",
         "bits": {
             "0": { "pad_bit":"0" }
         },

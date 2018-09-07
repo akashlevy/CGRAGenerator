@@ -50,6 +50,9 @@ def init_globals(grid_width = 8, grid_height = 8, DBG=0):
             print "Loading cgra_info..\n" 
             cgra_info.read_cgra_info()
 
+    # Declare these
+    # E.g. if third tile placed is 0x0101 then order[0x0101] = 2 (right?)
+    global order; order = {};
 
     # Set these
     global GRID_WIDTH
@@ -58,54 +61,56 @@ def init_globals(grid_width = 8, grid_height = 8, DBG=0):
     # Derive these
     global NTILES
     global tiles
-    global order
 
     GRID_WIDTH  = grid_width
     GRID_HEIGHT = grid_height
     NTILES = GRID_HEIGHT * GRID_WIDTH
 
+    # print(661, GRID_WIDTH, GRID_HEIGHT)
     if USE_CGRA_INFO:
         # FIXME should also use cgra_info to set width, height
         NTILES = cgra_info.ntiles()
         (GRID_WIDTH,GRID_HEIGHT) = cgra_info.grid_dimensions()
 
     print "# Grid is maybe %dx%d" % (GRID_WIDTH,GRID_HEIGHT)
+    # print(662, GRID_WIDTH, GRID_HEIGHT)
 
     tiles = range(NTILES)
     if DBG: print "# tiles:"; print '#', tiles, '\n'
 
-    order = NTILES * [-1]
-    if DBG: print "# order:"; print '#', order, '\n'
-   
 # If a tile didn't work out, you can uanllocate() it (see below),
 # add it to EXCEPTIONS list, and try again.
 EXCEPTIONS = []
 def is_free(tileno, DBG=0):
-    if DBG>2: print "is_free tileno %d has order %d" % (tileno, order[tileno])
+    if DBG>2:
+        if tileno in order: 
+            print "is_free: tileno %04X has order %d" % (tileno, order[tileno])
+        else:
+            print "is_free: tileno %04X not yet ordered" % tileno
     if tileno in EXCEPTIONS:
         if DBG: print 'Cannot choose tile(s) %s\n' % EXCEPTIONS
         return False
 
-    elif (order[tileno] == -1):
+    elif tileno not in order:
         return True
 
     else:
         return False
 
 def ntiles_free():
-    n = 0
-    for i in range( len(order)):
-        if order[i] == -1: n = n+1
-    return n
-
-def tile_exists(tileno): return tileno >= 0 and tileno < NTILES
+    global NTILES
+    global order
+    return NTILES - len(order)
 
 def allocate(tileno, DBG=0):
     '''tileno will be next in the ordered list'''
 
-    n_allocated = max(order)
+    # E.g. if third tile placed is 0x0101 then order[0x0101] = 2 (right?)
+    global order
+
+    n_allocated = len(order)
     order[tileno] = n_allocated+1
-    n_allocated = n_allocated+1
+    n_allocated   = n_allocated+1
 
     if DBG: print "#   Allocated %s as %dth tile." \
        % (FMT.tileT(tileno),n_allocated),
@@ -119,7 +124,7 @@ def allocate(tileno, DBG=0):
         print "# "
 
 def unallocate(tileno, DBG=0):
-    order[tileno] = -1
+    del order[tileno]
     if DBG>5:
         print "# order after unallocate(%d):" % tileno
         print "# "
@@ -166,20 +171,23 @@ class Format:
             print '#   ',
             for c in range(GRID_WIDTH):
                 tno = rc2tileno(r,c)
-                if order[tno] == -1: print ' .',
+                if tno not in order: print ' .',
                 else: print '%2d' % order[tno],
             print ''
 
     def grid(self):
+        print '#      ',
+        for c in range(GRID_WIDTH):
+            print('%02X ' % c),
+        print("")
+
         for r in range(GRID_HEIGHT):
-            print '#   ',
+            print('#  %02X ' % r),
             for c in range(GRID_WIDTH):
-                tno = cgra_info.rc2tileno(r,c)
-                # if order[tno] == -1: print ' .',
-                # else: print '%2d' % tno
-                if tno == 0: print ' x ',
-                else:        print '%3x' % tno,
-            print ''
+                print("..."),
+            print("")
+
+
 
 
 FMT = Format()
@@ -342,9 +350,10 @@ def search_perps(ctr, L, sp='nwes', DBG=1):
     return -1
 
 def alloc_tile(tno, DBG=0):
-    if not tile_exists(tno):
-        if DBG: print "no tile exists."
-        return -1
+    # not usefule
+    # if not tile_exists(tno):
+    #     if DBG: print "no tile exists."
+    #     return -1
 
     if DBG: print "found %s. Free:" % FMT.tileT(tno),
     if not is_free(tno):

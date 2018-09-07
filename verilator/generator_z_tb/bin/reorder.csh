@@ -10,8 +10,10 @@ if ($?HELP) then
   exit
 endif
 
-grep -v '#' $1 | egrep . > tmp$$
-cat tmp$$ | egrep -v '^..00' > tmp$$.1
-cat tmp$$ | egrep    '^..00' > tmp$$.2
-cat tmp$$.1 tmp$$.2
+set tmpdir = `mktemp -d /tmp/reorder.XXX`
+  grep -v '#' $1 | egrep . > $tmpdir/reorder.0
+  cat $tmpdir/reorder.0 | egrep -v '^..00' > $tmpdir/reorder.1
+  cat $tmpdir/reorder.0 | egrep    '^..00' > $tmpdir/reorder.2
+  cat $tmpdir/reorder.1 $tmpdir/reorder.2
+/bin/rm -rf $tmpdir
 

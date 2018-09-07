@@ -69,8 +69,8 @@ GRID_HEIGHT = GRID_WIDTH
 INPUT_TILENO =      26 # Actually I think it's 21 :o
 INPUT_TILE   =      INPUT_TILENO
 INPUT_WIRE   =      'in_s2t0'
-INPUT_WIRE_T =      'T%d_in_s2t0' % INPUT_TILENO
-INPUT_TILE_PE_OUT = "T%d_pe_out" % INPUT_TILENO
+INPUT_WIRE_T =      'Tx%04X_in_s2t0' % INPUT_TILENO
+INPUT_TILE_PE_OUT = "Tx%04X_pe_out"  % INPUT_TILENO
 
 # Find the input tile
 def find_input_tile():
@@ -88,10 +88,10 @@ def find_input_tile():
             INPUT_TILENO = i
             INPUT_TILE   = INPUT_TILENO
             INPUT_WIRE   = 'in_s2t0'
-            INPUT_WIRE_T = 'T%d_%s' % (INPUT_TILENO, INPUT_WIRE)
-            INPUT_TILE_PE_OUT = "T%d_pe_out" % INPUT_TILENO
+            INPUT_WIRE_T = 'Tx%04X_%s' % (INPUT_TILENO, INPUT_WIRE)
+            INPUT_TILE_PE_OUT = "Tx%04X_pe_out" % INPUT_TILENO
             
-            print "I think  input tile is T%d" % INPUT_TILENO
+            print "I think  input tile is Tx%04X" % INPUT_TILENO
             print "I think  input wire is %s" % INPUT_WIRE_T
             print "I think output wire is %s" % INPUT_TILE_PE_OUT
             return i
@@ -103,7 +103,8 @@ def find_input_tile():
 
 # FIXME this should come from board_info.json etc
 # Use first bit on side 1 (bottom, SW corner) for onebit output
-OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
+# OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
+OUTPUT_PAD_onebit = 'pads_S_0'  # Bottom / SW corner
 
 # # Value is calculated later, search below
 # # OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
@@ -141,19 +142,53 @@ def find_output_tile():
             if r == 2:
                 OUTPUT_TILENO = i
             elif r > 2:
-                print "I think output tile is T%d (early out)" % OUTPUT_TILENO
+                print "I think output tile is Tx%04X (early out)" % OUTPUT_TILENO
                 # Early out
                 break
-    print "I think output tile is T%d (late)" % OUTPUT_TILENO
+    print "I think output tile is Tx%04X (late)" % OUTPUT_TILENO
 
-    global OUTPUT_TILENO_onebit
-    # OUTPUT_PAD_onebit = 'pad_S1_T0'
-    padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
-    assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
-    (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
-    OUTPUT_TILENO_onebit = padno
-    print "# Found onebit output pad %d = 0x%x" % (padno,padno)
-    print ""
+    # FIXME assuming output tile is rightmost tile in the row, set ADJ to the tile just before that
+    # E.g. if output tile is 0x0210 (r2c16) then adj tile is 0x020F (r2c15)
+    global OUTPUT_ADJACENT_TILENO
+    OUTPUT_ADJACENT_TILENO = OUTPUT_TILENO-1
+
+    #     # This comes from json file now I guess
+    #     global OUTPUT_TILENO_onebit
+    #     # OUTPUT_PAD_onebit = 'pad_S1_T0'
+    #     padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
+    #     assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
+    #     (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
+    #     OUTPUT_TILENO_onebit = padno
+    #     print "# Found onebit output pad %d = 0x%x" % (padno,padno)
+    #     print ""
+
+    # FIXME should be a separate function
+    global io_filename
+    if io_filename:
+        print("\n# Found io json info file '%s'" % io_filename)
+        import json
+        #
+        # "io1_out_0_0": {
+        #     "pad_bus" : "pads_S_2",
+        #     "bits": {
+        #         "0": { "pad_bit":"0" }
+        #     },
+        #     "mode": "out",
+        #     "width": 1
+        #
+        # global OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
+        io1_out = "io1_out_0_0"
+        with open(io_filename) as json_data:
+            io_info = json.load(json_data)
+            # print(io_info)
+            if io1_out in io_info:
+                # print(666, io_info[io1_out])
+                # print(667, io_info[io1_out]["pad_bus"])
+                padname = io_info[io1_out]["pad_bus"]
+                padbit  = io_info[io1_out]["bits"]["0"]["pad_bit"]
+                padname_w_ix = "%s[%s]" % (padname, padbit)
+                (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname_w_ix)
+                print "# ::found onebit output pad %d = 0x%x" % (padno,padno)
 
     return
 
@@ -196,7 +231,7 @@ Examples:
    %s pointwise_mapped.dot
    %s -v pointwise_mapped.dot
    %s pointwise_mapped.dot -o pointwise.bsb
-   %s pointwise_mapped.dot -o pointwise.bsb -cgra cgra_info.txt 
+   %s pointwise_mapped.dot -o pointwise.bsb -cgra cgra_info.txt -io $v/io/2in2out.json
    %s --help
 ''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
 
@@ -206,6 +241,9 @@ Examples:
 
     # if (len(args) < 1): print usage; sys.exit(-1);
 
+    global io_filename
+    io_filename = None
+
     global VERBOSE
     global bsb_filename
     global dot_filename
@@ -214,6 +252,9 @@ Examples:
         elif (args[0] == '-v'):    VERBOSE = True
         elif (args[0] == '-cgra' or args[0] == '-cgra_info'):
             cgra_filename = args[1]
+            args = args[1:];
+        elif (args[0] == '-io'):
+            io_filename = args[1]
             args = args[1:];
         elif (args[0] == '-o'):
             bsb_filename = args[1]
@@ -688,7 +729,7 @@ def print_oplist(DBG=0):
             bit1 = optype(src.bit1, 'bit1', DBG)
             bit2 = optype(src.bit2, 'bit2', DBG)
 
-            opline = 'T%d_lut%X(%s,%s,%s)' % (src.tileno, src.lut_value, bit0, bit1, bit2)
+            opline = 'Tx%04X_lut%X(%s,%s,%s)' % (src.tileno, src.lut_value, bit0, bit1, bit2)
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
 
@@ -761,9 +802,9 @@ def print_oplist(DBG=0):
             #   bit2='False'
             if opname == 'mux':
                 bit0 = optype(src.bit0, 'bit0', DBG)
-                opline = 'T%d_%s(%s,%s,%s)' % (src.tileno, opname, op1, op2, bit0)
+                opline = 'Tx%04X_%s(%s,%s,%s)' % (src.tileno, opname, op1, op2, bit0)
             else:
-                opline = 'T%d_%s(%s,%s)' % (src.tileno, opname, op1, op2)
+                opline = 'Tx%04X_%s(%s,%s)' % (src.tileno, opname, op1, op2)
 
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
@@ -776,7 +817,7 @@ def print_oplist(DBG=0):
 
     # FIXME should be separate print_wenlist()
     print "# LUT tiles for wen_lut's", WEN_LUT_LIST
-    for i in WEN_LUT_LIST: print "T%d_lutFF(const0,const0,const0)" % i
+    for i in WEN_LUT_LIST: print "Tx%04X_lutFF(const0,const0,const0)" % i
     print ''
 
 
@@ -793,7 +834,7 @@ def print_memlist():
 
         if is_mem_node(sname):
             # print("# Adding mem node", sname)
-            opline = 'T%d_mem_%d' % (src.tileno, src.fifo_depth)
+            opline = 'Tx%04X_mem_%d' % (src.tileno, src.fifo_depth)
             opcomm = '# %s fifo_depth=%d' % (sname, src.fifo_depth)
             memlist[src.tileno] = '%-12s %s' % (opline,opcomm)
 
@@ -1022,7 +1063,7 @@ class Node:
         '''
         Resource rname in tile T is avail
         if it is free and/or if it is already in mynet.
-        rname should be of the form 'T%d_something'
+        rname should be of the form 'Tx%04X_something'
         '''
         # rname must have embedded tileno, e.g. 'T1_in_s3t2' or 'T5_mem_out'
         (tileno,r) = parse_resource(rname)
@@ -1054,7 +1095,7 @@ class Node:
         # Can't use a register unless we're specifically looking for a register
         if rname in REGISTERS:
             if DBG>2: print('')
-            if DBG>2: print "Looking for '%s' in tile T%d (0x%x)" % (r, tileno, tileno)
+            if DBG>2: print "Looking for '%s' in tile Tx%04X (0x%x)" % (r, tileno, tileno)
             assert rname not in resources[tileno],\
                    "'%s' is a register: should not be in resources list!"
             # But it CAN be in the net list maybe...?
@@ -1065,7 +1106,7 @@ class Node:
             # assert r not in self.net, "'%s' is a register: should not be part of net list!"
 
         if DBG>2: print('')
-        if DBG>2: pwhere(874, "Looking for '%s' in T%d (0x%x)" % (r, tileno, tileno))
+        if DBG>2: pwhere(874, "Looking for '%s' in Tx%04X (0x%x)" % (r, tileno, tileno))
 
         # First check to see if resource already assigned to output net of orig node (?)
         # 'is_avail: looking for 'T121_in_s2t0' in 'mux_793_794_795$mux' nodenet'
@@ -1079,7 +1120,7 @@ class Node:
         if DBG>2: print "is_avail: Looking for '%s' in tile %d resources %s" \
               % (rname, tileno, resources[tileno])
         if rname in resources[tileno]:
-            if DBG>2: print "  YES %-11s available to tile T%d (0x%x)" % (rname, tileno, tileno)
+            if DBG>2: print "  YES %-11s available to tile Tx%04X (0x%x)" % (rname, tileno, tileno)
             return True
 
         else:
@@ -1229,15 +1270,15 @@ def serpent_connect_within_tile(node, a, b, T, DBG=0):
     # e.g. serpent_connect_within_tile(node, 'T136_in_s1t1', 'T136_op2', 136)?
     # BUT really should be called only via node.connect('T136_in_s1t1', 'T136_op2', 136) above
     # Returns False is unsuccessful, otherwise returns a->b path e.g.
-    # ['T118_in_s1t3 -> T118_out_s2t3', 'T118_out_s2t3 -> T118_op1']
+    # ['Tx0508_in_s1t3 -> Tx0508_out_s2t3', 'Tx0508_out_s2t3 -> Tx0508_op1']
 
     DBG = max(0,DBG)
-    if a[0] == 'T': T = int(re.search('^T(\d+)', a).group(1))
-    if b[0] == 'T': T = int(re.search('^T(\d+)', b).group(1))
+    if a[0] == 'T': T = int(re.search('^Tx([^_]+)', a).group(1), 16)
+    if b[0] == 'T': T = int(re.search('^Tx([^_]+)', b).group(1), 16)
 
     # Canonicalize a,b to have embedded tile info e.g. 'T<t>_resource'
-    if a[0] != 'T': a = "T%d_%s" % (T,a)
-    if b[0] != 'T': b = "T%d_%s" % (T,b)
+    if a[0] != 'T': a = "Tx%04X_%s" % (T,a)
+    if b[0] != 'T': b = "Tx%04X_%s" % (T,b)
 
     if DBG>1: print ''
     if DBG>1: print "looking to connect '%s' and '%s'" % (a,b)
@@ -1624,11 +1665,12 @@ def build_resource_list(tileno, suffix, DBG=0):
         if  is_mem_tile(i): nsides = 8
         for side in range(nsides):
             for track in range(5):
-                port = "T%d_%s_s%dt%d%s" % (i, dir,side,track,suffix)
+                port = "Tx%04X_%s_s%dt%d%s" % (i, dir,side,track,suffix)
                 resources.append(port)
 
     # Tile-specific resources
-    pfx = 'T' + str(i) + '_'
+    pfx = 'Tx%04x_' % int(i)
+
     if suffix == '':
         # BUS16 resources
         if  is_mem_tile(i):
@@ -1658,12 +1700,18 @@ def show_resources(tileno):
 
 def init_tile_resources(DBG=0):
     '''E.g. resources[0] = ['in_s0t0', 'in_s0t1', ... 'out_s3t3', 'out_s3t4']'''
-    global resources
 
-    ntiles = cgra_info.ntiles()
-    resources = range(ntiles)
+    # FIXME if resources is global it should be RESOURCES instead
+    global resources
+    resources = {}
+    ntiles = 0
+
     printed_pe = False; printed_mem = False
-    for tileno in range(ntiles):
+
+    for tileno in cgra_info.list_all_pe_and_mem_tiles():
+        ntiles = ntiles + 1
+        # print(666,"%04x" % tileno)
+
         valid = is_pe_tile(tileno) or is_mem_tile(tileno)
         if not valid: continue
 
@@ -1692,7 +1740,7 @@ def init_tile_resources(DBG=0):
 #             if  is_mem_tile(i): nsides = 8
 #             for side in range(nsides):
 #                 for track in range(5):
-#                     port = "T%d_%s_s%dt%d" % (i, dir,side,track)
+#                     port = "Tx%04X_%s_s%dt%d" % (i, dir,side,track)
 #                     resources.append(port)
 # 
 #         # Tile-specific resources
@@ -1750,7 +1798,7 @@ def initialize_node_INPUT():
     # assert INPUT.routed == False
 
 def initialize_node_OUTPUT():
-    # INPUT_WIRE_T =      'T%d_in_s2t0' % INPUT_TILENO
+    # INPUT_WIRE_T =      'Tx%04X_in_s2t0' % INPUT_TILENO
 
     if 'OUTPUT' in nodes:
         # assert is_mem_tile(tileno) # Not relevant, maybe
@@ -1762,7 +1810,7 @@ def initialize_node_OUTPUT():
         # FIXME later could have an option to hop tracks maybe
         # So: One-bit output must come out track 0 on the right side (S0)
         # of the mem tile to the left of the pad (OUTPUT_TILE)
-        trackno = 0; output = 'T%d_out_s0t%d' % (tileno, trackno)
+        trackno = 0; output = 'Tx%04X_out_s0t%d' % (tileno, trackno)
         # 0 is only track that goes to io16 output tile, right?
         # 'output' only used for no-longer-used output comment i think
 
@@ -1785,8 +1833,8 @@ def initialize_node_OUTPUT_1bit():
         # 'output' only used for no-longer-used output comment i think
         # 0 is only track that goes to io16 output tile, right?
         trackno=0
-        output   = 'T%d_out_s1t%d' % (tileno, trackno) # this works
-        # output = 'T%d_out_s5t%d' % (tileno, trackno) # this works too (why?)
+        output   = 'Tx%04X_out_s1t%d' % (tileno, trackno) # this works
+        # output = 'Tx%04X_out_s5t%d' % (tileno, trackno) # this works too (why?)
 
         getnode('OUTPUT_1bit').place(tileno, input, output)
 
@@ -1890,7 +1938,7 @@ def find_regsolo_dstports(name, tile, track, DBG=0):
     if DBG: print( "- make sure each outport goes somewhere valid!")
     for track in trackrange:
       for side in range(nsides):
-        outport = "T%d_out_s%dt%d" % (tile,side,track)
+        outport = "Tx%04X_out_s%dt%d" % (tile,side,track)
         n = CT.find_neighbor(outport, DBG=0)
 
 #         # assert n[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
@@ -1923,7 +1971,7 @@ def find_regsolo_dstports(name, tile, track, DBG=0):
 
 
 # dest node 'mux_793_794_795$mux.bit.in.0'
-# dest port 'T118_op1'
+# dest port 'Tx0508_op1'
 def dstports(name, tile, track, DBG=0):
     # 'dstports' is what you need to connect to to get the indicated node, yes?
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
@@ -1935,7 +1983,7 @@ def dstports(name, tile, track, DBG=0):
             port = 'op%d' % (int(port[-1]) + 1)
 
         assert port in ['op1', 'op2', 'op3', 'mem_in'], 'Found port "%s"' % port
-        return 'T%d_%s' % (tile,port)
+        return 'Tx%04X_%s' % (tile,port)
     DBG=1
     ntracks = 5
     if DBG: pwhere(1613, "okay here we are in dstports()")
@@ -1964,7 +2012,7 @@ def dstports(name, tile, track, DBG=0):
 
         p = []
         for track in range(ntracks):
-            outport = "T%d_out_s%dt%db" % (tile, out_side, track)
+            outport = "Tx%04X_out_s%dt%db" % (tile, out_side, track)
             p.append(outport)
 
     elif name == 'OUTPUT':
@@ -1974,7 +2022,7 @@ def dstports(name, tile, track, DBG=0):
         if is_mem_tile(tile): nsides = 8
         else:                 nsides = 4
         for side in range(nsides):
-            outport = "T%d_out_s%dt0" % (tile,side)
+            outport = "Tx%04X_out_s%dt0" % (tile,side)
             p.append(outport)
     else:
         assert is_regsolo(name)
@@ -2033,7 +2081,7 @@ def constant_folding(DBG=0):
 
         k.placed = True
         k.tileno = pe.tileno
-        o = 'T%d_%s' % (pe.tileno,op)
+        o = 'Tx%04X_%s' % (pe.tileno,op)
         k.output = o
         kroute = '%s -> %s' % (k.name, o)
         k.route[pe.name] = [kroute]
@@ -2189,14 +2237,14 @@ def parseT(wirename):
     return cgra_info.parse_resource(wirename)
 
 def getboth(tileno, wirename):
-    parse = re.search('^T\d+_(.*)',wirename)
+    parse = re.search('^T[^_]+_(.*)',wirename)
     if parse: wirename = parse.group(1)
-    tname = 'T%d_%s' % (tileno,wirename)
+    tname = 'Tx%04X_%s' % (tileno,wirename)
     return (wirename,tname)
 
 def stripT(wirename):
     print wirename
-    return re.search('^T\d+_(.*)',wirename).group(1)
+    return re.search('^T[^_]+_(.*)',wirename).group(1)
 
 
 
@@ -2219,7 +2267,7 @@ def stripT(wirename):
 #         if not parse: assert False, 'oof what now'
 #         which_in = int(parse.group(1));
 #         op = 'op%d' % (which_in + 1)
-#         dst_port = "T%d_%s" % (getnode(dname).tileno, op)
+#         dst_port = "Tx%04X_%s" % (getnode(dname).tileno, op)
 #         if DBG: print "# I must connect '%s' to '%s' (%s)" % (sname, dname, op)
 #             
 #     # Can't route unplaced nodes, right?
@@ -2487,7 +2535,7 @@ def place_dest(sname, dname, indent, DBG=0):
         print "Actually '%s' has a home already, in tile %d" % (dname, dtileno)
         if dtileno in packer.EXCEPTIONS:
             print "exceptions = ", packer.EXCEPTIONS
-            pwhere(1586, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
+            pwhere(1586, "OOPS Already tried and failed to reach Tx%04X oh nooooo" % dtileno)
             assert False, "Out of options"
     else:
         dtileno = get_nearest_tile(sname, dname)
@@ -2597,10 +2645,10 @@ def create_adj_node(dname, DBG=0):
     #Maybe this happens later, by its own self
     #adjnode.net = [adjnode.output]
 
-    #   If going to OUTPUT (tile 36), put adj in tile 35;
-    #   FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
-    #   dtileno = OUTPUT_ADJACENT_TILENO
-    if dname == 'OUTPUT': adj_tileno = 35
+    # If going to OUTPUT (tile 36), put adj in tile 35;
+    # FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
+    global OUTPUT_ADJACENT_TILENO
+    if dname == 'OUTPUT': adj_tileno = OUTPUT_ADJACENT_TILENO
     else:                 adj_tileno = -1 # Let PNR place adj later
     adjnode.tileno = adj_tileno
 
@@ -2608,10 +2656,10 @@ def create_adj_node(dname, DBG=0):
         if DBG: print('# Creating unplaced intermediate node "%s"' % adjname)
     else:
         packer.allocate(adj_tileno, DBG)
-        if DBG: print('# Creating intermediate node "%s" in tile T%d' % (adjname,adj_tileno))
+        if DBG: print('# Creating intermediate node "%s" in tile Tx%04X' % (adjname,adj_tileno))
         if DBG: print("# order after placing intermediate node '%s'" % adjname)
         packer.FMT.order()
-        adjnode.output = 'T%d_pe_out' % adj_tileno # E.g. 'T35_pe_out'
+        adjnode.output = 'Tx%04X_pe_out' % adj_tileno # E.g. 'T35_pe_out'
         adjnode.placed = True
 
     #Maybe this happens later, by its own self
@@ -2751,7 +2799,7 @@ def try_again(sname, dname, dtileno, DBG=0):
 
     if dtileno in packer.EXCEPTIONS:
         print "2401 exceptions = ", packer.EXCEPTIONS
-        pwhere(2402, "OOPS Already tried and failed to reach T%d oh nooooo" % dtileno)
+        pwhere(2402, "OOPS Already tried and failed to reach Tx%04X oh nooooo" % dtileno)
         assert False, "Out of options"
 
     # Add dtileno as an EXCEPTION and try again
@@ -3216,12 +3264,12 @@ def route_wen(memtile):
     (wentileno,wenside) = getnode(memtile).wen_lut
 
     if wenside == 'right':
-        print 'T%d_pe_out_b0 -> T%d_out_s2t0_b0'  % (wentileno, wentileno)
-        print 'T%d_in_s0t0_b0 -> T%d_out_s2t0_b0' % (mtileno, mtileno)
-        print 'T%d_out_s2t0_b0 -> T%d_wen'       % (mtileno, mtileno)
+        print 'Tx%04X_pe_out_b0 -> Tx%04X_out_s2t0_b0'  % (wentileno, wentileno)
+        print 'Tx%04X_in_s0t0_b0 -> Tx%04X_out_s2t0_b0' % (mtileno, mtileno)
+        print 'Tx%04X_out_s2t0_b0 -> Tx%04X_wen'       % (mtileno, mtileno)
     else:
-        print 'T%d_pe_out_b0 -> T%d_out_s0t0_b0' % (wentileno, wentileno)
-        print 'T%d_in_s2t0_b0 -> T%d_wen'       % (mtileno, mtileno)
+        print 'Tx%04X_pe_out_b0 -> Tx%04X_out_s0t0_b0' % (wentileno, wentileno)
+        print 'Tx%04X_in_s2t0_b0 -> Tx%04X_wen'       % (mtileno, mtileno)
     print ''
 
 
@@ -3343,7 +3391,7 @@ def place_pe_in_input_tile(dname):
 
     sname = 'INPUT'
     p1 = INPUT_WIRE_T
-    p2 = "T%d_%s" % (INPUT_TILE, op)
+    p2 = "Tx%04X_%s" % (INPUT_TILE, op)
     path = getnode('INPUT').connect(p1,p2,DBG=DBG)
     if not path:
         if DBG>1:
@@ -3415,7 +3463,7 @@ def check_for_double_destination(sname,dname,DBG=0):
     # Find the unused op (should be op2) (for now) and mark it in the destination
     op = getnode(dname).addop(sname)
     assert op == 'op2', "Well I guess it's time to fix this"
-    dst_port = "T%d_%s" % (getnode(dname).tileno, op)
+    dst_port = "Tx%04X_%s" % (getnode(dname).tileno, op)
     #    Connecting 'INPUT' to 'add_inst0'/'op2'
     if DBG: print "#   Connecting '%s' to '%s'/'%s'" \
               % (sname,dname,op)
@@ -3476,7 +3524,7 @@ def place_folded_reg_in_input_tile(dname):
     # etc.
 
 
-    d_in = 'T%d_%s' % (dtileno,input0) # E.g. 'T0_op1'
+    d_in = 'Tx%04X_%s' % (dtileno,input0) # E.g. 'T0_op1'
     d_out = place_regop_op(dname, dtileno, d_in, DBG=9)
     getnode(dname).place(dtileno, d_in, d_out, DBG)
 
@@ -3687,7 +3735,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
     # Want tileno associated with output;
     # note for e.g. regsolo, input and output ports are in different tiles;
     # want tileno associated with output...right?  Right!
-    stileno = int(re.search('^T(\d+)', snode.output).group(1))
+    stileno = int(re.search('^Tx([^_]+)', snode.output).group(1), 16)
 
     if dtileno == stileno:
         # This can happen when e.g. we're trying to connect an ALU
@@ -3953,7 +4001,7 @@ def eval_path(path, snode, dname, dtileno, DBG=0):
     # Check every port on the path for availability to snode
     if not ports_available(snode, path, DBG): return False
     if DBG:
-        print "YES path from T%d to T%d is available\n" % (stileno,dtileno)
+        print "YES path from Tx%04X to Tx%04X is available\n" % (stileno,dtileno)
 
     # part 2 verify begin and end points
     final_path = can_connect_ends(path, snode, dname, dtileno, DBG)
@@ -4060,12 +4108,12 @@ def output_endpoint_hack(dname, path, DBG=0):
 
     if DBG: pwhere(2207, "Before: path=[...'%s'" % path[-1])
 
-    new_in  = 'T%d_in_s6t0' % OUTPUT_TILENO
-    new_out = 'T%d_out_s7t0' % OUTPUT_TILENO
+    new_in  = 'Tx%04X_in_s6t0' % OUTPUT_TILENO
+    new_out = 'Tx%04X_out_s7t0' % OUTPUT_TILENO
     assert path[-1] == new_in # why not
     path[-1] = '%s -> %s' % (new_in, new_out)
 
-    new_endpoint = 'T%d_in_s1t0' % OUTPUT_TILENO
+    new_endpoint = 'Tx%04X_in_s1t0' % OUTPUT_TILENO
     path.append(new_endpoint)
 
     if DBG: pwhere(2219, "After:  path=[...'%s', '%s'\n" % (path[-2], path[-1]))
@@ -4092,7 +4140,7 @@ def connect_beginpoint(snode, beginpoint, buswidth, DBG=0):
     stileno = snode.tileno
     sname   = snode.name
 
-    # canon_src = 'T%d_%s' % (stileno, snode.input0)
+    # canon_src = 'Tx%04X_%s' % (stileno, snode.input0)
     # plist = [canon_src] + snode.net
 
     plist = sorted(snode.net)
@@ -4164,7 +4212,7 @@ def find_outport(tileno, nodename, DBG=0):
         # FIXME should be a func (below); also used for luts (below);
         # should cojmbine and just have one clause for all nodes .*bit.in.[0-2]
         portnum = int(parse.group(1))
-        only_dest = 'T%d_bit%d' % (tileno, portnum)
+        only_dest = 'Tx%04X_bit%d' % (tileno, portnum)
 
         # Little checkyweck to see if port is avail or did somebody already take it!
         bitnum = portnum
@@ -4192,7 +4240,7 @@ def find_outport(tileno, nodename, DBG=0):
         elif (portnum==1): assert getnode(nodename).input1 == False
 
         opnum = portnum + 1
-        only_dest = 'T%d_op%s' % (tileno, opnum)
+        only_dest = 'Tx%04X_op%s' % (tileno, opnum)
         return only_dest
 
 # Pretty sure this is covered by "other bit ops" below
@@ -4202,7 +4250,7 @@ def find_outport(tileno, nodename, DBG=0):
 #     if parse:
 #         # (optype, portnum) = ('lut', int(parse.group(1)))
 #         portnum = int(parse.group(1))
-#         only_dest = 'T%d_bit%d' % (tileno, portnum)
+#         only_dest = 'Tx%04X_bit%d' % (tileno, portnum)
 # 
 #         # Little checkyweck to see if port is avail or did somebody already take it!
 #         bitnum = portnum
@@ -4218,7 +4266,7 @@ def find_outport(tileno, nodename, DBG=0):
     # also harris: slt_790_775_791$not$lut$lut.bit.in.0
     parse = re.search(r'\.bit\.in\.(\d)', nodename)
     if parse:
-        only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
+        only_dest = 'Tx%04X_bit%s' % (tileno, parse.group(1))
 
         # Little checkyweck to see if port is avail or did somebody already take it!
         bitnum = int(parse.group(1))
@@ -4245,7 +4293,7 @@ def find_outport(tileno, nodename, DBG=0):
         elif (portnum==1): assert getnode(nodename).input1 == False
 
         opnum = portnum + 1
-        only_dest = 'T%d_op%s' % (tileno, opnum)
+        only_dest = 'Tx%04X_op%s' % (tileno, opnum)
         return only_dest
 
     # OLD: parse = re.search(r'lut.in(\d)', nodename)
@@ -4253,7 +4301,7 @@ def find_outport(tileno, nodename, DBG=0):
     parse = re.search(r'lut.in(\d)', nodename)
     if parse:
         (optype, portnum) = ('lut', int(parse.group(1)))
-        only_dest = 'T%d_bit%d' % (tileno, portnum)
+        only_dest = 'Tx%04X_bit%d' % (tileno, portnum)
 
         # Little checkyweck to see if port is avail or did somebody already take it!
         bitnum = portnum
@@ -4267,7 +4315,7 @@ def find_outport(tileno, nodename, DBG=0):
     # NEW: 'bitor_154_155_156_lut_bitPE.bit.in.0'
     parse = re.search(r'bitPE\.bit\.in\.(\d)', nodename)
     if parse:
-        only_dest = 'T%d_bit%s' % (tileno, parse.group(1))
+        only_dest = 'Tx%04X_bit%s' % (tileno, parse.group(1))
 
         # Little checkyweck to see if port is avail or did somebody already take it!
         bitnum = int(parse.group(1))
@@ -4289,7 +4337,7 @@ def find_outport(tileno, nodename, DBG=0):
         elif (portnum==1): assert getnode(nodename).input1 == False
 
         opnum = portnum + 1
-        only_dest = 'T%d_op%s' % (tileno, opnum)
+        only_dest = 'Tx%04X_op%s' % (tileno, opnum)
         return only_dest
 
     # Not a pe op i guess
@@ -4334,12 +4382,12 @@ def connect_endpoint(endpoint, dname, dtileno, track, DBG):
             continue
 
 # FIXME either delete this or make it like DBG>1 thing
-#         if dstport == 'T118_op1':
+#         if dstport == 'Tx0508_op1':
 #             print("dname = %s" % dname)
 #             getnode(dname).show()
 #             print("dstports (dplist) = %s" % dplist)
 # 
-#             print("thinking we wanna connect to 'T118_op1' right?")
+#             print("thinking we wanna connect to 'Tx0508_op1' right?")
 #             assert False, "how things look now?"
 
         cend = can_connect_end(endpoint, dstport, DBG)
@@ -4363,8 +4411,8 @@ def connect_endpoint(endpoint, dname, dtileno, track, DBG):
 #         print '  I think endpoint is on side %d' % side
 #         print '  That means we preferentially choose op%d' % (2-side%2)
 # 
-#     op1 = 'T%d_op1' % T
-#     op2 = 'T%d_op2' % T
+#     op1 = 'Tx%04X_op1' % T
+#     op2 = 'Tx%04X_op2' % T
 # 
 #     newlist = []
 #     if   (side%2==0) and (op2 in dplist): newlist = [op2]
@@ -4578,14 +4626,14 @@ main()
 #         # 'a' wires pe_out, mem_out (rdata) can connect to any outwire
 #         if re.search('out$', a):
 #             # If 'a' is an '_out' then b should be an outwire
-#             assert re.search('^T\d+_out', b)
+#             assert re.search('^T[^_]+_out', b)
 #             return '%s -> %s' % (a,b)
 # 
 #         # a should be inwire now
-#         assert re.search('^T\d+_in', a)
+#         assert re.search('^T[^_]+_in', a)
 # 
 #         # 'a' inwire can connect to any wire not on same side
-#         if re.search('^T\d+_out', b):
+#         if re.search('^T[^_]+_out', b):
 #             (Ta,da,sa,ta) = CT.parsewire(a)
 #             (Tb,db,sb,tb) = CT.parsewire(b)
 #             return not (sa == sb)

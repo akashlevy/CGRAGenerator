@@ -253,8 +253,20 @@
 //; #####################################################
 //; #Print cgra grid as comments in the verilog file
 //; #####################################################
+//;
+//; # Header
+//; my $grid_prefix = "//CGRA  ";
+//; printf($grid_prefix);
+//; printf('   ');
+//; for (my $row=0; $row<$cgra_grid_width; $row++) {
+//;   printf(' %02X', $row);
+//; }
+//; print "\n";
+//;
+//; # Body
 //; for (my $h=0; $h<$cgra_grid_height; $h++) {
-//;   print "//";
+//;   printf($grid_prefix);
+//;   printf(' %02X', $h);
 //;   for (my $w=0; $w<$cgra_grid_width; $w++) {
 //;     # 
 //;     # New stuff: row, col coded in tile address e.g. 0x030A means "row 3, col 10"
@@ -262,17 +274,26 @@
 //;     my $tile_count = ($row << 8) + $col;
 //; 
 //;     my $key = "${w}_${h}";
-//;     my $tile_type = $tile_grid{$key};
+//;     my $type = $tile_grid{$key};
+//;     # (pe,mem,io1,io16) => (pe,me,io,IO)
+//;     my $t = 'I'; if ($type ne 'io16') { $t = substr($type, 0, 1); }
 //;     my $tile_count_hex = sprintf("0x%X", $tile_count);
-//;     if (($tile_type ne "X") && ($tile_type ne "empty")) {
-//;       printf("%4s%04X ", ${tile_type}, ${tile_count});
-//;       $tile_grid{"${key}_addr"} = $tile_count;
+//;
+//;     if (($type ne "X") && ($type ne "empty")) {
+//;       printf("%2s ", ${t}, ${tile_count});
 //;     } else {
-//;       printf "%8s ", ".......";
+//;       printf " ..";
+//;     }
+//;
+//;     # FIXME NOTE this is important, it sets a global that is used later (%tile_grid) :(
+//;     if (($type ne "X") && ($type ne "empty")) {
+//;       $tile_grid{"${key}_addr"} = $tile_count;
 //;     }
 //;   }
 //;   print "\n";
 //; }
+//; print "\n";
+//; 
 //; #####################################################
 //; #Create verilog
 //; #####################################################

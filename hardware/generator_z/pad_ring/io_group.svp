@@ -60,7 +60,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   my $tracknum = 0;
 //;   my $portside = ($side_num+2) % 4;
 //;   my @collateral = (
-//; "  <tile type='io1bit'      tile_addr='$hex_id' row='$row' col='$col' ".
+//; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' ".
 //; "name='pads_${side}_${io_group_num}[${bitnum}]'>",
 //; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
 //; "    <io_group>$io_group_num</io_group>",

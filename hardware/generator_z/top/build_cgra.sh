@@ -9,6 +9,7 @@ function do_genesis {
     \
     ../pad_ring/pad_ring.svp \
     ../pad_ring/io_group.svp \
+    ../pad_ring/fixed_io.vp \
     \
     ../sb/sb.vp \
     ../cb/cb.vp \

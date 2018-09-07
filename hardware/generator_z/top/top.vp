@@ -41,13 +41,13 @@ module `mname` (
   input [`$config_data_width-1`:0] config_data_in,
   input [`$config_addr_width-1`:0] config_addr_in,
 //; }
-  input tck,
-  input tms,
-  input trst_n,
-  input tdi,
-  output tdo,
-  input clk_in,
-  input reset_in
+  input tck_pad,
+  input tms_pad,
+  input trst_pad,
+  input tdi_pad,
+  output tdo_pad,
+  input clk_pad,
+  input reset_pad
 );
 
 
@@ -59,6 +59,11 @@ wire [`$config_addr_width-1`:0] config_addr_in;
 
 wire clk;
 wire reset;
+wire tck;
+wire tdi;
+wire tdo;
+wire tms;
+wire trst_n;
 wire config_read;
 wire config_write;
 wire [`$config_data_width-1`:0] read_data;
@@ -150,8 +155,20 @@ assign config_write = 1;
     .config_read(config_read),
     .config_write(config_write),
     .read_data(read_data_pads),
-    .clk(clk),
-    .reset(reset)
+    .clk_pad(clk_pad),
+    .reset_pad(reset_pad),
+    .tck_pad(tck_pad),
+    .tdi_pad(tdi_pad),
+    .tms_pad(tms_pad),
+    .trst_n_pad(trst_n_pad),
+    .tdo_pad(tdo_pad),
+    .clk(clk_in),
+    .reset(reset_in),
+    .tck(tck),
+    .tdi(tdi),
+    .tms(tms),
+    .trst_n(trst_n),
+    .tdo(tdo)
   );
 
 //; if (0) {

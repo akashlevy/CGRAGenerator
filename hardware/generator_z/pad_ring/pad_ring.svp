@@ -17,12 +17,24 @@
 //; # I need this order for debugging; we can change it back later if you like...
 //; my @sides = ('N','E','S','W');
 module `mname` (
-  input clk,
-  input reset,
+  input clk_pad,
+  input reset_pad,
+  input tck_pad,
+  input tms_pad,
+  input tdi_pad,
+  input trst_n_pad,
+  output tdo_pad,
   input [`$config_data_width-1`:0] config_data,
   input [`$config_addr_width-1`:0] config_addr,
   input config_read,
   input config_write,
+  output clk,
+  output reset,
+  output tck,
+  output tdi,
+  output tms,
+  output trst_n,
+  input tdo,
 
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {
@@ -77,4 +89,54 @@ always @(*) begin
     read_data = read_data | read_data_group[i];
 end
 
+//Instantiate IO cells for non-configurable IOs (clk, reset, JTAG signals)
+//input clk pad 
+//; my $clk_input_obj = generate("fixed_io", "clk_input_cell", is_input=>1);
+`$clk_input_obj->instantiate()` (
+  .pad(clk_pad),
+  .p2f(clk)
+); 
+
+//input reset pad
+//; my $reset_input_obj = clone($clk_input_obj, "reset_input_cell");
+`$reset_input_obj->instantiate()` (
+  .pad(reset_pad),
+  .p2f(reset)
+);
+ 
+//input tck pad
+//; my $tck_input_obj = clone($clk_input_obj, "tck_input_cell");
+`$tck_input_obj->instantiate()` (
+  .pad(tck_pad),
+  .p2f(tck)
+); 
+
+//input tdi pad
+//; my $tdi_input_obj = clone($clk_input_obj, "tdi_input_cell");
+`$tdi_input_obj->instantiate()` (
+  .pad(tdi_pad),
+  .p2f(tdi)
+); 
+
+//input tms pad
+//; my $tms_input_obj = clone($clk_input_obj, "tms_input_cell");
+`$tms_input_obj->instantiate()` (
+  .pad(tms_pad),
+  .p2f(tms)
+); 
+
+//input trst_n pad
+//; my $trst_n_input_obj = clone($clk_input_obj, "trst_n_input_cell");
+`$trst_n_input_obj->instantiate()` (
+  .pad(trst_n_pad),
+  .p2f(trst_n)
+);
+
+//output tdo pad
+//; my $tdo_output_obj = generate("fixed_io", "tdo_output_cell", is_input=>0);
+`$tdo_output_obj->instantiate()` (
+  .pad(tdo_pad),
+  .f2p(tdo)
+); 
+ 
 endmodule

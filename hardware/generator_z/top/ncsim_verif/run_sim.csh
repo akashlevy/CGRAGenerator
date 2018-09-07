@@ -52,5 +52,7 @@ $RTL_FOLDER/io_group_unq2.sv \
 $RTL_FOLDER/io_group_unq3.sv \
 $RTL_FOLDER/io_group_unq4.sv \
 $RTL_FOLDER/pad_ring.sv \
+$RTL_FOLDER/fixed_io_unq1.v \
+$RTL_FOLDER/fixed_io_unq2.v \
 $SYNOPSYS/dw/sim_ver/DW_tap.v \
 $RTL_FOLDER/sram_512w_16b.v 

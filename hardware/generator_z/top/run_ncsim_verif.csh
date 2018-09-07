@@ -27,6 +27,7 @@ Genesis2.pl -parse -generate -top test_top -hierarchy top.xml -input\
   \
   ../pad_ring/pad_ring.svp \
   ../pad_ring/io_group.svp \
+  ../pad_ring/fixed_io.vp \
   \
   ../sb/sb.vp \
   ../cb/cb.vp \

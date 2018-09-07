@@ -150,7 +150,7 @@ program automatic `mname`(
 	 $display("\nWRITE TO FEATURE 0 IN ALL IO1BIT TILES");
 	 status = $fscanf(io1bit_IDs,"%x",id);
 	 while(status==1) begin 
-	 	write_config(id,8'h0,8'h0,32'h3);
+	 	write_config(id,8'h0,8'h0,$urandom_range(0,3));
 	 	status = $fscanf(io1bit_IDs,"%x",id);
 	 end
 	 $display("\nWRITE TO FEATURE 0 IN ALL MEM TILES");

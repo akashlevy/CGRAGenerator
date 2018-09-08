@@ -97,19 +97,6 @@ CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
   'gte/lte' model broken(?) in 'isa.py'; wrote my own instead (utest.py/FIXME)
   'sel' - no test yet b/c needs 'd' input
 '''
-# 
-# haha we don't do this no more (right?)
-#     # FIXME FIXME FIXME
-#     # FIXME instead of doing this, should simply use -build flag later on...
-#     if USE_TBG and ("SKIP_RUNCSH_BUILD" in os.environ):
-#         # assert False
-#         print '''
-# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-# ERROR! Looks like SKIP_RUNCSH_BUILD env var is set!  We will probably FAIL!!!
-# '''
-
-
 
 def main():
     caveats()
@@ -365,8 +352,8 @@ def gen_output_file_cgra(tname, DBG=0):
     else:       logfile = cwd + "run_tbg.log"
 
     if USE_TBG:
+        # run_csh = './run_tbg.csh -v -build' # NO!!!!  NEVER BUILD!!!
         run_csh = './run_tbg.csh -v'
-        run_csh = './run_tbg.csh -v -build'
     else:
         run_csh = './run.csh -v'
         if GENERATED:          run_csh = './run.csh -v -nobuild'

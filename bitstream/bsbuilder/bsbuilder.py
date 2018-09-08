@@ -127,7 +127,8 @@ def main():
 
         # self.in -> T0_in_s2t0
         if re.search('self.in', line):
-            io_info.append(process_input(line))
+            # Ignore self.in (really?)
+            # io_info.append(process_input(line))
             continue
 
         # T0_out_s0t0 -> self.out
@@ -338,24 +339,25 @@ def preprocess(input_lines, DBG=0):
 
     return output_lines
 
-def process_input(line):
-    '''
-    # NOTE in 16x16 grid w/io pads, input can *only* go to tile 0x15 (T21) in_s2t0
-    line = 'self.in -> T0_in_s2t0'
-    rval = 'INPUT  tile  0 (0,0) / in_BUS16_S2_T0 / wire_0_m1_BUS16_S0_T0'
-    '''
-
-    wire = re.search('self.in\s*->\s*(\S+)', line).group(1)
-    # (tileno,lhs) = striptile(wire)
-    # (tileno,lhs) = cgra_info.parse_resource(wire)
-
-    assert wire == 'T21_in_s2t0', "\nERROR %s;\n'self.in' can only connect to T21_in_s2t0\n\n" % line
-
-    (tileno, dir, side, track) = cgra_info.parse_canon(wire)
-    (r,c) = cgra_info.tileno2rc(tileno)
-    g = cgra_info.canon2global(wire)
-    return '# INPUT  tile  %d (%d,%d) /  %s_BUS16_S%d_T%d / %s' %\
-          (tileno, r, c, dir, side, track, g)
+# Ignore self.in (really?)
+# def process_input(line):
+#     '''
+#     # NOTE in 16x16 grid w/io pads, input can *only* go to tile 0x15 (T21) in_s2t0
+#     line = 'self.in -> T0_in_s2t0'
+#     rval = 'INPUT  tile  0 (0,0) / in_BUS16_S2_T0 / wire_0_m1_BUS16_S0_T0'
+#     '''
+# 
+#     wire = re.search('self.in\s*->\s*(\S+)', line).group(1)
+#     # (tileno,lhs) = striptile(wire)
+#     # (tileno,lhs) = cgra_info.parse_resource(wire)
+# 
+#     assert wire == 'T21_in_s2t0', "\nERROR %s;\n'self.in' can only connect to T21_in_s2t0\n\n" % line
+# 
+#     (tileno, dir, side, track) = cgra_info.parse_canon(wire)
+#     (r,c) = cgra_info.tileno2rc(tileno)
+#     g = cgra_info.canon2global(wire)
+#     return '# INPUT  tile  %d (%d,%d) /  %s_BUS16_S%d_T%d / %s' %\
+#           (tileno, r, c, dir, side, track, g)
 
 
 def process_output(line):

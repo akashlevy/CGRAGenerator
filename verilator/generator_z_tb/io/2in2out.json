@@ -1,6 +1,6 @@
 {
     "reset_in_pad": {
-        "pad_bus" : "pads_E_0",
+        "pad_bus" : "pads_W_0",
         "bits": {
             "0": { "pad_bit":"0" }
         },

@@ -55,29 +55,30 @@ ORIG_ORDER = False
 WEN_LUT_LIST = []
 
 # FIXME/TODO globals wrapper and initializer thingy, see packer.py maybe
+# FIXME/TODO pretty sure this is WRONG and never gets RESET!!
 GRID_WIDTH  = 8
 GRID_HEIGHT = GRID_WIDTH
 
-# # INPUT always comes in on bus 'T0_in_s2t0'
-# INPUT_TILENO = 0
-# INPUT_TILE   = INPUT_TILENO
-# INPUT_WIRE   = 'in_s2t0'
-# INPUT_WIRE_T = 'T0_in_s2t0'
-
-
 # These all get rewritten by find_input_tile, below.
-INPUT_TILENO =      26 # Actually I think it's 21 :o
-INPUT_TILE   =      INPUT_TILENO
-INPUT_WIRE   =      'in_s2t0'
-INPUT_WIRE_T =      'Tx%04X_in_s2t0' % INPUT_TILENO
+INPUT_TILENO =      0x0101           # Top left
+INPUT_WIRE   =      'in_s3t0'        # From the *north*
+INPUT_WIRE_T =      'Tx%04X_in_s3t0' % INPUT_TILENO
 INPUT_TILE_PE_OUT = "Tx%04X_pe_out"  % INPUT_TILENO
+INPUT_TILE   =      INPUT_TILENO     # An alias - is this a good idea?
 
 # Find the input tile
 def find_input_tile():
     # Assumes first pe tile found is the input tile (how terrible is that!?
+    # FIXME this is not a good way to do this...
     for i in range(1000):
         t = cgra_info.tiletype(i)
         if t[0:2] == "pe":
+
+            # FIXME what we *should* do is...
+            # - Find input signal name in json file
+            # - Look up signal name (io16bit tile) in cgra_info.xml
+            # - Set input, output globals
+
 
             global INPUT_TILENO
             global INPUT_TILE
@@ -87,7 +88,7 @@ def find_input_tile():
 
             INPUT_TILENO = i
             INPUT_TILE   = INPUT_TILENO
-            INPUT_WIRE   = 'in_s2t0'
+            INPUT_WIRE   = 'in_s3t0' # From the *north*
             INPUT_WIRE_T = 'Tx%04X_%s' % (INPUT_TILENO, INPUT_WIRE)
             INPUT_TILE_PE_OUT = "Tx%04X_pe_out" % INPUT_TILENO
             
@@ -136,12 +137,16 @@ def find_output_tile():
     # We use the first (PE or?) mem tile in NW corner
     # E.g. for tallmem OUTPUT_TILENO = 0x24
     # FIXME better would be to calculate it from pad name, like OUTPUT_TILENO_onebit below
+
+    # FIXME Terrible assumption(s):
+    # - output tile is last pe or mem tile in row 1
+    # - that tile number is less than 1000
     for i in range(1000):
         if is_pe_tile(i) or is_mem_tile(i):
             (r,c) = cgra_info.tileno2rc(i)
-            if r == 2:
+            if r == 1:
                 OUTPUT_TILENO = i
-            elif r > 2:
+            elif r > 1:
                 print "I think output tile is Tx%04X (early out)" % OUTPUT_TILENO
                 # Early out
                 break

@@ -1426,7 +1426,7 @@ def cgra2canon(name, tileno=-1, DBG=0):
         newname = '%s_s%st%s' % (dir,side,track)
 
     if tileno != -1:
-        newname = 'T%d_%s' % (tileno, newname)
+        newname = 'Tx%04X_%s' % (tileno, newname)
 
     # Little hacky wack; buswidth should come from parse_cgra_wirename probably
     if name.find('BUS1_') >= 0: newname = newname + 'b'

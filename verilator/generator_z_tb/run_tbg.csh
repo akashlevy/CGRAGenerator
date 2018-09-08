@@ -145,16 +145,31 @@ while ($#argv)
       set GENERATE = '-gen'; breaksw;
 
     case '-nobuild':
-      set GENERATE = '-nogen'; unset BUILD; breaksw;
+      echo ""
+      echo "WARNING you asked for -nobuild but this is run_tbg"
+      echo "WARNING so I don't think that's what you really want"
+      echo "WARNING so I gonna ingore it sorry dude/babe"
+      echo ""
+      breaksw
+      # set GENERATE = '-nogen'; unset BUILD; breaksw;
 
     case '-nogen':
       set GENERATE = '-nogen'; breaksw;
 
     case '-build':
-    case '-rebuild':
+      echo ""
+      echo "WARNING -build no longer supported"
+      echo "WARNING tbg must rebuild incrementally every time anyway"
+      echo "WARNING if you really want to start over from scratch use '-rebuild_from_scratch'"
+      echo ""
+      breaksw
+
+    case '-rebuild_from_scratch':
+        echo ""; echo "WARNING"; echo "WARNING"; echo "WARNING"; 
         echo WARNING You asked for it with -build
         echo WARNING Will rebuild Vtop from scratch...
         echo "rm build/*"
+        echo "WARNING"; echo "WARNING"; echo "WARNING"; echo ""
         if (-d build) rm build/*
         unsetenv SKIP_RUNCSH_BUILD; breaksw
 

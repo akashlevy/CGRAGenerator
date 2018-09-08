@@ -713,7 +713,8 @@ def get_opname(sname, DBG=0):
 
 
 def print_oplist(DBG=0):
-    oplist = range(cgra_info.ntiles())
+
+    oplist = {}
     for sname in sorted(nodes):
         if is_const(sname): continue
         src = getnode(sname)
@@ -814,10 +815,7 @@ def print_oplist(DBG=0):
             opcomm = '# %s' % sname
             oplist[src.tileno] = '%-26s %s' % (opline,opcomm)
 
-    # Print in tile order, 0 to 'ntiles'
-    for i in range(cgra_info.ntiles()):
-        if oplist[i] != i: print oplist[i]
-
+    for i in oplist: print oplist[i]
     print ''
 
     # FIXME should be separate print_wenlist()
@@ -870,7 +868,7 @@ def optype(input, opname, DBG=0):
 def mark_regs(c):
     '''
     if e.g. c=="T0_in_s2t0 -> T0_out_s0t0" and "T0_out_s0t0" is a register,
-    mark it with an r e.g. return "T0_in_s2t0 -> T0_out_s0t0_R"
+    mark it with an r e.g. return "T0_in_s2t0 -> T0_out_s0t0 (r)"
     '''
     rhs = re.search('(\S+)$', c).group(1)
     # print c,rhs
@@ -1037,7 +1035,7 @@ class Node:
         print "  type='%s'" % type
         print "  reg_op='%s'" % self.reg_op
         print "  ----"
-        print "  tileno= %s" % self.tileno
+        print "  tileno= 0x%04X" % int(self.tileno)
         print "  input0='%s'" % self.input0
         print "  input1='%s'" % self.input1
 
@@ -1070,16 +1068,17 @@ class Node:
         if it is free and/or if it is already in mynet.
         rname should be of the form 'Tx%04X_something'
         '''
-        # rname must have embedded tileno, e.g. 'T1_in_s3t2' or 'T5_mem_out'
-        (tileno,r) = parse_resource(rname)
         # DBG=9
+        # rname must have embedded tileno, e.g. 'Tx0101_in_s3t2' or 'Tx0805_mem_out'
+        (tileno,r) = parse_resource(rname)
         if DBG>2: pwhere(386)
-
 
         ########################################################################
         # FIXME re-examine / remove this hack!!!
         # harris hack to get us to the next level
         # To maintain prior success, restrict tile 111 usage to indicated nodes...
+        # FIXME FIXME
+        # NOTE this hack may have been solved by can_skip_resource_check(), below
         if 'lb_grad_yy_2_stencil_update_stream$lb1d_0$reg_1' in nodes:
             # restrict hack to harris only:
             # assumes "lb_grad_xy..." nodename is unique to harris
@@ -1102,7 +1101,7 @@ class Node:
             if DBG>2: print('')
             if DBG>2: print "Looking for '%s' in tile Tx%04X (0x%x)" % (r, tileno, tileno)
             assert rname not in resources[tileno],\
-                   "'%s' is a register: should not be in resources list!"
+                   "'%s' is a register: should not be in resources list!" % rname
             # But it CAN be in the net list maybe...?
             print "OOPS looks like '%s' (0x%x) is a register...?" % (r, tileno)
             print "Did not want a register in this path!"
@@ -1136,8 +1135,8 @@ class Node:
         '''
         Place node "name" in tile "tileno"
         with input 'input' and output 'output'
-        where e.g. 'input'  = 'T2_op1'    or 'T1_out_s0t1'
-        where e.g. 'output' = 'T2_pe_out' or 'T2_in_s2t1'
+        where e.g. 'input'  = 'Tx0302_op1'    or 'Tx0507_out_s0t1'
+        where e.g. 'output' = 'Tx0101_pe_out' or 'Tx0101_in_s2t1' or? 'mul_307_308_309$binop.data.in.0'
         '''
         name = self.name
 
@@ -1191,6 +1190,7 @@ class Node:
         if (len(self.dests) > 0) and is_bit_node(self.dests[0]): buswidth = 1
         else: buswidth = 16
 
+        # One-bit output should have 'b' suffix
         # if (self.buswidth == 1) and (output[-3:] == "out"):
         if (buswidth == 1) and (output[-3:] == "out"):
             if DBG>1: print("output was '%s'" % output)
@@ -1204,9 +1204,8 @@ class Node:
         # output is in our net, but input is not.  right?
         self.net.append(output) # right?  RIGHT???
 
-        if DBG: print "# 818 Placed '%s' in tile %d at location '%s'" \
-           % (name, tileno, input)
-
+        if DBG:
+            print "# 818 Placed '%s' in tile %d at location '%s'" % (name, tileno, input)
 
         # FIXME there should be a better way to do this...!
         # Oh...maybe that's this.
@@ -1268,6 +1267,30 @@ class Node:
         return serpent_connect_within_tile(self, a, b, T, DBG)
 
 
+def can_skip_resource_check(node, op, DBG=0):
+    # If node (e.g. 'INPUT') has a reg_op (e.g. 'Tx0101_data0'), 
+    # then okay to skip availability check
+    # FIXME this could be clearer, no?
+
+    rname = node.reg_op
+    if rname:
+        # If op is my reg_op, then it will be marked "unavail" I think
+        # but I want to route to it anyway I think
+        node.show()
+        if DBG: pwhere(1080, "hey look I have an associated reg_op '%s'" % rname)
+        rnode = getnode(rname)
+        if DBG: rnode.show()
+
+        # Should be exactly one route associated w/the register; route dest should be b
+        # route ['mul_307_308_309$binop.data.in.0'] = ['Tx0101_op1']
+        reg_home = rnode.route.values()[0][0]
+        if reg_home == op:
+            if DBG: print("# op '%s' is same as reg_op '%s' so that's okay then" % (op, reg_home))
+            return True
+
+    # Still need to check availability
+    return False
+
 
 # FIXME this should be part of cgra_info.connect_within_tile() !!!
 def serpent_connect_within_tile(node, a, b, T, DBG=0):
@@ -1292,9 +1315,11 @@ def serpent_connect_within_tile(node, a, b, T, DBG=0):
         if not node.is_avail(a):
             if DBG>1: print "'%s' not avail to tile %d" % (a,T)
             return False
-        if not node.is_avail(b):
-            if DBG>1: print "'%s' not avail to tile %d" % (b,T)
-            return False
+
+        if not can_skip_resource_check(node, b, DBG):
+            if not node.is_avail(b):
+                if DBG>1: print "'%s' not avail to tile %d" % (b,T)
+                return False
 
         if DBG>1: print "       Looks like both are available to '%s' (%s)\n" % (node.name, where(451))
         #         print "       Ask cgra: can '%s' connect to '%s'? (%s)" % (a,b,where(457))
@@ -1411,8 +1436,10 @@ def find_middle(a, b, T, DBG=0):
 
 
 def addT(tileno, r):
-    '''Embed tileno in resource 'r' e.g. "mem_out" => "T3_mem_out"'''
-    return 'T' + str(tileno) + '_' + r
+    '''Embed tileno in resource 'r' e.g. "mem_out" => "Tx0406_mem_out"'''
+    # return 'T' + str(tileno) + '_' + r
+    return 'Tx%04X_%s' % (tileno, r)
+
 
 # FIXME/TODO use CT.parse_resource(r) instead
 def parse_resource(r):
@@ -1422,7 +1449,6 @@ def parse_resource(r):
     4/2018 now also works for e.g. "T0_in_s0t0b"
     '''
     return cgra_info.parse_resource(r)
-
 
 
 def prettyprint_dict(dictname, dict):
@@ -1455,6 +1481,15 @@ def to_cgra(name, DBG=0):
 
 # List of output ports being used as registers
 REGISTERS = []
+
+def add_register(dtileno, d_in, DBG=0):
+    global REGISTERS
+    REGISTERS.append(d_in)
+
+    if DBG>2: print "# Add reg's input wire to list of registers"
+    if DBG>2: print '# 3039 added reg "%s" to REGISTERS' % d_in
+    if DBG>2: print '# now registers is', REGISTERS
+
 
 # FIXME do the thing with the globals and the init-globals...
 nodes = {}
@@ -3023,17 +3058,10 @@ def place_and_route(sname,dname,indent='# ',DBG=0):
         elif is_regsolo(dname):
             print '# 1a. If regsolo, add name to REGISTERS for later'
             d_out = CT.find_neighbor(d_in, DBG=0)
-
-            global REGISTERS
-            if DBG>2: print "# Add reg's input wire to list of registers"
-            # REGISTERS.append(path[-1])
-            REGISTERS.append(d_in)
-            if DBG>2: print 'added reg to REGISTERS'
-            if DBG>2: print 'now registers is', REGISTERS
+            add_register(dtileno, d_in)
 
             # If neighbor tile is zero we did something wrong!
             assert d_out[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
-
 
         elif is_regop(dname):
             d_out = place_regop_op(dname, dtileno, d_in, DBG)
@@ -3397,21 +3425,7 @@ def place_pe_in_input_tile(dname):
     sname = 'INPUT'
     p1 = INPUT_WIRE_T
     p2 = "Tx%04X_%s" % (INPUT_TILE, op)
-    path = getnode('INPUT').connect(p1,p2,DBG=DBG)
-    if not path:
-        if DBG>1:
-            print 'oops no route from p1 to p2'
-            print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
-            assert False
-
-    if path == False:
-        # E.g.
-        # WHOOP! There it is: out_BUS16_S1_T0
-        # Oops middle node is occupied; we will have to try again
-        print "oops hey what. path is false!!?"
-        print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
-        pstack()
-        assert False
+    path = input_to_op(p2)
 
     # FIXME this exact code is repeated elsewhere!!!  multiple places even maybe
     print "# 2. Add the connection ('path') to src node's src->dst route list 3088"
@@ -3450,6 +3464,28 @@ def place_pe_in_input_tile(dname):
     # 
     # # Check that pe_out got removed from INPUT (tile0) resources
     # assert not ('pe_out' in resources[INPUT_TILENO])
+
+
+def input_to_op(op, DBG=0):
+    '''E.g. op=Tx0101_op1 (old) or op=Tx0101_data0 (new)'''
+    global INPUT_WIRE_T
+    if DBG: print("3581 Connecting '%s' to '%s'" % (INPUT_WIRE_T, op))
+
+    path = getnode('INPUT').connect(INPUT_WIRE_T,op,DBG=DBG)
+    if not path:
+        print 'oops no route from input_wire to op'
+        print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
+        pstack()
+        assert False
+
+#     # FIXME this is same as above, what?
+#     if path == False:
+#         print "oops hey what. path is false!!?"
+#         print 'shoulda sorted your input nodes so ALU gets placed FIRST, right?'
+#         pstack()
+#         assert False
+
+    return path
 
 
 def check_for_double_destination(sname,dname,DBG=0):
@@ -3504,6 +3540,11 @@ def place_folded_reg_in_input_tile(dname):
 
     DBG=1
     sname = 'INPUT'
+
+    # Set INPUT's reg_op field
+    assert getnode(sname).reg_op == False
+    getnode(sname).reg_op = dname
+
     if DBG:
         print "# Put reg-pe folded pair '%s' in INPUT tile " % dname
         print "Connecting '%s' to '%s'" % (sname,dname)
@@ -3535,8 +3576,13 @@ def place_folded_reg_in_input_tile(dname):
 
     # FIXME A lot of this is duplicated from place() :(
     print "# 2. Add the connection to src node's src->dst route list 3200"
-    path = '%s -> %s' % (INPUT_WIRE_T, d_in)
-    path = [path]
+
+    # Connect INPUT_WIRE_T to d_in
+    # path = '%s -> %s' % (INPUT_WIRE_T, d_in)
+    # haha no they don't always connect e.g. if INPUT_WIRE_T = Tx0101_in_s3t0
+    #   and d_in = "Tx0101_op1" b/c op1, then can only connect to side 2
+    path = input_to_op(d_in)
+
     getnode(sname).route[dname] = path
     if DBG: print "#   Added connection '%s' to route from '%s' to '%s'" % \
        (path, sname, dname)
@@ -3597,7 +3643,7 @@ def place_regop_op(dname, dtileno, d_in, DBG):
     getnode(pname).place(dtileno, d_in+'(r)', addT(dtileno,'pe_out'), DBG)
     if DBG>2: getnode(pname).show(); print ''
 
-    REGISTERS.append(d_in)
+    add_register(dtileno, d_in)
 
     # dnode.route[pname] is going to be e.g. ['op1']
     # we'll need to change that to e.g. 'T10_op1' i.e. 'd_in'
@@ -3708,8 +3754,6 @@ global ENDPOINT_MUST_BE_FREE
 ENDPOINT_MUST_BE_FREE = False
 
 def find_best_path(sname,dname,dtileno,track,DBG=1):
-    # DBG=1
-
     # next:
     # trying to route sname/stileno to dname/dtileno
     # foreach path in connect_{hv,vh}connect(ptile,dtile)
@@ -3727,7 +3771,8 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
         "Want to route from src tile %d ('%s') to dest tile %d ('%s') on track '%d'\n" \
         % (stileno, sname, dtileno, dname, track))
 
-    # output='T73_in_s2t1'
+    # output='Tx0505_in_s2t1'
+    assert snode.output[0:2] == 'Tx', "signal name '%s' looks wrong..." % snode.output
     if DBG>2: print snode.output
     parse = re.search(r's[0-9]t([0-9])b?$', snode.output)
     if parse:

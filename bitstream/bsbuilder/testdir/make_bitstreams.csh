@@ -89,9 +89,16 @@ foreach b ($bmarks)
     echo ''
   endif
 
+  unset BSBFAIL
   echo "  ../bsbuilder.py < $tmp/$bsb > $tmp/$bsa"
   # ../bsbuilder.py -v < $tmp/$bsb | sed -n '/FINAL PASS/,$p' | sed '1,2d' > $tmp/$bsa || exit 13
-  ../bsbuilder.py < $tmp/$bsb > $tmp/$bsa || exit 13
+  ../bsbuilder.py < $tmp/$bsb > $tmp/$bsa || set BSBFAIL
+  if ($?BSBFAIL) then
+    echo "uh oh looks like bsbuilder FAILED"
+    tail -n 40 $tmp/$bsa
+    exit 13
+  endif
+
 
   echo "  cmp $tmp/$bsa examples/$bsa"
   ls -l examples/$bsa $tmp/$bsa

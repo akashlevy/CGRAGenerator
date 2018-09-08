@@ -13,7 +13,7 @@ endif
 # 1. run_tbg is now the ONLY option
 # 2. '-build' is default in run_tbg now or should be anyway
 set RUN = run_tbg.csh
-set build_switch = '-build'
+set build_switch = ''
 
 if ("$1" == "-tbg") then
   echo "WARNING ignoring -tbg switch (tbg is default)"

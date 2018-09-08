@@ -310,18 +310,11 @@ set nclocks = "-nclocks $nclocks"
   grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
   set config = $tmpdir/${config:t:r}.bs
 
-  # Here's some terrible hackiness
-  # if ($?ONEBIT) then
-  if (1) then
-    echo ''
-    echo 'HACK WARNING found onebit_bool config'
-    echo 'HACK WARNING found onebit_bool config'
-    echo 'HACK WARNING found onebit_bool config'
-    echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
-    echo ""
-    bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
-    set config = $tmpdir/${config:t:r}_reordered.bs
-  endif
+  echo ''
+  echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+  echo ""
+  bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+  set config = $tmpdir/${config:t:r}_reordered.bs
 
   # Quick check of goodness in config file (again)
   # Early out before waste time simulating

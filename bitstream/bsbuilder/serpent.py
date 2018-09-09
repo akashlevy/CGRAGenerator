@@ -1980,31 +1980,17 @@ def find_regsolo_dstports(name, tile, track, DBG=0):
       for side in range(nsides):
         outport = "Tx%04X_out_s%dt%d" % (tile,side,track)
         n = CT.find_neighbor(outport, DBG=0)
-
-#         # assert n[0:3] != 'T0_', "regsolo neighbor tile does not exist maybe?"
-#         if n[0:3] != 'T0_':
-#           if DBG: print("-- Hey '%s' you're okay you connect to '%s'" % (outport, n))
-#           p.append(outport)
-
+        assert n[0:2] == 'Tx', "signal name '%s' looks wrong..." % n
 
         # '''E.g. parseT("T4_in_s2t4") = (4, "in_s2t4")'''
         (t,w) = parseT(n)
         if is_pe_tile(t) or is_mem_tile(t):
           if DBG: print("-- Hey '%s' you're okay you connect to '%s'" % (outport, n))
           p.append(outport)
-            
-
-
-
-
-
-
 
         elif DBG: print("** Hmm '%s' neighbor '%s' not exist maybe **" % (outport, n))
 
-        # assert outport != 'T21_out_s3t0'
-        if outport == 'T21_out_s3t0':
-            print '666a here we is'
+        # if outport == 'T21_out_s3t0': print '666a here we is'
 
     if DBG: print ""
     return p
@@ -3768,7 +3754,7 @@ def find_best_path(sname,dname,dtileno,track,DBG=1):
     dnode = getnode(dname)
     stileno = snode.tileno
     pwhere(1289,\
-        "Want to route from src tile %d ('%s') to dest tile %d ('%s') on track '%d'\n" \
+        "Want to route from src tile %04X ('%s') to dest tile %04X ('%s') on track '%d'\n" \
         % (stileno, sname, dtileno, dname, track))
 
     # output='Tx0505_in_s2t1'

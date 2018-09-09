@@ -629,8 +629,7 @@ def find_neighbor(w, DBG=0):
             if DBG: print " It's a bottom"
             side = side + 4
 
-    nbr_wire = "T%s_%s_s%dt%d" \
-               % (nbr_tileno, in_or_out, side, track)
+    nbr_wire = "Tx%04X_%s_s%dt%d" % (nbr_tileno, in_or_out, side, track)
 
     # if DBG: print "%s on tile %d matches %s on tile %d\n" % (w, tileno, nbr_wire, nbr_tileno)
     if DBG: print "'%s' connects to neighbor '%s'\n" % (w, nbr_wire)

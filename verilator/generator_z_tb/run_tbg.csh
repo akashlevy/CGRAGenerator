@@ -240,18 +240,19 @@ set io_config = `pwd`/io/2in2out.json
 echo ""
 echo "${0:t}: Using standard io file '$io_config:t'"
 
-if ($?ONEBIT) then
-  set io_config = `pwd`/io/s2in_s1t0out.io.json
-  echo -n "$0:t aha it's the onebit thing - "
-  echo    "i will try using $io_config instead"
-endif
-
-# This is the default now...
-# if ($?TWO_IN_TWO_OUT) then
-#   set io_config = `pwd`/io/2in2out.io.json
-#   echo -n "$0:t oh wait it's 2in2out okay..."
-#   echo    "i will use '$io_config' for io config"
-# endif
+# # We're all using the same one now...
+# # if ($?ONEBIT) then
+# #   set io_config = `pwd`/io/s2in_s1t0out.io.json
+# #   echo -n "$0:t aha it's the onebit thing - "
+# #   echo    "i will try using $io_config instead"
+# # endif
+# 
+# # This is the default now...
+# # if ($?TWO_IN_TWO_OUT) then
+# #   set io_config = `pwd`/io/2in2out.io.json
+# #   echo -n "$0:t oh wait it's 2in2out okay..."
+# #   echo    "i will use '$io_config' for io config"
+# # endif
 
 # Note I think the new default works for cascade as well, but it's not yet been tested...
 # From Lenny, for cascade

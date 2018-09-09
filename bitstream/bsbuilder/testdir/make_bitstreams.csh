@@ -42,6 +42,7 @@ cd $scriptpath
 
 # Script is maybe in $gen/bitstream/bsbuilder/testdir
 set gen = `(cd ../../..; pwd)`
+set v   = $gen/verilator/generator_z_tb
 alias json2dot $gen/testdir/graphcompare/json2dot.py
 
 
@@ -70,9 +71,12 @@ foreach b ($bmarks)
   cmp $tmp/$map_dot examples/$map_dot || set result = 'FAILED'
   echo ""
 
-
-  echo "  ../serpent.py $t/$map_dot -o $t/$bsb > $t/$b.log.serpent"
-  ../serpent.py $tmp/$map_dot -o $tmp/$bsb > $tmp/$b.log.serpent || exit 13
+  set io_config = $v/io/2in2out.json
+  echo "  ../serpent.py -io $io_config \"
+  echo "    $t/$map_dot -o $t/$bsb > $t/$b.log.serpent"
+  ../serpent.py -io $io_config \
+    $tmp/$map_dot -o $tmp/$bsb > $tmp/$b.log.serpent \
+    || exit 13
 
   echo "  cmp $tmp/$bsb examples/$bsb"
   cmp $tmp/$bsb examples/$bsb || set result = 'FAILED'

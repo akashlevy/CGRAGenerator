@@ -97,46 +97,29 @@ def find_input_tile():
             print "I think output wire is %s" % INPUT_TILE_PE_OUT
             return i
 
-# # Note: FIXME OUTPUT_TILENO is not really the io16 output tileno
-# # It's the PE (or MEM) tile that feeds into the io16 output tile...
-# # OUTPUT_TILENO = 0x24         # First (PE or?) mem tile in NW corner
-# OUTPUT_TILENO = -1
+##############################################################################
+# global output info
+# 
+# Where is the 1-bit output tile?
+global OUTPUT01_TILENO        # E.g. 0x1101
+#
+# Which tile feeds the 1-bit output tile, and on what side?
+global OUTPUT01_FEEDER_TILENO # E.g. 0x1001
+global OUTPUT01_FEEDER_SIDE   # 0,1,2,3 = E,S,W,N
+#
+# Which tile feeds the 16-bit output tile?
+global OUTPUT16_FEEDER_TILENO
 
-# FIXME this should come from board_info.json etc
-# Use first bit on side 1 (bottom, SW corner) for onebit output
-# OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
-OUTPUT_PAD_onebit = 'pads_S_0'  # Bottom / SW corner
-
-# # Value is calculated later, search below
-# # OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
-# OUTPUT_TILENO_onebit = -1
-# # E.g. OUTPUT_TILENO_onebit = 0x116 # First io1 tile in SW corner
-# # Staging area for 1bit out is calculated elsewhere,
-# # see "staging_area_onebit(), below
-# # OUTPUT_TILENO_onebit = 0x108 # First PE (or mem?) tile in SW corner
-
-
-# Should be the tile ABOVE io1bit tile that is the LSB in first group
-# on side 1 (bottom) e.g.
-#      <tile type='io1bit' tile_addr='0x125' row='19' col='17' ... name='pad_S1_T15'>
-#        <io_bit>0</io_bit><!-- LSB=0 -->
-#        <io_group>2</io_group>
-# => io1bit tile is row 19, col 17 => look for tile in row 18, col 17
-#   <tile type='memory_tile' tile_addr='0x105' row='16' col='17' tracks='BUS1:5 BUS16:5 '>
-
-
-# Find the output tile = last pe or mem in row 2
-# FIXME should also set OUTPUT_TILENO_onebit for node "OUTPUT_1bit" ("io1_out_0_0")
-# which is the tile above io1bit tile for LSB in first group on side 1 (bottom) (see above)
 
 def find_output_tile():
+    # FIXME this should come from board_info.json etc
+    # Note OUTPUT01 globals are set by staging_area_onebit(), below
 
-    global OUTPUT_TILENO
-    # Note: FIXME OUTPUT_TILENO is not really the io16 output tileno
-    # It's the PE (or MEM) tile that feeds into the io16 output tile...
+    global OUTPUT16_FEEDER_TILENO
+    # This is the PE (or MEM) tile that feeds into the io16 output tile...
     # We use the first (PE or?) mem tile in NW corner
-    # E.g. for tallmem OUTPUT_TILENO = 0x24
-    # FIXME better would be to calculate it from pad name, like OUTPUT_TILENO_onebit below
+    # E.g. for tallmem OUTPUT16_FEEDER_TILENO = 0x24
+    # FIXME better would be to calculate it from pad name, like OUTPUT01_FEEDER_TILENO below
 
     # FIXME Terrible assumption(s):
     # - output tile is last pe or mem tile in row 1
@@ -145,73 +128,75 @@ def find_output_tile():
         if is_pe_tile(i) or is_mem_tile(i):
             (r,c) = cgra_info.tileno2rc(i)
             if r == 1:
-                OUTPUT_TILENO = i
+                OUTPUT16_FEEDER_TILENO = i
             elif r > 1:
-                print "I think output tile is Tx%04X (early out)" % OUTPUT_TILENO
+                print "I think output tile is Tx%04X (early out)" % OUTPUT16_FEEDER_TILENO
                 # Early out
                 break
-    print "I think output tile is Tx%04X (late)" % OUTPUT_TILENO
-
-    # FIXME assuming output tile is rightmost tile in the row, set ADJ to the tile just before that
-    # E.g. if output tile is 0x0210 (r2c16) then adj tile is 0x020F (r2c15)
-    global OUTPUT_ADJACENT_TILENO
-    OUTPUT_ADJACENT_TILENO = OUTPUT_TILENO-1
-
-    #     # This comes from json file now I guess
-    #     global OUTPUT_TILENO_onebit
-    #     # OUTPUT_PAD_onebit = 'pad_S1_T0'
-    #     padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
-    #     assert OUTPUT_PAD_onebit.find('pad_S1_')==0, 'only works for side 1 :('
-    #     (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname)
-    #     OUTPUT_TILENO_onebit = padno
-    #     print "# Found onebit output pad %d = 0x%x" % (padno,padno)
-    #     print ""
-
-    # FIXME should be a separate function
-    global io_filename
-    if io_filename:
-        print("\n# Found io json info file '%s'" % io_filename)
-        import json
-        #
-        # "io1_out_0_0": {
-        #     "pad_bus" : "pads_S_2",
-        #     "bits": {
-        #         "0": { "pad_bit":"0" }
-        #     },
-        #     "mode": "out",
-        #     "width": 1
-        #
-        # global OUTPUT_PAD_onebit = 'pad_S1_T0'  # Bottom / SW corner
-        io1_out = "io1_out_0_0"
-        with open(io_filename) as json_data:
-            io_info = json.load(json_data)
-            # print(io_info)
-            if io1_out in io_info:
-                # print(666, io_info[io1_out])
-                # print(667, io_info[io1_out]["pad_bus"])
-                padname = io_info[io1_out]["pad_bus"]
-                padbit  = io_info[io1_out]["bits"]["0"]["pad_bit"]
-                padname_w_ix = "%s[%s]" % (padname, padbit)
-                (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname_w_ix)
-                print "# ::found onebit output pad %d = 0x%x" % (padno,padno)
-
+    print "I think output tile is Tx%04X (late)" % OUTPUT16_FEEDER_TILENO
     return
 
 def staging_area_onebit():
+    # FIXME clean up this function!!!
+
     # Find staging area for onebit-output tile
     # If io1bit output tile is on side 1 and its location is (r,c),
     # then staging area is tile (r-2,c).  Right?
     # E.g. if output pad is 'pad_S1_T0' at (19,2) then staging tile is at (17,2)
-    # Currently 0x116 for 16x16 tallmem, 0x136 for shortmem maybe
+    # Currently default json sets pads_S_0[0] as 1-bit output, which
+    # in the current 16x16 1-high-mem design translates to tile 0x1101 (r17c1);
+    # this is Use first bit on side 1 (bottom, SW corner).
 
-    global OUTPUT_TILENO_onebit
-    print OUTPUT_TILENO_onebit
-    (padrow,padcol) = cgra_info.tileno2rc(OUTPUT_TILENO_onebit)
-    padno = cgra_info.rc2tileno(padrow-2, padcol)
+    # Info comes from json file now I guess
+
+    # global OUTPUT01_PADNAME = 'pads_S_0[0]'  # Bottom / SW corner
+    global OUTPUT01_TILENO
+    global OUTPUT01_FEEDER_TILENO
+    global OUTPUT01_FEEDER_SIDE
+
+    global io_filename
+    assert io_filename
+
+    print("\n# Found io json info file '%s'" % io_filename)
+    import json
+    # Looking for this:
+    #   "io1_out_0_0": {
+    #       "pad_bus" : "pads_S_0",
+    #       "bits": { "0": { "pad_bit":"0" }},
+    #       "mode": "out",
+    #       "width": 1
+    #
+    io1_out = "io1_out_0_0"
+    with open(io_filename) as json_data:
+        io_info = json.load(json_data)
+        # print(io_info)
+        if io1_out in io_info:
+            # print(666, io_info[io1_out])
+            # print(667, io_info[io1_out]["pad_bus"])
+            padname = io_info[io1_out]["pad_bus"]
+            padbit  = io_info[io1_out]["bits"]["0"]["pad_bit"]
+            padname_w_ix = "%s[%s]" % (padname, padbit)
+            (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname_w_ix)
+            print "# ::found onebit output pad %d = 0x%x" % (padno,padno)
+
+            # Name should be of the form "pads_S_0[0]"
+            padside = re.search('^pads_([NSEW])', padname).group(1)
+
+            OUTPUT01_TILENO = padno
+
+            if   (padside == 'N'): OUTPUT01_FEEDER_TILENO = padno+0x0100 # One row down
+            elif (padside == 'S'): OUTPUT01_FEEDER_TILENO = padno-0x0100 # One row up
+            elif (padside == 'E'): OUTPUT01_FEEDER_TILENO = padno-0x0001 # One col left
+            elif (padside == 'W'): OUTPUT01_FEEDER_TILENO = padno+0x0001 # One col right
+            else: assert False
+
+            if   (padside == 'N'): OUTPUT01_FEEDER_SIDE = 3
+            elif (padside == 'S'): OUTPUT01_FEEDER_SIDE = 1
+            elif (padside == 'E'): OUTPUT01_FEEDER_SIDE = 0
+            elif (padside == 'W'): OUTPUT01_FEEDER_SIDE = 2
+
     print "# Found onebit output staging tile %d = 0x%x" % (padno,padno)
-    return padno
-
-
+    return OUTPUT01_FEEDER_TILENO
 
 
 # Set this to True if a PE has been placed in the INPUT tile
@@ -600,7 +585,7 @@ def final_output(DBG=0):
         '''E.g. print("Tx116_pad(out,1)")'''
         # Currently 0x116 for 16x16 tallmem, 0x136 for shortmem maybe
         print '# IO'
-        print("Tx%X_pad(out,1)\n" % OUTPUT_TILENO_onebit);
+        print("Tx%X_pad(out,1)\n" % OUTPUT01_TILENO);
 
     # Routing
     print '# ROUTING'
@@ -1843,7 +1828,7 @@ def initialize_node_OUTPUT():
     if 'OUTPUT' in nodes:
         # assert is_mem_tile(tileno) # Not relevant, maybe
 
-        tileno = OUTPUT_TILENO
+        tileno = OUTPUT16_FEEDER_TILENO
         input = False # not routed yet
 
         # (For now at least) output must be track 0, see above
@@ -1860,10 +1845,6 @@ def initialize_node_OUTPUT():
 
 def initialize_node_OUTPUT_1bit():
     if 'OUTPUT_1bit' in nodes:
-
-        # global OUTPUT_TILENO_onebit
-        # padname = OUTPUT_PAD_onebit  # E.g. 'pad_S1_T0'
-        # (tileno, row, col) = cgra_info.find_tile_by_name(padname)
         tileno = staging_area_onebit()
         # assert is_pe_tile(tileno) # not relevant maybe
 
@@ -2003,6 +1984,7 @@ def dstports(name, tile, track, DBG=0):
     # E.g. for pe it's op1 AND op2; for mem it's 'mem_in'
     # for regsolo it's every outport in the tile
     # for regpe it's op1 or op2
+    global MEMHEIGHT
     def T(port):
         if port[-4:2] == 'in':
             assert port in ['in.0', 'in.1', 'in.2']
@@ -2032,9 +2014,11 @@ def dstports(name, tile, track, DBG=0):
         p = [T(getnode(name).input0)]
 
     elif name == 'OUTPUT_1bit':
-        if is_mem_tile(tile): out_side = 6
-        else:                 out_side = 2
-        if DBG: pwhere(1395, "One-bit output can only go out on side %s (bottom)" % out_side)
+        global OUTPUT01_FEEDER_SIDE
+        out_side = OUTPUT01_FEEDER_SIDE
+
+        if (MEMHEIGHT == 2) and (out_side == 2): out_side = 6
+        # if DBG: pwhere(1395, "One-bit output can only go out on side %s (bottom)" % out_side)
 
         p = []
         for track in range(ntracks):
@@ -2045,8 +2029,10 @@ def dstports(name, tile, track, DBG=0):
         # Output on track 0 ONLY
         # FIXME yeah this should be more nuanced than that :(
         p = []
-        if is_mem_tile(tile): nsides = 8
-        else:                 nsides = 4
+
+        nsides = 4;
+        if (MEMHEIGHT == 2) and (is_mem_tile(tile)): nsides = 8
+
         for side in range(nsides):
             outport = "Tx%04X_out_s%dt0" % (tile,side)
             p.append(outport)
@@ -2558,7 +2544,7 @@ def place_dest(sname, dname, indent, DBG=0):
     '''
     if is_placed(dname):
         dtileno = getnode(dname).tileno
-        print "Actually '%s' has a home already, in tile %d" % (dname, dtileno)
+        print "Actually '%s' has a home already, in tile %04X" % (dname, dtileno)
         if dtileno in packer.EXCEPTIONS:
             print "exceptions = ", packer.EXCEPTIONS
             pwhere(1586, "OOPS Already tried and failed to reach Tx%04X oh nooooo" % dtileno)
@@ -2567,9 +2553,9 @@ def place_dest(sname, dname, indent, DBG=0):
         dtileno = get_nearest_tile(sname, dname)
 
     if DBG:
-        if dname == "OUTPUT_1bit": msg = 'Connecting to one-bit OUTPUT tile %d\n' % dtileno
-        elif dname == "OUTPUT":    msg = 'Connecting to OUTPUT tile %d\n' % dtileno
-        else:                      msg = 'Nearest available tile is %d\n' % dtileno
+        if dname == "OUTPUT_1bit": msg = 'Connecting to one-bit OUTPUT tile %04X\n' % dtileno
+        elif dname == "OUTPUT":    msg = 'Connecting to OUTPUT tile %04X\n' % dtileno
+        else:                      msg = 'Nearest available tile is %04X\n' % dtileno
         pwhere(2161, msg)
 
     return dtileno
@@ -2673,8 +2659,9 @@ def create_adj_node(dname, DBG=0):
 
     # If going to OUTPUT (tile 36), put adj in tile 35;
     # FIXME OUTPUT tile should be more heuristic, see e.g. 'find_output_tile()
-    global OUTPUT_ADJACENT_TILENO
-    if dname == 'OUTPUT': adj_tileno = OUTPUT_ADJACENT_TILENO
+    # FIXME assuming output tile is rightmost tile in the row, set ADJ to the tile just before that
+    # E.g. if output tile is 0x0210 (r2c16) then adj tile is 0x020F (r2c15)
+    if dname == 'OUTPUT': adj_tileno = OUTPUT16_FEEDER_TILENO-0x0001
     else:                 adj_tileno = -1 # Let PNR place adj later
     adjnode.tileno = adj_tileno
 
@@ -2766,7 +2753,7 @@ def try_again_OUTPUT(sname, dname, dtileno, DBG=0):
         # UNPLACE ADJNAME0
         # TRY AGAIN
 
-#     pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
+#     pwhere(1489, 'Tile %04X no good; undo and try again:' % dtileno)
 #     packer.unallocate(dtileno, DBG=0)
 
 #     # Add dtileno as an EXCEPTION and try again
@@ -2808,7 +2795,7 @@ def try_again(sname, dname, dtileno, DBG=0):
     assert not is_placed(dname)
 
 
-    pwhere(1489, 'Tile %d no good; undo and try again:' % dtileno)
+    pwhere(1489, 'Tile %04X no good; undo and try again:' % dtileno)
 
     # CAREFUL! get_nearest_tile() may have tried to put sname and dname in same tile!
     # If it fails it may erroneously deallocate sname!
@@ -2889,6 +2876,7 @@ def find_trackrange(sname, dname, DBG=0):
         trackrange = [0]
 
     # FIXME i think onebit is a pe tile and could use any of the five tracks!?
+    # NO! output only track 0.  (*input* can be any track)
     elif dname == "OUTPUT_1bit":
         trackrange = [0]
 
@@ -3153,15 +3141,15 @@ ERROR apparently not one of: pe, mem, output, io1_out, regsolo, reg or regreg
 
     # FIXME Whaaaat? This ain't right... :(
     # (tileno,resource) = (getnode(dname).tileno, getnode(dname).input0)
-    # print indent+"  Placed '%s' at tile %d port '%s'" % (dname,tileno,resource)
+    # print indent+"  Placed '%s' at tile %04X port '%s'" % (dname,tileno,resource)
     # print indent+"  Routed '%s -> %s'" % (sname,dname)
 
-#             print indent+"  1679 Placed '%s' in tile %d at location '%s'" \
+#             print indent+"  1679 Placed '%s' in tile %04X at location '%s'" \
 #                   % (dname, t, loc)
 
 
     # I think loc is last thing added to sname net...?
-    print indent+" Placed '%s' in tile %d at location '%s' (2676)" \
+    print indent+" Placed '%s' in tile %04X at location '%s' (2676)" \
           % (dname, getnode(dname).tileno, getnode(sname).net[-1])
     print indent+" Routed %s" % getnode(sname).route[dname]
     print indent+" Now node['%s'].net = %s" % (sname,getnode(sname).net)
@@ -3208,13 +3196,13 @@ def is_last_wen_lut_candidate(tileno):
     if (r%2)==1: return False
     tile_to_right = cgra_info.rc2tileno(r,c+1)
     if is_mem_tile(tile_to_right):
-        if DBG: pwhere(2880, "okay tile %d, to my right, is a mem tile" % tile_to_right)
+        if DBG: pwhere(2880, "okay tile %04X, to my right, is a mem tile" % tile_to_right)
         if tile_to_right in HAS_WEN_LUT:
-            if DBG: print "okay mem tile %d has a wenlut already" % tile_to_right
+            if DBG: print "okay mem tile %04X has a wenlut already" % tile_to_right
             return False
         else:
             if DBG: print(\
-               "I am tile %d and I am the last hope for mem tile %d to have a wen lut" \
+               "I am tile %04X and I am the last hope for mem tile %04X to have a wen lut" \
                % (tileno, tile_to_right))
             return True
     return False
@@ -3229,23 +3217,23 @@ def build_wen_lut(sname, dname, DBG=0):
     if DBG: pwhere(2243, "#   Must create a wen_lut for mem node '%s'" % dname)
     mtileno = getnode(dname).tileno
     (r,c) = cgra_info.tileno2rc(mtileno)
-    # print "#   Mem tile is in tile %d (0x%x)" % (mtileno,mtileno)
+    # print "#   Mem tile is in tile %04X (0x%x)" % (mtileno,mtileno)
 
     # Check tile to right of memtile, then if not avail, check left
     candside = 'right'; cand = cgra_info.rc2tileno(r,c+1)
-    print "#   So...to my right is tile %d (0x%d).  Is it free?" % (cand,cand),
+    print "#   So...to my right is tile %04X (0x%04X).  Is it free?" % (cand,cand),
     print packer.is_free(cand)
     if not packer.is_free(cand):
         # Not free
         candside = 'left'; cand = cgra_info.rc2tileno(r,c-1)
-        if DBG: print "#  Okay, well then to my left is tile %d (0x%x)," % (cand,cand),
+        if DBG: print "#  Okay, well then to my left is tile %04X (0x%x)," % (cand,cand),
         if DBG: print "Is it free?", packer.is_free(cand)
         if not packer.is_free(cand): assert False, "oh that's a shame"
 
     # Whew assert did not trigger so one of them works.
     # print "okay successfully found a candidate to hold the wen_lut hooray"
     if DBG:
-        print '#   Great! Place the wen_lut in tile %d(0x%x)' % (cand,cand)
+        print '#   Great! Place the wen_lut in tile %04X(0x%x)' % (cand,cand)
         print ''
         print "# order before wen_lut alloc:"
         packer.FMT.order()
@@ -3304,11 +3292,11 @@ def route_wen(memtile):
 # 
 #     if DBG:
 #         print ''
-#         print "1. Route from '%s' output '%s' to any avail outport in tile %d"\
+#         print "1. Route from '%s' output '%s' to any avail outport in tile %04X"\
 #               % (sname, src, snode.tileno)
 # 
 #     t = snode.tileno
-#     if DBG>1: print "\n# Tile %d free list: %s" % (t, resources[t])
+#     if DBG>1: print "\n# Tile %04X free list: %s" % (t, resources[t])
 # 
 #     # if 'src' is an outport, just use that
 #     if re.search('T\d+_out_', src): outwire = src
@@ -3357,12 +3345,12 @@ def unfree_resources(path,DBG=0):
         (tileno,x) = CT.parse_resource(r)
         if (r in resources[tileno]):
             resources[tileno].remove(r)
-            if DBG: print "     %s removed from tile %d free list" \
+            if DBG: print "     %s removed from tile %04X free list" \
                % (sqw(r), tileno)
             # print "  Before: %s" % resources[tileno]
             # print "  After:  %s" % resources[tileno]
         else:
-            if DBG: print "     %s not in tile %d free list" \
+            if DBG: print "     %s not in tile %04X free list" \
                % (sqw(r), tileno)
 
 
@@ -4144,12 +4132,12 @@ def output_endpoint_hack(dname, path, DBG=0):
 
     if DBG: pwhere(2207, "Before: path=[...'%s'" % path[-1])
 
-    new_in  = 'Tx%04X_in_s6t0' % OUTPUT_TILENO
-    new_out = 'Tx%04X_out_s7t0' % OUTPUT_TILENO
+    new_in  = 'Tx%04X_in_s6t0' % OUTPUT16_FEEDER_TILENO
+    new_out = 'Tx%04X_out_s7t0' % OUTPUT16_FEEDER_TILENO
     assert path[-1] == new_in # why not
     path[-1] = '%s -> %s' % (new_in, new_out)
 
-    new_endpoint = 'Tx%04X_in_s1t0' % OUTPUT_TILENO
+    new_endpoint = 'Tx%04X_in_s1t0' % OUTPUT16_FEEDER_TILENO
     path.append(new_endpoint)
 
     if DBG: pwhere(2219, "After:  path=[...'%s', '%s'\n" % (path[-2], path[-1]))
@@ -4575,7 +4563,7 @@ def can_connect_end(endpoint, dstport, DBG=0):
 #         if r not in resources[tileno]: continue
 #         else:
 #             if DBG:
-#                 print "# Randomly assigning '%s' to tile %d resource '%s'" \
+#                 print "# Randomly assigning '%s' to tile %04X resource '%s'" \
 #                       % (dname,tileno,r)
 #             getnode(dname).place(tileno,'XXX',op)
 #             return (tileno,r)

@@ -175,11 +175,10 @@ def staging_area_onebit():
             # print(667, io_info[io1_out]["pad_bus"])
             padname = io_info[io1_out]["pad_bus"]
             padbit  = io_info[io1_out]["bits"]["0"]["pad_bit"]
-            padname_w_ix = "%s[%s]" % (padname, padbit)
-            (padno, padrow, padcol) = cgra_info.find_tile_by_name(padname_w_ix)
+            (padno, padrow, padcol) = cgra_info.find_pad(padname, int(padbit))
             print "# ::found onebit output pad %d = 0x%x" % (padno,padno)
 
-            # Name should be of the form "pads_S_0[0]"
+            # Name should be of the form "pads_S_0"
             padside = re.search('^pads_([NSEW])', padname).group(1)
 
             OUTPUT01_TILENO = padno

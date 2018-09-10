@@ -39,18 +39,18 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 
 //; # Given IO number (0..16n) on side N, S, E or W, return row, col of io tile
 //; sub io_row_col {
-//;   my ($i, $side) = @_;
+//;   my ($i, $side, $num_ios) = @_;
 //;   my ($row,$col) = (-1,-1);
 //; 
-//;   if    ($side eq "N") { $row = 0; }
-//;   elsif ($side eq "E") { $row = 1+$i; }
-//;   elsif ($side eq "W") { $row = 1+$i; }
-//;   elsif ($side eq "S") { $row = 1+$num_ios; }
+//;   if    ($side eq "N") { $row = 0 }           # 0
+//;   elsif ($side eq "E") { $row = $num_ios-$i } # 16..1
+//;   elsif ($side eq "W") { $row = 1+$i }        # 1..16
+//;   elsif ($side eq "S") { $row = 1+$num_ios }  # 17
 //;
-//;   if    ($side eq "N") { $col = 1+$i; }
-//;   elsif ($side eq "E") { $col = 1+$num_ios; }
-//;   elsif ($side eq "W") { $col = 0; }
-//;   elsif ($side eq "S") { $col = 1+$i; }
+//;   if    ($side eq "N") { $col = $num_ios-$i } # 16..1
+//;   elsif ($side eq "E") { $col = 1+$num_ios; } # 17
+//;   elsif ($side eq "W") { $col = 0; }          # 0
+//;   elsif ($side eq "S") { $col = 1+$i }        # 1..16
 //;
 //;   return ($row,$col);
 //; }
@@ -61,8 +61,8 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   my $portside = ($side_num+2) % 4;
 //;   my @collateral = (
 //; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' ".
-//; "name='pads_${side}_${io_group_num}[${bitnum}]'>",
-//; "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->",
+//; "name='pads_${side}_${io_group_num}'>",
+//; "    <io_bit>$bitnum</io_bit>",
 //; "    <io_group>$io_group_num</io_group>",
 //; "    <tri feature_address='0' reg_address='0' bitl='0' bith='0'>",
 //; "        <direction sel='0'>in</direction>  <!--input-->",
@@ -89,10 +89,11 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   close TILEINFO;
 //; }
 //;
-//; for (my $i=0; $i < $num_ios; $i++) {
+//; # Count *DOWN* from 15 to 0 (little endian)
+//; for (my $i=($num_ios-1); $i >=0; $i--) {
 //;
 //;   # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;   my ($row,$col) = io_row_col($i, $side);
+//;   my ($row,$col) = io_row_col($i, $side, $num_ios);
 //;
 //;   my $id = ($row<<8) + $col;
 //;   my $hex_id = sprintf("0x%04X", $id);

@@ -38,6 +38,7 @@ import sys
 # Index:
 # def mem_tile_height():
 # def find_tile_by_name(tilename):
+# def find_pad(padname, i)
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -138,6 +139,22 @@ def find_tile_by_name(name):
             col = getnum(tile.attrib['col'])
             return (id, row, col)
     assert False, 'ERROR cannot find tile "%s"' % name
+
+def find_pad(padname, bitno):
+    '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''
+    # E.g. <tile type='io1bit' tile_addr='0x0001' row='0' col='1' name='pads_N_0'><io_bit>0</io_bit>
+    # returns (0x0001, 0, 1)
+    for tile in CGRA.findall('tile'):
+        if tile.attrib['type'] != 'io1bit': continue
+        # print(666, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
+        if tile.attrib['name'] == padname:
+            for b in tile.iter('io_bit'):
+                if getnum(b.text) != bitno: continue
+                id  = getnum(tile.attrib['tile_addr'])
+                row = getnum(tile.attrib['row'])
+                col = getnum(tile.attrib['col'])
+                return (id, row, col)
+    assert False, 'ERROR cannot find tile "%s"' % padname
 
 
 # def build_mask(bith,bitl):

@@ -277,17 +277,19 @@ def configure_output_pads():
     # E.g. pads_E_0[0], pads_E_0[1], .. pads_E_0[15]
     # <tile type='io1bit' tile_addr='0x0111' row='1' col='17' name='pads_E_0[0]'>
     pad_bus = 'pads_E_0'
-    for i in range(16):
-        padname = '%s[%d]' % (pad_bus, i)
-        (id, row, col) = cgra_info.find_tile_by_name(padname)
+
+    # Little endian means count backwards 15..0
+    for i in range(15, -1, -1):
+        (id, row, col) = cgra_info.find_pad(pad_bus, i)
         b = b + "%08X 00000001\n" % id
+
     print b
     return b
 
     # E.g.
-    # 00000111 00000001
-    # 00000211 00000001
-    # 00000311 00000001
+    # 00000111 00000001 (bit 15)
+    # 00000211 00000001 (bit 14)
+    # 00000311 00000001 ( ...  )
     # 00000411 00000001
     # 00000511 00000001
     # 00000611 00000001
@@ -300,7 +302,7 @@ def configure_output_pads():
     # 00000D11 00000001
     # 00000E11 00000001
     # 00000F11 00000001
-    # 00001011 00000001
+    # 00001011 00000001 (bit 0)
 
 def preprocess(input_lines, DBG=0):
     # For lazy programmers:

@@ -59,13 +59,25 @@ function do_genesis {
 
 function main {
 
-  # PREAMBLE
+  # Backward compatibility: Build cgra_info.txt -> cgra_info.xml link
   cgra_info_link_hack
-  cleanup_from_prev_builds
-  register_all_switchbox_outputs
-  use_verilator_hacks_if_travis
+
+  # Clean up from previous build(s)
+  if [ -d genesis_verif ]; then rm -rf genesis_verif; fi
+
+  # Register *all* outputs (no longer needed I hope)
+  # register_all_switchbox_outputs
+
+  # If travis or kiwi, set env var USE_VERILATOR_HACKS
+  use_verilator_hacks_if_travis_or_kiwi
+
+  # Make sure Genesis2 is available
   find_or_install_genesis2
-  undo_tristates_if_using_verilator
+
+#   # BOOKMARK
+#   undo_tristates_if_using_verilator
+
+
   short_or_tall=`short_or_tall $* | tail -n 1`
   echo NOTICE Building ${short_or_tall}mem design
 
@@ -92,11 +104,11 @@ function main {
   source clean_up_cgra_inputs.csh
   source remove_genesis_wires.csh
 
-  # SR 3/29
-  # If using verilator, change pad inouts to separate ins and outs (part 2)
-  # See 'fix_inouts.csh' code for details
-  # Note fix_inouts is supposed to DO NOTHING if it detects a no-verilator run
-  ./fix_inouts.csh top
+#   # SR 3/29
+#   # If using verilator, change pad inouts to separate ins and outs (part 2)
+#   # See 'fix_inouts.csh' code for details
+#   # Note fix_inouts is supposed to DO NOTHING if it detects a no-verilator run
+#   ./fix_inouts.csh top
 
 
   # SR 4/30/2018
@@ -146,24 +158,27 @@ function cgra_info_link_hack {
   echo ""
 }
 
-function cleanup_from_prev_builds {
-  # Note/FIXME probably should do this:
-  #    if (-e ./genesis_clean.cmd) ./genesis_clean.cmd
-  if [ -d genesis_verif ]; then rm -rf genesis_verif; fi
-}
-function register_all_switchbox_outputs {
-  # @Caleb: For providing registers on all outputs of all SBs, do-
-  # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
-  # export CGRA_GEN_ALL_REG=1  (sh syntax)
-  export CGRA_GEN_ALL_REG=1
-}
-function use_verilator_hacks_if_travis {
-  # If it's travis then it must mean verilator hacks, yes?
+# This is default now (I hope)
+# function register_all_switchbox_outputs {
+#   # @Caleb: For providing registers on all outputs of all SBs, do-
+#   # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
+#   # export CGRA_GEN_ALL_REG=1  (sh syntax)
+#   export CGRA_GEN_ALL_REG=1
+# }
+
+
+function use_verilator_hacks_if_travis_or_kiwi {
+  # If it's travis or kiwi then it must mean verilator hacks, yes?
   if [ ! -z ${TRAVIS_BUILD_DIR+x} ]; then
     echo "${0:t} WARNING I think we are running from travis; setting USE_VERILATOR_HACKS"
     export USE_VERILATOR_HACKS="TRUE"
   fi
+  if expr `hostname` : "kiwi" > /dev/null; then
+    echo "${0:t} WARNING I think we are running from kiwi; setting USE_VERILATOR_HACKS"
+    export USE_VERILATOR_HACKS="TRUE"
+  fi
 }
+
 function find_or_install_genesis2 {
   if [ ! `command -v Genesis2.pl` ]; then
     echo 'build_cgra.sh: Oops cannot find Genesis2.pl; I will try to fix this for you'
@@ -173,20 +188,23 @@ function find_or_install_genesis2 {
     echo ''
   fi
 }
-function undo_tristates_if_using_verilator {
-  # SR 3/29/2018
-  # If using verilator, change pad inouts to separate ins and outs (part 1)
-  # i.e. use ../io1bit/verilator_hack/io1bit.vp instead of ../io1bit/io1bit.vp
-  #
-  ./fix_inouts.csh io1bit | sed '$d'
-  if [[ `./fix_inouts.csh io1bit` == "NO_VHACK" ]]; then
-    echo '  Note: not using verilator tri/inout hack';
-    io1bit=../io1bit/io1bit.vp;
-  else
-    echo "  Verilator pad tristate inout hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
-    io1bit=../io1bit/verilator_hack/io1bit.vp;
-  fi
-}
+
+
+# function undo_tristates_if_using_verilator {
+#   # SR 3/29/2018
+#   # If using verilator, change pad inouts to separate ins and outs (part 1)
+#   # i.e. use ../io1bit/verilator_hack/io1bit.vp instead of ../io1bit/io1bit.vp
+#   #
+#   ./fix_inouts.csh io1bit | sed '$d'
+#   if [[ `./fix_inouts.csh io1bit` == "NO_VHACK" ]]; then
+#     echo '  Note: not using verilator tri/inout hack';
+#     io1bit=../io1bit/io1bit.vp;
+#   else
+#     echo "  Verilator pad tristate inout hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
+#     io1bit=../io1bit/verilator_hack/io1bit.vp;
+#   fi
+# }
+
 function short_or_tall {
   # Default is shortmem
   short_or_tall="short"
@@ -199,3 +217,10 @@ function short_or_tall {
 }
 
 main $*
+
+
+# NOTES
+# 
+# Genesis cleanup: instead of 'rm -rf genesis_verif',
+# should probabl be doing this:
+# 'if (-e ./genesis_clean.cmd) ./genesis_clean.cmd'

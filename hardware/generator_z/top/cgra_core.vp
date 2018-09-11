@@ -81,12 +81,20 @@
 //; $basic_block_repeat_x = 4; $basic_block_repeat_y = 8;
 //; #
 //; #
-//; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
-//; # eg: <BUS_NAME>:<number of bits>b#<seg1_length>_<seg1_register_after_hops>:<seg2_length>_<seg2_register_after_hops>:...
-//; my $bus_config = "BUS16:16b#1_4:1_4:1_4:1_4:1_4 BUS1:1b#1_4:1_4:1_4:1_4:1_4";
-//; if ($ENV{'CGRA_GEN_ALL_REG'}==1) {
-//;   $bus_config = "BUS16:16b#1_1:1_1:1_1:1_1:1_1 BUS1:1b#1_1:1_1:1_1:1_1:1_1";
-//; }
+//; # Specify the bus configuration below. 
+//; # This parm lets you set width, number, and segment length of buses.  
+//; # eg: <BUS_NAME>:<number of bits>b#<seg1_length>_<seg1_register_after_hops>:
+//; #     <seg2_length>_<seg2_register_after_hops>:...
+//; #
+//; # my $bus_config = "BUS16:16b#1_4:1_4:1_4:1_4:1_4 BUS1:1b#1_4:1_4:1_4:1_4:1_4";
+//; # if ($ENV{'CGRA_GEN_ALL_REG'}==1) {
+//; #   $bus_config = "BUS16:16b#1_1:1_1:1_1:1_1:1_1 BUS1:1b#1_1:1_1:1_1:1_1:1_1";
+//; # }
+//; # SR 09/2018: Changed default to "everything registered"
+//; # In future, change this using approved means (xml config), *not* environment variable!!
+//; my $bus_config = "BUS16:16b#1_1:1_1:1_1:1_1:1_1 BUS1:1b#1_1:1_1:1_1:1_1:1_1";
+//; 
+//; 
 //; # specify the number of global signals available for each pe/mem tile
 //; my $global_signal_count = 4;
 //; #

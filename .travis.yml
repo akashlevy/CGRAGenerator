@@ -44,7 +44,7 @@ script:
   - set -e
 
   ########################################################################
-  # Twenty-five minutes for travis system tests
+  - echo "Twenty-five minutes (1500s) for travis system tests"
   - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
 
   ################################################################

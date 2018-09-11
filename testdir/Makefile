@@ -68,12 +68,15 @@ test_all:
 
 # Twenty-minute (ish) tests for travis
 travis_system_tests:
+	@echo TIMENOW `date +%H:%M`
 	@echo "ten minutes for basic test (pointwise) + tbg first build"
 	make SILENT=TRUE test_basic   RUN=run_tbg.csh
 
+	@echo TIMENOW `date +%H:%M`
 	@echo "ten minutes for sr unit tests"
 	make SILENT=TRUE test_unit    RUN=run_tbg.csh
 
+	@echo TIMENOW `date +%H:%M`
 	@echo "five minutes for serpent-based tests"
         # Note the "tee" command masks make errors :(
 	(make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) \
@@ -83,6 +86,7 @@ travis_system_tests:
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
 	grep RESULT serpent_results.tmp
 	$(HARDWARE_TOP)/bin/show_cgra_info.csh | grep mem_tile_height
+	@echo TIMENOW `date +%H:%M`
 
 
 # Note this is where onebit_bool gets testsd

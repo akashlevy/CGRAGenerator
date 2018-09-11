@@ -57,8 +57,9 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; sub print_io_collateral {
 //;   my ($i, $id, $hex_id, $row, $col, $io_group_num, $side, $side_num) = @_;
 //;   my $bitnum = ($i % 16);
-//;   my $tracknum = 0;
-//;   my $portside = ($side_num+2) % 4;
+//;   my $tracknum = 0; # Input track (used to interleave; now it's always 0).
+//;   my $portside = $side_num;
+//; 
 //;   my @collateral = (
 //; "  <tile type='io1bit' tile_addr='$hex_id' row='$row' col='$col' ".
 //; "name='pads_${side}_${io_group_num}'>",
@@ -72,13 +73,33 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; "        <src sel='0'>16</src> <!-- 16 bit mode -->",
 //; "        <src sel='1'>1</src>  <!--  1 bit mode -->",
 //; "    </mux>",
-//; "    <input>in_1BIT_S${portside}_T${tracknum}</input>",
-//; "    <output>out_1BIT_S${portside}_T0</output>",
-//; "    <output>out_1BIT_S${portside}_T1</output>",
-//; "    <output>out_1BIT_S${portside}_T2</output>",
-//; "    <output>out_1BIT_S${portside}_T3</output>",
-//; "    <output>out_1BIT_S${portside}_T4</output>",
-//; "  </tile>\n");
+//; "",
+//; "    <!-- input goes from pad to ALL tracks -->",
+//; "    <p2f_1bit>out_1BIT_S${portside}_T0</p2f_1bit>",
+//; "    <p2f_1bit>out_1BIT_S${portside}_T1</p2f_1bit>",
+//; "    <p2f_1bit>out_1BIT_S${portside}_T2</p2f_1bit>",
+//; "    <p2f_1bit>out_1BIT_S${portside}_T3</p2f_1bit>",
+//; "    <p2f_1bit>out_1BIT_S${portside}_T4</p2f_1bit>",
+//; "",
+//; "    <!-- output only comes from track 0 -->",
+//; "    <f2p_1bit>in_1BIT_S${portside}_T${tracknum}</f2p_1bit>");
+//;
+//; # Add 16-bit info if io1bit tile is LSB
+//;   if ($i == 15) {
+//;     push @collateral, (
+//; "",
+//; "    <!-- 16bit IO same exc. BUS16 instead of BUS1 -->",
+//; "    <p2f_wide>out_1BIT_S${portside}_T0</p2f_wide>",
+//; "    <p2f_wide>out_1BIT_S${portside}_T1</p2f_wide>",
+//; "    <p2f_wide>out_1BIT_S${portside}_T2</p2f_wide>",
+//; "    <p2f_wide>out_1BIT_S${portside}_T3</p2f_wide>",
+//; "    <p2f_wide>out_1BIT_S${portside}_T4</p2f_wide>",
+//; "    <f2p_wide>in_1BIT_S${portside}_T${tracknum}</f2p_wide>",
+//; "");
+//;   }
+//; 
+//;   push @collateral,
+//; "  </tile>\n";
 //; 
 //;   print "// ".join("\n// ", @collateral);
 //;   @top::CGRA_INFO[$id] = join("\n", @collateral);

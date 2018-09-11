@@ -1,7 +1,19 @@
 #!/bin/bash
 
+function help {
+  if [[ "$1" == "--help" ]]; then
+    echo ""
+    echo "${0:t} [ --use_verilator_hacks | --no_verilator_hacks ]"
+    exit 13
+  fi
+}
+
 function do_genesis {
-  export TRISTATE_UNAVAILABLE=TRUE
+
+  if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
+    export TRISTATE_UNAVAILABLE=TRUE
+  fi
+
   Genesis2.pl -parse -generate -top top -hierarchy top.xml \
     -xml ./bin/${short_or_tall}mem.xml \
     -input top.vp \
@@ -59,24 +71,20 @@ function do_genesis {
 
 function main {
 
+  # Check for help request
+  help $*
+
   # Backward compatibility: Build cgra_info.txt -> cgra_info.xml link
   cgra_info_link_hack
 
   # Clean up from previous build(s)
   if [ -d genesis_verif ]; then rm -rf genesis_verif; fi
 
-  # Register *all* outputs (no longer needed I hope)
-  # register_all_switchbox_outputs
-
   # If travis or kiwi, set env var USE_VERILATOR_HACKS
-  use_verilator_hacks_if_travis_or_kiwi
+  use_verilator_hacks_if_travis_or_kiwi $*
 
   # Make sure Genesis2 is available
   find_or_install_genesis2
-
-#   # BOOKMARK
-#   undo_tristates_if_using_verilator
-
 
   short_or_tall=`short_or_tall $* | tail -n 1`
   echo NOTICE Building ${short_or_tall}mem design
@@ -88,30 +96,25 @@ function main {
   # Post-process #########################################################
   ########################################################################
 
-  echo
-  echo HACKWARNING Using custom stub instead of proprietary DW_tap
-  echo HACKWARNING Using custom stub instead of proprietary DW_tap
-  echo HACKWARNING Using custom stub instead of proprietary DW_tap
-  echo cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
-  echo cp  mdll_top.sv genesis_verif/mdll_top.sv
-  cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
-  cp mdll_top.sv genesis_verif/mdll_top.sv
-  ls -l ../jtag/Template/src/digital/DW_tap.v.stub
-  ls -l genesis_verif/DW_tap.v
-  echo
+  # If using verilator, replace DW_tap w/verilator stub
+  if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
+    echo
+    echo HACKWARNING Using custom stub instead of proprietary DW_tap
+    echo HACKWARNING Using custom stub instead of proprietary DW_tap
+    echo HACKWARNING Using custom stub instead of proprietary DW_tap
+    echo cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
+    echo cp  mdll_top.sv genesis_verif/mdll_top.sv
+    cp  ../jtag/Template/src/digital/DW_tap.v.stub genesis_verif/DW_tap.v
+    cp mdll_top.sv genesis_verif/mdll_top.sv
+    ls -l ../jtag/Template/src/digital/DW_tap.v.stub
+    ls -l genesis_verif/DW_tap.v
+    echo
+  fi
 
   # What are these?  Why are they here?
   source clean_up_cgra_inputs.csh
   source remove_genesis_wires.csh
 
-#   # SR 3/29
-#   # If using verilator, change pad inouts to separate ins and outs (part 2)
-#   # See 'fix_inouts.csh' code for details
-#   # Note fix_inouts is supposed to DO NOTHING if it detects a no-verilator run
-#   ./fix_inouts.csh top
-
-
-  # SR 4/30/2018
   # If using verilator, replace SRAM w/verilator stub
   if [[ $USE_VERILATOR_HACKS == "TRUE" ]]; then
     echo '  VERILATOR HACK: SRAM'
@@ -120,25 +123,7 @@ function main {
     cp ../../../verilator/generator_z_tb/sram_stub.v genesis_verif/sram_512w_16b.v
   fi
 
-
-  # Fixed now maybe
-  # # Must fix e.g.  <depth bith='15' bitl='3'>0</depth>
-  # # should be <fifo_depth bith='15' bitl='3'>0</fifo_depth>
-  # # Second run below should say 'no errors found'
-  # ./find_and_fix_depth_problems.csh
-  # ./find_and_fix_depth_problems.csh
-
-
-  # SR 3/29 looks like this got fixed maybe?
-  # # Must fix e.g.
-  # #       <src sel='0'>in_1_BUS16_0_3</src>
-  # # should be
-  # #       <src sel='0'>in_1_BUS16_S0_T3</src>
-  # # 
-  # ./find_and_fix_ST_deficient_memwires.csh
-  # ./find_and_fix_ST_deficient_memwires.csh
-
-
+  # This won't work on travis until/unless we install xmllint there...
   if [ `hostname` == "kiwi" ]; then
     echo Checking cgra_info for errors...
     echo xmllint --noout cgra_info.txt
@@ -158,25 +143,27 @@ function cgra_info_link_hack {
   echo ""
 }
 
-# This is default now (I hope)
-# function register_all_switchbox_outputs {
-#   # @Caleb: For providing registers on all outputs of all SBs, do-
-#   # setenv CGRA_GEN_ALL_REG 1 (csh syntax)
-#   # export CGRA_GEN_ALL_REG=1  (sh syntax)
-#   export CGRA_GEN_ALL_REG=1
-# }
-
-
 function use_verilator_hacks_if_travis_or_kiwi {
   # If it's travis or kiwi then it must mean verilator hacks, yes?
   if [ ! -z ${TRAVIS_BUILD_DIR+x} ]; then
-    echo "${0:t} WARNING I think we are running from travis; setting USE_VERILATOR_HACKS"
+    echo "$0 WARNING I think we are running from travis; setting USE_VERILATOR_HACKS"
     export USE_VERILATOR_HACKS="TRUE"
   fi
   if expr `hostname` : "kiwi" > /dev/null; then
-    echo "${0:t} WARNING I think we are running from kiwi; setting USE_VERILATOR_HACKS"
+    echo "$0 WARNING I think we are running from kiwi; setting USE_VERILATOR_HACKS"
     export USE_VERILATOR_HACKS="TRUE"
   fi
+
+  # Can override with the appropriate command-line argument(s)
+  if [[ "$1" == "--use_verilator_hacks" ]]; then
+    echo "$0 WARNING setting USE_VERILATOR_HACKS=TRUE b/c command line arg"
+    export USE_VERILATOR_HACKS="TRUE"
+  fi
+  if [[ "$1" == "--no_verilator_hacks" ]]; then
+    echo "$0 WARNING setting USE_VERILATOR_HACKS=FALSE b/c command line arg"
+    export USE_VERILATOR_HACKS="FALSE"
+  fi
+  echo ""
 }
 
 function find_or_install_genesis2 {
@@ -188,22 +175,6 @@ function find_or_install_genesis2 {
     echo ''
   fi
 }
-
-
-# function undo_tristates_if_using_verilator {
-#   # SR 3/29/2018
-#   # If using verilator, change pad inouts to separate ins and outs (part 1)
-#   # i.e. use ../io1bit/verilator_hack/io1bit.vp instead of ../io1bit/io1bit.vp
-#   #
-#   ./fix_inouts.csh io1bit | sed '$d'
-#   if [[ `./fix_inouts.csh io1bit` == "NO_VHACK" ]]; then
-#     echo '  Note: not using verilator tri/inout hack';
-#     io1bit=../io1bit/io1bit.vp;
-#   else
-#     echo "  Verilator pad tristate inout hack part 1 (pre-genesis): use verilator_hack/io1bit.vp instead";
-#     io1bit=../io1bit/verilator_hack/io1bit.vp;
-#   fi
-# }
 
 function short_or_tall {
   # Default is shortmem
@@ -222,5 +193,5 @@ main $*
 # NOTES
 # 
 # Genesis cleanup: instead of 'rm -rf genesis_verif',
-# should probabl be doing this:
-# 'if (-e ./genesis_clean.cmd) ./genesis_clean.cmd'
+# should probably be doing this:
+#   'if (-e ./genesis_clean.cmd) ./genesis_clean.cmd'

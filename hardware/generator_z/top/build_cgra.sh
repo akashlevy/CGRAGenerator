@@ -44,7 +44,7 @@ function do_genesis {
     ../pe_tile_new/pe_tile_new.svp \
     \
     ../empty/empty.vp \
-    $io1bit \
+    ../io1bit/io1bit.vp \
     ../io16bit/io16bit.vp \
     ../global_signal_tile/global_signal_tile.vp \
     \

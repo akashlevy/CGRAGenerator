@@ -190,7 +190,7 @@ assign config_write = 1;
 //; print INFO2 "<CGRA>\n";
 //; for my $i (0 .. $#top::CGRA_INFO) {
 //;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
-//;     print INFO2 sprintf("\n0x%04X\n", $i);
+//;     # print INFO2 sprintf("\n0x%04X\n", $i);
 //;     print INFO2 @top::CGRA_INFO[$i];
 //;     # FIXME/TODO if no info, emit an empty tile
 //; }

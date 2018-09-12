@@ -4,7 +4,7 @@
         "bits": {
             "0": { "pad_bit":"0" }
         },
-        "mode": "in",
+        "mode": "reset",
         "width": 1
     },
     "io16in_in_arg_1_0_0": {

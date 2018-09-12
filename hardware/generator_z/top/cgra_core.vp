@@ -15,6 +15,7 @@
 //;
 //; my $include_GST = parameter(NAME => 'include_GST', val => 1, Min => 0, Max => 1, Step => 1);
 //; my @sides = ('N','S','E','W');
+//;
 //; #########################################
 //; #// Generator Configuration Start 
 //; ######################################### 
@@ -22,30 +23,27 @@
 //; # Specify the CGRA grid size as 8x8,16x16, or 64x64. You can generate additional sizes by modifying
 //; # the IO_count and basic_block_repeat_* variables below.
 //; # my $grid_size = "8x8";
+//; # my $grid_size ="48x48";
 //; # my $grid_size = "64x64";
 //; my $grid_size = "16x16";
-//; #my $grid_size ="48x48";
-//; #
-//; # for IOs
+//;
+//; # For IOs
 //; # <number of bits> <number of bits> <number of bits> <number of bits>
-//; # There are four die sides 0-3 that can host IOs. Each token in the string above specifies
-//; # IO count on a side, starting from the right side and going clockwise eg: "10 11 12 13"
-//; # implies 10 IOs on the right side, 11 IOs on the bottom, and so on. Each IO will generate
-//; # a 1-bit IO tile on the specified side. The generator will greedily form groups of 16 1-bit
-//; # IOs to create a 16-bit IO tile. The 16-bit IO tile is placed next to the LS 1-bit
-//; # IO tile of the group. Both 16 bit and 1 bit IO tiles are of size 1x1. 16-bit and 1-bit 
-//; # IO tiles occupy separate rows (or columns) on the CGRA fabric. Any unused space on the
-//; # 16-bit (or 1-bit) IO row is filled with empty tiles. Empty tiles do not contain any 
-//; # resources or even wires. IOs are numbered clockwise i.e. IO0 will be at the top for the
-//; # right side, rightmost on the bottom side and so on.
-//; #
-//; my @IO_count = ();
+//; # There are four die sides 0,1,2,3 = E,S,W,N that can host IOs. Each token in the string
+//; # above specifies IO count on a side, starting from the right side and going clockwise eg:
+//; # "10 11 12 13" implies 10 IOs on the right side, 11 IOs on the bottom, and so on. Each IO
+//; # will generate a 1-bit IO tile on the specified side. The generator will greedily form
+//; # groups of 16 1-bit IOs to create a 16-bit bus. The 16-bit bus feeds to/from the
+//; # MSB IO tile of the group. IO tiles are of size 1x1. IO tiles occupy separate rows 
+//; # (or columns) on the CGRA fabric. Any unused space on the IO row is filled with empty
+//; # tiles. Empty tiles do not contain any resources or even wires. IOs are numbered
+//; # clockwise starting from MSB i.e bit 15 will be at the top on the right side,
+//; # rightmost on the bottom side and so on.
+//; my @IO_count = qw(16 16 16 16); # Default is 16x16
 //; if ($grid_size == "8x8")   { @IO_count = qw(8 8 8 8); }
-//; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
 //; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
-//; @IO_count = qw(16 16 16 16);
-//;
+//; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; my $num_ios_per_group = 16;
 //; my $num_groups_per_side = 1;
 //; #
@@ -800,11 +798,11 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
       .tile_id(16'h`$tile_addr_hex`),
       .read_data(read_data_`$tile_addr_hex`)
     );
-    //;  if ($read_data_memory eq '') {
-        //;    $read_data_memory = "read_data_$tile_addr_hex";
-        //;  } else {
-            //;    $read_data_memory = $read_data_memory . " | read_data_$tile_addr_hex";
-            //;  }
+//;      if ($read_data_memory eq '') {
+//;        $read_data_memory = "read_data_$tile_addr_hex";
+//;      } else {
+//;        $read_data_memory = $read_data_memory . " | read_data_$tile_addr_hex";
+//;      }
 //;    } elsif ($tile_type eq "pe") {
     wire [31:0] read_data_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
@@ -838,85 +836,74 @@ assign wire_`1 + $offset + $bit`_`($cgra_grid_height-1)`_BUS1_S2_T`$t` = p2f_S_`
 //;         }
 //;       }
 //;     }
-//;   for (my $i=0; $i<$global_signal_count; $i++) {
+//;     for (my $i=0; $i<$global_signal_count; $i++) {
       .gin_`${i}`(global_wire_h2l_1_`${i}`_`(int(floor((${w}-1)/2))+1)`_`(int(floor((${h}-1)/2))+1)`),
-//;   }
+//;     }
       .gout(global_wire_l2h_0_`${w}`_`${h}`),
       .tile_id(16'h`$tile_addr_hex`),
       .read_data(read_data_`$tile_addr_hex`)
     );
-//;  if ($read_data_pe eq '') {
-//;    $read_data_pe = "read_data_$tile_addr_hex";
-//;  } else {
-//;    $read_data_pe = $read_data_pe . " | read_data_$tile_addr_hex";
-//;  }
-//; #
-//; #
-//;    } elsif ($tile_type eq "empty") {
-//; #
-//; #
-//;    }
-
-
-
-
-
-//;   # cgra_info/io1bit tiles
-//;   { 
-//;     # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;     my $ty = "$tile_config->{ $tile_type }{ 'type' }";
-//;     my $ta = "0x$tile_addr_hex";
-//;     my $tr = "";
-//;     my $pn = "";
-//;     if ($tile_type eq "io1") {
-//;       $tr = "BUS1:1 BUS16:0";
-//;       my $pad_name = $tile_config->{ 'io1' }{ 'pad_name' };
-//;       $pn = " name='$pad_name'";
-//;     } elsif ($tile_type eq "io16") {
-//;       $tr = "BUS1:0 BUS16:1";
-//;     } else {
-//;       # FIXME Won't this break if there is ever jmore than one key??
+//;
+//;#Reminder I think we are HERE in the loop nest:
+//;#for (my $h=0; $h<$cgra_grid_height; $h++) {
+//;#  for (my $w=0; $w<$cgra_grid_width; $w++) {
+//;#    } elsif ($tile_type eq "pe") {
+//;
+//;       if ($read_data_pe eq '') {
+//;         $read_data_pe = "read_data_$tile_addr_hex";
+//;       } else {
+//;         $read_data_pe = $read_data_pe . " | read_data_$tile_addr_hex";
+//;       }
+//;       #
+//;       #
+//;     } elsif ($tile_type eq "empty") {}
+//;     #
+//;#Reminder I think we are HERE in the loop nest:
+//;#for (my $h=0; $h<$cgra_grid_height; $h++) {
+//;#  for (my $w=0; $w<$cgra_grid_width; $w++) {
+//;     ########################################################################
+//;     # WRITE CGRA_INFO ######################################################
+//;     ########################################################################
+//;     #
+//;     # # will it blend (I)? no it will not (yet) b/c inst_obj
+//;     # }} # for w; for h
+//;     # for (my $h=0; $h<$cgra_grid_height; $h++) {
+//;     #   for (my $w=0; $w<$cgra_grid_width; $w++) {
+//;     #     my $key = "${w}_${h}";
+//;     #     my $tile_type = $tile_grid{$key};
+//;     #     my $tile_addr = $tile_grid{ "${key}_addr" };
+//;     #     my $tile_addr_hex = sprintf("%04X", $tile_addr);
+//;     #
+//;     # FIXME Note this could/should be a sub/func w/args
+//;     # %tile_config, $bus $bus_num_tracks_hash{$bus}, bus_num_tracks_hash, $inst_obj...?
+//;     #
+//;     # cgra_info: io tile info gets written by io_group.svp
+//;     # cgra_info: no longer emit empty tiles
+//;     if (($tile_type ne "io1") && ($tile_type ne "empty")) {
+//;       my $ty = "$tile_config->{ $tile_type }{ 'type' }";
+//;       my $ta = "0x$tile_addr_hex";
+//;       my $tr = "";
 //;       foreach my $bus (sort keys %bus_num_tracks_hash) {
 //;         $tr = $tr . "$bus:$bus_num_tracks_hash{$bus} ";
 //;       }
-//;     }
-//;     print INFO "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'$pn>\n";
-//;     # Note spurious tile info will get overwritten by io_group.svp
-//;     @top::CGRA_INFO[$tile_addr] .= "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'$pn>\n";
-//; 
-//;     my $bitnum = $tile_config->{ 'io1' }{ 'bit_pos' };
-//;     if ($tile_type eq "io1") { 
-//;        print INFO "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->\n";
-//;        @top::CGRA_INFO[$tile_addr] .= "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->\n";
-//;     }
-//; 
-//;   } 
-//;   # cgra_info/empty tiles
-//;   if ($tile_type ne "empty") {
-//;     open (INP, "<TILE".$inst_obj->mname()) or die "Couldn't open file TILE$inst_obj->mname(), $!";
-//;     while (<INP>) {
-//;       print INFO $_;
-//;       @top::CGRA_INFO[$tile_addr] .= $_;
-//;     }
-//;     close INP;
-//;   	if ($tile_type eq "io1") {
-//;	  my $io1_track = 0;
-//;	  my $side = $inst_obj->get_param('side');
-//;       if (($side % 2) eq 0) {$io1_track = ($h - 2) % $io1bit_num_tracks;}
-//;	  else {$io1_track = ($w - 2) % $io1bit_num_tracks;}
-//;	  print INFO                     "    <input>in_1BIT_S${side}_T$io1_track</input>\n";
-//;       @top::CGRA_INFO[$tile_addr] .= "    <input>in_1BIT_S${side}_T$io1_track</input>\n";
-//;       # Output fans out to all tracks
-//;       for (my $track=0; $track < $io1bit_num_tracks; $track +=1) { 
-//;	      print INFO                     "    <output>out_1BIT_S${side}_T$track</output>\n";
-//;           @top::CGRA_INFO[$tile_addr] .= "    <output>out_1BIT_S${side}_T$track</output>\n";
+//;       # print INFO "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'>\n";
+//;       # Note spurious tile info will get overwritten by io_group.svp
+//;       @top::CGRA_INFO[$tile_addr] .= "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'>\n";
+//;   
+//;       # FIXME/TODO use internal data structure instead of file IO :(  )
+//;       open (INP, "<TILE".$inst_obj->mname()) or die "Couldn't open file TILE$inst_obj->mname(), $!";
+//;       while (<INP>) {
+//;         print INFO $_;
+//;         @top::CGRA_INFO[$tile_addr] .= $_;
 //;       }
-//;	}
-//;   }
-//;   print INFO                     "  </tile>\n";
-//;   @top::CGRA_INFO[$tile_addr] .= "  </tile>\n";
-//;   }
-//; }
+//;       close INP;
+//;       # print INFO                     "  </tile>\n";
+//;       @top::CGRA_INFO[$tile_addr] .= "  </tile>\n";
+//;     } # all other tile types
+//;   } # for w
+//; } # for h
+//; #
+//; #
 //; #
 //; if ($include_GST) {
 //;   #####################################################

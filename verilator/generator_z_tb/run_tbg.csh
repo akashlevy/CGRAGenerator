@@ -82,11 +82,11 @@ if ($#argv == 1) then
     echo "Usage:"
     echo "    $0 <textbench.cpp> -q [-gen | -nogen] [-nobuild]"
     echo "        -usemem -allreg"
-    echo "        -config <config_filename.bs>"
+    echo "        -config  <config_filename.bs>"
     echo "        -input   <input_filename.png>"
-    echo "        -output <output_filename.raw>"
-    echo "        -out1 s1t0 <1bitout_filename>",
-    echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
+    echo "        -output  <output_filename.raw>"
+    echo "        -out1    <1bitout_filename>",
+    echo "        -delay   <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
     echo "        -build   # no longer supported, use -rebuild_from_scratch instead"
@@ -457,7 +457,7 @@ RUN_SIM:
 
   echo ''
   echo "${0:t}: TIME NOW: `date`"
-# echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
+# echo "${0:t}: Vtop -output $output:t -out1 $out1:t"
 
 set TestBenchGenerator = `cd ../../../TestBenchGenerator; pwd`
 pushd build >& /dev/null

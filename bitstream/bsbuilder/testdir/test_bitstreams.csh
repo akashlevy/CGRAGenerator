@@ -100,7 +100,8 @@ foreach b ($bmarks)
   set out1 = $tmpdir/${b}_CGRA_out1.raw
   set out1sw = ""
   if ($b == onebit_bool) then
-    set out1sw = "-out1 s1t0 $out1"
+    # set out1sw = "-out1 s1t0 $out1"
+    set out1sw = "-out1 $out1"
   endif
   
   setenv SERPENT_HACK

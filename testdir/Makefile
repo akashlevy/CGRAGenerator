@@ -102,7 +102,7 @@ travis_test_cascade:
 
 cascade: $(CGRA_INFO)
 	cd $(VERILATOR_TOP); ./run_tbg.csh \
-	  -config ./examples/tmp.cascade/cascade_tx.bsa\
+	  -config ../../bitstream/examples/cascade_kyi.bsa\
 	  -input  ../../bitstream/bsbuilder/testdir/examples/cascade_input.raw \
 	  -output build/cascade_CGRA_out.raw \
 	  -out1   build/cascade_CGRA_out1.raw \

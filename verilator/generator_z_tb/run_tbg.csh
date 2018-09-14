@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-# This is tbg.csh. It replaces run.csh (eventually maybe)
+# This is run_tbg.csh. It replaces run.csh (eventually maybe)
 
 # Can't believe I have to do this...
 set path = (. $path)
@@ -53,19 +53,14 @@ grep mem_tile_height $hwtop/genesis_verif/top.v \
 # Default configuration bitstream: 16x16 pointwise mul-by-two
 # 
 set b = ../../bitstream/examples
-
-if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
-if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
-
-
 if ($memtile_height == 1) set config = $b/pw_padring_shortmem.bsa
 if ($memtile_height == 2) then
+  echo ""
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo ""
   set config = sorry_no_tallmem_config_exists_yet
-  echo ""
-  echo WARNING "There is no default config file for tallmem (yet)"
-  echo WARNING "There is no default config file for tallmem (yet)"
-  echo WARNING "There is no default config file for tallmem (yet)"
-  echo ""
 endif
 
 echo "run.csh: Looks like memtile_height is $memtile_height"
@@ -95,7 +90,7 @@ if ($#argv == 1) then
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)"
+    echo "        -build   # no longer supported, use --rebuild_from_scratch instead"
     echo "        -nobuild # no genesis, no verilator build"
     echo "        -nogen   # no genesis"
     echo "        -gen     # genesis"
@@ -165,13 +160,12 @@ while ($#argv)
       breaksw
 
     case '-rebuild_from_scratch':
-        echo ""; echo "WARNING"; echo "WARNING"; echo "WARNING"; 
-        echo WARNING You asked for it with -build
-        echo WARNING Will rebuild Vtop from scratch...
-        echo "rm build/*"
-        echo "WARNING"; echo "WARNING"; echo "WARNING"; echo ""
-        if (-d build) rm build/*
-        unsetenv SKIP_RUNCSH_BUILD; breaksw
+      echo ""; echo "WARNING"; echo "WARNING"; echo "WARNING"; 
+      echo WARNING You asked for it with -build
+      echo WARNING Will rebuild Vtop from scratch...
+      echo "rm build/*"
+      echo "WARNING"; echo "WARNING"; echo "WARNING"; echo ""
+      if (-d build) rm build/*
 
     ########################################
     # Switches: programming the CGRA
@@ -254,17 +248,22 @@ echo "${0:t}: Using standard io file '$io_config:t'"
 # #   echo    "i will use '$io_config' for io config"
 # # endif
 
-# Note I think the new default works for cascade as well, but it's not yet been tested...
-# From Lenny, for cascade
+
+
+##############################################################################
+# FIXME this is just temporary until keyi_router "fixed" (I hope)
 unset CASCADE
-# if (${config:t:r} == 'cascade') set CASCADE
 # works for e.g. "cascade" or "cascade_keyi"
 if `expr "${config:t:r}" : 'cascade'` set CASCADE
+if `expr "${config:t:r}" : 'harris'`  set CASCADE
 if ($?CASCADE) then
-  set io_config = `pwd`/io/cascade_fixed.bsb.json
-  echo -n "$0:t oh wait it's cascade"
+  set io_config = `pwd`/io/2in2out_cascade.json
+  echo -n "$0:t oh wait it's cascade or harris - "
   echo    "i will use '$io_config' for io config"
 endif
+##############################################################################
+
+
 
 # if ($?VERBOSE) then
 if (1) then
@@ -372,11 +371,6 @@ AFTER_GENERATE:
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     unset SKIP_RUNCSH_BUILD
-
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     goto RUN_SIM
   endif
 
   # Oops no this does not fly w/tbg; must recompile when bitstream changes
@@ -488,7 +482,8 @@ pushd build >& /dev/null
   python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
 
 
-  if ($?ONEBIT) then
+#  if ($?ONEBIT) then
+  if ($?CASCADE) then
     set echo
     ls -lt *.raw | head
     cp io16in_in_arg_1_0_0.raw $output 

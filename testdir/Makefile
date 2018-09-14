@@ -82,6 +82,11 @@ travis_system_tests:
 	(make SILENT=TRUE test_serpent RUN=run_tbg.csh || echo FAIL) \
 	  | tee serpent_results.tmp
 
+	@echo TIMENOW `date +%H:%M`
+	@echo "two minutes(?) for keyi-routed cascade"
+	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
+	  | tee -a serpent_results.tmp
+
         # check for hidden errors
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
 	grep RESULT serpent_results.tmp
@@ -89,7 +94,26 @@ travis_system_tests:
 	@echo TIMENOW `date +%H:%M`
 
 
-# Note this is where onebit_bool gets testsd
+travis_test_cascade:
+	@echo "cascade!"
+	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
+	  | tee -a serpent_results.tmp
+
+
+cascade: $(CGRA_INFO)
+	cd $(VERILATOR_TOP); ./run_tbg.csh \
+	  -config ./examples/tmp.cascade/cascade_tx.bsa\
+	  -input  ../../bitstream/bsbuilder/testdir/examples/cascade_input.raw \
+	  -output build/cascade_CGRA_out.raw \
+	  -out1   build/cascade_CGRA_out1.raw \
+	  -delay 260,0 -nclocks 1M || exit 13
+
+	cd $(VERILATOR_TOP); python ./bin/keyi_cascade_compare.py  \
+	  build/cascade_CGRA_out.raw build/cascade_CGRA_out1.raw \
+	  ../../bitstream/bsbuilder/testdir/examples/cascade_halide_out.raw \
+          && echo TEST RESULT cascade PASSED || exit 13
+
+
 test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
 	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) $(TEMPDIR)

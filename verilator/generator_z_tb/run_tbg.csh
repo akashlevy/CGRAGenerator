@@ -73,7 +73,6 @@ set input     = io/conv_bw_in.png
 set tmpdir = `mktemp -d /tmp/run.csh.XXX`
 
 set nclocks = "1M"
-set outpad  = 's1t0'
 set output  = $tmpdir/output.raw
 set out1    = $tmpdir/onebit.raw
 set tracefile = ""
@@ -101,7 +100,7 @@ if ($#argv == 1) then
     echo "       -config  $config \"
     echo "       -input   $input  \"
     echo "       -output  $output \"
-    echo "       -out1    $outpad $out1 \"
+    echo "       -out1    $out1 \"
     echo "       -delay   $DELAY \"
     if ("$tracefile" != "") then
       echo "       -trace $tracefile \"
@@ -191,7 +190,6 @@ while ($#argv)
       set output = "$2"; shift; breaksw
 
     case -out1:
-      set outpad = $2; shift;
       set out1   = $2; shift;
       breaksw;
 
@@ -276,7 +274,7 @@ if (1) then
   echo "   -config $config \"
   echo "   -input  $input \"
   echo "   -output $output \"
-  echo "   -out1   $outpad $out1 \"
+  echo "   -out1   $out1 \"
   echo "   -delay  $DELAY \"
   if ("$tracefile" != "") then
     echo "   -trace   $tracefile \"
@@ -477,27 +475,34 @@ pushd build >& /dev/null
   ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
       | tee $tmpdir/run.log.$$
 
-  # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
+  # Let process_output put its garbage in 'build' directory
+
+  # FIXME process_output.py has problems
+  # Hm appears to do funny hacks in case of conv_1_2 or conv_bw (which I don't use)
+  # Also no provision for one-bit output
   echo python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
-  python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
+  python3 $TestBenchGenerator/process_output.py $io_config $output UNUSED $DELAY
 
+popd >& /dev/null
 
-#  if ($?ONEBIT) then
+  set po_out16 = build/io16_out_0_0.raw
+  set po_out1  = build/io1_out_0_0.raw
+  # echo ""; echo "BEFORE:"; ls -l $po_out16 $po_out1 $output $out1
+
+  # FIXME should not have to do this, see process_output problems above
   if ($?CASCADE) then
     set echo
     ls -lt *.raw | head
-    cp io16in_in_arg_1_0_0.raw $output 
-    cp io1_out_0_0.raw $out1
+    cp $po_out16 $output 
+    cp $po_out1  $out1
     unset echo
   endif
-
-
-popd >& /dev/null
+  # echo ""; echo "AFTER:"; ls -l $po_out16 $po_out1 $output $out1
 
   if ($?VERBOSE) then
     echo ""
     echo "ub.  so i guess i built this maybe:"
-    ls -l $output
+    ls -l $output $out1
     echo ""
   endif
 

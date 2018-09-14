@@ -89,7 +89,7 @@ if ($#argv == 1) then
     echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build   # no longer supported, use --rebuild_from_scratch instead"
+    echo "        -build   # no longer supported, use -rebuild_from_scratch instead"
     echo "        -nobuild # no genesis, no verilator build"
     echo "        -nogen   # no genesis"
     echo "        -gen     # genesis"
@@ -165,6 +165,7 @@ while ($#argv)
       echo "rm build/*"
       echo "WARNING"; echo "WARNING"; echo "WARNING"; echo ""
       if (-d build) rm build/*
+      breaksw
 
     ########################################
     # Switches: programming the CGRA

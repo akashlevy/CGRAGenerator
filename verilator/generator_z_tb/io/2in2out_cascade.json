@@ -2,7 +2,7 @@
     "reset_in_pad": {
         "pad_bus" : "pads_N_0",
         "bits": {
-            "0": { "pad_bit":"0" }
+            "0": { "pad_bit":"15" }
         },
         "mode": "reset",
         "width": 1

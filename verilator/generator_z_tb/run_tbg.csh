@@ -488,17 +488,17 @@ popd >& /dev/null
 
   set po_out16 = build/io16_out_0_0.raw
   set po_out1  = build/io1_out_0_0.raw
-  # echo ""; echo "BEFORE:"; ls -l $po_out16 $po_out1 $output $out1
+  echo ""; echo "BEFORE:"; ls -l $po_out16 $po_out1 $output $out1
 
   # FIXME should not have to do this, see process_output problems above
-  if ($?CASCADE) then
+#   if ($?CASCADE) then
     set echo
     ls -lt *.raw | head
-    cp $po_out16 $output 
+#     cp $po_out16 $output 
     cp $po_out1  $out1
     unset echo
-  endif
-  # echo ""; echo "AFTER:"; ls -l $po_out16 $po_out1 $output $out1
+#   endif
+  echo ""; echo "AFTER:"; ls -l $po_out16 $po_out1 $output $out1
 
   if ($?VERBOSE) then
     echo ""

@@ -2,8 +2,8 @@ F0000101 00000032
 # data[(15, 0)] : init `data0` reg with const `50`
 
 FF000101 0008F005
-# data[(5, 0)] : alu_op = ule
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = ule
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_CONST= 0x0
 # data[(19, 18)]: data1: REG_BYPASS=0x2
@@ -24,8 +24,8 @@ F0000102 0000000A
 # data[(15, 0)] : init `data0` reg with const `10`
 
 FF000102 0008F004
-# data[(5, 0)] : alu_op = uge
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = uge
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_CONST= 0x0
 # data[(19, 18)]: data1: REG_BYPASS=0x2
@@ -68,8 +68,8 @@ F1000201 00000014
 # data[(15, 0)] : init `data1` reg with const `20`
 
 FF000201 0002F004
-# data[(5, 0)] : alu_op = uge
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = uge
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_CONST= 0x0

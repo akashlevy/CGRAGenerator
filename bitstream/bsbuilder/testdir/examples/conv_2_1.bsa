@@ -2,8 +2,8 @@ F1000101 00000007
 # data[(15, 0)] : init `data1` reg with const `7`
 
 FF000101 0002F00B
-# data[(5, 0)] : alu_op = mul
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = mul
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_CONST= 0x0
@@ -20,8 +20,8 @@ F1000102 00000000
 # data[(15, 0)] : init `data1` reg with const `0`
 
 FF000102 0002F000
-# data[(5, 0)] : alu_op = add
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = add
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_CONST= 0x0
@@ -38,8 +38,8 @@ F1000103 00000007
 # data[(15, 0)] : init `data1` reg with const `7`
 
 FF000103 0002F00B
-# data[(5, 0)] : alu_op = mul
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = mul
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_CONST= 0x0
@@ -106,8 +106,8 @@ FF000105 0000E00E
 # data[(7, 6)] : @ tile (2, 1) connect wire 2 (in_BUS16_S3_T3) to out_BUS16_S0_T3
 
 FF000202 000AF000
-# data[(5, 0)] : alu_op = add
-# data[(6, 6)] : unsigned=0x0
+# data[( 5,  0)]: alu_op = add
+# data[( 6,  6)]: unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_BYPASS=0x2

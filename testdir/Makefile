@@ -108,7 +108,7 @@ cascade harris: $(CGRA_INFO)
 	  -out1   build/$@_CGRA_out1.raw \
 	  -delay 260,0 -nclocks 1M || exit 13
 
-	cd $(VERILATOR_TOP); python ./bin/keyi_$@_compare.py  \
+	cd $(VERILATOR_TOP); python ./bin/keyi_compare.py  \
 	  build/$@_CGRA_out.raw build/$@_CGRA_out1.raw \
 	  ../../bitstream/bsbuilder/testdir/examples/$@_halide_out.raw \
           && echo TEST RESULT $@ PASSED || exit 13

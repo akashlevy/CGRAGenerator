@@ -184,9 +184,7 @@ assign config_write = 1;
 //; close INFO;
 //; }
 
-    // FIXME little temporary hacky wack to make 1-bit input work
-    // NECESSARY for cascade to work, it has one-bit input (only one so far)
-    assign wire_1_2_BUS1_S1_T0 = wire_0_2_BUS1_S1_T0;
+
 
 //; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
 //; print INFO2 "<CGRA>\n";

@@ -127,8 +127,8 @@ def main():
 
         # self.in -> T0_in_s2t0
         if re.search('self.in', line):
-            # Ignore self.in (really?)
             # io_info.append(process_input(line))
+            # Ignore self.in (really?)
             continue
 
         # T0_out_s0t0 -> self.out
@@ -407,7 +407,7 @@ def bs_connection(tileno, line, DBG=0):
     # see reg_field_bug_hack() for deets
     if (lhs == 'in_s0t0_b0') and (rhs == 'out_s2t0_b0'):
         return reg_field_bug_hack(t)
-    #DBG=9
+
     # Connect lhs to rhs
     Tlhs = "Tx%04X_%s" % (tileno,lhs)
     Trhs = "Tx%04X_%s" % (tileno,rhs)
@@ -756,10 +756,10 @@ op_data['umin']    = op_data['lte']
 # Added for Harris 7/2018, probably should NOT work...
 # FIXME Will have to fix this some day SOON maybe
 # signed, unsigned, who cares!!!???  all map to same FIXME
-op_data['ashr'] = op_data['rshft']
-op_data['smax'] = op_data['gte']
-op_data['sle']  = op_data['lte']
-op_data['sge']  = op_data['gte']
+op_data['ashr'] = op_data['rshft'] | (1 << 6)
+op_data['smax'] = op_data['gte']   | (1 << 6)
+op_data['sle']  = op_data['lte']   | (1 << 6)
+op_data['sge']  = op_data['gte']   | (1 << 6)
 op_data['mux']  = op_data['sel']
 
 
@@ -970,8 +970,8 @@ def bs_op(tileno, line, DBG=0):
     # data[(19, 18)] : data1: REG_CONST
 
     comment = [
-        "data[(5, 0)] : alu_op = %s" % opname,
-        "data[(6, 6)] : unsigned=0x0",
+        "data[( 5,  0)]: alu_op = %s"   % opname,
+        "data[( 6,  6)]: unsigned=0x%d" % (op_data[opname] >> 6 & 1),
         "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
         "data[(17, 16)]: data0: %s" % regtranslate(op1),
         "data[(19, 18)]: data1: %s" % regtranslate(op2),

@@ -84,8 +84,10 @@ travis_system_tests:
 	  | tee serpent_results.tmp
 
 	@echo TIMENOW `date +%H:%M`
-	@echo "two minutes(?) for keyi-routed cascade"
+	@echo "four minutes(?) for keyi-routed cascade and harris"
 	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
+	  | tee -a serpent_results.tmp
+	(make SILENT=TRUE harris  RUN=run_tbg.csh || echo FAIL) \
 	  | tee -a serpent_results.tmp
 
         # check for hidden errors

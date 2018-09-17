@@ -99,20 +99,19 @@ travis_test_cascade:
 	(make SILENT=TRUE cascade RUN=run_tbg.csh || echo FAIL) \
 	  | tee -a serpent_results.tmp
 
-
-cascade: $(CGRA_INFO)
+# '$@' turns into 'cascade' or 'harris' as appropriate
+cascade harris: $(CGRA_INFO)
 	cd $(VERILATOR_TOP); ./run_tbg.csh \
-	  -config ../../bitstream/examples/cascade_keyi.bsa \
-	  -input  ../../bitstream/bsbuilder/testdir/examples/cascade_input.raw \
-	  -output build/cascade_CGRA_out.raw \
-	  -out1   build/cascade_CGRA_out1.raw \
+	  -config ../../bitstream/examples/$@_keyi.bsa \
+	  -input  ../../bitstream/bsbuilder/testdir/examples/$@_input.raw \
+	  -output build/$@_CGRA_out.raw \
+	  -out1   build/$@_CGRA_out1.raw \
 	  -delay 260,0 -nclocks 1M || exit 13
 
-	cd $(VERILATOR_TOP); python ./bin/keyi_cascade_compare.py  \
-	  build/cascade_CGRA_out.raw build/cascade_CGRA_out1.raw \
-	  ../../bitstream/bsbuilder/testdir/examples/cascade_halide_out.raw \
-          && echo TEST RESULT cascade PASSED || exit 13
-
+	cd $(VERILATOR_TOP); python ./bin/keyi_$@_compare.py  \
+	  build/$@_CGRA_out.raw build/$@_CGRA_out1.raw \
+	  ../../bitstream/bsbuilder/testdir/examples/$@_halide_out.raw \
+          && echo TEST RESULT $@ PASSED || exit 13
 
 test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)

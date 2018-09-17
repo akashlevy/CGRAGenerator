@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 import sys
 import re
@@ -16,7 +16,7 @@ def my_syscall(cmd, action="FAIL"):
     DBG=0
     sys.stdout.flush()
     import subprocess
-    if DBG: print "okay here we go with", cmd
+    if DBG: print("okay here we go with", cmd)
     err = subprocess.Popen(cmd, shell=True).wait()
     if err and (action == "FAIL"):
         assert False, "\nSubprocess call failed:\n%s" % cmd
@@ -37,7 +37,7 @@ mydir  = os.path.dirname(mypath)
 # import pe
 
 # cmd = "cd %s; test -d pe || echo no pe (yet)" % mydir
-# print cmd
+# print(cmd)
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
 my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)" % mydir)
@@ -56,8 +56,8 @@ import pe
 
 
 
-# print pe.isa.add()(1,2)
-# print pe.isa.eq()(1,2)
+# print(pe.isa.add()(1,2))
+# print(pe.isa.eq()(1,2))
 # exit()
 
 BINARY_OPS=[
@@ -88,7 +88,7 @@ VERILATOR_DIR = ''
 OPTIONS = {}
 
 def caveats():
-    print '''
+    print('''
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
 CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
@@ -96,7 +96,7 @@ CAVEATS: BROKEN/DISABLED/HACKED (see FIXME in utest.py, isa.py)
   'rshft/lshft' model wrong in 'isa.py'; wrote my own instead (utest.py/FIXME)
   'gte/lte' model broken(?) in 'isa.py'; wrote my own instead (utest.py/FIXME)
   'sel' - no test yet b/c needs 'd' input
-'''
+''')
 
 def main():
     caveats()
@@ -104,8 +104,8 @@ def main():
     mypath = os.path.realpath(__file__)
     mydir  = os.path.dirname(mypath)
     if VERBOSE:
-        print ""
-        print "Script dir = '%s'" % mydir
+        print("")
+        print("Script dir = '%s'" % mydir)
 
     # Script dir is maybe '$gen/testdir/unit_tests'
     global VERILATOR_DIR
@@ -118,19 +118,19 @@ def main():
     show_options()
 
     if OPTIONS['nobuild']:
-        print "Skipping bsb/bsa file generation b/c '--nobuild'"
+        print("Skipping bsb/bsa file generation b/c '--nobuild'")
     else:
         # Build only requested bsb and bsa files
         my_syscall(mydir+'/gen_bsb_files.py ' + ' '.join(OPTIONS['tests']))
 
-        print ""
+        print("")
         sys.stdout.flush()
 
         if not os.path.exists('op_add.bsa'):
             my_syscall(mydir+'/gen_bsa_files.csh')
-            print ""
+            print("")
         else:
-            print "Skipping (redundant) bsa file generation b/c found 'op_add.bsa'"
+            print("Skipping (redundant) bsa file generation b/c found 'op_add.bsa'")
 
     # n_iter = 'forever'
     # n_iter = 3
@@ -138,19 +138,19 @@ def main():
     i = 1
     n_iter = OPTIONS['repeat']
     while (True):
-        print "----------------------------------------------------------------"
-        print "Round %d of %s:" % (i, n_iter),
+        print("----------------------------------------------------------------")
+        print("Round %d of %s:" % (i, n_iter), end=' ')
         do_one_round()
-        print ""
+        print("")
         i = i + 1
         if n_iter == 'forever': continue
         elif i > int(n_iter): break
 
 def show_options():
-    print "OPTIONS"
+    print("OPTIONS")
     for i in OPTIONS:
-        print "  OPTIONS['%-7s'] = %s" % (i, OPTIONS[i])
-    print ""
+        print("  OPTIONS['%-7s'] = %s" % (i, OPTIONS[i]))
+    print("")
 
 
 def do_one_round():
@@ -158,11 +158,11 @@ def do_one_round():
     # Build one input file per iteration
     # gen_input_file_seq()
     gen_input_file()
-    print ""
+    print("")
 
     for test in OPTIONS['tests']:
         do_one_test(test)
-        print ""
+        print("")
 
 
 # E.g. test = 'add'
@@ -171,7 +171,7 @@ def do_one_test(test, DBG=0):
 
     msg = 'trace is OFF'
     if OPTIONS['trace']: msg = 'trace is ON'
-    print "Testing '%s' (%s)" % (test, msg)
+    print("Testing '%s' (%s)" % (test, msg))
 
     # Find bsa file
     tname_op  = 'op_'  + test
@@ -208,7 +208,7 @@ def print_raw_file_abbrev(label, tname, filename):
     (d1,d2) = delay.split(',')
     d1 = int(d1)
 
-    print "  %s"   % label,
+    print("  %s"   % label, end=' ')
     if d1 < 40:
         # Align in/out cycles (unless delay is too darn big)
         for i in range(d1): sys.stdout.write('----')
@@ -223,15 +223,15 @@ def compare_outputs(tname, DBG=0):
     cmd = 'cmp %s %s' % (gold_out,cgra_out)
 
     if VERBOSE:
-        print "  Comparing %s and %s..." % (gold_out,cgra_out)
-        print "  " + cmd
+        print("  Comparing %s and %s..." % (gold_out,cgra_out))
+        print("  " + cmd)
 
     err = my_syscall(cmd, "CONTINUE")
     if err:
-        print "  OOPS thatsa no good: '%s' failed" % tname
+        print("  OOPS thatsa no good: '%s' failed" % tname)
         sys.exit(13)
     else:
-        if VERBOSE: print "   IT'S GOOD!!!"
+        if VERBOSE: print("   IT'S GOOD!!!")
         return True
 
 
@@ -241,7 +241,7 @@ def compare_outputs(tname, DBG=0):
 # pypat['add'](1,3)[0] should yield '4' I think
 GOLD = {}
 # GOLD['add'] = pe.isa.add()
-# print GOLD['add'](1,3)[0]
+# print(GOLD['add'](1,3)[0])
 
 GOLD['add']   = pe.isa.add()
 GOLD['sub']   = pe.isa.sub()
@@ -310,16 +310,16 @@ def gen_output_file_gold(tname, DBG=0):
     if   is_mem(tname):    outpixels = PIXELS
     elif is_binary(tname): outpixels = gen_pixels_binary(tname)
     else: assert False
-    # print outpixels
+    # print(outpixels)
 
     filename = gold_out
     write_pixels(filename, outpixels)
-    if DBG>1: print ''
+    if DBG>1: print('')
 
     if VERBOSE:
-        print "  gold-model output file '%s':" % filename
+        print("  gold-model output file '%s':" % filename)
         my_syscall('od -t u1 ' + filename + " | egrep -v '^.......$' | sed 's/^/  /'", 'CONT')
-        print ""
+        print("")
 
     return gold_out
 
@@ -331,7 +331,7 @@ def gen_output_file_cgra(tname, DBG=0):
     cgra_out = '%s_CGRA_out.raw' % tname
 
     if VERBOSE:
-        print "  Will use bsa file '%s.bsa' to generate '%s'" % (tname,cgra_out)
+        print("  Will use bsa file '%s.bsa' to generate '%s'" % (tname,cgra_out))
 
     if DBG:
         if USE_TBG: my_syscall('(cd %s; ls -l run_tbg.csh)' % VERILATOR_DIR, 'CONT')
@@ -368,12 +368,12 @@ def gen_output_file_cgra(tname, DBG=0):
 
     if VERBOSE:
         # How to redo on error:
-        print ""
-        print "  set d = " + cwd
-        print "  cd " + VERILATOR_DIR
-        print "  " + re.sub(cwd, '$d/', cmd)
-        if savelog != '': print "  " + savelog
-        print ""
+        print("")
+        print("  set d = " + cwd)
+        print("  cd " + VERILATOR_DIR)
+        print("  " + re.sub(cwd, '$d/', cmd))
+        if savelog != '': print("  " + savelog)
+        print("")
 
     DBG=0
     # (cd $v; ./run.csh -hackmem -config $bsa -input $in -output $cout -delay $delay ) || exit -1
@@ -386,7 +386,7 @@ def gen_output_file_cgra(tname, DBG=0):
         else:       assert False, "Oops looks like run.csh failed"
 
     if VERBOSE:
-        print "  CGRA output file '%s':" % cgra_out
+        print("  CGRA output file '%s':" % cgra_out)
         my_syscall('od -t u1 ' + cgra_out + " | egrep -v '^.......$' | sed 's/./  /'", 'CONT')
 
     return cgra_out
@@ -403,7 +403,7 @@ def find_delay(tname, DBG=0):
         delay = '%d,%d' % (d,d)
         # delay = '%d,0' % (d)
     else: assert False, 'What is this thing: "%s"' % tname
-    if DBG: print "  delay should be " + delay
+    if DBG: print("  delay should be " + delay)
     return delay
 
 
@@ -427,10 +427,10 @@ def is_mem(tname):
 def gen_input_file():
     nvecs = OPTIONS['nvecs']
     if OPTIONS['vectype'][0:3] == 'seq':
-        print "using input file of %d sequential 8-bit vectors" % OPTIONS['nvecs']
+        print("using input file of %d sequential 8-bit vectors" % OPTIONS['nvecs'])
         pixels =  gen_input_file_seq(nvecs)
     elif OPTIONS['vectype'][0:4] == 'rand':
-        print "using input file of %d random 8-bit vectors" % OPTIONS['nvecs']
+        print("using input file of %d random 8-bit vectors" % OPTIONS['nvecs'])
         pixels =  gen_input_file_rand(nvecs)
 
     # Save the pixels for later
@@ -443,13 +443,13 @@ def gen_input_file_seq(nvecs):
     DBG=0
     pixels = range(nvecs)
 
-    if DBG>1: print pixels
+    if DBG>1: print(pixels)
     filename = 'test_in.raw'
     write_pixels(filename, pixels)
-    if DBG>1: print ''
+    if DBG>1: print('')
 
     if VERBOSE:
-        print "input file '%s':" % filename
+        print("input file '%s':" % filename)
         print_raw_file(filename)
 
     return pixels
@@ -458,19 +458,19 @@ def gen_input_file_rand(nvecs):
     import random
 
     seed = random.randint(1000000,9999999)
-    print "seed=", seed
+    print("seed=%d" % seed)
     random.seed(seed)
 
     DBG=0
     pixels = random.sample(range(0,255), nvecs)
 
-    if DBG>1: print pixels
+    if DBG>1: print(pixels)
     filename = 'test_in.raw'
     write_pixels(filename, pixels)
-    if DBG>1: print ''
+    if DBG>1: print('')
 
     if VERBOSE:
-        print "input file '%s':" % filename
+        print("input file '%s':" % filename)
         print_raw_file(filename)
 
     return pixels
@@ -495,7 +495,7 @@ def print_raw_file(filename, first_line_only = False):
         else:                cmd = 'echo -n "`%s`"' % cmd_pipe
 
         my_syscall(cmd)
-        print ""
+        print("")
 
 def write_pixels(filename, pixels):
     import struct
@@ -564,9 +564,9 @@ Examples:
 
     # cgra_filename = get_default_cgra_info_filename()
     while (len(args) > 0):
-        if   (args[0] == '--help'): print usage; sys.exit(0);
+        if   (args[0] == '--help'): print(usage); sys.exit(0);
         elif (args[0] == '-v'):
-            print "VERBOSE=True"
+            print("VERBOSE=True")
             VERBOSE = True
         elif (args[0] == '--repeat'):
             OPTIONS['repeat'] = args[1];  args = args[1:];
@@ -588,9 +588,9 @@ Examples:
         OPTIONS['tests'] = LBUF_LIST + BINARY_OPS
 
         # Lenny fixed it!
-        # print "WARNING utest.py skipping 'abs' test b/c verilog broken maybe\n"
+        # print("WARNING utest.py skipping 'abs' test b/c verilog broken maybe\n")
         # OPTIONS['tests'].remove('abs')
 
-    if VERBOSE: print OPTIONS
+    if VERBOSE: print(OPTIONS)
 
 main()

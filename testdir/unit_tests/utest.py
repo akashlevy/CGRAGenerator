@@ -49,13 +49,43 @@ my_syscall("cd %s; test -d pe ||      (git clone https://github.com/phanrahan/pe
 #    && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)"\
 #  % mydir)
 
-# Could have saved some trouble if this had been left uncommented earlier!
-# Ensures that the right packages get installed in *current context*
-# Pat's stuff needs numpy, bit_vector
-# my_syscall("pip list | grep numpy || pip install --upgrade pip")
-# my_syscall("pip list | grep numpy || pip install requests[security]")
-my_syscall("pip list | grep numpy || pip install numpy")
-my_syscall("pip list | grep bit_vector || pip install bit_vector")
+
+
+
+
+
+##############################################################################
+# # Could have saved some trouble if this had been left uncommented earlier!
+# # Ensures that the right packages get installed in *current context* e.g. miniconda vs. /usr/bin
+# # Pat's stuff needs numpy, bit_vector
+# my_syscall("pip list | grep numpy || pip install numpy")
+# my_syscall("pip list | grep bit_vector || pip install bit_vector")
+# 
+# # Don't know, do I need/want these?
+# # my_syscall("pip list | grep numpy || pip install --upgrade pip")
+# # my_syscall("pip list | grep numpy || pip install requests[security]")
+
+
+# FIXME/TODO stackoverflow says I should do this:
+# https://stackoverflow.com/questions/12332975/installing-python-module-within-code
+# This solution guarantees it calls the pip of the python interpreter running the code.
+
+
+def install(package):
+    import subprocess
+    import sys
+    subprocess.call([sys.executable, "-m", "pip", "install", package])
+
+install('numpy')
+install('bit_vector')
+##############################################################################
+
+
+
+
+
+
+
 
 global PYPAT_DIR
 PYPAT_DIR = mydir + '/pe'

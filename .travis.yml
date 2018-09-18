@@ -41,10 +41,6 @@ script:
   # set -e => exit on failure.
   - set -e
 
-  ########################################################################
-  - echo "Twenty-five minutes (1500s) for travis system tests"
-  - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
-
   ################################################################
   # Fifteen minutes for LT unit tests
 
@@ -59,7 +55,12 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
   - echo Fifteen minutes for LT unit tests
-  - ./run_tests.sh
+  # can we bacgkround it!!?
+  - ./run_tests.sh &
+
+  ########################################################################
+  - echo "Twenty-five minutes (1500s) for travis system tests"
+  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
 
   ########################################################################
   # Redo serpent summary maybe

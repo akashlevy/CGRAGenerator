@@ -16,10 +16,6 @@ install:
   # - sudo apt-get install python3
   # - python --version
 
-  - pip install --user -U pip
-  - pip install --user numpy
-  - pip install --user bit_vector
-
   # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
   - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
       --branch master ../TestBenchGenerator
@@ -34,6 +30,10 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
+
+  - pip install --user -U pip
+  - pip install --user numpy
+  - pip install --user bit_vector
 
   # Needed by TestBenchGenerator
   - pip install delegator.py

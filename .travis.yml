@@ -55,8 +55,14 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
   - echo Fifteen minutes for LT unit tests
+
+
+  # - ./run_tests.sh
   # can we bacgkround it!!?
-  - ./run_tests.sh &
+  - ../../bin/generate.csh
+  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
+
+
 
   ########################################################################
   - echo "Twenty-five minutes (1500s) for travis system tests"
@@ -64,4 +70,5 @@ script:
 
   ########################################################################
   # Redo serpent summary maybe
+  - cat $TRAVIS_BUILD_DIR/pytest.log
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp

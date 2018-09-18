@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 import sys
 import re
@@ -40,14 +40,22 @@ mydir  = os.path.dirname(mypath)
 # print(cmd)
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
-my_syscall("cd %s; test -d pe || (git clone https://github.com/phanrahan/pe.git && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)" % mydir)
+my_syscall("cd %s; test -d pe ||      (git clone https://github.com/phanrahan/pe.git)" % mydir)
 
+# How to check out an older version:
+# my_syscall(\
+#  "cd %s; test -d pe || (\
+#    git clone https://github.com/phanrahan/pe.git \
+#    && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)"\
+#  % mydir)
 
-# DO THIS IN .travis.yml INSTEAD!
-# # Pat's stuff needs numpy
+# Could have saved some trouble if this had been left uncommented earlier!
+# Ensures that the right packages get installed in *current context*
+# Pat's stuff needs numpy, bit_vector
 # my_syscall("pip list | grep numpy || pip install --upgrade pip")
 # my_syscall("pip list | grep numpy || pip install requests[security]")
-# my_syscall("pip list | grep numpy || pip install numpy")
+my_syscall("pip list | grep numpy || pip install numpy")
+my_syscall("pip list | grep bit_vector || pip install bit_vector")
 
 global PYPAT_DIR
 PYPAT_DIR = mydir + '/pe'

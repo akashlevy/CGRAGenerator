@@ -12,15 +12,7 @@ addons:
     # - build-essential
 
 install:
-  # - python --version
-  # - sudo apt-get install python3
-  # - python --version
-
-  - pip install --user -U pip
-  - pip install --user numpy
-  - pip install --user bit_vector
-
-  # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
+  # Current working directory: /home/travis/build/StanfordAHA/CGRAGenerator
   - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
       --branch io-reset-padring ../TestBenchGenerator
 
@@ -34,6 +26,12 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
+
+  # Maybe don't need this no more b/c utest.py does it directly...?
+  # # Needed by utest.py
+  # - pip install --user -U pip
+  # - pip install --user numpy
+  # - pip install --user bit_vector
 
   # Needed by TestBenchGenerator
   - pip install delegator.py

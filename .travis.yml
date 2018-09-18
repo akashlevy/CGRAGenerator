@@ -42,7 +42,7 @@ script:
   - set -e
 
   ################################################################
-  # Fifteen minutes for LT unit tests
+  # Fifteen minutes for LT unit tests (background)
 
   # Install python dependencies
   - pip install pytest numpy delegator.py bit_vector
@@ -54,21 +54,18 @@ script:
   - export GENESIS_HOME=/tmp/Genesis2/Genesis2Tools
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
+
   - echo Fifteen minutes for LT unit tests
-
-
-  # - ./run_tests.sh
-  # can we bacgkround it!!?
   - ../../bin/generate.csh
   - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
-
 
 
   ########################################################################
   - echo "Twenty-five minutes (1500s) for travis system tests"
   - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
 
+
   ########################################################################
-  # Redo serpent summary maybe
+  # Summarize results here at the end
   - cat $TRAVIS_BUILD_DIR/pytest.log
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo

@@ -70,9 +70,9 @@ python3 $TestBenchGenerator/generate_harness.py \
 	--bitstream $config \
 	--max-clock-cycles 5000000                \
 	--output-file-name build/harness.cpp \
-        $trace_switch $tracefile_switch \
     --input-chunk-size $input_size \
-    --output-chunk-size $output_size
+    --output-chunk-size $output_size \
+    $trace_switch $tracefile_switch
 unset echo
 
 ls -l build/harness.cpp

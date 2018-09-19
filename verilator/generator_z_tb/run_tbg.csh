@@ -420,7 +420,7 @@ BUILD_SIM:
   echo  "  $INPUT_SIZE \"
   echo  "  $OUTPUT_SIZE"
   ./bin/build_simulator_tbg.csh $VSWITCH $config $io_config $input $output \
-                                $tracefile $INPUT_SIZE $OUTPUT_SIZE || exit 13
+                                $INPUT_SIZE $OUTPUT_SIZE $tracefile || exit 13
 
 
 RUN_SIM:

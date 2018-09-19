@@ -76,19 +76,22 @@ set nclocks = "1M"
 set output  = $tmpdir/output.raw
 set out1    = $tmpdir/onebit.raw
 set tracefile = ""
+set io_config = `pwd`/io/2in2out.json
+unset io_config_override
 
 if ($#argv == 1) then
   if ("$argv[1]" == '--help') then
     echo "Usage:"
     echo "    $0 <textbench.cpp> -q [-gen | -nogen] [-nobuild]"
     echo "        -usemem -allreg"
-    echo "        -config  <config_filename.bs>"
-    echo "        -input   <input_filename.png>"
-    echo "        -output  <output_filename.raw>"
-    echo "        -out1    <1bitout_filename>",
-    echo "        -delay   <ncy_delay_in>,<ncy_delay_out>"
-    echo "       [-trace   <trace_filename.vcd>]"
-    echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
+    echo "        -config    <config_filename.bs>"
+    echo "        -io_config <io_config_filename.json>"
+    echo "        -input     <input_filename.png>"
+    echo "        -output    <output_filename.raw>"
+    echo "        -out1      <1bitout_filename>",
+    echo "        -delay     <ncy_delay_in>,<ncy_delay_out>"
+    echo "       [-trace     <trace_filename.vcd>]"
+    echo "        -nclocks   <max_ncycles e.g. '100K' or '5M' or '3576602'>"
     echo "        -build   # no longer supported, use -rebuild_from_scratch instead"
     echo "        -nobuild # no genesis, no verilator build"
     echo "        -nogen   # no genesis"
@@ -97,15 +100,16 @@ if ($#argv == 1) then
     echo "Defaults:"
     echo "    $0 top_tb.cpp \"
     echo "       $GENERATE         \"
-    echo "       -config  $config \"
-    echo "       -input   $input  \"
-    echo "       -output  $output \"
-    echo "       -out1    $out1 \"
-    echo "       -delay   $DELAY \"
+    echo "       -config    $config \"
+    echo "       -io_config $io_config \"
+    echo "       -input     $input  \"
+    echo "       -output    $output \"
+    echo "       -out1      $out1 \"
+    echo "       -delay     $DELAY \"
     if ("$tracefile" != "") then
-      echo "       -trace $tracefile \"
+      echo "       -trace   $tracefile \"
     endif
-    echo "       -nclocks $nclocks"
+    echo "       -nclocks   $nclocks"
     echo
     exit 0
   endif
@@ -181,8 +185,8 @@ while ($#argv)
 
     ########################################
     # Switches: I/O
-    case '-config':
-      set config = "$2"; shift; breaksw
+    case '-io_config':
+      set io_config = "$2"; shift; breaksw
 
     case -input:
       set input = "$2"; shift; breaksw
@@ -228,27 +232,6 @@ if (! $?VERBOSE) set VSWITCH = '-q'
 unset ONEBIT
 if (${config:t:r} == 'onebit_bool') set ONEBIT
 
-# Need this on more than one path...
-set io_config = `pwd`/io/2in2out.json
-echo ""
-echo "${0:t}: Using standard io file '$io_config:t'"
-
-# # We're all using the same one now...
-# # if ($?ONEBIT) then
-# #   set io_config = `pwd`/io/s2in_s1t0out.io.json
-# #   echo -n "$0:t aha it's the onebit thing - "
-# #   echo    "i will try using $io_config instead"
-# # endif
-# 
-# # This is the default now...
-# # if ($?TWO_IN_TWO_OUT) then
-# #   set io_config = `pwd`/io/2in2out.io.json
-# #   echo -n "$0:t oh wait it's 2in2out okay..."
-# #   echo    "i will use '$io_config' for io config"
-# # endif
-
-
-
 ##############################################################################
 # FIXME this is just temporary until keyi_router "fixed" (I hope)
 unset CASCADE
@@ -256,9 +239,19 @@ unset CASCADE
 if `expr "${config:t:r}" : 'cascade'` set CASCADE
 if `expr "${config:t:r}" : 'harris'`  set CASCADE
 if ($?CASCADE) then
-  set io_config = `pwd`/io/2in2out_cascade.json
-  echo -n "$0:t oh wait it's cascade or harris - "
-  echo    "i will use '$io_config' for io config"
+  set tmp = `pwd`/io/2in2out_cascade.json
+  if ($?io_config_override) then
+    echo ""
+    echo "WARNING requested io_config override for cascade or harris"
+    echo "WARNING will use requested io_config '$io_config'"
+    echo "WARNING instead of cascade/harris default '$tmp'"
+    echo ""
+  else
+    # set io_config = `pwd`/io/2in2out_cascade.json
+    echo -n "$0:t oh wait it's cascade or harris - "
+    echo    "i will use '$tmp' as default io config"
+    set io_config = $tmp
+  endif
 endif
 ##############################################################################
 
@@ -272,15 +265,16 @@ if (1) then
   echo "$0 $VSWITCH \"
   echo "   $GENERATE \"
   if (! $?BUILD) echo "   -nobuild \"
-  echo "   -config $config \"
-  echo "   -input  $input \"
-  echo "   -output $output \"
-  echo "   -out1   $out1 \"
-  echo "   -delay  $DELAY \"
+  echo "   -config    $config \"
+  echo "   -io_config $io_config \"
+  echo "   -input     $input \"
+  echo "   -output    $output \"
+  echo "   -out1      $out1 \"
+  echo "   -delay     $DELAY \"
   if ("$tracefile" != "") then
-    echo "   -trace   $tracefile \"
+    echo "   -trace      $tracefile \"
   endif
-  echo "   -nclocks $nclocks"
+  echo "   -nclocks    $nclocks"
 endif
 
 if (! -e $config) then

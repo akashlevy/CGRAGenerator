@@ -316,9 +316,8 @@ FF000401 0200E00E
 # INPUT  tile 257 ( 1, 1) / in_BUS16_S3_T0 / wire_0_1_BUS16_S1_T0
 # OUTPUT tile 4097 (16, 1) / out_BUS16_S1_T0 / wire_16_1_BUS16_S1_T0
 
-# Configure side 0 (right side) io1bit tiles as 16bit output bus;
-# assumes output is tile 36 (io16bit_0x24)
-
+# WARNING You did not designate a 16-bit output bus, so I will build one: 
+# Configuring side 0 (right side) io1bit tiles as 16bit output bus
 00000111 00000001
 00000211 00000001
 00000311 00000001

@@ -340,12 +340,12 @@ def find_cornerconn(end1,begin2,DBG=0):
 
         if side1 < 4:
             if DBG>1: print "# Going from top to bottom half"
-            mid1 = 'T%d_out_s1t%d' % (tileno1, track1)
-            mid2 =  'T%d_in_s7t%d' % (tileno1, track1)
+            mid1 = 'Tx%04X_out_s1t%d' % (tileno1, track1)
+            mid2 = 'Tx%04X_in_s7t%d'  % (tileno1, track1)
         else:
             if DBG>1: print "# Going from bottom to top half"
-            mid1 = 'T%d_out_s7t%d' % (tileno1, track1)
-            mid2 =  'T%d_in_s1t%d' % (tileno1, track1)
+            mid1 = 'Tx%04X_out_s7t%d' % (tileno1, track1)
+            mid2 = 'Tx%04X_in_s1t%d'  % (tileno1, track1)
         conn1 = "%s -> %s" % (end1,mid1)
         conn2 = "%s -> %s" % (mid2,begin2)
         cornerconn = [conn1,conn2]
@@ -494,7 +494,7 @@ def build_wire_rc(r,c,inout,side,track):
     if is_2hi_rc(r,c) and (r%2==1): mo=4
     else                          : mo=0
 
-    return "T%d_%s_s%dt%d" % (tileno, inout, side+mo, track)
+    return "Tx%04X_%s_s%dt%d" % (tileno, inout, side+mo, track)
 
 def is_2hi_rc(r,c):
     if cgra_info.MEMTILE_HEIGHT == 1: return False
@@ -629,8 +629,7 @@ def find_neighbor(w, DBG=0):
             if DBG: print " It's a bottom"
             side = side + 4
 
-    nbr_wire = "T%s_%s_s%dt%d" \
-               % (nbr_tileno, in_or_out, side, track)
+    nbr_wire = "Tx%04X_%s_s%dt%d" % (nbr_tileno, in_or_out, side, track)
 
     # if DBG: print "%s on tile %d matches %s on tile %d\n" % (w, tileno, nbr_wire, nbr_tileno)
     if DBG: print "'%s' connects to neighbor '%s'\n" % (w, nbr_wire)

@@ -10,7 +10,17 @@ set output    = $1; shift
 
 # Note tracefile is optional
 unset tracefile
-if ($#argv) set tracefile = $1
+set trace_switch     = ''
+set tracefile_switch = ''
+if ($#argv) then
+  set trace_switch = '--trace'
+
+  # tracefile path will be relative to build directory :(
+  # so use absolute path (readlink -f)
+  set tracefile = $1
+  set tracefile = `readlink -f $tracefile`
+  set tracefile_switch = "--trace-file-name $tracefile"
+endif
 
 
 # E.g. testname = "bw" or "pw2_16x16"
@@ -52,11 +62,14 @@ if (! -d $TBG_DIR) then
 endif
 
 set TestBenchGenerator = `cd $TBG_DIR; pwd`
+set echo
 python3 $TestBenchGenerator/generate_harness.py \
 	--pnr-io-collateral $io_config \
 	--bitstream $config \
 	--max-clock-cycles 5000000                \
-	--output-file-name build/harness.cpp
+	--output-file-name build/harness.cpp \
+        $trace_switch $tracefile_switch
+unset echo
 
 ls -l build/harness.cpp
 
@@ -85,13 +98,15 @@ echo "     verilate.py \"
 echo "        --harness harness.cpp          \"
 echo "        --verilog-directory $RTL_DIR   \"
 echo "        --output-directory build       \"
-echo "        --top-module-name top"
+echo "        --top-module-name top          \"
+echo "        $trace_switch"
 echo ""
 python3 $TestBenchGenerator/verilate.py \
-        --harness harness.cpp          \
-        --verilog-directory $RTL_DIR   \
-        --output-directory build       \
-        --top-module-name top
+        --harness harness.cpp        \
+        --verilog-directory $RTL_DIR \
+        --output-directory build     \
+        --top-module-name top        \
+        $trace_switch
 
 echo ''
 echo make -C build -j -f Vtop.mk Vtop

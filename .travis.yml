@@ -12,15 +12,7 @@ addons:
     # - build-essential
 
 install:
-  # - python --version
-  # - sudo apt-get install python3
-  # - python --version
-
-  - pip install --user -U pip
-  - pip install --user numpy
-  - pip install --user bit_vector
-
-  # pwd => /home/travis/build/StanfordAHA/CGRAGenerator
+  # Current working directory: /home/travis/build/StanfordAHA/CGRAGenerator
   - git clone https://github.com/StanfordAHA/TestBenchGenerator.git
       --branch io-reset ../TestBenchGenerator
 
@@ -43,21 +35,8 @@ script:
   # set -e => exit on failure.
   - set -e
 
-  ########################################################################
-  # Twenty-five minutes for travis system tests
-  # - cd testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
-
-  - pushd testdir
-  -   make travis_test_basic   SILENT=TRUE MEMHEIGHT=short TIME=10m
-  -   make travis_test_unit    SILENT=TRUE MEMHEIGHT=short TIME=10m
-  -   make travis_test_serpent SILENT=TRUE MEMHEIGHT=short TIME=05m
-  -   make travis_test_cascade SILENT=TRUE MEMHEIGHT=short TIME=03m
-  -   make travis_test_harris  SILENT=TRUE MEMHEIGHT=short TIME=03m
-  -   make travis_test_end     SILENT=TRUE MEMHEIGHT=short TIME=00m
-  - popd
-
   ################################################################
-  # Fifteen minutes for LT unit tests
+  # Fifteen minutes for LT unit tests (background)
 
   # Install python dependencies
   - pip install pytest numpy delegator.py bit_vector
@@ -69,9 +48,18 @@ script:
   - export GENESIS_HOME=/tmp/Genesis2/Genesis2Tools
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
+
   - echo Fifteen minutes for LT unit tests
-  - ./run_tests.sh
+  - ../../bin/generate.csh
+  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
+
 
   ########################################################################
-  # Redo serpent summary maybe
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp
+  - echo "Twenty-five minutes (1500s) for travis system tests"
+  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
+
+
+  ########################################################################
+  # Summarize results here at the end
+  - cat $TRAVIS_BUILD_DIR/pytest.log
+  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo

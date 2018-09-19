@@ -127,7 +127,8 @@ def main():
 
         # self.in -> T0_in_s2t0
         if re.search('self.in', line):
-            io_info.append(process_input(line))
+            # io_info.append(process_input(line))
+            # Ignore self.in (really?)
             continue
 
         # T0_out_s0t0 -> self.out
@@ -272,36 +273,36 @@ def configure_output_pads():
 # assumes output is tile 36 (io16bit_0x24)
 
 '''
-    for padname in [\
-    'pad_S0_T0',  'pad_S0_T1',  'pad_S0_T2',  'pad_S0_T3',
-    'pad_S0_T4',  'pad_S0_T5',  'pad_S0_T6',  'pad_S0_T7',
-    'pad_S0_T8',  'pad_S0_T9',  'pad_S0_T10', 'pad_S0_T11',
-    'pad_S0_T12', 'pad_S0_T13', 'pad_S0_T14', 'pad_S0_T15'
-    ]:
-        (id, row, col) = cgra_info.find_tile_by_name(padname)
+    # FIXME should come from json file :(
+    # E.g. pads_E_0[0], pads_E_0[1], .. pads_E_0[15]
+    # <tile type='io1bit' tile_addr='0x0111' row='1' col='17' name='pads_E_0[0]'>
+    pad_bus = 'pads_E_0'
+
+    # Little endian means count backwards 15..0
+    for i in range(15, -1, -1):
+        (id, row, col) = cgra_info.find_pad(pad_bus, i)
         b = b + "%08X 00000001\n" % id
+
     print b
     return b
 
     # E.g.
-    # 00000026 00000001
-    # 00000034 00000001
-    # 00000046 00000001
-    # 00000054 00000001
-    # 00000066 00000001
-    # 00000074 00000001
-    # 00000086 00000001
-    # 00000094 00000001
-    # 000000A6 00000001
-    # 000000B4 00000001
-    # 000000C6 00000001
-    # 000000D4 00000001
-    # 000000E6 00000001
-    # 000000F4 00000001
-    # 00000106 00000001
-    # 00000114 00000001
-
-
+    # 00000111 00000001 (bit 15)
+    # 00000211 00000001 (bit 14)
+    # 00000311 00000001 ( ...  )
+    # 00000411 00000001
+    # 00000511 00000001
+    # 00000611 00000001
+    # 00000711 00000001
+    # 00000811 00000001
+    # 00000911 00000001
+    # 00000A11 00000001
+    # 00000B11 00000001
+    # 00000C11 00000001
+    # 00000D11 00000001
+    # 00000E11 00000001
+    # 00000F11 00000001
+    # 00001011 00000001 (bit 0)
 
 def preprocess(input_lines, DBG=0):
     # For lazy programmers:
@@ -340,24 +341,25 @@ def preprocess(input_lines, DBG=0):
 
     return output_lines
 
-def process_input(line):
-    '''
-    # NOTE in 16x16 grid w/io pads, input can *only* go to tile 0x15 (T21) in_s2t0
-    line = 'self.in -> T0_in_s2t0'
-    rval = 'INPUT  tile  0 (0,0) / in_BUS16_S2_T0 / wire_0_m1_BUS16_S0_T0'
-    '''
-
-    wire = re.search('self.in\s*->\s*(\S+)', line).group(1)
-    # (tileno,lhs) = striptile(wire)
-    # (tileno,lhs) = cgra_info.parse_resource(wire)
-
-    assert wire == 'T21_in_s2t0', "\nERROR %s;\n'self.in' can only connect to T21_in_s2t0\n\n" % line
-
-    (tileno, dir, side, track) = cgra_info.parse_canon(wire)
-    (r,c) = cgra_info.tileno2rc(tileno)
-    g = cgra_info.canon2global(wire)
-    return '# INPUT  tile  %d (%d,%d) /  %s_BUS16_S%d_T%d / %s' %\
-          (tileno, r, c, dir, side, track, g)
+# Ignore self.in (really?)
+# def process_input(line):
+#     '''
+#     # NOTE in 16x16 grid w/io pads, input can *only* go to tile 0x15 (T21) in_s2t0
+#     line = 'self.in -> T0_in_s2t0'
+#     rval = 'INPUT  tile  0 (0,0) / in_BUS16_S2_T0 / wire_0_m1_BUS16_S0_T0'
+#     '''
+# 
+#     wire = re.search('self.in\s*->\s*(\S+)', line).group(1)
+#     # (tileno,lhs) = striptile(wire)
+#     # (tileno,lhs) = cgra_info.parse_resource(wire)
+# 
+#     assert wire == 'T21_in_s2t0', "\nERROR %s;\n'self.in' can only connect to T21_in_s2t0\n\n" % line
+# 
+#     (tileno, dir, side, track) = cgra_info.parse_canon(wire)
+#     (r,c) = cgra_info.tileno2rc(tileno)
+#     g = cgra_info.canon2global(wire)
+#     return '# INPUT  tile  %d (%d,%d) /  %s_BUS16_S%d_T%d / %s' %\
+#           (tileno, r, c, dir, side, track, g)
 
 
 def process_output(line):
@@ -405,10 +407,10 @@ def bs_connection(tileno, line, DBG=0):
     # see reg_field_bug_hack() for deets
     if (lhs == 'in_s0t0_b0') and (rhs == 'out_s2t0_b0'):
         return reg_field_bug_hack(t)
-    #DBG=9
+
     # Connect lhs to rhs
-    Tlhs = "T%d_%s" % (tileno,lhs)
-    Trhs = "T%d_%s" % (tileno,rhs)
+    Tlhs = "Tx%04X_%s" % (tileno,lhs)
+    Trhs = "Tx%04X_%s" % (tileno,rhs)
 
     # Make sure that no two guys try to write the same guy.
     if (Trhs in ALLSOURCES) and (ALLSOURCES[Trhs] != Tlhs):
@@ -456,18 +458,18 @@ def is_alu_input(port):
 def striptile(r):
     '''
     Given a resource name 'r' e.g. one of
-        T0_in_s2t0
+        Tx0101_in_s2t0
         in_s2t0
-        T24_add(wire,wire)
-    strip off the leading tilenumber 'T24' if one exists and return
+        Tx0304_add(wire,wire)
+    strip off the leading tilenumber "Tx0101" if one exists and return
     (tileno,stripped_name)
     If no leading tilenumber then tileno = -1
     '''
     # Strip off the tile number, if one exists
-    parse = re.search("^T(\d+)_(.*)", r)
+    parse = re.search("^Tx([^_]+)_(.*)", r)
     if not parse: return(-1, r)
 
-    tileno = int(parse.group(1))
+    tileno = int(parse.group(1),16)
     r      = parse.group(2)
     return (tileno,r)
 
@@ -968,8 +970,8 @@ def bs_op(tileno, line, DBG=0):
     # data[(19, 18)] : data1: REG_CONST
 
     comment = [
-        "data[(5, 0)] : alu_op = %s" % opname,
-        "data[(6, 6)] : unsigned=0x%d" % (op_data[opname] >> 6 & 1),
+        "data[( 5,  0)]: alu_op = %s"   % opname,
+        "data[( 6,  6)]: unsigned=0x%d" % (op_data[opname] >> 6 & 1),
         "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
         "data[(17, 16)]: data0: %s" % regtranslate(op1),
         "data[(19, 18)]: data1: %s" % regtranslate(op2),

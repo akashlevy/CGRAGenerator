@@ -1,9 +1,6 @@
 #!/bin/csh -f
 
-# This is tbg.csh
-# It replaces run.csh (eventually maybe)
-
-
+# This is run_tbg.csh. It replaces run.csh (eventually maybe)
 
 # Can't believe I have to do this...
 set path = (. $path)
@@ -56,8 +53,16 @@ grep mem_tile_height $hwtop/genesis_verif/top.v \
 # Default configuration bitstream: 16x16 pointwise mul-by-two
 # 
 set b = ../../bitstream/examples
-if ($memtile_height == 1) set config = $b/pw2_16x16_shortmem.bsa
-if ($memtile_height == 2) set config = $b/pw2_16x16.bsa
+if ($memtile_height == 1) set config = $b/pw_padring_shortmem.bsa
+if ($memtile_height == 2) then
+  echo ""
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo WARNING "There is no default config file for tallmem (yet)"
+  echo ""
+  set config = sorry_no_tallmem_config_exists_yet
+endif
+
 echo "run.csh: Looks like memtile_height is $memtile_height"
 echo ""
 
@@ -68,7 +73,6 @@ set input     = io/conv_bw_in.png
 set tmpdir = `mktemp -d /tmp/run.csh.XXX`
 
 set nclocks = "1M"
-set outpad  = 's1t0'
 set output  = $tmpdir/output.raw
 set out1    = $tmpdir/onebit.raw
 set tracefile = ""
@@ -78,14 +82,14 @@ if ($#argv == 1) then
     echo "Usage:"
     echo "    $0 <textbench.cpp> -q [-gen | -nogen] [-nobuild]"
     echo "        -usemem -allreg"
-    echo "        -config <config_filename.bs>"
+    echo "        -config  <config_filename.bs>"
     echo "        -input   <input_filename.png>"
-    echo "        -output <output_filename.raw>"
-    echo "        -out1 s1t0 <1bitout_filename>",
-    echo "        -delay <ncy_delay_in>,<ncy_delay_out>"
+    echo "        -output  <output_filename.raw>"
+    echo "        -out1    <1bitout_filename>",
+    echo "        -delay   <ncy_delay_in>,<ncy_delay_out>"
     echo "       [-trace   <trace_filename.vcd>]"
     echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
-    echo "        -build  # (overrides SKIP_RUNCSH_BUILD)"
+    echo "        -build   # no longer supported, use -rebuild_from_scratch instead"
     echo "        -nobuild # no genesis, no verilator build"
     echo "        -nogen   # no genesis"
     echo "        -gen     # genesis"
@@ -96,7 +100,7 @@ if ($#argv == 1) then
     echo "       -config  $config \"
     echo "       -input   $input  \"
     echo "       -output  $output \"
-    echo "       -out1    $outpad $out1 \"
+    echo "       -out1    $out1 \"
     echo "       -delay   $DELAY \"
     if ("$tracefile" != "") then
       echo "       -trace $tracefile \"
@@ -135,18 +139,33 @@ while ($#argv)
       set GENERATE = '-gen'; breaksw;
 
     case '-nobuild':
-      set GENERATE = '-nogen'; unset BUILD; breaksw;
+      echo ""
+      echo "WARNING you asked for -nobuild but this is run_tbg"
+      echo "WARNING so I don't think that's what you really want"
+      echo "WARNING so I gonna ingore it sorry dude/babe"
+      echo ""
+      breaksw
+      # set GENERATE = '-nogen'; unset BUILD; breaksw;
 
     case '-nogen':
       set GENERATE = '-nogen'; breaksw;
 
     case '-build':
-    case '-rebuild':
-        echo WARNING You asked for it with -build
-        echo WARNING Will rebuild Vtop from scratch...
-        echo "rm build/*"
-        if (-d build) rm build/*
-        unsetenv SKIP_RUNCSH_BUILD; breaksw
+      echo ""
+      echo "WARNING -build no longer supported"
+      echo "WARNING tbg must rebuild incrementally every time anyway"
+      echo "WARNING if you really want to start over from scratch use '-rebuild_from_scratch'"
+      echo ""
+      breaksw
+
+    case '-rebuild_from_scratch':
+      echo ""; echo "WARNING"; echo "WARNING"; echo "WARNING"; 
+      echo WARNING You asked for it with -build
+      echo WARNING Will rebuild Vtop from scratch...
+      echo "rm build/*"
+      echo "WARNING"; echo "WARNING"; echo "WARNING"; echo ""
+      if (-d build) rm build/*
+      breaksw
 
     ########################################
     # Switches: programming the CGRA
@@ -172,7 +191,6 @@ while ($#argv)
       set output = "$2"; shift; breaksw
 
     case -out1:
-      set outpad = $2; shift;
       set out1   = $2; shift;
       breaksw;
 
@@ -211,33 +229,40 @@ unset ONEBIT
 if (${config:t:r} == 'onebit_bool') set ONEBIT
 
 # Need this on more than one path...
-set io_config = `pwd`/io/s2in_s0out.io.json
+set io_config = `pwd`/io/2in2out.json
 echo ""
 echo "${0:t}: Using standard io file '$io_config:t'"
 
-if ($?ONEBIT) then
-  set io_config = `pwd`/io/s2in_s1t0out.io.json
-  echo -n "$0:t aha it's the onebit thing - "
-  echo    "i will try using $io_config instead"
-endif
+# # We're all using the same one now...
+# # if ($?ONEBIT) then
+# #   set io_config = `pwd`/io/s2in_s1t0out.io.json
+# #   echo -n "$0:t aha it's the onebit thing - "
+# #   echo    "i will try using $io_config instead"
+# # endif
+# 
+# # This is the default now...
+# # if ($?TWO_IN_TWO_OUT) then
+# #   set io_config = `pwd`/io/2in2out.io.json
+# #   echo -n "$0:t oh wait it's 2in2out okay..."
+# #   echo    "i will use '$io_config' for io config"
+# # endif
 
-if ($?TWO_IN_TWO_OUT) then
-  set io_config = `pwd`/io/2in2out.io.json
-  echo -n "$0:t oh wait it's 2in2out okay..."
-  echo    "i will use '$io_config' for io config"
-endif
 
-# From Lenny, for cascade
+
+##############################################################################
+# FIXME this is just temporary until keyi_router "fixed" (I hope)
 unset CASCADE
-# if (${config:t:r} == 'cascade') set CASCADE
 # works for e.g. "cascade" or "cascade_keyi"
 if `expr "${config:t:r}" : 'cascade'` set CASCADE
-if `expr "${config:t:r}" : 'harris'` set CASCADE
+if `expr "${config:t:r}" : 'harris'`  set CASCADE
 if ($?CASCADE) then
-  set io_config = `pwd`/io/cascade_fixed.bsb.json
-  echo -n "$0:t oh wait it's cascade"
+  set io_config = `pwd`/io/2in2out_cascade.json
+  echo -n "$0:t oh wait it's cascade or harris - "
   echo    "i will use '$io_config' for io config"
 endif
+##############################################################################
+
+
 
 # if ($?VERBOSE) then
 if (1) then
@@ -250,7 +275,7 @@ if (1) then
   echo "   -config $config \"
   echo "   -input  $input \"
   echo "   -output $output \"
-  echo "   -out1   $outpad $out1 \"
+  echo "   -out1   $out1 \"
   echo "   -delay  $DELAY \"
   if ("$tracefile" != "") then
     echo "   -trace   $tracefile \"
@@ -284,18 +309,11 @@ set nclocks = "-nclocks $nclocks"
   grep -v '#' $config | grep . > $tmpdir/${config:t:r}.bs
   set config = $tmpdir/${config:t:r}.bs
 
-  # Here's some terrible hackiness
-  # if ($?ONEBIT) then
-  if (1) then
-    echo ''
-    echo 'HACK WARNING found onebit_bool config'
-    echo 'HACK WARNING found onebit_bool config'
-    echo 'HACK WARNING found onebit_bool config'
-    echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
-    echo ""
-    bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
-    set config = $tmpdir/${config:t:r}_reordered.bs
-  endif
+  echo ''
+  echo "bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs"
+  echo ""
+  bin/reorder.csh $config > $tmpdir/${config:t:r}_reordered.bs
+  set config = $tmpdir/${config:t:r}_reordered.bs
 
   # Quick check of goodness in config file (again)
   # Early out before waste time simulating
@@ -352,11 +370,6 @@ AFTER_GENERATE:
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     echo "WARNING: IGNORING ENV VAR 'SKIP_RUNCSH_BUILD'"
     unset SKIP_RUNCSH_BUILD
-
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     echo "WARNING SKIPPING SIMULATOR BUILD B/C FOUND ENV VAR 'SKIP_RUNCSH_BUILD'"
-#     goto RUN_SIM
   endif
 
   # Oops no this does not fly w/tbg; must recompile when bitstream changes
@@ -444,7 +457,7 @@ RUN_SIM:
 
   echo ''
   echo "${0:t}: TIME NOW: `date`"
-# echo "${0:t}: Vtop -output $output:t -out1 $outpad $out1:t"
+# echo "${0:t}: Vtop -output $output:t -out1 $out1:t"
 
 set TestBenchGenerator = `cd ../../../TestBenchGenerator; pwd`
 pushd build >& /dev/null
@@ -463,26 +476,34 @@ pushd build >& /dev/null
   ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
       | tee $tmpdir/run.log.$$
 
-  # Hm appears to do funny hacks in case of conv_1_2 or conv_bw
+  # Let process_output put its garbage in 'build' directory
+
+  # FIXME process_output.py has problems
+  # Hm appears to do funny hacks in case of conv_1_2 or conv_bw (which I don't use)
+  # Also no provision for one-bit output
   echo python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
-  python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
-
-
-  if ($?ONEBIT) then
-    set echo
-    ls -lt *.raw | head
-    cp io16in_in_arg_1_0_0.raw $output 
-    cp io1_out_0_0.raw $out1
-    unset echo
-  endif
-
+  python3 $TestBenchGenerator/process_output.py $io_config $output UNUSED $DELAY
 
 popd >& /dev/null
+
+  set po_out16 = build/io16_out_0_0.raw
+  set po_out1  = build/io1_out_0_0.raw
+  echo ""; echo "BEFORE:"; ls -l $po_out16 $po_out1 $output $out1
+
+  # FIXME should not have to do this, see process_output problems above
+#   if ($?CASCADE) then
+    set echo
+    ls -lt *.raw | head
+#     cp $po_out16 $output 
+    cp $po_out1  $out1
+    unset echo
+#   endif
+  echo ""; echo "AFTER:"; ls -l $po_out16 $po_out1 $output $out1
 
   if ($?VERBOSE) then
     echo ""
     echo "ub.  so i guess i built this maybe:"
-    ls -l $output
+    ls -l $output $out1
     echo ""
   endif
 

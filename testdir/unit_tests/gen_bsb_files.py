@@ -7,203 +7,100 @@ import random
 
 # FIXME/TODO if tile 3 is memtile, use non-io templates etc.
 
-# # OOPS with IO tiles included, first mem tile is...?  tile 14?
-# # Replace 'DEPTH' with a decimal integer %03d
-# MEM_TEMPLATE='''
-#   #DELAY DEPTH,DEPTH
-#   #
-#   T14_mem_DEPTH # (fifo_depth=DEPTH)
-#   self.in -> T14_in_s2t0 -> T14_mem_in
-#   T14_mem_out -> T14_out_s2t0 -> self.out
-# '''
-
-# 8x8 grid w/ io pads
-# Input from PE tile 11, output to mem tile T14
-# MEM_TEMPLATE='''
-#   #DELAY DEPTH,DEPTH
-#   #
-#   self.in -> T11_in_s2t0
-#   T11_in_s2t0 -> T11_out_s0t0
-#   T12_in_s2t0 -> T12_out_s0t0
-#   T13_in_s2t0 -> T13_out_s0t0
-#   T14_in_s2t0 -> T14_mem_in
-#   T14_mem_DEPTH # (fifo_depth=DEPTH)
-#   T14_mem_out -> T14_out_s1t1
-#   T14_in_s7t1 -> T14_out_s5t1 -> self.out
-# '''
-
 # 16x16 grid w/ io pads
 # Input must come in to T21_s2t0, output from T36_s0t0
 # Input from PE tile 21 (0x15), output to mem tile T36 (0x24)
 # PE: 21, 22, 23 MEM: 24
+# Replace 'DEPTH' with a decimal integer %03d
 MEM_TEMPLATE='''
   #DELAY DEPTH,DEPTH
   #
-  self.in -> T21_in_s2t0
-  T21_in_s2t0 -> T21_out_s0t0
-  T22_in_s2t0 -> T22_out_s0t0
-  T23_in_s2t0 -> T23_out_s0t0
-  T24_in_s2t0 -> T24_mem_in
-  T24_mem_DEPTH # (fifo_depth=DEPTH)
-  T24_mem_out -> T24_out_s0t0
+  # INPUT::mem
+  self.in        -> Tx0101_in_s3t0
+  Tx0101_in_s3t0 -> Tx0101_out_s0t0
+  Tx0102_in_s2t0 -> Tx0102_out_s0t0
+  Tx0103_in_s2t0 -> Tx0103_out_s0t0
   #
-  # mem in T24, wen_lut in adjoining tile T25
-  T25_lutFF(const0,const0,const0)
-  T25_pe_out_b0 -> T25_out_s2t0_b0
-  T24_in_s0t0_b0 -> T24_out_s2t0_b0
-  T24_out_s2t0_b0 -> T24_wen
+  # Configure mem tile
+  Tx0104_in_s2t0 -> Tx0104_mem_in
+  Tx0104_mem_DEPTH # (fifo_depth=DEPTH)
+  Tx0104_mem_out -> Tx0104_out_s0t0
   #
-  T25_in_s2t0 -> T25_out_s0t0
-  T26_in_s2t0 -> T26_out_s0t0
-  T27_in_s2t0 -> T27_out_s0t0
-  T28_in_s2t0 -> T28_out_s0t0
+  # mem in Tx0104, wen_lut in adjoining tile Tx0105
+  Tx0105_lutFF(const0,const0,const0)
+  Tx0105_pe_out_b0 -> Tx0105_out_s2t0_b0
+  Tx0104_in_s0t0_b0 -> Tx0104_out_s2t0_b0
+  Tx0104_out_s2t0_b0 -> Tx0104_wen
   #
-  T29_in_s2t0 -> T29_out_s0t0
-  T30_in_s2t0 -> T30_out_s0t0
-  T31_in_s2t0 -> T31_out_s0t0
-  T32_in_s2t0 -> T32_out_s0t0
-  #
-  T33_in_s2t0 -> T33_out_s0t0
-  T34_in_s2t0 -> T34_out_s0t0
-  T35_in_s2t0 -> T35_out_s0t0
-  T36_in_s2t0 -> T36_out_s0t0 -> self.out
-'''
-
-
-
-
-# # Input from PE tile 11, output to PE tile T11
-# MEM_TEMPLATE='''
-#   #DELAY DEPTH,DEPTH
-#   #
-#   self.in -> T11_in_s2t0
-#   T11_in_s2t0 -> T11_out_s0t0
-#   T12_in_s2t0 -> T12_out_s0t0
-#   T13_in_s2t0 -> T13_out_s0t0
-#   T14_in_s2t0 -> T14_mem_in
-#   T14_mem_DEPTH # (fifo_depth=DEPTH)
-#   T14_mem_out -> T14_out_s2t1
-#   T13_in_s0t1 -> T13_out_s2t1
-#   T12_in_s0t1 -> T12_out_s2t1
-#   T11_in_s0t1 -> T11_out_s2t1 -> self.out
-# '''
-
-# MEM_TEMPLATE='''
-#   #DELAY DEPTH,DEPTH
-#   #
-#   self.in -> T11_in_s2t0 -> T11_out_s0t0 -> T12_out_s0t0 -> T13_out_s0t0
-#   T14_in_s2t0 -> T14_mem_in
-#   T14_mem_DEPTH # (fifo_depth=DEPTH)
-#   T14_mem_out -> T14_out_s2t0 -> self.out
-# '''
-
-# Version for CGRA w/o IO tiles
-# Replace 'DEPTH' with a decimal integer %03d
-MEM_TEMPLATE_OLD='''
-  #DELAY DEPTH,DEPTH
-  #
-  T3_mem_DEPTH # (fifo_depth=DEPTH)
-  self.in -> T3_in_s2t0 -> T3_mem_in
-  T3_mem_out -> T3_out_s2t0 -> self.out
-'''
-
-##############################################################################
-# THIS ONE CRASHES!!
-# OOPS with IO tiles included, first PE tile is...? tile 11?
-# Replace OPNAME with name of operand e.g. 'add'
-# BAD reg op1 ba
-OP_TEMPLATE='''
-  #DELAY 1,1
-  #
-  self.in -> T11_in_s2t0
-  T11_in_s2t0 -> T11_op1 (r)
-  T11_in_s2t0 -> T11_out_s1t0
-  T11_out_s1t0 -> T11_op2
-  T11_OPNAME(reg,wire)
-  T11_pe_out -> T11_out_s0t1 -> self.out
+  # mem::OUTPUT
+  Tx0105_in_s2t0 -> Tx0105_out_s0t0
+  Tx0106_in_s2t0 -> Tx0106_out_s0t0
+  Tx0107_in_s2t0 -> Tx0107_out_s0t0
+  Tx0108_in_s2t0 -> Tx0108_out_s0t0
+  # 
+  Tx0109_in_s2t0 -> Tx0109_out_s0t0
+  Tx010A_in_s2t0 -> Tx010A_out_s0t0
+  Tx010B_in_s2t0 -> Tx010B_out_s0t0
+  Tx010C_in_s2t0 -> Tx010C_out_s0t0
+  # 
+  Tx010D_in_s2t0 -> Tx010D_out_s0t0
+  Tx010E_in_s2t0 -> Tx010E_out_s0t0
+  Tx010F_in_s2t0 -> Tx010F_out_s0t0
+  Tx0110_in_s2t0 -> Tx0110_out_s0t0 -> self.out
 '''
 
 # OOPS with IO tiles included, first PE tile is...? tile 11?
 # Replace OPNAME with name of operand e.g. 'add'
-# GOOD reg op2 ab
-OP_TEMPLATE='''
-  #DELAY 1,1
-  #
-  self.in -> T11_in_s2t0
-  T11_in_s2t0 -> T11_op1
-  T11_in_s2t0 -> T11_out_s1t0
-  T11_out_s1t0 -> T11_op2 (r)
-  T11_OPNAME(wire,reg)
-  T11_pe_out -> T11_out_s0t1 -> self.out
-'''
-
-# 8x8 grid w/ io tiles
-# Input from PE tile 11, output to mem tile T14
-OP_TEMPLATE='''
-  #DELAY 1,1
-  #
-  self.in -> T11_in_s2t0
-  T11_in_s2t0 -> T11_op1
-  T11_in_s2t0 -> T11_out_s1t0
-  T11_out_s1t0 -> T11_op2 (r)
-  T11_OPNAME(wire,reg)
-  T11_pe_out -> T11_out_s0t1
-  T12_in_s2t1 -> T12_out_s0t1
-  T13_in_s2t1 -> T13_out_s0t1
-  T14_in_s2t1 -> T14_out_s1t1
-  T14_in_s7t1 -> T14_out_s5t1 -> self.out
-'''
 
 # 16x16 grid w/ io pads
 # Input must come in to T21_s2t0, output from T36_s0t0
 # Input from PE tile 21 (0x15), output to mem tile T36 (0x24)
 # PE: 21, 22, 23 MEM: 24
+
+# (dta0,data1) only connect to (S2,S1) :(
+#   <mux snk='data0'>
+#     <src sel='0'>in_BUS16_S2_T0</src>
+#     <src sel='5'>out_BUS16_S2_T0</src>
+#   <mux snk='data1'>
+#     <src sel='0'>in_BUS16_S1_T0</src>
+#     <src sel='5'>out_BUS16_S1_T0</src>
 OP_TEMPLATE='''
   #DELAY 1,1
   #
-  self.in -> T21_in_s2t0
-  T21_in_s2t0 -> T21_op1
-  T21_in_s2t0 -> T21_out_s1t0
-  T21_out_s1t0 -> T21_op2 (r)
-  T21_OPNAME(wire,reg)
-  T21_pe_out -> T21_out_s0t0
+  # INPUT decl
+  self.in -> Tx0101_in_s3t0
   #
-  T22_in_s2t0 -> T22_out_s0t0
-  T23_in_s2t0 -> T23_out_s0t0
-  T24_in_s2t0 -> T24_out_s0t0
+  # INPUT::data0(S2)
+  Tx0101_in_s3t0 -> Tx0101_out_s2t0
+  Tx0101_out_s2t0 -> Tx0101_data0
   #
-  T25_in_s2t0 -> T25_out_s0t0
-  T26_in_s2t0 -> T26_out_s0t0
-  T27_in_s2t0 -> T27_out_s0t0
-  T28_in_s2t0 -> T28_out_s0t0
+  # INPUT::data0(S1) registered/delayed
+  Tx0101_in_s3t0 -> Tx0101_out_s1t0
+  Tx0101_out_s1t0 -> Tx0101_data1 (r)
   #
-  T29_in_s2t0 -> T29_out_s0t0
-  T30_in_s2t0 -> T30_out_s0t0
-  T31_in_s2t0 -> T31_out_s0t0
-  T32_in_s2t0 -> T32_out_s0t0
+  # pe_out = OPNAME(data0,data1)
+  Tx0101_OPNAME(wire,reg)
   #
-  T33_in_s2t0 -> T33_out_s0t0
-  T34_in_s2t0 -> T34_out_s0t0
-  T35_in_s2t0 -> T35_out_s0t0
-  T36_in_s2t0 -> T36_out_s0t0 -> self.out
-'''
-
-
-
-
-
-
-# Version for CGRA w/o IO tiles
-# Replace OPNAME with name of operand e.g. 'add'
-OP_TEMPLATE_OLD='''
-  #DELAY 1,1
-  #
-  self.in -> T0_in_s2t0
-  T0_in_s2t0 -> T0_op1
-  T0_in_s2t0 -> T0_out_s1t0
-  T0_out_s1t0 -> T0_op2 (r)
-  T0_OPNAME(wire,reg)
-  T0_pe_out -> T0_out_s0t1 -> self.out
+  # pe_out::OUTPUT
+  Tx0101_pe_out  -> Tx0101_out_s0t0
+  Tx0102_in_s2t0 -> Tx0102_out_s0t0
+  Tx0103_in_s2t0 -> Tx0103_out_s0t0
+  Tx0104_in_s2t0 -> Tx0104_out_s0t0
+  # 
+  Tx0105_in_s2t0 -> Tx0105_out_s0t0
+  Tx0106_in_s2t0 -> Tx0106_out_s0t0
+  Tx0107_in_s2t0 -> Tx0107_out_s0t0
+  Tx0108_in_s2t0 -> Tx0108_out_s0t0
+  # 
+  Tx0109_in_s2t0 -> Tx0109_out_s0t0
+  Tx010A_in_s2t0 -> Tx010A_out_s0t0
+  Tx010B_in_s2t0 -> Tx010B_out_s0t0
+  Tx010C_in_s2t0 -> Tx010C_out_s0t0
+  # 
+  Tx010D_in_s2t0 -> Tx010D_out_s0t0
+  Tx010E_in_s2t0 -> Tx010E_out_s0t0
+  Tx010F_in_s2t0 -> Tx010F_out_s0t0
+  Tx0110_in_s2t0 -> Tx0110_out_s0t0 -> self.out
 '''
 
 

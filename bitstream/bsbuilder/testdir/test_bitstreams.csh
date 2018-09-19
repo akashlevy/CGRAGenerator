@@ -7,33 +7,34 @@ if ("$1" == "--help") then
   echo 'test_bitstreams.csh tmpdir pointwise'
   echo 'test_bitstreams.csh tmpdir pointwise conv_1_2 conv_2_1 conv_3_1 conv_bw onebit_bool'
   echo 'test_bitstreams.csh -trace tmpdir'
-  echo 'test_bitstreams.csh -nobuild tmpdir'
-  echo 'test_bitstreams.csh -tbg tmpdir'
   exit
 endif
 
+# 1. run_tbg is now the ONLY option
+# 2. '-build' is default in run_tbg now or should be anyway
+set RUN = run_tbg.csh
 set build_switch = ''
-set RUN = run.csh
+
 if ("$1" == "-tbg") then
-  set RUN = run_tbg.csh
-  # set build_switch = '-build' # What? No!
+  echo "WARNING ignoring -tbg switch (tbg is default)"
   shift
 endif
 
 if ("$1" == "-nobuild") then
-  set build_switch = '-nobuild'
+  echo "WARNING ignoring -nobuild switch (tbg always builds)"
   shift
 endif
 
 if ("$1" == "-build") then
-  set build_switch = '-build'
+  echo "WARNING ignoring -build switch (tbg always builds)"
   shift
 endif
 
 unset TRACE
 if ("$1" == "-trace") then
   set TRACE
-  set build_switch = '-build'
+  # echo "WARNING ignoring -build switch (tbg always builds)"
+  # set build_switch = '-build'
   shift
 endif
 
@@ -99,7 +100,8 @@ foreach b ($bmarks)
   set out1 = $tmpdir/${b}_CGRA_out1.raw
   set out1sw = ""
   if ($b == onebit_bool) then
-    set out1sw = "-out1 s1t0 $out1"
+    # set out1sw = "-out1 s1t0 $out1"
+    set out1sw = "-out1 $out1"
   endif
   
   setenv SERPENT_HACK

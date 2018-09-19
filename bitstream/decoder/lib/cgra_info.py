@@ -38,6 +38,7 @@ import sys
 # Index:
 # def mem_tile_height():
 # def find_tile_by_name(tilename):
+# def find_pad(padname, i)
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -117,12 +118,20 @@ def mem_tile_height():
 
     assert False, 'What is memheight?  Could not find two mem tiles in same row maybe?'
 
-
+def list_all_pe_and_mem_tiles():
+    rlist = ()
+    for tile in CGRA.findall('tile'):
+        type = tile.attrib['type']
+        if (type[0:2] == 'pe') or (type[0:3] == 'mem'):
+            rlist = rlist + (getnum(tile.attrib['tile_addr']),)
+    return rlist
+                                               
 def find_tile_by_name(name):
     '''Given name e.g. "pad_S0_T7", return id, row, and col'''
     # E.g. <tile type='io1bit' tile_addr='0xA4' row='9' col='19' name='pad_S0_T7'>
     # returns (164,9,19)
     for tile in CGRA.findall('tile'):
+        # print(669, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
         if 'name' not in tile.attrib: continue
         if tile.attrib['name'] == name:
             id  = getnum(tile.attrib['tile_addr'])
@@ -130,6 +139,22 @@ def find_tile_by_name(name):
             col = getnum(tile.attrib['col'])
             return (id, row, col)
     assert False, 'ERROR cannot find tile "%s"' % name
+
+def find_pad(padname, bitno):
+    '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''
+    # E.g. <tile type='io1bit' tile_addr='0x0001' row='0' col='1' name='pads_N_0'><io_bit>0</io_bit>
+    # returns (0x0001, 0, 1)
+    for tile in CGRA.findall('tile'):
+        if tile.attrib['type'] != 'io1bit': continue
+        # print(666, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
+        if tile.attrib['name'] == padname:
+            for b in tile.iter('io_bit'):
+                if getnum(b.text) != bitno: continue
+                id  = getnum(tile.attrib['tile_addr'])
+                row = getnum(tile.attrib['row'])
+                col = getnum(tile.attrib['col'])
+                return (id, row, col)
+    assert False, 'ERROR cannot find tile "%s"' % padname
 
 
 # def build_mask(bith,bitl):
@@ -482,18 +507,25 @@ def ntiles():
 def grid_dimensions():
     '''Return grid (nrows,ncols) e.g. (16,16)'''
     (maxrow,maxcol) = (0,0)
-    for i in range(ntiles()):
-        if tiletype(i) != 'io1bit': continue # Quelle hackrreur!
-        (r,c) = tileno2rc(i)
+
+    for tile in CGRA.findall('tile'):
+
+        # FIXME hack alert! Assumes at least one max tile is type io1bit
+        if tile.attrib['type'] != 'io1bit': continue # Quelle hackrreur!
+
+        r = getnum(tile.attrib['row'])
+        c = getnum(tile.attrib['col'])
         if r > maxrow: maxrow = r
         if c > maxcol: maxcol = c
+
     return (maxrow+1,maxcol+1)
 
 def getnum(s, base=10):
-    '''s="14" => result=14; s="0x14" => result=20'''
+    ''' ("20", "0x14", "x14") all return 20'''
     if base==16:         return int(s,16)
     elif type(s) != str: return s
     elif s[0:2] == '0x': return int(s,16)
+    elif s[0:1] == 'x':  return int('0'+s,16)
     else:                return int(s)
 
 def tileno2rc(tileno):
@@ -1035,10 +1067,10 @@ def get_tile(tileno):
 
 def parse_resource(r):
     '''
-    resource must be of the form "T0_in_s0t0" or "T3_mem_out" or "T0_in_s0t0b"
+    resource must be of the form "Tx0101_in_s0t0" or "Tx0101_mem_out" or "Tx0101_in_s0t0b"
     returns tileno+remains e.g. parse_resource("T0_in_s0t0") = (0, 'in_s0t0')
     '''
-    parse = re.search('^T(\d+)_(.*)b?', r)
+    parse = re.search('^T([^_]+)_(.*)b?', r)
     if not parse: assert False, r
     (tileno,resource) = (getnum(parse.group(1)), parse.group(2))
     return (tileno,resource)
@@ -1411,7 +1443,7 @@ def cgra2canon(name, tileno=-1, DBG=0):
         newname = '%s_s%st%s' % (dir,side,track)
 
     if tileno != -1:
-        newname = 'T%d_%s' % (tileno, newname)
+        newname = 'Tx%04X_%s' % (tileno, newname)
 
     # Little hacky wack; buswidth should come from parse_cgra_wirename probably
     if name.find('BUS1_') >= 0: newname = newname + 'b'

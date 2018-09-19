@@ -6,12 +6,16 @@ set config = $1
 unset bad_config
 set c = '[0-9a-fA-F]'
 set goodline = "$c$c$c$c$c$c$c$c $c$c$c$c$c$c$c$c"
-egrep -v "$goodline" $config > /tmp/tmp$$ && set bad_config
-/bin/rm /tmp/tmp$$
+
+set tmp = /tmp/verify_bitstream_goodness.$$
+egrep -v "$goodline" $config > $tmp && set bad_config
 if ($?bad_config) then
   echo
   echo "ERROR Config file '$config' looks bad, man. Bad line(s) include:"
-  cat /tmp/tmp$$ | sed 's/^/> /'
+  cat $tmp | sed 's/^/> /'
+  /bin/rm $tmp
   exit 13
 endif
+
+/bin/rm $tmp
 

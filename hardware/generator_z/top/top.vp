@@ -1,480 +1,88 @@
-//; #///////////////////////////////////////////////////////////////////
-//; #// CGRA TOP generator 
-//; #//
-//; #//////////////////////////////////////////////////////////////////
-//; use POSIX;
-//; #
-//; #### CHANGE THIS TO 1 TO CONNECT ALL GC SIGNALS FOR TAPEOUT @NIKHIL
-//; my $connect_GC = parameter(NAME => 'connect_GC', val => 0, Min => 0, Max => 1, Step => 1); 
-//; my $include_analog_block = parameter(NAME => 'include_analog_block', val => 0, Min => 0, Max => 1, Step => 1);
-//;
-//; my $mem_tile_height = parameter(
-//;    doc => 'height of memtile relative to minimum grid height',
-//;    name=>'mem_tile_height',
-//;    val => 1,
-//;    min=>1, max=>2, step=>1);
-//;
-//; #########################################
-//; #// Generator Configuration Start 
-//; ######################################### 
-//; #
-//; # Specify the CGRA grid size as 8x8,16x16, or 64x64. You can generate additional sizes by modifying
-//; # the IO_count and basic_block_repeat_* variables below.
-//; # my $grid_size = "8x8";
-//; # my $grid_size = "64x64";
-//; my $grid_size = "16x16";
-//; #my $grid_size ="48x48";
-//; #
-//; # for IOs
-//; # <number of bits> <number of bits> <number of bits> <number of bits>
-//; # There are four die sides 0-3 that can host IOs. Each token in the string above specifies
-//; # IO count on a side, starting from the right side and going clockwise eg: "10 11 12 13"
-//; # implies 10 IOs on the right side, 11 IOs on the bottom, and so on. Each IO will generate
-//; # a 1-bit IO tile on the specified side. The generator will greedily form groups of 16 1-bit
-//; # IOs to create a 16-bit IO tile. The 16-bit IO tile is placed next to the LS 1-bit
-//; # IO tile of the group. Both 16 bit and 1 bit IO tiles are of size 1x1. 16-bit and 1-bit 
-//; # IO tiles occupy separate rows (or columns) on the CGRA fabric. Any unused space on the
-//; # 16-bit (or 1-bit) IO row is filled with empty tiles. Empty tiles do not contain any 
-//; # resources or even wires. IOs are numbered clockwise i.e. IO0 will be at the top for the
-//; # right side, rightmost on the bottom side and so on.
-//; #
-//; my @IO_count = ();
-//; if ($grid_size == "8x8")   { @IO_count = qw(8 8 8 8); }
-//; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
-//; if ($grid_size == "16x16") { @IO_count = qw(16 16 16 16); }
-//; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
-//; @IO_count = qw(16 16 16 16);
-//; #
-//; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
-//; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
-//; # type to each node. Tile types are listed above. If the width or height of
-//; # a tile type is more than 1x1 (eg: memory), pad the the tile type in the 
-//; # grid with Xes (eg: if mem tile width is 2, the tile will be instantiated
-//; # in the grid as 'mem X'. If tile height is 2, the node in the row below the
-//; # tile node will be X). Multiple spaces are treated as a single space. Do
-//; # not include IO tiles in the basic block.
-//; #
-//; my $basic_block  = "pe pe pe mem\n";
-//;    $basic_block .= "pe pe pe X  ";
+//; # Experimenting with globals
+//; our @CGRA_INFO;
+
+// New Top level that contains CGRA_core module and IO pad_ring module
+//; #TOP LEVEL PARAMS
+//; my $num_ios_per_side = parameter(name=>'num_ios_per_side', val=>16, min=>16, step=>16);
+//; #Other values
+//; my $num_ios_per_group = 16;
+//; my $num_groups_per_side = $num_ios_per_side/$num_ios_per_group;
+//; my @sides = ('N','S','E','W');
+//; my $connect_GC = parameter(name=>'connect_GC', val=>0, min=>0, max=>1, step=>1);
+//; my $config_addr_width = parameter(name=>'config_addr_width', val=>32, min=>1, step=>1);
+//; my $config_data_width = parameter(name=>'config_data_width', val=>32, min=>1, step=>1);
+//; my $num_stall_domains = parameter(name=>'num_stall_domains', val=>4, min=>1, step=>1);
 //; 
-//; if ($mem_tile_height == 1) {
-//;    $basic_block  = "pe pe pe mem\n";
-//;    $basic_block .= "pe pe pe mem  ";
-//; }
-//;  
-//; # Number of times the basic block repeats in the horizontal direction.
-//; #
-//; my $basic_block_repeat_x = 8;
-//; #
-//; # Number of times the basic block repeats in the vertical direction
-//; #
-//; my $basic_block_repeat_y = 16;
-//; #
-//; if ($grid_size == "8x8")   { $basic_block_repeat_x =  2; $basic_block_repeat_y =  4; }
-//; if ($grid_size == "64x64") { $basic_block_repeat_x = 16; $basic_block_repeat_y = 32; }
-//; if ($grid_size == "16x16") { $basic_block_repeat_x =  4; $basic_block_repeat_y = 8; }
-//; if ($grid_size == "48x48") { $basic_block_repeat_x = 12; $basic_block_repeat_y = 24; }
-//; $basic_block_repeat_x = 4; $basic_block_repeat_y = 8;
-//; #
-//; #
-//; # Specify the bus configuration below. This parameter allows you to set the width, number, and segment length of buses.
-//; # eg: <BUS_NAME>:<number of bits>b#<seg1_length>_<seg1_register_after_hops>:<seg2_length>_<seg2_register_after_hops>:...
-//; my $bus_config = "BUS16:16b#1_4:1_4:1_4:1_4:1_4 BUS1:1b#1_4:1_4:1_4:1_4:1_4";
-//; if ($ENV{'CGRA_GEN_ALL_REG'}==1) {
-//;   $bus_config = "BUS16:16b#1_1:1_1:1_1:1_1:1_1 BUS1:1b#1_1:1_1:1_1:1_1:1_1";
-//; }
-//; # specify the number of global signals available for each pe/mem tile
-//; my $global_signal_count = 4;
-//; #
-//; # IMP: ensure cb_connections length is equal to (num of tracks defined in bus_config)*2 + num of global signals
-//; #      eg: for 5 wires and 4 global signals, set cb_connections = "11111111111111" i.e. 5*2 + 4 = 14
-//; #      '1' bits to enable muxing of all wires passing through the CB. Unpredictable behavior will result if this
-//; #      is not done correctly.
-//; #
-//; my $cb_connections = "11111111111111";
-//; #
-//; ###########################################
-//; # Restricted variables. Do not change.
-//; ###########################################
-//; my $all_segments_for_all_tiles = 1;
-//; my $sides = 4;
-//; my $sb_fs = "10000#10000#10000";
-//; ###########################################
-//; ###########################################
-//; #
-//; # Specify all tiles used in the CGRA, and their configuration parameters below. The configuration parameters will be passed 
-//; # by the top level generator to the tile generators automatically (no modifications to the top level generator are needed when
-//; # paramaters are added/removed/edited from the list of a tile's parameters). Some parameters like type, tile_width, tile_height
-//; # are used by the top level generator and must be defined for all tiles. These wont be passed to the tile genrators.
-//; # For a list and for details about a tile generator's parameters, refer to the generator's .vp file. The parameters are usually
-//; # defined at the top of the .vp file.
-//; #
-//; my $tile_config;
-//; $tile_config->{ 'pe' } = {
-//;       type => 'pe_tile_new',
-//;       tile_height => 1,
-//;       tile_width => 1,
-//;       sides => $sides,
-//;       is_bidi => 0,
-//;       bus_config => $bus_config,
-//;       cb_connections => $cb_connections,
-//;       global_signal_count => $global_signal_count,
-//;       has_constant => 0,
-//;       reg_inputs => 1,
-//;       reg_out => 0, 
-//;       use_add => 1,
-//;       use_cntr => 1,
-//;       use_bool => 1,
-//;       use_shift => 1,
-//;       use_div => 0,
-//;       mult_mode => 1,
-//;       is_msb => 0,
-//;       en_double => 0,
-//;       lut_inps => 3,
-//;       sb_fs => $sb_fs,
-//;       all_segments_for_all_tiles => $all_segments_for_all_tiles
-//; };
-//; $tile_config->{ 'mem' } = {
-//;       type => 'memory_tile',
-//;       tile_height => $mem_tile_height,
-//;       tile_width => 1,
-//;       gen_mem_for_busname => 'BUS16',
-//;       control_busname => 'BUS1',
-//;       ddepth => 1024,
-//;       bus_config => $bus_config,
-//;       cb_connections => $cb_connections,
-//;       global_signal_count => $global_signal_count,
-//;       sb_fs => $sb_fs
-//; };
-//; $tile_config->{ 'io1' } = {
-//;       type => 'io1bit',
-//;       tile_height => 1,
-//;       tile_width => 1,
-//;       pad_name => 'none',  # E.g. 'pad_S0_T0' = MSB on E side
-//;       bit_pos => -1,       # E.g. 0 for LSB within group, 15 for MSB
-//; };
-//; $tile_config->{ 'io16' } = {
-//;       type => 'io16bit',
-//;       tile_height => 1,
-//;       tile_width => 1,
-//; };
-//; $tile_config->{ 'empty' } = {
-//;       type => 'empty',
-//;       tile_height => 1,
-//;       tile_width => 1,
-//; };
+//; # my $tristate_supported = parameter(name=>'tristate_supported', val=>0, list=>[0,1]);
+//; my $tristate_supported = 1;
+//; if (exists $ENV{"TRISTATE_UNAVAILABLE"}) { $tristate_supported = 0; }
 //; 
-//; #####################################################
-//; # Done Generator Configuration
-//; #####################################################
-//; 
-//; #####################################################
-//; # OR every read_data output from tile
-//; #####################################################
-//;my $read_data_pe = '';
-//;my $read_data_global = '';
-//;my $read_data_memory = '';
-//;my $read_data_io1bit = '';
-//; #####################################################
-//; #Populate bus track hash
-//; #####################################################
-//; my %bus_width_hash = ();
-//; my %bus_segment_hash = ();
-//; my %bus_registered_outputs_hash = ();
-//; my %bus_num_tracks_hash = ();
-//; foreach my $bus (split(' ', $bus_config)) {
-//;   if ($bus=~m/(BUS\S+):(\S+)b#(\S+)/) {
-//;     my $track_count=0;
-//;     my $bus_name = $1;
-//;     $bus_width_hash{ $bus_name } = $2;
-//;     $bus_segment_hash{ $bus_name } = $3;
-//;     foreach my $seg_info (split(':',$bus_segment_hash{ $bus_name })) {
-//;       $seg_info =~ m/(\S+)_(\S+)/;
-//;       my $segment_length = $1;
-//;       if ($all_segments_for_all_tiles==1) {
-//;         $track_count += $segment_length;
-//;       } else {
-//;         $track_count += 1;
-//;       }
-//;     }
-//;     $bus_num_tracks_hash{ $bus_name } = $track_count;
+module `mname` (
+  //pads_{side}_{group_num_within_side} [bit number within group]
+//; for (my $i=0; $i<$num_groups_per_side; $i++) {
+//;   if ($tristate_supported) {
+  inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_E_`$i`,
+  inout [`$num_ios_per_group-1`:0] pads_W_`$i`,
+//;   } else {
+  input [`$num_ios_per_group-1`:0] pads_N_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_S_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_E_`$i`_in,
+  input [`$num_ios_per_group-1`:0] pads_W_`$i`_in,
+
+  output [`$num_ios_per_group-1`:0] pads_N_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_S_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_E_`$i`_out,
+  output [`$num_ios_per_group-1`:0] pads_W_`$i`_out,
 //;   }
 //; }
-//; #####################################################
-//; #Setup basic tile pattern
-//; #####################################################
-//;   $basic_block=~s/[ ]+/ /g;
-//;   my @rows=split /\n/, $basic_block;
-//;   my $h_index = 0;
-//;   my %basic_block_hash = ();
-//;   my $basic_block_width = 0;
-//;   my $basic_block_height = scalar @rows;
-//;   foreach my $r (@rows) {
-//;     my $w_index = 0;
-//;     my @cols=split /\s/, $r;
-//;     $basic_block_width = scalar @cols;
-//;     foreach my $node (@cols) {
-//;       my $key = "${w_index}_${h_index}";
-//;       $basic_block_hash{ $key } = $node;
-//;       $w_index += 1;
-//;     }
-//;     $h_index += 1;
-//;   }
-//; #####################################################
-//; #Initialize cgra grid
-//; #####################################################
-//; my %tile_grid;
-//; # CGRA grid width = (block_width * blocks_repeat_x) + 2 IO cols on left + 2 IO cols on right
-//; my $cgra_grid_width = ($basic_block_width * $basic_block_repeat_x) + 4;
-//; #
-//; my $cgra_grid_height = ($basic_block_height * $basic_block_repeat_y) + 4;
-//; # 
-//; # Default all cgra grid nodes to empty tile
-//; for (my $w=0; $w<$cgra_grid_width; $w++) {
-//;   for (my $h=0; $h<$cgra_grid_height; $h++) {
-//;     my $cgra_key = "${w}_${h}";
-//;     $tile_grid{$cgra_key} = 'empty'; 
-//;   }
+//; if ($connect_GC == 0) {
+  input [`$config_data_width-1`:0] config_data_in,
+  input [`$config_addr_width-1`:0] config_addr_in,
 //; }
-//;
-//; # Instantiate nonIO part of the grid using basic block
-//; for (my $w=2; $w<($cgra_grid_width-2); $w++) {
-//;   for (my $h=2; $h<($cgra_grid_height-2); $h++) {
-//;     my $wa = $w - 2; my $ha = $h - 2;
-//;     my $cgra_key = "${w}_${h}";
-//;     my $basic_block_key = ($wa % $basic_block_width) . "_" . ($ha % $basic_block_height); 
-//;     $tile_grid{$cgra_key} = $basic_block_hash{$basic_block_key};
-//;   }
-//; }
-//; # Instantiate IO tiles on the right. IOs are vertically centered.
-//; if ($IO_count[0] > $cgra_grid_height - 4 ) {print STDOUT "ERROR: Too many IOs on the right. Quitting\n"; exit;}
-//; my $io_start_y = int(($cgra_grid_height/2) - ($IO_count[0]/2));
-//; my $w1 = $cgra_grid_width - 1;
-//; my $w16 = $cgra_grid_width - 2;
-//; for (my $h=$io_start_y; $h < ($IO_count[0]+$io_start_y); $h++) {
-//;   my $cgra_key = "${w1}_${h}";
-//;   $tile_grid{$cgra_key} = 'io1';
-//;   $tile_grid{"${cgra_key}_side"} = 2; 
-//;   $tile_grid{"${cgra_key}_count"} = ($h -$io_start_y);
-//;   if ((($h-$io_start_y)%16)==0 && ((($h-$io_start_y)+16)<=$IO_count[0])) {
-//;     $cgra_key = "${w16}_${h}";
-//;     $tile_grid{$cgra_key} = 'io16';
-//;     $tile_grid{"${cgra_key}_side"} = 2; 
-//;     $tile_grid{"${cgra_key}_count"} = ($h -$io_start_y); 
-//;   }
-//; }
-//; # instantiate io tiles on the bottom. ios are horizontally centered.
-//; if ($IO_count[1] > $cgra_grid_width - 4 ) {print STDOUT "ERROR: Too many ios on the bottom. quitting\n"; exit;}
-//; my $io_start_x = int(($cgra_grid_width/2) - ($IO_count[1]/2));
-//; my $h1 = $cgra_grid_height - 1;
-//; my $h16 = $cgra_grid_height - 2;
-//; for (my $w=$io_start_x; $w < ($IO_count[1]+$io_start_x); $w++) {
-//;   my $cgra_key = "${w}_${h1}";
-//;   $tile_grid{$cgra_key} = 'io1';
-//;   $tile_grid{"${cgra_key}_side"} = 3; 
-//;   $tile_grid{"${cgra_key}_count"} = ($w -$io_start_x);
-//;   if ((($w-$io_start_x)%16)==0 && ((($w-$io_start_x)+16)<=$IO_count[1])) {
-//;     $cgra_key = "${w}_${h16}";
-//;     $tile_grid{$cgra_key} = 'io16';
-//;     $tile_grid{"${cgra_key}_side"} = 3; 
-//;     $tile_grid{"${cgra_key}_count"} = ($w -$io_start_x);
-//;   }
-//; } 
-//; # Instantiate IO tiles on the left. IOs are vertically centered.
-//; if ($IO_count[2] > $cgra_grid_height - 4 ) {print STDOUT "ERROR: Too many IOs on the left. Quitting\n"; exit;}
-//; my $io_start_y = int(($cgra_grid_height/2) - ($IO_count[2]/2));
-//; my $w1 = 0;
-//; my $w16 = 1;
-//; for (my $h=$io_start_y; $h < ($IO_count[2]+$io_start_y); $h++) {
-//;   my $cgra_key = "${w1}_${h}";
-//;   $tile_grid{"${cgra_key}_side"} = 0; 
-//;   $tile_grid{"${cgra_key}_count"} = ($h -$io_start_y); 
-//;   $tile_grid{$cgra_key} = 'io1';
-//;   if ((($h-$io_start_y)%16)==0 && ((($h-$io_start_y)+16)<=$IO_count[2])) {
-//;     $cgra_key = "${w16}_${h}";
-//;     $tile_grid{$cgra_key} = 'io16';
-//;     $tile_grid{"${cgra_key}_side"} = 0; 
-//;     $tile_grid{"${cgra_key}_count"} = ($h -$io_start_y); 
-//;   }
-//; } 
-//; # Instantiate IO tiles on the top. IOs are horizontally centered.
-//; if ($IO_count[3] > $cgra_grid_width - 4 ) {print "ERROR: Too many IOs on the top. Quitting\n"; exit;}
-//; my $io_start_x = int(($cgra_grid_width/2) - ($IO_count[3]/2));
-//; my $h1 = 0;
-//; my $h16 = 1;
-//; for (my $w=$io_start_x; $w < ($IO_count[3]+$io_start_x); $w++) {
-//;   my $cgra_key = "${w}_${h1}";
-//;   $tile_grid{"${cgra_key}_side"} = 1; 
-//;   $tile_grid{"${cgra_key}_count"} = ($w -$io_start_x); 
-//;   $tile_grid{$cgra_key} = 'io1';
-//;   if ((($w-$io_start_x)%16)==0 && ((($w-$io_start_x)+16)<=$IO_count[3])) {
-//;     $cgra_key = "${w}_${h16}";
-//;     $tile_grid{$cgra_key} = 'io16';
-//;     $tile_grid{"${cgra_key}_side"} = 1; 
-//;     $tile_grid{"${cgra_key}_count"} = ($w -$io_start_x);
-//;   }
-//; }
-//; #####################################################
-//; #Print cgra grid as comments in the verilog file
-//; #####################################################
-//; my $tile_count=2;
-//; for (my $h=0; $h<$cgra_grid_height; $h++) {
-//;   print "//";
-//;   for (my $w=0; $w<$cgra_grid_width; $w++) {
-//;     my $key = "${w}_${h}";
-//;     my $tile_type = $tile_grid{$key};
-//;     my $tile_count_hex = sprintf("0x%X", $tile_count);
-//;     if (($tile_type ne "X") && ($tile_type ne "empty")) {
-//;       printf "%-12s", "${tile_type}_${tile_count_hex}";
-//;       $tile_grid{"${key}_addr"} = $tile_count;
-//;       $tile_count+=1;
-//;     } else {
-//;       printf "%-12s", ".......";
-//;     }
-//;   }
-//;   print "\n";
-//; }
-//; my $core_tile_addr = $tile_count;
-//; #####################################################
-//; #Create verilog
-//; #####################################################
-module top(
-//; for (my $side=0; $side<4; $side++) {
-//;   for (my $count=0; $count< $IO_count[$side]; $count++) {
-        pad_S`$side`_T`$count`,
-//;   }
-//; }
-// -------------------------------------
-// PLACEHOLDERS FOR VERILATOR PORT WIRES
-//
-// VERILATOR_PORT0
-// VERILATOR_PORT1
-// VERILATOR_PORT2
-// VERILATOR_PORT3
-// VERILATOR_PORT4
-// VERILATOR_PORT5
-// VERILATOR_PORT6
-// VERILATOR_PORT7
-// VERILATOR_PORT8
-// -------------------------------------
-//; if($connect_GC==0){
-config_addr_in,
-config_data_in,
-//;}
-tdi,
-tdo,
-tms,
-tck,
-trst_n,
-//; if($include_analog_block) {
-//PORTS FOR ANALOG BLOCK
-ext_cki,
-ext_ckib,
-ext_frefp,
-ext_frefn,
-ext_cki_jm,
-ext_ckib_jm,
-ext_frefp_jm,
-ext_frefn_jm,
-clk_ext_in,
-aux_div_pad,
-fout_div_pad,
-fref_off_pad,
-ffeed_pad,
-frefp_out_jm,
-frefn_out_jm,
-mdllout_pad,
-lf_out
-//; }
-clk_in,
-reset_in
+  input tck_pad,
+  input tms_pad,
+  input trst_pad,
+  input tdi_pad,
+  output tdo_pad,
+  input clk_pad,
+  input reset_pad
 );
 
-//;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
-//;print INFO "<CGRA>\n";
-//; if($connect_GC==0){
-  input [31:0] config_addr_in;
-  input [31:0] config_data_in;
-//; }
-  input clk_in;
-  input reset_in;
-  input tdi;
-  input tms;
-  input tck;
-  input trst_n;
-  output tdo;
-//; if($include_analog_block) {
-  //PADS FOR ANALOG BLOCK
-  input ext_cki;  // (+) cmos clock input (reference clock input)
-  input ext_ckib; // (-) cmos clock input (reference clock input)
-  input ext_frefp; // (+) low-swing clock input (reference clock input)
-  input ext_frefn; // (-) low-swing clock input (reference clock input)
-  input ext_cki_jm;  // (+) cmos clock input (reference clock input) (jitter measurement)
-  input ext_ckib_jm; // (-) cmos clock input (reference clock input) (jitter measurement)
-  input ext_frefp_jm; // (+) low-swing clock input (reference clock input) (jitter measurement)
-  input ext_frefn_jm; // (-) low-swing clock input (reference clock input) (jitter measurement)
-  input clk_ext_in;       // external clock for aux osc (valid when aux_sel = 1)
-  output aux_div_pad;     // aux osc output for monitoring purpose
-  output fout_div_pad;    // divided clock of fref for monitoring purpose
-  output fref_off_pad;    // fref for monitoring purpose
-  output ffeed_pad;       // 
-  
-  output frefp_out_jm;    // (+) frefp for off-chip phase adjustment
-  output frefn_out_jm;    // (-) frefp for off-chip phase adjustment
 
-  output [3:0] mdllout_pad; // 4-phase MDLL outputs
-  wire [19:0] jm_out;   // number of 1's in jitter measurement
-  output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
+//; if ($connect_GC == 1) {
+wire [`$config_data_width-1`:0] config_data_in;
+wire [`$config_addr_width-1`:0] config_addr_in;
 //; }
-   // --------------------------------------
-   // PLACEHOLDERS FOR VERILATOR INPUT WIRES
-   // --------------------------------------
-   // VERILATOR_IN0
-   // VERILATOR_IN1
-   // VERILATOR_IN2
-   // VERILATOR_IN3
-   // VERILATOR_IN4
-   // --------------------------------------
-//; for (my $side=0; $side<4; $side++) {
-//;   for (my $count=0; $count<$IO_count[$side]; $count++) {
-  inout pad_S`$side`_T`$count`;
-//;   }
-//; }
-   // ---------------------------------------
-   // PLACEHOLDERS FOR VERILATOR OUTPUT WIRES
-   // ---------------------------------------
-   // VERILATOR_OUT0
-   // VERILATOR_OUT1
-   // VERILATOR_OUT2
-   // VERILATOR_OUT3
-   // VERILATOR_OUT4
-   // ---------------------------------------
 
-//; ###################################################################################
 
-wire [31:0] config_addr;
-wire [31:0] config_data;
 wire clk;
 wire reset;
+wire tck;
+wire tdi;
+wire tdo;
+wire tms;
+wire trst_n;
 wire config_read;
 wire config_write;
-wire [31:0] read_data;
-wire [31:0] read_data_pe;
-wire [31:0] read_data_global;
-wire [31:0] read_data_memory;
-wire [31:0] read_data_io1bit;
-wire [3:0] stall;
+wire [`$config_data_width-1`:0] read_data;
+wire [`$config_data_width-1`:0] read_data_core;
+wire [`$config_data_width-1`:0] read_data_pads;
+wire [`$num_stall_domains-1`:0] stall;
+
+assign read_data = read_data_core | read_data_pads;
+
 //; my $global_controller_obj = generate("global_controller", "global_controller");
-//; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
-    `$global_controller_obj->instantiate()` 
+    `$global_controller_obj->instantiate()`
     (
       .clk_in(clk_in),
       .reset_in(reset_in),
 //; if($connect_GC == 1) {
       .clk_out(clk),
       .reset_out(reset),
-      .config_addr_out(config_addr),
-      .config_data_out(config_data),
+      .config_addr_out(config_addr_in),
+      .config_data_out(config_data_in),
       .write(config_write),
 //; }
       .config_data_in(read_data),
@@ -486,664 +94,140 @@ wire [3:0] stall;
       .cgra_stalled(stall),
       .read(config_read)
     );
+
+
 //; if($connect_GC == 0) {
-    //UNTIL WE FIX TESTS TO INPUT CFG ADDR AND DATA THROUGH JTAG, DON'T RUN CLK SIGNALS THROUGH GC
-    assign config_addr = config_addr_in;
-    assign config_data = config_data_in;
-    assign clk = clk_in;
-    assign reset = reset_in;
-    assign config_write = 1;
+assign clk = clk_in;
+assign reset = reset_in;
+assign config_write = 1;
 //; }
-//; if ($include_analog_block) {
-  //Instantiate analog block
-  mdll_top mdll_top 
-  (
-    .ext_cki(ext_cki),  // (+) cmos clock   . (reference clock   .)
-    .ext_ckib(ext_ckib), // (-) cmos clock   . (reference clock   .)
-    .ext_frefp(ext_frefp), // (+) low-swing clock   . (reference clock   .)
-    .ext_frefn(ext_frefn), // (-) low-swing clock   . (reference clock   .)
-    .ext_cki_jm(ext_cki_jm),  // (+) cmos clock   . (reference clock   .) (jitter measurement)
-    .ext_ckib_jm(ext_ckib_jm), // (-) cmos clock   . (reference clock   .) (jitter measurement)
-    .ext_frefp_jm(ext_frefp_jm), // (+) low-swing clock   . (reference clock   .) (jitter measurement)
-    .ext_frefn_jm(ext_frefn_jm), // (-) low-swing clock   . (reference clock   .) (jitter measurement)
-    .clk_ext_in(clk_ext_in),       // external clock for aux osc (valid when aux_sel = 1)
-  
-    .ref_sel(analog_r0[4]),          // select reference clock   .s ('1': ext_cki(b)), '0': ext_frefp(n))
-    .reset(analog_r0[3]),  // reset for isynth (act Hi)
-    .rstb(analog_r0[2]), // reset for main osc (act Lo)
-    .en_inj(analog_r0[1]), // enable injection (act Hi)
-    .en_osc(analog_r0[0]),   // enable main oscillator (act Hi)
+//; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
 
-    .sel_bb_in(analog_r1[3]),        // select clock source for BB control ('1': ), '0': )
-    .en_ext_tune(analog_r1[2]),  // initizlize mtune externally (act Hi)
-    .bypass_dcdl(analog_r1[1]), // bypass coarse tune (act Hi)
-    .loop_sel(analog_r1[0]), // select loop algorithm ('1': BB), '0': TDC)
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for my $side (@sides) {
+  wire [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`;
+  wire [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`;
+  wire [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`;
+//;   }
+//; }
 
-    .aux_sel(analog_r2[10]),  // select auxilliary osc source ('1': ext_clk_in), '0': internal osc)
-    .en_aux(analog_r2[9]), // enable aux osc (act Hi)
-    .aux_div(analog_r2[8]),  // divider aux osc by 2 (act Hi)
-    .ndiv_aux(analog_r2[7:5]),   // divider ratio of aux 
-    .aux_tune(analog_r2[4:0]), // aux osc frequency control
- 
-    .ndiv(analog_r3[5:4]), // feedback divider control
-    .ndiv_fref(analog_r3[3:0]),  // divider ratio of fref
-  
-    .gain_ratio(analog_r4[5:4]), // gain control in LF
-    .gain_ctrl(analog_r4[3:0]),  // gain control in LF
-  
-  
-    .ctune0(analog_r5[3:0]),  // ctune control   . for main osc cell 0
-  
-    .ctune1(analog_r6[3:0]),  // ctune control   . for main osc cell 1
-  
-    .ext_mtune(analog_r7[6:0]),  // external mtune (see en_ext_tune)
-  
-    .m_str(analog_r8[2:0]),  // control driving strength of fine delay cell
-  
-  
-    .en_dith(analog_r9[6:5]),  // enable dithering
-    .dith_sel(analog_r9[4]),       // select dithering scheme ('1': PRS ), '0': DSM)
-    .en_dsm_lsb_dith(analog_r9[3]),  // use PRS in DSM dithering (act Hi)
-    .ndiv_fout(analog_r9[2:0]),  // divider ratio of fout (for generating dithering clock)
-  
-    .bypass_retimer(analog_r10[5]),   // disable retimer (act Hi)
-    .sel_ph(analog_r10[4:3]),     // select phase for retimer
-    .dith_retime(analog_r10[2:0]),  // control dithering retiming point
-  
-    .bypass_bb(analog_r11[5]),        // disable offset control in BB loop (act Hi)
-    .bypass_tdc(analog_r11[4]),       // disable offset control in TDC loop (act Hi)
-    .add_off(analog_r11[3:0]),      // offset delay control
-  
-    .en_jm(analog_r12[7]),    // enable jitter measurement
-    .ref_sel_jm(analog_r12[6]),       // select jitter measurement clock   .s ('1': ext_cki(b)_jm), '0': ext_frefp(n)_jm)
-    .ncycle_jm(analog_r12[5:0]),  // run n cycles of fref to measure jitter
 
-    .mdll_reserved(analog_r13),    // reserved   . register
+//; my $cgra_core_obj = generate_base("cgra_core","core");
 
-    .aux_div_pad(aux_div_pad),     // aux osc output for monitoring purpose
-    .fout_div_pad(fout_div_pad),    // divided clock of fref for monitoring purpose
-    .fref_off_pad(fref_off_pad),    // fref for monitoring purpose
-    .ffeed_pad(ffeed_pad),       // 
-  
-    .frefp_out_jm(frefp_out_jm),    // (+) frefp for off-chip phase adjustment
-    .frefn_out_jm(frefn_out_jm),    // (-) frefp for off-chip phase adjustment
-
-    .mdllout_pad(mdllout_pad), // 4-phase MDLL outputs
-    .jm_out(jm_out),   // number of 1's in jitter measurement
-    .lf_out(lf_out)    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
+  `$cgra_core_obj->instantiate()` (
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for my $side (@sides) {
+    .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
+    .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
+    .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
+//;   }
+//; }
+    .clk(clk),
+    .reset(reset),
+    .config_addr(config_addr_in),
+    .config_data(config_data_in),
+    .config_read(config_read),
+    .config_write(config_write),
+    .stall(stall),
+    .read_data(read_data_core)
   );
-//INSTANTIATE ANALOG BLOCK
-//; } #if ($include_analog_block)
 
+//; my $pad_ring_obj = generate_base("pad_ring", "pads");
 
-// FIXME Note there are LOTS of unused wires being created below!
-// FIXME I assume they will be hooked up to something eventually
-// FIXME when this module is ready to be part of a working testbench...?
-// FIXME At which point the verilator directive(s) can be removed maybe...
+  `$pad_ring_obj->instantiate()` (
 
-/* verilator lint_off UNUSED */
-//#####################################################
-//#Create wires
-//#Naming: wire_<row>_<col>_<busname>_S<side_T<track>
-//#Where : row,col = row,col of source tile
-//#####################################################
-//; for (my $h=0; $h<$cgra_grid_height; $h++) {
-//;   for (my $w=0; $w<$cgra_grid_width; $w++) {
-//;     my $key = "${w}_${h}";
-//;     my $tile_type = $tile_grid{$key};
-//;     my $tile_height = $tile_config->{ $tile_type }{ 'tile_height' };
-//;     for my $bus (sort keys %bus_num_tracks_hash) {
-//;       my $num_tracks = $bus_num_tracks_hash { $bus };
-//;       my $bus_width = $bus_width_hash { $bus };
-//;       for(my $s=0; $s<$sides; $s++) {
-//;         for(my $t=0; $t<$num_tracks; $t++) {
-    wire [`$bus_width-1`:0] wire_`$h`_`$w`_`$bus`_S`$s`_T`$t`;
-//;         }
-//;       }
-//;     }
-//;     if ($tile_type eq "mem") {
-//;       my $data_bus = $tile_config->{ $tile_type }{ 'gen_mem_for_busname' };
-//;       my $bus_width = $bus_width_hash { $data_bus };
-    wire [`$bus_width-1`:0] mem_chain_`$h`_`$w`;
-    wire  mem_chain_valid_`$h`_`$w`;
-//;     }
-//;     if (($tile_type eq "mem") || ($tile_type eq "pe")) {
-//;       for (my $i=0; $i<$global_signal_count; $i++) {
-//;         if ((${w}%2==0) && (${h}%2==0)) {
-      wire global_wire_h2l_1_`${i}`_`(int(floor((${w}-2)/2))+2)`_`(int(floor((${h}-2)/2))+2)`;
-//;         }
-//;       }
-    wire global_wire_l2h_0_`${w}`_`${h}`;
-//;     }
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for my $side (@sides) {
+    .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
+    .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
+//;     if ($tristate_supported) {
+    .pads_`$side`_`$i`(pads_`$side`_`$i`),
+//;     } else {
+    .pads_`$side`_`$i`_in(pads_`$side`_`$i`_in),
+    .pads_`$side`_`$i`_out(pads_`$side`_`$i`_out),
+//;   }
+    .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
+
 //;   }
 //; }
-/* verilator lint_on UNUSED */
+    .config_data(config_data_in),
+    .config_addr(config_addr_in),
+    .config_read(config_read),
+    .config_write(config_write),
+    .read_data(read_data_pads),
+    .clk_pad(clk_pad),
+    .reset_pad(reset_pad),
+    .tck_pad(tck_pad),
+    .tdi_pad(tdi_pad),
+    .tms_pad(tms_pad),
+    .trst_n_pad(trst_n_pad),
+    .tdo_pad(tdo_pad),
+    .clk(clk_in),
+    .reset(reset_in),
+    .tck(tck),
+    .tdi(tdi),
+    .tms(tms),
+    .trst_n(trst_n),
+    .tdo(tdo)
+  );
 
-    // FIXME little temporary hacky wack to make 1-bit input work
-    // NECESSARY for cascade to work, it has one-bit input (only one so far)
-    assign wire_1_2_BUS1_S1_T0 = wire_0_2_BUS1_S1_T0;
-
-//; my $tile_hash_ref;
-//; my $io1bit_num_tracks = $bus_num_tracks_hash{ 'BUS1' };
-//; my $io16bit_num_tracks = $bus_num_tracks_hash{ 'BUS16' };
-//#####################################################
-//#Instantiate components
-//#####################################################
-//; for (my $h=0; $h<$cgra_grid_height; $h++) {
-//;   for (my $w=0; $w<$cgra_grid_width; $w++) {
-//;     my $key = "${w}_${h}";
-//;     my $tile_type = $tile_grid{$key};
-//;     my $tile_addr = $tile_grid{ "${key}_addr" };
-//;     my $io_side = -1;
-//;     my $io_count = -1;
-//;     my $io_group = -1;
-//;     my $io_gcount = 0;
-//;     if (($tile_type eq "X")) {next;}
-//;     if ($tile_type=~m/io/) {
-//;       $io_side = $tile_grid{"${key}_side"};
-//;       $io_count = $tile_grid{"${key}_count"};
-//;       if ($io_side==0) {$io_gcount = $io_count + $IO_count[0] + $IO_count[1] + $IO_count[3];}
-//;       if ($io_side==2) {$io_gcount = $io_count + $IO_count[3];}
-//;       if ($io_side==3) {$io_gcount = $io_count + $IO_count[3] + $IO_count[0];}
-//;       if ($io_side==1) {$io_gcount = $io_count + 0;}
-//;       $io_group = int($io_gcount/16);
-//;     }
-//;     my $options = "";
-//;     my $tile_addr_hex = sprintf("%X", $tile_addr);
-//;     my $tile_id = sprintf("%s_0x%s", $tile_type, $tile_addr_hex);
-//;#Add PE specific parameters from the tile config to the generate command
-//;#All paramters in the tile_config hash except type, tile_height/width are passed to the generator
-//;     # my %hhash = %{$tile_config->{ $tile_type }}; # This cmd increases compile time 15x!!!
-//;     foreach my $f (keys %{ $tile_config->{ $tile_type } }) {
-//;       my $v = $tile_config->{ $tile_type }{ $f };
-//;       # print "$f : $v\n";
-//;       if (($f!~m/type/) && ($f!~m/tile_height/) && ($f!~m/tile_width/)) {
-//;         $options .= " $f => \"$v\",";
-//;       }
-//;     }
-//;     if ($tile_type eq "mem" || $tile_type eq "pe") { 
-//;#Create feedthrough and registered output masks based on tile_x
-//;       my $sb_feedthrough = "";
-//;       my $sb_registered = "";
-//;       my $tile_x = $w;
-//;
-//;       foreach my $bus (keys %bus_width_hash) { 
-//;         my $width = $bus_width_hash{$bus}; 
-//;         $sb_feedthrough .= " $bus:";
-//;         $sb_registered .= " $bus:";
-//;         foreach my $seg_info (split(':', $bus_segment_hash{$bus})) {
-//;           $seg_info=~m/(\S+)_(\S+)/;
-//;           my $seg_len = $1;
-//;           my $seg_reg = $2;
-//;           my $count = 1;
-//;           if ($all_segments_for_all_tiles==1) {
-//;              $count = $seg_len;
-//;           }
-//;           for (my $s=0; $s<$count; $s++) {
-//;             if (($tile_x%$seg_len)==$s) {
-//;               $sb_feedthrough .= "0";
-//;               my $track_reg_repeats_after = $seg_len*$seg_reg;
-//;               if (($tile_x%$track_reg_repeats_after)==$s) {
-//;                 $sb_registered .= "1";
-//;               } else {
-//;                 $sb_registered .= "0";
-//;               }
-//;             } else {
-//;               $sb_feedthrough .= "1";
-//;               $sb_registered .= "0";
-//;             }
-//;           }
-//;         }
-//;       }
-//;       $sb_feedthrough =~ s/^\s+|\s+$//;
-//;       $sb_registered =~ s/^\s+|\s+$//;
-//;       $options .= "feedthrough_outputs => \"$sb_feedthrough\", registered_outputs => \"$sb_registered\",";
-//;     } elsif (($tile_type eq "io1") || ($tile_type eq "io16")) { 
-//;       $options = "io_group => $io_group, side => $io_side,";
-//;     } else {
-//;       $options = "";
-//;    }
-//;#Create a tile_is composed of all options and see if such a tile has been generated before
-//;#If not generated, generate it and add to a hash. Else, clone the existing tile
-//;     $options =~ s/,$//;
-//;     my $options_key = "${tile_type}_${options}";
-//;     $options_key =~ s/\s/_/g;
-//;     $options_key =~ s/=>/_/g;
-//;     $options_key =~ s/\"/_/g;
-//;     $options_key =~ s/:/_/g;
-//;     $options_key =~ s/#/_/g;
-//;     $options_key =~ s/,/_/g;
-//;     my $inst_obj;
-//;     if ($tile_type ne "empty") {
-//;       if (not defined $tile_hash_ref->{$options_key}) {
-//;         my $cmd = "\$tile_hash_ref->{'$options_key'} = generate('$tile_config->{ $tile_type }{ 'type' }', '$tile_id', $options);";
-//;         eval $cmd;
-//;         $inst_obj = $tile_hash_ref->{$options_key}; 
-//;       } else {
-//;         my $obj = $tile_hash_ref->{$options_key};
-//;         $inst_obj = clone($obj, $tile_id);
-//;       }
-//;     }
-//;    if ($tile_type eq "mem") {
-    wire [31:0] read_data_`$tile_addr_hex`;
-    `$inst_obj->instantiate()` 
-    (
-      .clk_in(clk),
-      .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_write(config_write),
-      .config_read(config_read),
-//;   for (my $row=0; $row < $tile_config->{ $tile_type }{ 'tile_height' }; $row++) {
-//;     for my $bus (sort keys %bus_num_tracks_hash) {
-//;       my $num_tracks = $bus_num_tracks_hash { $bus };
-//;       my $bus_width = $bus_width_hash { $bus };
-//;       for(my $s=0; $s<$sides; $s++) {
-//;         for(my $t=0; $t<$num_tracks; $t++) {
-//;# NB: Change the following for the case of sides > 4
-//;           if ($s==0 || $s==2) {
-      .out_`$row`_`$bus`_`$s`_`$t`(wire_`$h+$row`_`$w`_`$bus`_S`$s`_T`$t`),
-//;           }
-//;           if ($s==1 && $row==($tile_config->{ $tile_type }{ 'tile_height' }-1)) {
-      .out_`$row`_`$bus`_`$s`_`$t`(wire_`$h+$row`_`$w`_`$bus`_S`$s`_T`$t`),
-//;           }
-//;           if ($s==3 && $row==0) {
-      .out_`$row`_`$bus`_`$s`_`$t`(wire_`$h+$row`_`$w`_`$bus`_S`$s`_T`$t`),
-//;           }
-//;           my $opposite_side = $s + int($sides*0.5);
-//;           if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}
-//;           my $w_delta=0;
-//;           my $h_delta=0;
-//;#Modification needed to support different 'sides' options
-//;           if ($sides==4) {
-//;             if ($s==0) {$w_delta=1;}
-//;             if ($s==1) {$h_delta=1;}
-//;             if ($s==2) {$w_delta=-1;}
-//;             if ($s==3) {$h_delta=-1;}
-//;           }
-//;           my $h_new = $h+$row+$h_delta;
-//;           my $w_new = $w+$w_delta;
-//;           if ($s==0 || $s==2) {
-      .in_`$row`_`$bus`_`$s`_`$t`(wire_`$h_new`_`$w_new`_`$bus`_S`$opposite_side`_T`$t`),
-//;           }
-//;           if ($s==1 && $row==($tile_config->{ $tile_type }{ 'tile_height' }-1)) {
-      .in_`$row`_`$bus`_`$s`_`$t`(wire_`$h_new`_`$w_new`_`$bus`_S`$opposite_side`_T`$t`),
-//;           }
-//;           if ($s==3 && $row==0) {
-      .in_`$row`_`$bus`_`$s`_`$t`(wire_`$h_new`_`$w_new`_`$bus`_S`$opposite_side`_T`$t`),
-//;           }
-//;         }
-//;       }
-//;     }
-//;   }
-//;   my $h_new = $h+2;
-//;   if ($h_new >= ($cgra_grid_height - 4)) {
-//;   my $data_bus=$tile_config->{ $tile_type }{ 'gen_mem_for_busname' };
-//;   my $width=$bus_width_hash { $data_bus };
-      .chain_in(`$width`'d0),
-      .chain_wen_in(1'b0),
-//;   } else {
-      .chain_in(mem_chain_`$h_new`_`$w`),
-      .chain_wen_in(mem_chain_valid_`$h_new`_`$w`),
-//;   }
-      .chain_out(mem_chain_`$h`_`$w`),
-      .chain_valid_out(mem_chain_valid_`$h`_`$w`),
-//;   for (my $i=0; $i<$global_signal_count; $i++) {
-      .gin_`${i}`(global_wire_h2l_1_`${i}`_`(int(floor((${w}-2)/2))+2)`_`(int(floor((${h}-2)/2))+2)`),
-//;   }
-      .gout(global_wire_l2h_0_`${w}`_`${h}`),
-      .tile_id(16'h`$tile_addr_hex`),
-      .read_data(read_data_`$tile_addr_hex`)
-    );
-    //;  if ($read_data_memory eq '') {
-        //;    $read_data_memory = "read_data_$tile_addr_hex";
-        //;  } else {
-            //;    $read_data_memory = $read_data_memory . " | read_data_$tile_addr_hex";
-            //;  }
-//;    } elsif ($tile_type eq "pe") {
-    wire [31:0] read_data_`$tile_addr_hex`;
-    `$inst_obj->instantiate()` 
-    (
-      .clk_in(clk),
-      .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_read(config_read),
-      .config_write(config_write),
-//;     for my $bus (sort keys %bus_num_tracks_hash) {
-//;       my $num_tracks = $bus_num_tracks_hash { $bus };
-//;       my $bus_width = $bus_width_hash { $bus };
-//;       for(my $s=0; $s<$sides; $s++) {
-//;         for(my $t=0; $t<$num_tracks; $t++) {
-      .out_`$bus`_S`$s`_T`$t`(wire_`$h`_`$w`_`$bus`_S`$s`_T`$t`),
-//;       my $opposite_side = $s + int($sides*0.5);
-//;       if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}
-//;       my $w_delta=0;
-//;       my $h_delta=0;
-//;#Modification needed to support different 'sides' options
-//;       if ($sides==4) {
-//;         if ($s==0) {$w_delta=1;}
-//;         if ($s==1) {$h_delta=1;}
-//;         if ($s==2) {$w_delta=-1;}
-//;         if ($s==3) {$h_delta=-1;}
-//;       }
-//;       my $h_new = $h+$h_delta;
-//;       my $w_new = $w+$w_delta;
-      .in_`$bus`_S`$s`_T`$t`(wire_`$h_new`_`$w_new`_`$bus`_S`$opposite_side`_T`$t`),
-//;         }
-//;       }
-//;     }
-//;   for (my $i=0; $i<$global_signal_count; $i++) {
-      .gin_`${i}`(global_wire_h2l_1_`${i}`_`(int(floor((${w}-2)/2))+2)`_`(int(floor((${h}-2)/2))+2)`),
-//;   }
-      .gout(global_wire_l2h_0_`${w}`_`${h}`),
-      .tile_id(16'h`$tile_addr_hex`),
-      .read_data(read_data_`$tile_addr_hex`)
-    );
-//;  if ($read_data_pe eq '') {
-//;    $read_data_pe = "read_data_$tile_addr_hex";
-//;  } else {
-//;    $read_data_pe = $read_data_pe . " | read_data_$tile_addr_hex";
-//;  }
-//; #
-//; #
-//;    } elsif ($tile_type eq "empty") {
-//; #
-//; #
-//;    } elsif ($tile_type eq "io1") {
-
-    wire [31:0] read_data_`$tile_addr_hex`;
-    `$inst_obj->instantiate()` 
-    (
-      .clk(clk),
-      .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_read(config_read),
-      .config_write(config_write),
-//;       my $s = $io_side; 
-//;       my $opposite_side = $s + int($sides*0.5);
-//;       if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}
-//;       my $w_delta=0;
-//;       my $h_delta=0;
-//;#Modification needed to support different 'sides' options
-//;       if ($sides==4) {
-//;         if ($s==0) {$w_delta=1;}
-//;         if ($s==1) {$h_delta=1;}
-//;         if ($s==2) {$w_delta=-1;}
-//;         if ($s==3) {$h_delta=-1;}
-//;       }
-//;       my $h_new = $h+$h_delta;
-//;       my $w_new = $w+$w_delta;
-//;		 my $io1_track = 0;
-//;		 if(($s % 2) eq 0) {$io1_track = ($h_new - 2) % $io1bit_num_tracks;}
-//;		 else {$io1_track = ($w_new - 2) % $io1bit_num_tracks;}
-//;              $tile_config->{ 'io1' }{ 'pad_name' } = "pad_S${opposite_side}_T${io_count}"; # For cgra_info
-//;              $tile_config->{ 'io1' }{ 'bit_pos' }  = 15 - ($io_count % 16);                # For cgra_info
-      .p2f(wire_`$h`_`$w`_BUS1_S`$s`_T0),
-      .f2p_16(wire_`$h_new`_`$w_new`_BUS1_S`$opposite_side`_T`$io1_track`),
-      .f2p_1(wire_`$h_new+$h_delta`_`$w_new+$w_delta`_BUS1_S`$opposite_side`_T`$io1_track`),
-      .pad(pad_S`$opposite_side`_T`$io_count`),
-      .tile_id(16'h`$tile_addr_hex`),
-      .read_data(read_data_`$tile_addr_hex`)
-    );
-//;  if ($read_data_io1bit eq '') {
-//;    $read_data_io1bit = "read_data_$tile_addr_hex";
-//;  } else {
-//;    $read_data_io1bit = $read_data_io1bit . " | read_data_$tile_addr_hex";
-//;  }
-    // Fanout for p2f
-//;      for(my $track = 1; $track < $io1bit_num_tracks; $track++) { 
-    assign wire_`$h`_`$w`_BUS1_S`$s`_T`$track` = wire_`$h`_`$w`_BUS1_S`$s`_T0;
-//;      }
-//; #
-//; #
-//;    } elsif ($tile_type eq "io16") {
-//;       my $s = $io_side;
-//; my $bus_width = $inst_obj -> get_param('width');
-
-    wire [`$bus_width-1`:0] fanout_`$h`_`$w`_BUS16_S`$s`_T0;
-    `$inst_obj->instantiate()` 
-    (
-//;       my $opposite_side = $s + int($sides*0.5);
-//;       if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}
-//;       my $w_delta=0;
-//;       my $h_delta=0;
-//;#Modification needed to support different 'sides' options
-//;       if ($sides==4) {
-//;         if ($s==0) {$w_delta=1;}
-//;         if ($s==1) {$h_delta=1;}
-//;         if ($s==2) {$w_delta=-1;}
-//;         if ($s==3) {$h_delta=-1;}
-//;       }
-//;       my $h_new = $h+$h_delta;
-//;       my $w_new = $w+$w_delta;
-//;       my $h_old = $h-$h_delta;
-//;       my $w_old = $w-$w_delta;
-//;       my $str = "";
-//;       my $io16_track = 0;							
-//;       for (my $i=0; $i<16; $i++) {
-//;         if ($s==0) {
-//;	     $io16_track = ($h+$i-2) % $io1bit_num_tracks;
-//;          $str= "${str}wire_".($h_old+$i)."_".($w_old)."_BUS1_S${s}_T$io16_track,";
-//;         } elsif ($s==1) {
-//;	     $io16_track = ($w+$i-2) % $io1bit_num_tracks;
-//;          $str= "${str}wire_".($h_old)."_".($w_old+$i)."_BUS1_S${s}_T$io16_track,";
-//;         } elsif ($s==2) {
-//;	     $io16_track = ($h+$i-2) % $io1bit_num_tracks;
-//;          $str= "${str}wire_".($h_old+$i)."_".($w_old)."_BUS1_S${s}_T$io16_track,";
-//;         } else {
-//;	     $io16_track = ($w+$i-2) % $io1bit_num_tracks;
-//;          $str= "${str}wire_".($h_old)."_".($w_old+$i)."_BUS1_S${s}_T$io16_track,";
-//;         }
-//;       }
-//;       $str=~s/,$//;
-      .p2f_in({`$str`}),
-      .p2f_out(fanout_`$h`_`$w`_BUS16_S`$s`_T0),
-      .f2p_in(wire_`$h_new`_`$w_new`_BUS16_S`$opposite_side`_T0),
-//;       my $str = "";
-//;       for (my $i=0; $i<16; $i++) {
-//;         if ($s==0) {
-//;		 $io16_track = ($h+$i-2) % $io1bit_num_tracks;
-//;              $str= "${str}wire_".($h+$i)."_".($w)."_BUS1_S${opposite_side}_T$io16_track,";
-//;         } elsif ($s==1) {
-//;		 $io16_track = ($w+$i-2) % $io1bit_num_tracks;
-//;              $str= "${str}wire_".($h)."_".($w+$i)."_BUS1_S${opposite_side}_T$io16_track,";
-//;         } elsif ($s==2) {
-//;		 $io16_track = ($h+$i-2) % $io1bit_num_tracks;
-//;              $str= "${str}wire_".($h+$i)."_".($w)."_BUS1_S${opposite_side}_T$io16_track,";
-//;         } else {
-//;		 $io16_track = ($w+$i-2) % $io1bit_num_tracks;
-//;              $str= "${str}wire_".($h)."_".($w+$i)."_BUS1_S${opposite_side}_T$io16_track,";
-//;         }
-//;       }
-//;       $str=~s/,$//;
-      .f2p_out({`$str`})
-    );
-    //Fanout for p2f_out
-//;      for(my $track = 0; $track < $io16bit_num_tracks; $track++) { 
-    assign wire_`$h`_`$w`_BUS16_S`$s`_T`$track` = fanout_`$h`_`$w`_BUS16_S`$s`_T0;
-//;      }
-//;    }
-//;   
-//;   # cgra_info/io1bit tiles
-//;   { 
-//;     # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;     my $ty = "$tile_config->{ $tile_type }{ 'type' }";
-//;     my $ta = "0x$tile_addr_hex";
-//;     my $tr = "";
-//;     my $pn = "";
-//;     if ($tile_type eq "io1") {
-//;       $tr = "BUS1:1 BUS16:0";
-//;       my $pad_name = $tile_config->{ 'io1' }{ 'pad_name' };
-//;       $pn = " name='$pad_name'";
-//;     } elsif ($tile_type eq "io16") {
-//;       $tr = "BUS1:0 BUS16:1";
-//;     } else {
-//;       # FIXME Won't this break if there is ever jmore than one key??
-//;       foreach my $bus (sort keys %bus_num_tracks_hash) {
-//;         $tr = $tr . "$bus:$bus_num_tracks_hash{$bus} ";
-//;       }
-//;     }
-//;     print INFO "  <tile type='$ty' tile_addr='$ta' row='$h' col='$w' tracks='$tr'$pn>\n";
-//;     my $bitnum = $tile_config->{ 'io1' }{ 'bit_pos' };
-//;     if ($tile_type eq "io1") { print INFO "    <io_bit>$bitnum</io_bit><!-- LSB=0 -->\n"; }
-//;   }
-//;   
-//;   
-//;   # cgra_info/empty tiles
-//;   if ($tile_type ne "empty") {
-//;     open (INP, "<TILE".$inst_obj->mname()) or die "Couldn't open file TILE$inst_obj->mname(), $!";
-//;     while (<INP>) {
-//;       print INFO $_;
-//;     }
-//;     close INP;
-//;   	if ($tile_type eq "io1") {
-//;	  my $io1_track = 0;
-//;	  my $side = $inst_obj->get_param('side');
-//;       if (($side % 2) eq 0) {$io1_track = ($h - 2) % $io1bit_num_tracks;}
-//;	  else {$io1_track = ($w - 2) % $io1bit_num_tracks;}
-//;	  print INFO "    <input>in_1BIT_S${side}_T$io1_track</input>\n";
-//;       # Output fans out to all tracks
-//;       for (my $track=0; $track < $io1bit_num_tracks; $track +=1) { 
-//;	      print INFO "    <output>out_1BIT_S${side}_T$track</output>\n";
-//;       }
-//;	}
-//;   }
-//;   print INFO "  </tile>\n";
-//;   }
-//; }
-//; #
-//; #####################################################
-//; # Create global wire merge and distribute structure
-//; #####################################################
-//; my $obj = generate("global_signal_tile", "gst", global_signal_count=>$global_signal_count);
-//; my %gst_hash_new;
-//; my %gst_hash_old = %tile_grid;  
-//; my $incr=1;
-//; my $height=$cgra_grid_height;
-//; my $width=$cgra_grid_width;
-//; my $new_tile_addr = $core_tile_addr;
-//; my $last_tile_addr = 0;
-//; ####### tile ordering for connecting global signal tiles
-//; # 0   1
-//; # 3   2
-//; #######
-//; while (1) {
-//; ####### 
-//; ####### instantiate wires for each gst level 
-//; ####### 
-//;   my %wire_hash = ();
-//;   my $next_h=2;
-//;   for (my $h=2; $h<($height/$incr); $h+=2) {
-//;     my $next_w=2;
-//;     for (my $w=2; $w<($width/$incr); $w+=2) {
-//;       for (my $i=0; $i<4; $i++) {
-//;         my $key = "global_wire_h2l_".($incr*2)."_${i}_".(int(floor((${next_w}-2)/2))+2)."_".(int(floor((${next_h}-2)/2))+2);
-//;         $wire_hash{$key} = 1;
-//;       } 
-//;       my $key = "global_wire_l2h_${incr}_${next_w}_${next_h}";
-//;       $wire_hash{$key} = 1;
-//;       $next_w++;
-//;     }
-//;     $next_h++;
-//;   }
-//;   foreach my $w (sort keys(%wire_hash)) {
-//;     if ($incr!=1) {
-    wire `$w`;
-//;     }
-//;   }
-//; ####### 
-//; ####### instantiate all tiles for a gst level 
-//; ####### 
-//;   my $next_h=2;
-//;   for (my $h=2; $h<($height/$incr); $h+=2) {
-//;     my $next_w=2;
-//;     for (my $w=2; $w<($width/$incr); $w+=2) {
-//;       my @keys;
-//;       $keys[0] = (${w}+0)."_".(${h}+0);
-//;       $keys[1] = (${w}+1)."_".(${h}+0);
-//;       $keys[2] = (${w}+1)."_".(${h}+1);
-//;       $keys[3] = (${w}+0)."_".(${h}+1);
-//;       my $found=0;
-//;       my $new_key = "${next_w}_${next_h}";
-//;       $gst_hash_new{ ${new_key} } = "empty";
-//;       for (my $i=0; $i<4; $i++) {
-//;         my $key = $keys[$i];
-//;         my $child_type = $gst_hash_old{ $key };
-//;         if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
-//;           $found = 1;
-//;         }
-//;       }
-//;       if ($found==1) {
-//;         $gst_hash_new{ ${new_key} } = "gst";
-//;         $gst_hash_new{ "${new_key}_addr" } = ${new_tile_addr};
-//;         my $new_tile_addr_hex = sprintf("%X",$new_tile_addr);
-//;         print INFO "  <tile type='gst' tile_addr='0x$new_tile_addr_hex'>\n";
-//;         print INFO "    <controlled_tiles>\n";
-//;         my $inst_obj = clone($obj, "gst_0x${new_tile_addr_hex}");
-    wire [31:0] read_data_`$new_tile_addr_hex`;
-    `$inst_obj->instantiate()` 
-    (
-      .clk(clk),
-      .reset(reset),
-      .config_addr(config_addr),
-      .config_data(config_data),
-      .config_write(config_write),
-      .config_read(config_read),
-      .tile_id(16'h`$new_tile_addr_hex`),
-//;         for (my $i=0; $i<4; $i++) {
-//;           my $child_key = $keys[$i];
-//;           my $child_type = $gst_hash_old{ $child_key };
-//;           my $child_addr = $gst_hash_old{ "${child_key}_addr" };
-//;           my $child_addr_hex = sprintf("%X",$child_addr);
-//;   if(($incr*2 >= $cgra_grid_width-4) or (($grid_size eq "48x48") and ($incr*2==32))) {
-      .gin_u_`$i`(stall[`$i`] | global_wire_l2h_`$incr`_`$new_key`),
-//;   }
-//;   else {
-      .gin_u_`$i`(global_wire_h2l_`($incr*2)`_`$i`_`(int(floor((${next_w}-2)/2))+2)`_`(int(floor((${next_h}-2)/2))+2)`), 
-//;   }     
-      .gout_l_`$i`(global_wire_h2l_`$incr`_`$i`_`$new_key`), 
-//;           if ($child_type eq "mem" || $child_type eq "pe" || $child_type eq "gst") {
-      .gin_l_`$i`(global_wire_l2h_`(floor($incr/2))`_`$child_key`), 
-//;             print INFO "      <tile>0x${child_addr_hex}</tile>\n";
-//;           } else {
-//      .gout_l_`$i`(), 
-//      .gin_u_`$i`(1'b0), 
-      .gin_l_`$i`(1'b0), 
-//;           }
-//;         }
-      .gout_u(global_wire_l2h_`$incr`_`$new_key`),
-      .read_data(read_data_`$new_tile_addr_hex`)
-      
-//;         $new_tile_addr++;
-//;         print INFO "    </controlled_tiles>\n";
-//;         print INFO "  </tile>\n";
-    );
-//;  if ($read_data_global eq '') {
-//;    $read_data_global = "read_data_$new_tile_addr_hex";
-//;  } else {
-//;    $read_data_global = $read_data_global . " | read_data_$new_tile_addr_hex";
-//;  }
-//;       }
-//;       $next_w++;
-//;     }
-//;     $next_h++;
-//;   }
-//;   foreach my $key (keys %gst_hash_new) {
-//;   }
-//;   %gst_hash_old = %gst_hash_new;
-//;   print INFO "####################GST level: $incr #################\n";
-//;   if (($new_tile_addr - $last_tile_addr)==0 || ($incr >= 1024)) {last;}
-//;   $last_tile_addr = $new_tile_addr;
-//;   $incr*=2;
+//; if (0) {
+//;open(INFO, ">>cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
+//; for my $side (1,2,3,4) {
+//;    my $fname = "TILEio_group_unq$side";
+    // $fname
+//;    open(INP, "<$fname") or die "Couldn't open file $fname, $!";
+//;    while (<INP>) { print INFO $_; }
+//;    close INP;
 //; }
 //; print INFO "</CGRA>\n";
 //; close INFO;
-    assign read_data_pe = `$read_data_pe`;
-    assign read_data_memory = `$read_data_memory`;
-    assign read_data_global = `$read_data_global`;
-    assign read_data_io1bit = `$read_data_io1bit`;
-    assign read_data = read_data_pe | read_data_memory | read_data_global | read_data_io1bit;
+//; }
+
+
+
+//; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
+//; print INFO2 "<CGRA>\n";
+//; for my $i (0 .. $#top::CGRA_INFO) {
+//;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
+//;     # print INFO2 sprintf("\n0x%04X\n", $i);
+//;     print INFO2 @top::CGRA_INFO[$i];
+//;     # FIXME/TODO if no info, emit an empty tile
+//; }
+//; print INFO2 "</CGRA>\n";
+//; close INFO2;
+
+
+//; if (0) {
+//; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
+//; print INFO2 "<CGRA>\n";
+//; 
+//; # First sixteen tiles are IO
+//; for my $i (0 .. 15) {
+//;     print INFO2 @top::CGRA_INFO[$i];
+//; }
+//; my ($n_begin,$e_begin,$s_begin,$w_begin) = (0,16,32,48);
+//; # Then sixteen rows of main grid bounded by IO
+//; for my $a (0 .. 15) {
+//;    my $i;
+//;    for my $b (0..17) {
+//;       if ($b == 0) { $i = $a + $w_begin; }           # west side pads
+//;       elsif ($b == 17) { $i = $a + $e_begin; }       # east side pads
+//;       else { $i = (4*16) + (16*$a) + ($b-1); } # pe/mem tiles
+//;       print INFO2 @top::CGRA_INFO[$i];
+//;    }
+//; }
+//; # Final sixteen tiles are IO (south side pads)
+//; for my $i ($s_begin .. ($s_begin+15)) {
+//;     print INFO2 @top::CGRA_INFO[$i];
+//; }
+//; # Remaining tiles (gst)
+//; for my $i ((4*16+16*16) .. $#top::CGRA_INFO) {
+//;     print INFO2 @top::CGRA_INFO[$i];
+//; }
+//; 
+//; print INFO2 "</CGRA>\n";
+//; close INFO2;
+//; }
 
 endmodule

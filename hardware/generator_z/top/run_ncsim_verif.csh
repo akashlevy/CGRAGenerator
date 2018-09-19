@@ -23,6 +23,11 @@ Genesis2.pl -parse -generate -top test_top -hierarchy top.xml -input\
   ncsim_verif/JTAGDriver.svp \
   ncsim_verif/clocker.svp \
   top.vp \
+  cgra_core.vp \
+  \
+  ../pad_ring/pad_ring.svp \
+  ../pad_ring/io_group.svp \
+  ../pad_ring/fixed_io.vp \
   \
   ../sb/sb.vp \
   ../cb/cb.vp \

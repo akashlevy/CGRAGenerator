@@ -4,7 +4,6 @@ rm -rf INCA_libs irun.*
 irun -top test_top -timescale 1ns/1ps -l irun.log -access +rwc -notimingchecks \
 -input \
 $RTL_FOLDER/../ncsim_verif/cmd.tcl \
-$RTL_FOLDER/../mdll_top.sv \
 $RTL_FOLDER/cb_unq1.v  \
 $RTL_FOLDER/cb_unq2.v \
 $RTL_FOLDER/cfg_and_dbg_unq1.sv \
@@ -17,10 +16,6 @@ $RTL_FOLDER/flop_unq3.sv \
 $RTL_FOLDER/global_controller_unq1.sv \
 $RTL_FOLDER/global_signal_tile_unq1.v \
 $RTL_FOLDER/input_sr_unq1.v \
-$RTL_FOLDER/io16bit_unq1.v \
-$RTL_FOLDER/io16bit_unq2.v \
-$RTL_FOLDER/io16bit_unq3.v \
-$RTL_FOLDER/io16bit_unq4.v \
 $RTL_FOLDER/io1bit_unq1.v \
 $RTL_FOLDER/io1bit_unq2.v \
 $RTL_FOLDER/io1bit_unq3.v \
@@ -51,5 +46,13 @@ $RTL_FOLDER/test_shifter_unq1.sv \
 $RTL_FOLDER/test_top.sv \
 $RTL_FOLDER/test_unq1.sv \
 $RTL_FOLDER/top.v \
+$RTL_FOLDER/cgra_core.v \
+$RTL_FOLDER/io_group_unq1.sv \
+$RTL_FOLDER/io_group_unq2.sv \
+$RTL_FOLDER/io_group_unq3.sv \
+$RTL_FOLDER/io_group_unq4.sv \
+$RTL_FOLDER/pad_ring.sv \
+$RTL_FOLDER/fixed_io_unq1.v \
+$RTL_FOLDER/fixed_io_unq2.v \
 $SYNOPSYS/dw/sim_ver/DW_tap.v \
 $RTL_FOLDER/sram_512w_16b.v 

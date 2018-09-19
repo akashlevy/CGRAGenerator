@@ -70,33 +70,31 @@ module `mname`();
     * Instantiate DUT interface and DUT
     * *************************************************************************/
    //; # We use generate_base when there is for sure just one of X
-   //; my $dut_obj = generate_base($design_name, 'dut');
+   //; my $dut_obj = generate_base($design_name, 'dut', connect_GC=>1);
    //; my $dut_ifc_path = $dut_obj->get_param('IFC');
    //; my $dut_ifc = clone($dut_ifc_path, 'dut_ifc');
    `$dut_ifc->instantiate` (.Clk(Clk), .Reset(Reset));
 
    `$dut_obj->instantiate` (
-	//input pads
-//;for(my $side = 0; $side < 4; $side++){
-//;	for(my $track = 0; $track < $num_tracks; $track++){
-	.pad_S`$side`_T`$track`(pads_S`$side`[`$track`]),
-//;	}
-//;}	
-	.clk_in(Clk),
-	.reset_in(Reset)
+	.pads_N_0(pads_S3),
+	.pads_S_0(pads_S1),
+	.pads_E_0(pads_S0),
+	.pads_W_0(pads_S2),
+	.clk_pad(Clk),
+	.reset_pad(Reset)
    );
    //Since we aren't using interface here, assign signals 
    //Inputs
-   assign dut.tck = dut_ifc.tck;
+   assign dut.tck_pad = dut_ifc.tck;
    //assign dut.clk_in = dut_ifc.Clk;
    //assign dut.reset_in = dut_ifc.Reset;
-   assign dut.tdi = dut_ifc.tdi;
-   assign dut.tms = dut_ifc.tms;
-   assign dut.trst_n = dut_ifc.trst_n;
+   assign dut.tdi_pad = dut_ifc.tdi;
+   assign dut.tms_pad = dut_ifc.tms;
+   assign dut.trst_n_pad = dut_ifc.trst_n;
    //Outputs
    assign dut_ifc.config_addr_to_gc = dut.global_controller.config_addr_out;
    assign dut_ifc.config_data_to_gc = dut.global_controller.config_data_out;
-   assign dut_ifc.tdo = dut.tdo;
+   assign dut_ifc.tdo = dut.tdo_pad;
 //   assign dut_ifc.config_data_from_gc = dut.global_controller.config_data_in;
    /****************************************************************************
     * Instantiate Test

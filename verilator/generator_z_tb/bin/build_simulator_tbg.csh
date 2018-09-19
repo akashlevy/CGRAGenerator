@@ -7,6 +7,8 @@ set config    = $1; shift
 set io_config = $1; shift
 set input     = $1; shift
 set output    = $1; shift
+set input_size = $1; shift
+set output_size = $1; shift
 
 # Note tracefile is optional
 unset tracefile
@@ -68,7 +70,9 @@ python3 $TestBenchGenerator/generate_harness.py \
 	--bitstream $config \
 	--max-clock-cycles 5000000                \
 	--output-file-name build/harness.cpp \
-        $trace_switch $tracefile_switch
+        $trace_switch $tracefile_switch \
+    --input-chunk-size $input_size \
+    --output-chunk-size $output_size
 unset echo
 
 ls -l build/harness.cpp

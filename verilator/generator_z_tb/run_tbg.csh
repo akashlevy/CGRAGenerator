@@ -30,6 +30,10 @@ set GENERATE  = "-gen"     # Generate CGRA from scratch
 set BUILD                  # (re)build simulator from scratch
 set DELAY = '0,0'
 
+# IO size
+set INPUT_SIZE = 8
+set OUTPUT_SIZE = 8
+
 set hwtop = ../../hardware/generator_z/top
 
 ########################################################################
@@ -88,10 +92,12 @@ if ($#argv == 1) then
     echo "        -io_config <io_config_filename.json>"
     echo "        -input     <input_filename.png>"
     echo "        -output    <output_filename.raw>"
-    echo "        -out1      <1bitout_filename>",
-    echo "        -delay     <ncy_delay_in>,<ncy_delay_out>"
-    echo "       [-trace     <trace_filename.vcd>]"
-    echo "        -nclocks   <max_ncycles e.g. '100K' or '5M' or '3576602'>"
+    echo "        -out1    <1bitout_filename>",
+    echo "        -delay   <ncy_delay_in>,<ncy_delay_out>"
+    echo "       [-input-size <8>]"
+    echo "       [-output-size <8>]"
+    echo "       [-trace   <trace_filename.vcd>]"
+    echo "        -nclocks <max_ncycles e.g. '100K' or '5M' or '3576602'>"
     echo "        -build   # no longer supported, use -rebuild_from_scratch instead"
     echo "        -nobuild # no genesis, no verilator build"
     echo "        -nogen   # no genesis"
@@ -104,8 +110,10 @@ if ($#argv == 1) then
     echo "       -io_config $io_config \"
     echo "       -input     $input  \"
     echo "       -output    $output \"
-    echo "       -out1      $out1 \"
-    echo "       -delay     $DELAY \"
+    echo "       -out1          $out1 \"
+    echo "       -delay         $DELAY \"
+    echo "       -input-size    $INPUT_SIZE \"
+    echo "       -output-size   $OUTPUT_SIZE \"
     if ("$tracefile" != "") then
       echo "       -trace   $tracefile \"
     endif
@@ -221,6 +229,14 @@ while ($#argv)
       # will accept e.g. "1,000,031" or "41K" or "3M"
       set nclocks = $2;
       shift; breaksw
+
+    case -input-size:
+      set INPUT_SIZE = $2;
+      shift; breaksw;
+
+    case -output-size:
+      set OUTPUT_SIZE = $2;
+      shift; breaksw;
 
     default:
         echo ""
@@ -400,8 +416,11 @@ BUILD_SIM:
   echo  "build_simulator_tbg.csh $VSWITCH \"
   echo  "  $config:t $io_config:t \"
   echo  "  $input:t $output:t \"
-  echo  "  $tracefile:t"
-  ./bin/build_simulator_tbg.csh $VSWITCH $config $io_config $input $output $tracefile || exit 13
+  echo  "  $tracefile:t \"
+  echo  "  $INPUT_SIZE \"
+  echo  "  $OUTPUT_SIZE"
+  ./bin/build_simulator_tbg.csh $VSWITCH $config $io_config $input $output \
+                                $tracefile $INPUT_SIZE $OUTPUT_SIZE || exit 13
 
 
 RUN_SIM:

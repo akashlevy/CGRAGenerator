@@ -163,6 +163,7 @@ while ($#argv)
       breaksw
 
     case '-rebuild_from_scratch':
+    case '--rebuild_from_scratch':
       echo ""; echo "WARNING"; echo "WARNING"; echo "WARNING"; 
       echo WARNING You asked for it with -build
       echo WARNING Will rebuild Vtop from scratch...
@@ -186,15 +187,19 @@ while ($#argv)
     ########################################
     # Switches: I/O
     case '-io_config':
+    case '--io_config':
       set io_config = "$2"; shift; breaksw
 
     case -input:
+    case --input:
       set input = "$2"; shift; breaksw
 
     case -output:
+    case --output:
       set output = "$2"; shift; breaksw
 
     case -out1:
+    case --out1:
       set out1   = $2; shift;
       breaksw;
 
@@ -202,8 +207,10 @@ while ($#argv)
     # Switches: Debugging
 
     case -trace:
+    case --trace:
       set tracefile = "$2"; shift; breaksw
 
+    case -verilator_debug:
     case --verilator_debug:
       set VERILATOR_DEBUG = "--debug"; breaksw
 

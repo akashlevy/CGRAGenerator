@@ -20,6 +20,10 @@ from lib import cgra_info
 # 
 # exit()
 
+# FIXME temprorary backward-compatibility hack
+global FOUND_SIXTEEN
+FOUND_SIXTEEN = False
+
 def bs_addr_sort(addr):
     '''Bitstream address looks like this: RRFFTTTT;
     but want to sort tile first, then feature, then reg, e.g.
@@ -169,7 +173,7 @@ def main():
             if DBG>2: print '# tile%02d  %s' % (tileno,line)
 
         # Or maybe it's a hex number as denoted by a little 'x' e.g.
-        # Tx116_pad(out,1)
+        # Tx116(out,1)
         parse = re.search("^Tx([0-9a-fA-f]+)_(.*)", line)
         if parse:
             tileno = int(parse.group(1),16)
@@ -204,7 +208,7 @@ def main():
             continue
         elif DBG: print '# > Not a mem'
 
-        # Tx116_pad(out,1)
+        # Tx116_pad(out,1) or just Tx116(out,1) or just 
         if bs_io(tileno, line, DBG-1):
             if DBG: print ''
             continue
@@ -263,15 +267,17 @@ def main():
     # OUTPUT tile  0 (0,0) / in_BUS16_S1_T1 / wire_1_0_BUS16_S3_T1
     for i in io_info: print i
 
-    configure_output_pads();
+    global FOUND_SIXTEEN
+    if not FOUND_SIXTEEN:
+        print '''
+# WARNING You did not designate a 16-bit output bus, so I will build one:''',
+        configure_output_pads();
 
     return
 
 def configure_output_pads():
     b = '''
-# Configure side 0 (right side) io1bit tiles as 16bit output bus;
-# assumes output is tile 36 (io16bit_0x24)
-
+# Configuring side 0 (right side) io1bit tiles as 16bit output bus
 '''
     # FIXME should come from json file :(
     # E.g. pads_E_0[0], pads_E_0[1], .. pads_E_0[15]
@@ -833,13 +839,13 @@ def bs_mem(tileno, line, DBG=0):
 
 def bs_io(tileno, line, DBG=0):
     '''
-    E.g. tileno = 0x116, line = "pad(out,1)" =>
+    E.g. tileno = 0x116, line = "pad(out,1)" or just "(out,1)" =>
       00000116 00000003
       # io1_116
       # data[(0, 0)] : output  # 0x1
       # data[(1, 1)] : one-bit # 0x1
     '''
-    parse = re.search('pad[(](in|out),(1|16)', line)
+    parse = re.search('[(](in|out),(1|16)[)]', line)
     if not parse: return False
     dir = parse.group(1)
     wid = parse.group(2)
@@ -851,6 +857,8 @@ def bs_io(tileno, line, DBG=0):
 
     if (wid == '16'):
         b1 = 0; c1 = '16-bit ';
+        global FOUND_SIXTEEN
+        FOUND_SIXTEEN = True
     else:
         b1 = 1; c1 = 'one-bit';
 

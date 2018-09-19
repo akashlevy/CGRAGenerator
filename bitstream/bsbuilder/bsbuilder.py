@@ -173,8 +173,8 @@ def main():
             if DBG>2: print '# tile%02d  %s' % (tileno,line)
 
         # Or maybe it's a hex number as denoted by a little 'x' e.g.
-        # Tx116(out,1)
-        parse = re.search("^Tx([0-9a-fA-f]+)_(.*)", line)
+        # Tx116_pad(out,1)
+        parse = re.search("^Tx([0-9a-fA-F]+)_(.*)", line)
         if parse:
             tileno = int(parse.group(1),16)
             line = parse.group(2)
@@ -845,6 +845,7 @@ def bs_io(tileno, line, DBG=0):
       # data[(0, 0)] : output  # 0x1
       # data[(1, 1)] : one-bit # 0x1
     '''
+    if DBG>1: print "# > It's a IO!"
     parse = re.search('[(](in|out),(1|16)[)]', line)
     if not parse: return False
     dir = parse.group(1)
@@ -856,7 +857,7 @@ def bs_io(tileno, line, DBG=0):
         b0 = 1; c0 = 'output';
 
     if (wid == '16'):
-        b1 = 0; c1 = '16-bit ';
+        b1 = 0; c1 = '16-bit';
         global FOUND_SIXTEEN
         FOUND_SIXTEEN = True
     else:
@@ -864,6 +865,7 @@ def bs_io(tileno, line, DBG=0):
 
     addr = tileno;      # E.g. '00000116' (after addbs() formatting)
     data = (2*b1 + b0); # E.g. '00000003' (after addbs() formatting)
+    if DBG>1: print "addr=%04X" % addr
 
     comment = [
         "data[(0, 0)] : %s # 0x%d" % (c0, b0),

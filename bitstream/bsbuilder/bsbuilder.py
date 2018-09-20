@@ -208,7 +208,7 @@ def main():
             continue
         elif DBG: print '# > Not a mem'
 
-        # Tx116_pad(out,1) or just Tx116(out,1) or just 
+        # Tx116_pad(out,1)
         if bs_io(tileno, line, DBG-1):
             if DBG: print ''
             continue

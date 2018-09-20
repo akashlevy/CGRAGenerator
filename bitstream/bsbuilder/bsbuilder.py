@@ -269,19 +269,18 @@ def main():
 
     global FOUND_SIXTEEN
     if not FOUND_SIXTEEN:
-        print '''
-# WARNING You did not designate a 16-bit output bus, so I will build one:''',
         configure_output_pads();
 
     return
 
 def configure_output_pads():
     b = '''
+# WARNING You did not designate a 16-bit output bus, so I will build one: 
 # Configuring side 0 (right side) io1bit tiles as 16bit output bus
 '''
-    # FIXME should come from json file :(
-    # E.g. pads_E_0[0], pads_E_0[1], .. pads_E_0[15]
-    # <tile type='io1bit' tile_addr='0x0111' row='1' col='17' name='pads_E_0[0]'>
+    # NOTE This default only kicks in when bsbuilder detects no output bus designation
+    # For now we need it for backward compatibility in CGRAGenerator travis tests...
+    # FIXME should fix the tests and remove this hack (also see FOUND_SIXTEEN)
     pad_bus = 'pads_E_0'
 
     # Little endian means count backwards 15..0

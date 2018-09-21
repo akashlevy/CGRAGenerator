@@ -20,7 +20,8 @@ echo "$gold looks like this:"
 set cmd = "od -t u1 $gold"
 echo $cmd; $cmd | head; echo ...; $cmd | tail -n 3
 echo ''
-cmp $test $gold\
+set compare = ../../../verilator/generator_z_tb/bin/keyi_compare.py
+python $compare $test $gold\
   && echo "TEST RESULT $b PASSED"\
   || echo "TEST RESULT $b FAILED"\
 

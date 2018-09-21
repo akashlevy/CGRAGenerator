@@ -290,7 +290,7 @@ GOLD['gte']   = pe.isa.ge(signed)
 GOLD['lte']   = pe.isa.le(signed)
 
 GOLD['sel']   = pe.isa.sel()
-GOLD['rshft'] = pe.isa.shr()
+GOLD['rshft'] = pe.isa.shr(signed)
 GOLD['lshft'] = pe.isa.lshl()
 GOLD['or']    = pe.isa.or_()
 GOLD['and']   = pe.isa.and_()

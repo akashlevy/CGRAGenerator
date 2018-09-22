@@ -3,14 +3,26 @@ import sys
 import os
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage:", sys.argv[0], "<design_out.raw>", "<1bit_out.raw>", "<halide_out.raw>",
+    if len(sys.argv) != 3 and len(sys.argv) != 4:
+        print("Usage:", sys.argv[0], "<design_out.raw>", "[1bit_out.raw]", "<halide_out.raw>",
               file=sys.stderr)
         exit(1)
 
-    design_out = sys.argv[1]
-    onebit_out = sys.argv[2]
-    halide_out = sys.argv[3]
+    if len(sys.argv) == 3:
+        design_out = sys.argv[1]
+        onebit_out = "/dev/null"
+        halide_out = sys.argv[2]
+        no_onebit = True
+    else:
+        design_out = sys.argv[1]
+        onebit_out = sys.argv[2]
+        halide_out = sys.argv[3]
+        no_onebit = False
+
+        # sometimes the one bit output may not exist.
+        if not os.path.isfile(onebit_out):
+            onebit_out = "/dev/null"
+            no_onebit = True
 
     compare_size = os.path.getsize(halide_out)
 
@@ -26,7 +38,7 @@ def main():
                         break
                     pos += 1
                     design_byte = ord(design_byte)
-                    onebit_byte = ord(onebit_byte)
+                    onebit_byte = ord(onebit_byte) if not no_onebit else 1
                     if onebit_byte != 1:
                         skipped_pos += 1
                         continue

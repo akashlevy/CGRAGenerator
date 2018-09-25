@@ -17,12 +17,118 @@ from lib import cgra_info
 # # print w, cgra
 # glob = cgra_info.canon2global(w)
 # print w, cgra, glob
-# 
+#
 # exit()
 
 # FIXME temprorary backward-compatibility hack
 global FOUND_SIXTEEN
 FOUND_SIXTEEN = False
+
+# % grep localparam $top/genesis_verif/test_pe_comp* | grep _OP
+# localparam PE_ADD_OP     = 6'h0;
+# localparam PE_SUB_OP     = 6'h1;
+# localparam PE_ABS_OP     = 6'h3;
+# localparam PE_GTE_MAX_OP = 6'h4;
+# localparam PE_LTE_MIN_OP = 6'h5;
+# localparam PE_SEL_OP     = 6'h8;
+# localparam PE_MULT_0_OP  = 6'hB;
+# localparam PE_MULT_1_OP  = 6'hC;
+# localparam PE_MULT_2_OP  = 6'hD;
+# localparam PE_RSHFT_OP   = 6'hF;
+# localparam PE_LSHFT_OP   = 6'h11;
+# localparam PE_OR_OP      = 6'h12;
+# localparam PE_AND_OP     = 6'h13;
+# localparam PE_XOR_OP     = 6'h14;
+
+# NOT ELABORATED: eq, cntr, div
+# % grep localparam $top/../pe_new/pe/rtl/test_pe_comp.svp | grep _OP
+# localparam PE_EQ_OP      = 6'h6; # NOPE it's gone now...?
+# localparam PE_CNTR_OP    = 6'h18;
+# localparam PE_DIV_OP     = 6'h19;
+
+
+# FIXME I guess these should all come from cgra_info.txt maybe
+op_data = {} # dictionary
+# op_data['add']   = 0x00000000
+# op_data['mul']   = 0x0000000B
+op_data['add']     = 0x00000000
+op_data['sub']     = 0x00000001
+op_data['abs']     = 0x00000003
+op_data['gte']     = 0x00000004
+op_data['lte']     = 0x00000005
+# op_data['eq']      = 0x00000006  OOPS no not supported see below
+op_data['sel']     = 0x00000008
+op_data['rshft']   = 0x0000000F
+op_data['lshft']   = 0x00000011
+op_data['mul']     = 0x0000000B
+op_data['or']      = 0x00000012
+op_data['and']     = 0x00000013
+op_data['xor']     = 0x00000014
+
+op_data['lut']   = 0x0000000E # ?? right ??
+
+
+# aliases (old)
+# Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
+op_data['uge']     = op_data['gte']
+op_data['max']     = op_data['gte']
+op_data['umax']    = op_data['gte']
+
+op_data['ule']     = op_data['lte']
+op_data['min']     = op_data['lte']
+op_data['umin']    = op_data['lte']
+
+# Added for Harris 7/2018, probably should NOT work...
+# FIXME Will have to fix this some day SOON maybe
+# signed, unsigned, who cares!!!???  all map to same FIXME
+op_data['mux']  = op_data['sel']
+# Bit 6 decides signed/unsigned
+op_data['ashr'] = op_data['rshft'] | (1 << 6)
+op_data['smax'] = op_data['gte']   | (1 << 6)
+op_data['sle']  = op_data['lte']   | (1 << 6)
+op_data['sge']  = op_data['gte']   | (1 << 6)
+
+# (Bits [15:12] == 1) => set Z flag
+# (Also see "pe_flag_eq" below
+op_data['eq']   = op_data['xor']
+
+
+
+# A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
+op_data['const_a'] = (0 << 16)
+op_data['wire_a']  = (2 << 16)
+op_data['reg_a']   = (3 << 16)
+
+# B (data1) mode bits are 18,19; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
+op_data['const_b'] = (0 << 18)
+op_data['wire_b']  = (2 << 18)
+op_data['reg_b']   = (3 << 18)
+
+# C (bit0) mode bits are 24,25; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
+op_data['const_0'] = (0 << 24)
+op_data['wire_0']  = (2 << 24)
+op_data['reg_0']   = (3 << 24)
+
+# E (bit1) mode bits are 26,27; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
+op_data['const_1'] = (0 << 26)
+op_data['wire_1']  = (2 << 26)
+op_data['reg_1']   = (3 << 26)
+
+# F (bit2) mode bits are 28,29; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
+op_data['const_2'] = (0 << 28)
+op_data['wire_2']  = (2 << 28)
+op_data['reg_2']   = (3 << 28)
+
+
+# FIXME need more flags duh, see pe spec
+# data[(15, 12]: flag_sel: PE_FLAG_LUT (0xE)
+# data[(15, 12]: flag_sel: PE_FLAG_PE  (0xF)
+op_data['pe_flag_lut'] = (0xE << 12)
+op_data['pe_flag_pe']  = (0xF << 12)
+
+# (Bits [15:12] == 1) => set Z flag
+op_data['pe_flag_eq']  = (0x0 << 12)
+
 
 def bs_addr_sort(addr):
     '''Bitstream address looks like this: RRFFTTTT;
@@ -72,7 +178,7 @@ def test_bs_addr_sort():
         print i, bs_addr_sort(i)
         tmp[i] = 17
     print tmp
-    
+
     # for a in sorted(connections.iterkeys())
     for a in sorted(tmp.iterkeys(), key=bs_addr_sort): print a
 
@@ -99,12 +205,12 @@ opb = {}
 #   out=>s0
 
 # Sample input:
-# 
+#
 # T4_mul(wire,const15_15)    # mul_47515_476_PE
 # T8_add(wire,wire)          # add_457_476_477_PE
 # T10_mul(reg,const13_13$1)  # mul_48313_484_PE
 # T21_ule(wire,const50__148) # ule_148_147_149_PE
-# 
+#
 # T0_in_s2t0 -> T0_out_s0t0 (r)
 # T1_in_s2t0 -> T1_out_s0t0
 # T2_in_s2t0 -> T2_out_s0t0
@@ -186,7 +292,7 @@ def main():
 
 
         # mul(wire,const15_15)
-        # add(wire,wire) 
+        # add(wire,wire)
         # mul(reg,const13_13$1)
         if bs_op(tileno,line, max(0,DBG-1)):
             if DBG: print ''
@@ -228,37 +334,37 @@ def main():
 #         ################################################################
 #         # This is the old stuff.
 #         # SKIP IT for now anyways
-#         
+#
 #         # "tile=7" (also: "tile7" or "tile=7" or "TILE 7" ...)
 #         # (tile) = myparse(line, "\s+tile\s+([0-9]+)")
 #         if parse_tile_decl(line):
 #             tilestr = "%04X" % int(curtile)
 #             continue
-# 
+#
 #         # "op=mul" or "op MUL"
 #         if parse_op(line,tilestr): continue
-# 
+#
 #         # "in_s3=>a" or "in_s3 -> a" or "in_s3 => wire a" or "in_s3 => reg a"
 #         # or "out_s3 => reg a"
 #         if parse_opa(line, tilestr): continue
-#         
+#
 #         # FIXME have to extend above code for operand b (doofus)
-# 
+#
 #         # "in_s3=>out_s0"
 #         if parse_connection(line, tilestr): continue
-# 
+#
 #         # Konstants: "2=>b"
 #         if parse_const(line, tilestr): continue
-# 
+#
 #         # pe_out=>out_s0
 #         # pe_out_res=>out_s0
 #         if parse_pe_out(line, tilestr): continue
-# 
+#
 #         else:
 #             print "ERROR I can't do that yet."
 #             sys.exit(1)
 #         ################################################################
-            
+
     if DBG: print ''
     emit_bitstream()
 
@@ -475,7 +581,7 @@ def reg_field_bug_hack(tileno):
     #   File "cgra_info.py", line 781, in encode_parms
     #     assert regh==regl, 'select field crossed reg boundary!'
     # AssertionError: select field crossed reg boundary!
-    
+
     # <sb feature_address='0' bus='BUS1' row='0'>
     #   <mux snk='out_0_BUS1_2_0' reg='1' configh='32' configl='30' configr='70'>
     #     <src sel='0'>in_0_BUS1_0_0</src>
@@ -490,7 +596,7 @@ def reg_field_bug_hack(tileno):
         'in_0_BUS1_0_0', #canon2cgra(src),
         'out_0_BUS1_2_0', #canon2cgra(snk))
         )
-    
+
     # reg 0, element 0, tile 'tileno' = 0x80000000 (top bit of 0x2)
     (regno,elno) = (0,0)
     addr = (regno << 24) | (elno << 16) | tileno
@@ -569,7 +675,7 @@ def parse_opa(line, tilestr):
                 print "  out_s2 -> a"
                 print ""
                 return True
-                
+
         else: return False
 
 def parse_connection(line,tilestr):
@@ -588,7 +694,7 @@ def parse_connection(line,tilestr):
             addbs(addr, data, line+"\n# "+comment)
             return True
         else: return False
-            
+
 
 
 # def parse_const(line, tilestr):
@@ -597,15 +703,15 @@ def parse_connection(line,tilestr):
 #         if (k):
 #             DBG=0
 #             if DBG: print "# Found constant '%s' assigned to operand '%s'" % (k, operand)
-# 
+#
 #             # A
 #             # F0000008 00000002 # data[(15, 0)]=2 : init `a` reg with const `2`
 #             # FF000008 0000000B # data[(15,15)]=0 : read from reg `a`
-#             # 
+#             #
 #             # or B
 #             # F1000008 00000002 # data[(15, 0)]=2 : init `b` reg with const `2`
 #             # FF000008 0000000B # data[(13,13)]=0 : read from reg `b`
-#                                  
+#
 #             comment = line
 #             tileno = int(tilestr,16)
 #             if (operand=='a'):
@@ -616,11 +722,11 @@ def parse_connection(line,tilestr):
 #                 addr = "F100"+tilestr; opb[tileno] = 'reg'
 #                 # print "# Remember opb[%04X] = %s" % (tileno, opb[tileno])
 #                 comment = "# Remember opb[%04X] = %s" % (tileno, opb[tileno])
-#             
+#
 #             data = "%08X" % int(k)
 #             addbs(addr, data, line+"\n"+comment)
 #             return True
-# 
+#
 #         else: return False
 
 def parse_pe_out(line,tilestr):
@@ -672,112 +778,18 @@ def emit_bitstream():
         for c in sorted(bscomment[addr], key=bs_comment_sort): print "# " + c
         print ""
 
-        
+
 def set_opa(tileno, wr):
     DBG=0
     # print "# Setting a input to default 'wire'"
     opa[tileno] = wr;
     if DBG: print "# opa[%04X] = %s" % (tileno, opa[tileno])
-    
+
 def set_opb(tileno, wr):
     DBG=0
     # print "# Setting a input to default 'wire'"
     opb[tileno] = wr;
     if DBG: print "# opb[%04X] = %s" % (tileno, opb[tileno])
-
-
-# % grep localparam $top/../pe_new/pe/rtl/test_pe_comp.svp | grep _OP
-# localparam PE_ADD_OP     = 6'h0;
-# localparam PE_SUB_OP     = 6'h1;
-# localparam PE_ABS_OP     = 6'h3;
-# localparam PE_GTE_MAX_OP = 6'h4;
-# localparam PE_LTE_MIN_OP = 6'h5;
-# localparam PE_EQ_OP      = 6'h6;
-# localparam PE_SEL_OP     = 6'h8;
-# localparam PE_RSHFT_OP   = 6'hF;
-# localparam PE_LSHFT_OP   = 6'h11;
-# localparam PE_MULT_0_OP  = 6'hB;
-# localparam PE_MULT_1_OP  = 6'hC;
-# localparam PE_MULT_2_OP  = 6'hD;
-# localparam PE_OR_OP      = 6'h12;
-# localparam PE_AND_OP     = 6'h13;
-# localparam PE_XOR_OP     = 6'h14;
-# no
-# localparam PE_CNTR_OP    = 6'h18;
-# localparam PE_DIV_OP     = 6'h19;
-
-# FIXME I guess these should all come from cgra_info.txt maybe
-op_data = {} # dictionary
-# op_data['add']   = 0x00000000
-# op_data['mul']   = 0x0000000B
-op_data['add']     = 0x00000000
-op_data['sub']     = 0x00000001
-op_data['abs']     = 0x00000003
-op_data['gte']     = 0x00000004
-op_data['lte']     = 0x00000005
-op_data['eq']      = 0x00000006
-op_data['sel']     = 0x00000008
-op_data['rshft']   = 0x0000000F
-op_data['lshft']   = 0x00000011
-op_data['mul']     = 0x0000000B
-op_data['or']      = 0x00000012
-op_data['and']     = 0x00000013
-op_data['xor']     = 0x00000014
-
-op_data['lut']   = 0x0000000E # ?? right ??
-
-
-# aliases (old)
-# Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
-op_data['uge']     = op_data['gte']
-op_data['max']     = op_data['gte']
-op_data['umax']    = op_data['gte']
-
-op_data['ule']     = op_data['lte']
-op_data['min']     = op_data['lte']
-op_data['umin']    = op_data['lte']
-
-# Added for Harris 7/2018, probably should NOT work...
-# FIXME Will have to fix this some day SOON maybe
-# signed, unsigned, who cares!!!???  all map to same FIXME
-op_data['ashr'] = op_data['rshft'] | (1 << 6)
-op_data['smax'] = op_data['gte']   | (1 << 6)
-op_data['sle']  = op_data['lte']   | (1 << 6)
-op_data['sge']  = op_data['gte']   | (1 << 6)
-op_data['mux']  = op_data['sel']
-
-
-# A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
-op_data['const_a'] = (0 << 16)
-op_data['wire_a']  = (2 << 16)
-op_data['reg_a']   = (3 << 16)
-
-# B (data1) mode bits are 18,19; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
-op_data['const_b'] = (0 << 18)
-op_data['wire_b']  = (2 << 18)
-op_data['reg_b']   = (3 << 18)
-
-# C (bit0) mode bits are 24,25; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
-op_data['const_0'] = (0 << 24)
-op_data['wire_0']  = (2 << 24)
-op_data['reg_0']   = (3 << 24)
-
-# E (bit1) mode bits are 26,27; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
-op_data['const_1'] = (0 << 26)
-op_data['wire_1']  = (2 << 26)
-op_data['reg_1']   = (3 << 26)
-
-# F (bit2) mode bits are 28,29; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
-op_data['const_2'] = (0 << 28)
-op_data['wire_2']  = (2 << 28)
-op_data['reg_2']   = (3 << 28)
-
-
-# FIXME need more flags duh, see pe spec
-# data[(15, 12]: flag_sel: PE_FLAG_LUT (0xE)
-# data[(15, 12]: flag_sel: PE_FLAG_PE  (0xF)
-op_data['pe_flag_lut'] = (0xE << 12)
-op_data['pe_flag_pe']  = (0xF << 12)
 
 
 def bs_mem(tileno, line, DBG=0):
@@ -802,7 +814,7 @@ def bs_mem(tileno, line, DBG=0):
         addr = 0x00020000 | tileno
     else:
         addr = 0x00040000 | tileno
-        
+
     data = 0x00000004 | (fd<<3)
     comment = [
         "data[(1, 0)] : mode = linebuffer",
@@ -918,7 +930,7 @@ def bs_mux(tileno, line, DBG=0):
 def bs_op(tileno, line, DBG=0):
     # IN:
     # mul(wire,const15_15)
-    # add(wire,wire) 
+    # add(wire,wire)
     # mul(reg,const13_13$1)
     # ule(wire,const50__148)
 
@@ -947,11 +959,14 @@ def bs_op(tileno, line, DBG=0):
     assert op1=='reg_a' or op1=='wire_a' or op1=='const_a',op1
     assert op2=='reg_b' or op2=='wire_b' or op2=='const_b',op2
 
-    data = op_data[opname] | op_data['pe_flag_pe'] | op_data[op1] | op_data[op2] 
+    if opname == 'eq': flag = op_data['pe_flag_eq']
+    else             : flag = op_data['pe_flag_pe']
+
+    data = op_data[opname] | flag | op_data[op1] | op_data[op2]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
     addr = "FF00%04X" % tileno
-    
+
     # data[(5, 0)] : alu_op = mul
     # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
     # data[(17, 16)] : data0: REG_DELAY
@@ -960,7 +975,7 @@ def bs_op(tileno, line, DBG=0):
     comment = [
         "data[( 5,  0)]: alu_op = %s"   % opname,
         "data[( 6,  6)]: unsigned=0x%d" % (op_data[opname] >> 6 & 1),
-        "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
+        "data[(15, 12] : flag_sel: PE_FLAG_PE=0x%X" % (flag >> 12),
         "data[(17, 16)]: data0: %s" % regtranslate(op1),
         "data[(19, 18)]: data1: %s" % regtranslate(op2),
         ]
@@ -970,19 +985,19 @@ def bs_op(tileno, line, DBG=0):
 def bs_lut(tileno, line, DBG=0):
 
     # IN: lutF(const0,const0,const0)
-    # OUT: 
+    # OUT:
     # 0000TTTT 0000000F reg=0x00 => set LUT for 0xF (right?)
     # data[(7, 0)] : lut_value = 15
-    # 
+    #
     # F300TTTT 00000000 reg=0xF3 => set bit0 for const 1'b0
     # data[(0, 0)] : init `bit0` reg with const `0`
-    # 
+    #
     # F400TTTT 00000000 reg=0xF4 => set bit1 for const 1'b0
     # data[(0, 0)] : init `bit1` reg with const `0`
-    # 
+    #
     # F500TTTT 00000000 reg=0xF5 => set bit2 for const 1'b0
     # data[(0, 0)] : init `bit2` reg with const `0`
-    # 
+    #
     # FF00TTTT 0000000E
     # data[(5, 0)] : alu_op = lut ; 0xE
     # data[(25, 24)] : bit0: REG_CONST ; 0x0
@@ -1040,7 +1055,7 @@ def bs_lut(tileno, line, DBG=0):
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
     addr = "FF00%04X" % tileno
-    
+
     assert opname == 'lut'
 
     # FF00TTTT 0000000E
@@ -1107,7 +1122,7 @@ def bs_const(tileno,op,operand):
     '''
 
     if op[0:5] != 'const': return op
-    
+
     const = op
 
     DBG=0
@@ -1117,7 +1132,7 @@ def bs_const(tileno,op,operand):
     # OP1
     # F0000008 00000002 # data[(15, 0)]=2 : init `a` reg with const `2`
     # FF000008 0000000B # data[(15,15)]=0 : read from reg `a`
-    # 
+    #
     # or OP2
     # F1000008 00000002 # data[(15, 0)]=2 : init `b` reg with const `2`
     # FF000008 0000000B # data[(13,13)]=0 : read from reg `b`
@@ -1126,7 +1141,7 @@ def bs_const(tileno,op,operand):
     k = int(re.search('const(\d+)', const).group(1))
     #data = "%08X" % k
     data = k
-    
+
     # Address for a const is reg 'F0' + elem '00' + tileno e.g. '0008'
     # (op2 constant is 'F1' instead of 'F0')
     if operand=='op1':
@@ -1168,12 +1183,12 @@ def bs_const(tileno,op,operand):
 #         addr = "F100"+tilestr; opb[tileno] = 'reg'
 #         # print "# Remember opb[%04X] = %s" % (tileno, opb[tileno])
 #         comment = "# Remember opb[%04X] = %s" % (tileno, opb[tileno])
-# 
+#
 #     data = "%08X" % int(k)
 #     addbs(addr, data, line+"\n"+comment)
 #     return True
-# 
-# 
+#
+#
 
 
 
@@ -1223,7 +1238,7 @@ def addbs(addr,data, comment=''):
 
         # if comment != '': print "# " + comment
         for c in comment: print "# " + c
-        
+
     # Howzabout a quick error check on cb, sb elements
     feature = int(addr[2:4],16)
 
@@ -1283,7 +1298,7 @@ def myparse(line, regexp):
 #     import os
 #     mydir = os.path.dirname(os.path.realpath(__file__))
 #     cgra_filename = mydir + "../decoder/examples/cgra_info.txt"
-# 
+#
 #     # global verbose #(implied because use before def)
 #     if VERBOSE: print("I think I am here:\n  %s" % mydir)
 #     if VERBOSE: print("Default cgra_info file is\n  %s" % cgra_filename)
@@ -1339,7 +1354,7 @@ Usage:
         input_stream.close()
     else:
         for line in sys.stdin: input_lines.append(line)
-        
+
     # Read the input, store to 'input_lines' tuple
     input_lines = preprocess(input_lines)
     if DBG>1:
@@ -1370,7 +1385,7 @@ def connectbus(inbus, outbus):
             # print "# %s" % data
             # return (sel, h, l, r)
             return (data, comment)
-        
+
 
 
     # FIXME TROUBLE if configl or configr > 31...
@@ -1405,8 +1420,8 @@ def find_sb16():
                 if feature.tag == "sb" and feature.attrib['bus'] == 'BUS16':
                     if DBG: print "#   Found the sb for 16-bit track"
                     return feature
-                    
-                
+
+
 
 main()
 

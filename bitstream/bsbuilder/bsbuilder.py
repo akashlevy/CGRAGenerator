@@ -380,7 +380,7 @@ def main():
 
 def configure_output_pads():
     b = '''
-# WARNING You did not designate a 16-bit output bus, so I will build one:
+# WARNING You did not designate a 16-bit output bus, so I will build one: 
 # Configuring side 0 (right side) io1bit tiles as 16bit output bus
 '''
     # NOTE This default only kicks in when bsbuilder detects no output bus designation

@@ -143,18 +143,18 @@ ALIAS['eq'] = 'usub.eq'
 # aliases (gt/lt/ge/min/max...)
 # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
 ALIAS['uge']     = 'gte_max'
-ALIAS['gte']     = 'uge'
-ALIAS['ge']      = 'uge'
+ALIAS['gte']     = 'gte_max'
+ALIAS['ge']      = 'gte_max'
 
 ALIAS['ule']     = 'lte_min'
-ALIAS['lte']     = 'ule'
-ALIAS['le']      = 'ule'
+ALIAS['lte']     = 'lte_min'
+ALIAS['le']      = 'lte_min'
 
 ALIAS['umax']    = 'gte_max'
-ALIAS['max']     = 'umax'
+ALIAS['max']     = 'gte_max'
 
 ALIAS['umin']    = 'lte_min'
-ALIAS['min']     = 'umin'
+ALIAS['min']     = 'lte_min'
 
 # Aliases (other)
 ALIAS['mul']     = 'mult_0'
@@ -293,6 +293,7 @@ def main():
 #     bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
 #     bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
 #     bs_op(4, 'lte_min.lt(wire,reg)', DBG=9); print("")
+#     bs_op(4, 'gte(wire,reg)'       , DBG=9); print("")
 #     exit()
 
     process_args()
@@ -1043,6 +1044,8 @@ def bs_op(tileno, line, DBG=0):
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
 
+    if DBG>1: print(line)
+
     parse = re.search('(\S+)\s*\(\s*(\S+)\s*,\s*(\S+)\s*\)', line)
     if not parse: return False
 
@@ -1069,7 +1072,7 @@ def bs_op(tileno, line, DBG=0):
         opname = parse.group(1)
         flag   = parse.group(2)
 
-    # if DBG>1: print '# T0x%04X %s %s ( %s %s )' % (tileno,opname,flag,op1,op2)
+    if DBG>1: print '# T0x%04X %s %s ( %s %s )' % (tileno,opname,flag,op1,op2)
 
     global SIGN_BIT
     sign = 'u'    # Default is unsigned, why not
@@ -1080,7 +1083,7 @@ def bs_op(tileno, line, DBG=0):
         if parse:
             sign = parse.group(1); opname = parse.group(2)
             if opname not in op_data:
-                if DBG>1: print('# > "%s" does not seem to be a valid op (line 843)' % opname)
+                if DBG>1: print('# > "%s" does not seem to be a valid op (line 1084)' % opname)
                 return False
 
     if DBG>1: print '# T0x%04X    %s %s %s ( %s %s )' % (tileno,sign,opname,flag,op1,op2)

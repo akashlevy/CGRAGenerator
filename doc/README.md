@@ -1,8 +1,7 @@
 # CGRA/doc - A Place for CGRA-Related Documentation
 
-<b>Documentation in the github wiki:</b>
-* CGRA SPEC: https://github.com/StanfordAHA/CGRAGenerator/wiki/0.Guide-To-CGRA-Specs-And-Docs
-
+<b>Documentation in the github wiki (https://github.com/StanfordAHA/CGRAGenerator/wiki):</b>
+* CGRA SPEC: https://github.com/StanfordAHA/CGRAGenerator/wiki/PE-Spec
 -----
 <b>Documents here:</b>
 * global_signals_arch.pptx - NB doc for global signals and stalls 01/2018

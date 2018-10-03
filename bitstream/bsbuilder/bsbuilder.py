@@ -100,27 +100,6 @@ op_data['xor']     = 0x00000014
 op_data['lut']     = 0x0000000E # ?? right ??
 
 
-# # aliases (gt/lt/ge/min/max...)
-# # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
-# op_data['uge']     = op_data['gte_max']
-# op_data['gte']     = op_data['uge']
-# op_data['ge']      = op_data['uge']
-# 
-# op_data['ule']     = op_data['lte_min']
-# op_data['lte']     = op_data['ule']
-# op_data['le']      = op_data['ule']
-# 
-# op_data['umax']    = op_data['gte_max']
-# op_data['max']     = op_data['umax']
-# 
-# op_data['umin']    = op_data['lte_min']
-# op_data['min']     = op_data['umin']
-# 
-# # Aliases (other)
-# op_data['mul']     = op_data['mult_0']
-
-
-
 # NOTE FIXME 180929 this should no longer be necessary (below)
 # Added for Harris 7/2018, probably should NOT work...
 # FIXME Will have to fix this some day SOON maybe
@@ -344,19 +323,20 @@ opb = {}
 
 def main():
     set_pe_flags()
-
-    #     # Coupla tests
-    #     list_aliases()
-    #     bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
-    #     bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
-    #     bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
-    #     bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
-    #     bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
-    #     bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
-    #     exhaustive_alias_test(DBG=9)
-    #     bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
-    #     bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
-    #     exit()
+    if (0):
+         # Coupla tests
+         list_aliases()
+         bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+         bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
+         bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
+         bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
+         bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
+         bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
+         exhaustive_alias_test(DBG=9)
+         bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
+         bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
+         bs_op(4, 'gte(wire,reg)', DBG=9); print("")
+         exit()
 
     process_args()
 
@@ -1121,6 +1101,10 @@ def bs_op(tileno, line, DBG=0):
     if opname[0:3] == 'lut': return False
     if opname[0:3] == 'pad': return False
 
+    # E.g. ALIAS['eq'] = 'usub.eq'
+    opname = get_alias(opname)
+    if DBG>2: print("Found op '%s'" % opname)
+
     # OOPS no FIXME below opname can be e.g. 'mult_0' or 'lte_max' :(
     # Unpack flag if one exists, e.g. if opname = "usub.lt" flag is 'lt'
     # For backward compatibility, default flag is 'eq'
@@ -1128,12 +1112,8 @@ def bs_op(tileno, line, DBG=0):
     flag = 'pe'
     parse = re.search(r'([^.]+)[.](.*)', opname)
     if parse:
-        opname = parse.group(1)
+        opname = get_alias(parse.group(1))
         flag   = parse.group(2)
-
-    # E.g. ALIAS['eq'] = 'usub.eq'
-    opname = get_alias(opname)
-    if DBG>2: print("Found op '%s'" % opname)
 
     if DBG>1: print '# T0x%04X %s %s ( %s %s )' % (tileno,opname,flag,op1,op2)
 
@@ -1144,16 +1124,13 @@ def bs_op(tileno, line, DBG=0):
         # E.g. "usub" means "unsigned sub"
         parse = re.search(r'^([us])(.*)', opname)
         if parse:
-            sign = parse.group(1); opname = parse.group(2)
-
-            # Check for alias, e.g. ALIAS['eq'] = 'usub.eq'
-            opname = get_alias(opname)
+            sign = parse.group(1); opname = get_alias(parse.group(2))
 
             # Depending on how alias worked out, may need to redo flag thingy
             # E.g. 'ugt' => (u)'sub.gt'
             parse = re.search(r'([^.]+)[.](.*)', opname)
             if parse:
-                opname = parse.group(1)
+                opname = get_alias(parse.group(1))
                 flag   = parse.group(2)
 
             if opname not in op_data:

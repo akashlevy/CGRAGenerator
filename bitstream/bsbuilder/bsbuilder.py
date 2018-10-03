@@ -88,11 +88,11 @@ op_data['gte_max'] = 0x00000004
 op_data['lte_min'] = 0x00000005
 #op_data['eq']     = 0x00000006  OOPS no not supported see above/below
 op_data['sel']     = 0x00000008
-op_data['rshft']   = 0x0000000F
-op_data['lshft']   = 0x00000011
 op_data['mult_0']  = 0x0000000B
 op_data['mult_1']  = 0x0000000C
 op_data['mult_2']  = 0x0000000D
+op_data['rshft']   = 0x0000000F
+op_data['lshft']   = 0x00000011
 op_data['or']      = 0x00000012
 op_data['and']     = 0x00000013
 op_data['xor']     = 0x00000014
@@ -138,30 +138,50 @@ op_data['sge']  = op_data['gte_max']   | (1 << 6)
 global ALIAS
 ALIAS = {}
 
-ALIAS['eq'] = 'usub.eq'
+ALIAS['eq'] = 'sub.eq'
 
 # aliases (gt/lt/ge/min/max...)
 # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
-ALIAS['uge']     = 'gte_max'
-ALIAS['gte']     = 'gte_max'
-ALIAS['ge']      = 'gte_max'
+ALIAS['gte']     = 'sub.ge'
+ALIAS['ge']      = 'sub.ge'
 
-ALIAS['ule']     = 'lte_min'
-ALIAS['lte']     = 'lte_min'
-ALIAS['le']      = 'lte_min'
+ALIAS['lte']     = 'sub.le'
+ALIAS['le']      = 'sub.le'
 
-ALIAS['umax']    = 'gte_max'
+ALIAS['gt']      = 'sub.gt'
+ALIAS['lt']      = 'sub.lt'
+
 ALIAS['max']     = 'gte_max'
-
-ALIAS['umin']    = 'lte_min'
 ALIAS['min']     = 'lte_min'
 
 # Aliases (other)
 ALIAS['mul']     = 'mult_0'
 ALIAS['mux']     = 'sel'
 
+def get_alias(opname,DBG=0):
+    global ALIAS
+    orig_name = opname
+    if DBG>2: print("1 Found op '%s'" % opname)
+    while opname in ALIAS:
+        if DBG>2: print("2 Found alias '%s'" % ALIAS[opname])
+        opname = ALIAS[opname]
+        if DBG>2: print("3 Found op '%s'" % opname)
+    return opname
 
+def list_aliases():
+    global ALIAS
+    print("# ALIASES")
+    for opname in sorted(ALIAS):
+        print("  %-4s => %-s" % (opname, ALIAS[opname]))
 
+def exhaustive_alias_test(DBG=0):
+    global ALIAS
+    for opname in ALIAS:
+        for op1 in ['wire','reg','const12']:
+            for op2 in ['wire','reg','const12']:
+                op = "%s(%s,%s)" % (opname, op1, op2)
+                print("TEST %s" % op)
+                bs_op(4, op, DBG); print("")
 
 
 # A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
@@ -190,15 +210,51 @@ op_data['wire_2']  = (2 << 28)
 op_data['reg_2']   = (3 << 28)
 
 
-# # FIXME need more flags duh, see pe spec
-# # data[(15, 12]: flag_sel: PE_FLAG_LUT (0xE)
-# # data[(15, 12]: flag_sel: PE_FLAG_PE  (0xF)
-# op_data['pe_flag_lut'] = (0xE << 12)
-# op_data['pe_flag_pe']  = (0xF << 12)
-# 
-# # (Bits [15:12] == 1) => set Z flag
-# op_data['pe_flag_eq']  = (0x0 << 12)
+def manpage():
+    print('''
+Operations should be of the form "T0x<tilenum>_[us]op<.flag>(op1,op2...)" where
+  <tilenum> is a 4bit hex number
+  [us] is "u" for unsigned or "s" for signed or nothing (also unsigned)
+  op and flag choices are listed below (flag is optional)
+  op1,op2... are one of "const", "reg", or "wire"
 
+Examples:
+    T0x0306_sub.le(wire,const50__148)
+    T0x0306_smul(wire,const50__148)
+    T0x0705_eq(wire,const50__148)
+    T0x1A09_lte_min.lt(wire,reg)
+    T0x022F_gte(wire,reg)
+    T0x0306_ugt(const16,wire)
+''')
+
+    # OPS: Run through the list of 6-bit ops
+    global op_data
+
+    # Find max op number
+    max = 0
+    for i in range(2**6):
+        for o in op_data:
+            if o[0:3] in ['con','reg','wir']: continue
+            if i == op_data[o]:
+                if i>max: max=i
+
+    op_list = range(max)
+    for i in op_list:
+        op_list[i] = '%02x:none' % i
+        for o in op_data:
+            if o[0:3] in ['con','reg','wir']: continue
+            if i == op_data[o]: op_list[i] = '%02x:%s' % (i,o)
+
+    print("# OPS: %s" % op_list)
+    print("")
+
+    # ALIASES
+    list_aliases()
+    print("")
+
+    # PE FLAGS
+    list_pe_flags()
+    print("")
 
 def bs_addr_sort(addr):
     '''Bitstream address looks like this: RRFFTTTT;
@@ -289,12 +345,18 @@ opb = {}
 def main():
     set_pe_flags()
 
-#     # Coupla tests
-#     bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
-#     bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
-#     bs_op(4, 'lte_min.lt(wire,reg)', DBG=9); print("")
-#     bs_op(4, 'gte(wire,reg)'       , DBG=9); print("")
-#     exit()
+    #     # Coupla tests
+    #     list_aliases()
+    #     bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+    #     bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
+    #     bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
+    #     bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
+    #     bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
+    #     bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
+    #     exhaustive_alias_test(DBG=9)
+    #     bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
+    #     bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
+    #     exit()
 
     process_args()
 
@@ -1059,9 +1121,6 @@ def bs_op(tileno, line, DBG=0):
     if opname[0:3] == 'lut': return False
     if opname[0:3] == 'pad': return False
 
-    # E.g. ALIAS['eq'] = 'usub.eq'
-    if opname in ALIAS: opname = ALIAS[opname]
-
     # OOPS no FIXME below opname can be e.g. 'mult_0' or 'lte_max' :(
     # Unpack flag if one exists, e.g. if opname = "usub.lt" flag is 'lt'
     # For backward compatibility, default flag is 'eq'
@@ -1071,6 +1130,10 @@ def bs_op(tileno, line, DBG=0):
     if parse:
         opname = parse.group(1)
         flag   = parse.group(2)
+
+    # E.g. ALIAS['eq'] = 'usub.eq'
+    opname = get_alias(opname)
+    if DBG>2: print("Found op '%s'" % opname)
 
     if DBG>1: print '# T0x%04X %s %s ( %s %s )' % (tileno,opname,flag,op1,op2)
 
@@ -1082,6 +1145,17 @@ def bs_op(tileno, line, DBG=0):
         parse = re.search(r'^([us])(.*)', opname)
         if parse:
             sign = parse.group(1); opname = parse.group(2)
+
+            # Check for alias, e.g. ALIAS['eq'] = 'usub.eq'
+            opname = get_alias(opname)
+
+            # Depending on how alias worked out, may need to redo flag thingy
+            # E.g. 'ugt' => (u)'sub.gt'
+            parse = re.search(r'([^.]+)[.](.*)', opname)
+            if parse:
+                opname = parse.group(1)
+                flag   = parse.group(2)
+
             if opname not in op_data:
                 if DBG>1: print('# > "%s" does not seem to be a valid op (line 1084)' % opname)
                 return False
@@ -1464,8 +1538,7 @@ Usage:
    %s [ -v ] -cgra [cgra_info_file] [bsb-file]
    %s [ -v ] < [bsb-file]
    %s [ -v ] [bsb-file]
-   %s --help
-''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
+   %s --help''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
 
     # Load cgra_info
     cgra_filename = cgra_info.get_default_cgra_info_filename()
@@ -1475,7 +1548,10 @@ Usage:
     global VERBOSE
     # cgra_filename = get_default_cgra_info_filename()
     while (len(args) > 0):
-        if   (args[0] == '--help'): print usage; sys.exit(0);
+        if (args[0] == '--help'):
+            print usage;
+            manpage();
+            sys.exit(0);
         elif (args[0] == '-v'):    VERBOSE = True
         elif (args[0] == '-q'):    VERBOSE = False
         elif (args[0] == '-cgra' or args[0] == '-cgra_info'):
@@ -1608,17 +1684,33 @@ def set_pe_flags(DBG=0):
             PE_FLAG[flag_name] = flag_num
 
     if DBG:
-        print("# Found pe flags:")
-        for i in range(256):
-            for j in PE_FLAG:
-                if PE_FLAG[j] == i:
-                    # print("    PE_FLAG[0x%1X] = '%s'" % (i, PE_FLAG[i]))
-                    s = "PE_FLAG['%s'" % j
-                    print("#    %-13s] = 0x%1X" % (s, PE_FLAG[j]))
-                    break;
+        list_pe_flags()
+
+def list_pe_flags_alt():
+    # Sixteen flags, deal with it.
+    flag_list = range(16)
+    print PE_FLAG
+    for i in range(16):
+        print i
+        flag_list[i] = '%1x:none' % i
+        for f in PE_FLAG:
+            if i == PE_FLAG[f]:
+                flag_list[i] = '%1x:%s' % (i,f)
+    print("# FLAGS: %s" % flag_list)
+
+
+
+   
+def list_pe_flags():
+    print("# PE FLAGS:")
+    for i in range(256):
+        for j in PE_FLAG:
+            if PE_FLAG[j] == i:
+                # print("    PE_FLAG[0x%1X] = '%s'" % (i, PE_FLAG[i]))
+                s = "PE_FLAG['%s'" % j
+                print("#    %-13s] = 0x%1X" % (s, PE_FLAG[j]))
+                break;
+   
 
 
 main()
-
-
-

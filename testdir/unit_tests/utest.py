@@ -102,8 +102,8 @@ BINARY_OPS=[
     'abs', # Lenny fixed it!
     'add',
     'sub',
-    'gte',
-    'lte',
+    'gte_max',
+    'lte_min',
     # 'sel', # FIXME needs one-bit working
     'rshft',
     'lshft',

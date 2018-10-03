@@ -1,10 +1,10 @@
 F0000101 00000032
 # data[(15, 0)] : init `data0` reg with const `50`
 
-FF000101 0008F005
-# data[ 5,  0] =  5 :: alu_op 'lte_min'
+FF000101 0008D001
+# data[ 5,  0] =  1 :: alu_op 'sub'
 # data[ 6,  6] =  0 :: sign   'u'
-# data[15, 12] = 15 :: flag   'pe'
+# data[15, 12] = 13 :: flag   'le'
 # data[17, 16] =  0 :: data0  'const_a' (REG_CONST)
 # data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
@@ -23,10 +23,10 @@ FF000101 0008F005
 F0000102 0000000A
 # data[(15, 0)] : init `data0` reg with const `10`
 
-FF000102 0008F004
-# data[ 5,  0] =  4 :: alu_op 'gte_max'
+FF000102 0008A001
+# data[ 5,  0] =  1 :: alu_op 'sub'
 # data[ 6,  6] =  0 :: sign   'u'
-# data[15, 12] = 15 :: flag   'pe'
+# data[15, 12] = 10 :: flag   'ge'
 # data[17, 16] =  0 :: data0  'const_a' (REG_CONST)
 # data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
@@ -67,10 +67,10 @@ FF000103 0200E00E
 F1000201 00000014
 # data[(15, 0)] : init `data1` reg with const `20`
 
-FF000201 0002F004
-# data[ 5,  0] =  4 :: alu_op 'gte_max'
+FF000201 0002A001
+# data[ 5,  0] =  1 :: alu_op 'sub'
 # data[ 6,  6] =  0 :: sign   'u'
-# data[15, 12] = 15 :: flag   'pe'
+# data[15, 12] = 10 :: flag   'ge'
 # data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
 # data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 

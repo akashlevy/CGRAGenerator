@@ -110,6 +110,9 @@ op_data['smax'] = op_data['gte_max']   | (1 << 6)
 op_data['sle']  = op_data['lte_min']   | (1 << 6)
 op_data['sge']  = op_data['gte_max']   | (1 << 6)
 
+#FIXME op_data should only be accessed via this function!!!
+def get_op_data(opname): return op_data[get_alias(opname)]
+
 
 ##############################################################################
 # Aliases
@@ -325,8 +328,16 @@ def main():
     set_pe_flags()
     if (0):
          # Coupla tests
+         bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+         bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
+
+         bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+         bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
+
          list_aliases()
          bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+         exit()
+
          bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
          bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
          bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
@@ -1000,12 +1011,15 @@ def bs_mux(tileno, line, DBG=0):
     #     # data[(19, 18)]: data1: REG_CONST= 0x0
     #     # data[(25, 24)]:  bit0: REG_BYPASS=0x2
 
+    # Want signed mux e.g. "umux" or "smux"?  Too bad!!  Why would you want that anyway.
+
     parse = re.search('(mux|sel)\s*\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)', line)
     if not parse:
         if DBG>1: print '# > Not mux or sel (line 836)'
         return False
 
     # Note op1==data0, op2==data1
+    opname = parse.group(1)
     op1    = parse.group(2)+"_a"  # 'reg_a' or 'wire_a' or 'const0__795_a'
     op2    = parse.group(3)+"_b"
     bit0   = parse.group(4)+"_0"  # 'reg_0' or 'wire_0' or 'const0__795_0'
@@ -1024,9 +1038,11 @@ def bs_mux(tileno, line, DBG=0):
     assert op2 =='reg_b' or op2 =='wire_b' or op2== 'const_b',op2
     assert bit0=='reg_0' or bit0=='wire_0' or bit0=='const_0',op2
 
-    opname = 'mux'
+    assert (opname == 'mux') or (opname == 'sel')
+
     # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
-    data = op_data[opname] | (PE_FLAG['pe'] << 12) \
+    # data = op_data[opname] | (PE_FLAG['pe'] << 12)
+    data = get_op_data(opname) | (PE_FLAG['pe'] << 12) \
            | op_data[op1] | op_data[op2] | op_data[bit0]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
@@ -1048,25 +1064,37 @@ def bs_mux(tileno, line, DBG=0):
 #         "data[25, 24] = %2d ::  bit0 = %s"    % (data >> 25 & 0x03, regtranslate(bit0)),
 #         ]
 
-    build_comment(data, opname, sign, flag, op1, op2, bit0)
+    # Want signed mux e.g. "umux" or "smux"?  Too bad!!  Why would you want that anyway.
+    sign = 'u'
+    comment = build_comment(data, opname, sign, op1, op2, bit0)
     addbs(addr, data, comment)
+    if DBG>1:
+        print '# T0x%04X %s %s ( %s %s %s )' % (tileno,opname,'eq',op1,op2,bit0)
+        print("%s %08X" % (addr, data))
+        for L in comment: print(L)
     return True
 
 
-def build_comment(data, opname, sign, flag, op1, op2, bit0=''):
+def build_comment(data, opname, sign, op1, op2, bit0=''):
     # data[(5, 0)] : alu_op = mul
     # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
+
+    global PE_FLAG
+    f = data >> 12 & 0x0F
+    for flag_name in PE_FLAG:
+        if PE_FLAG[flag_name] == f: break
+
     comment = [
         "data[ 5,  0] = %2d :: alu_op '%s'" % (data >>  0 & 0x1F, opname),
-        "data[ 6,  6] = %2d :: sign   '%s'"   % (data >>  6 & 0x01, sign),
-        "data[15, 12] = %2d :: flag   '%s'"   % (data >> 12 & 0x0F, flag),
-        "data[17, 16] = %2d :: data0  %s"    % (data >> 16 & 0x03, regtranslate(op1)),
-        "data[19, 18] = %2d :: data1  %s"    % (data >> 18 & 0x03, regtranslate(op2)),
+        "data[ 6,  6] = %2d :: sign   '%s'" % (data >>  6 & 0x01, sign),
+        "data[15, 12] = %2d :: flag   '%s'" % (data >> 12 & 0x0F, flag_name),
+        "data[17, 16] = %2d :: data0  %s"   % (data >> 16 & 0x03, regtranslate(op1)),
+        "data[19, 18] = %2d :: data1  %s"   % (data >> 18 & 0x03, regtranslate(op2)),
         ]
     if bit0 != '': comment.append(
-        "data[25, 24] = %2d ::  bit0 = %s"    % (data >> 25 & 0x03, regtranslate(bit0))
+        "data[25, 24] = %2d :: bit0   %s"    % (data >> 25 & 0x03, regtranslate(bit0))
         )
     return comment
 
@@ -1100,6 +1128,10 @@ def bs_op(tileno, line, DBG=0):
     # Tx0201_uge(wire,const20__150)
     if opname[0:3] == 'lut': return False
     if opname[0:3] == 'pad': return False
+
+    # Also muxes and sels
+    if opname[0:3] == 'mux': return False
+    if opname[0:3] == 'sel': return False
 
     # E.g. ALIAS['eq'] = 'usub.eq'
     opname = get_alias(opname)
@@ -1152,7 +1184,7 @@ def bs_op(tileno, line, DBG=0):
 
     if DBG>1: print(sign, opname, flag, op1, op2)
     # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
-    data = op_data[opname] | SIGN_BIT[sign] | (PE_FLAG[flag] << 12) | op_data[op1] | op_data[op2]
+    data = get_op_data(opname) | SIGN_BIT[sign] | (PE_FLAG[flag] << 12) | op_data[op1] | op_data[op2]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
     addr = "FF00%04X" % tileno
@@ -1161,7 +1193,7 @@ def bs_op(tileno, line, DBG=0):
     # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
-    comment = build_comment(data, opname, sign, flag, op1, op2)
+    comment = build_comment(data, opname, sign, op1, op2)
     addbs(addr, data, comment)
     return True
 
@@ -1234,7 +1266,7 @@ def bs_lut(tileno, line, DBG=0):
 
     opname = 'lut'
     # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
-    data = op_data[opname] | (PE_FLAG['lut'] << 12) | op_data[op2] | op_data[op1] | op_data[op0]
+    data = get_op_data(opname) | (PE_FLAG['lut'] << 12) | op_data[op2] | op_data[op1] | op_data[op0]
     # TODO check opname is correct above and op_data etc.
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'

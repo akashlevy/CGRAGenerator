@@ -104,7 +104,8 @@ foreach b ($bmarks)
   endif
 
 
-  echo "  cmp $tmp/$bsa examples/$bsa"
+  echo "  diff examples/$bsa $tmp/$bsa | less"
+  echo "  cp $tmp/$bsa examples/$bsa"
   ls -l examples/$bsa $tmp/$bsa
   cmp $tmp/$bsa examples/$bsa || set result = 'FAILED'
 

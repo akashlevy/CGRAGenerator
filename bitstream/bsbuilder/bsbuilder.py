@@ -24,74 +24,146 @@ from lib import cgra_info
 global FOUND_SIXTEEN
 FOUND_SIXTEEN = False
 
-# % grep localparam $top/genesis_verif/test_pe_comp* | grep _OP
-# localparam PE_ADD_OP     = 6'h0;
-# localparam PE_SUB_OP     = 6'h1;
-# localparam PE_ABS_OP     = 6'h3;
-# localparam PE_GTE_MAX_OP = 6'h4;
-# localparam PE_LTE_MIN_OP = 6'h5;
-# localparam PE_SEL_OP     = 6'h8;
-# localparam PE_MULT_0_OP  = 6'hB;
-# localparam PE_MULT_1_OP  = 6'hC;
-# localparam PE_MULT_2_OP  = 6'hD;
-# localparam PE_RSHFT_OP   = 6'hF;
-# localparam PE_LSHFT_OP   = 6'h11;
-# localparam PE_OR_OP      = 6'h12;
-# localparam PE_AND_OP     = 6'h13;
-# localparam PE_XOR_OP     = 6'h14;
+# FIXME should be set by set_sign_bit_encoding() or something
+# FIXME2 should come from cgra_info.txt I guess
+global SIGN_BIT
+SIGN_BIT = {}
+SIGN_BIT['u']= (0 << 6)
+SIGN_BIT['s']= (1 << 6)
 
-# NOT ELABORATED: eq, cntr, div
-# % grep localparam $top/../pe_new/pe/rtl/test_pe_comp.svp | grep _OP
-# localparam PE_EQ_OP      = 6'h6; # NOPE it's gone now...?
-# localparam PE_CNTR_OP    = 6'h18;
-# localparam PE_DIV_OP     = 6'h19;
+
+# PE_FLAG dictionary set by set_pe_flags(), below
+global PE_FLAG
+    # egrep 'localparam.*PE_FLAG' $top/genesis_verif/test_pe_unq1.sv 
+    # localparam PE_FLAG_EQ = 4'h0;
+    # localparam PE_FLAG_NE = 4'h1;
+    # localparam PE_FLAG_CS = 4'h2;
+    # localparam PE_FLAG_CC = 4'h3;
+    # localparam PE_FLAG_MI = 4'h4;
+    # localparam PE_FLAG_PL = 4'h5;
+    # localparam PE_FLAG_VS = 4'h6;
+    # localparam PE_FLAG_VC = 4'h7;
+    # localparam PE_FLAG_HI = 4'h8;
+    # localparam PE_FLAG_LS = 4'h9;
+    # localparam PE_FLAG_GE = 4'hA;
+    # localparam PE_FLAG_LT = 4'hB;
+    # localparam PE_FLAG_GT = 4'hC;
+    # localparam PE_FLAG_LE = 4'hD;
+    # localparam PE_FLAG_LUT = 4'hE;
+    # localparam PE_FLAG_PE  = 4'hF;
 
 
 # FIXME I guess these should all come from cgra_info.txt maybe
+# FIXME op_data dictionary info should come from design/cgra_info
+# FIXME op_data is global, should be upper-case :(
+global op_data
 op_data = {} # dictionary
-# op_data['add']   = 0x00000000
-# op_data['mul']   = 0x0000000B
+    # FIXME where is LUT??
+    # % grep localparam $top/genesis_verif/test_pe_comp* | grep _OP
+    # localparam PE_ADD_OP     = 6'h0;
+    # localparam PE_SUB_OP     = 6'h1;
+    # localparam PE_ABS_OP     = 6'h3;
+    # localparam PE_GTE_MAX_OP = 6'h4;
+    # localparam PE_LTE_MIN_OP = 6'h5;
+    # localparam PE_SEL_OP     = 6'h8;
+    # localparam PE_MULT_0_OP  = 6'hB;
+    # localparam PE_MULT_1_OP  = 6'hC;
+    # localparam PE_MULT_2_OP  = 6'hD;
+    # localparam PE_RSHFT_OP   = 6'hF;
+    # localparam PE_LSHFT_OP   = 6'h11;
+    # localparam PE_OR_OP      = 6'h12;
+    # localparam PE_AND_OP     = 6'h13;
+    # localparam PE_XOR_OP     = 6'h14;
+
+    # NOT ELABORATED: eq, cntr, div
+    # % grep localparam $top/../pe_new/pe/rtl/test_pe_comp.svp | grep _OP
+    # localparam PE_EQ_OP      = 6'h6; # NOPE it's gone now...?
+    # localparam PE_CNTR_OP    = 6'h18;
+    # localparam PE_DIV_OP     = 6'h19;
+
 op_data['add']     = 0x00000000
 op_data['sub']     = 0x00000001
 op_data['abs']     = 0x00000003
-op_data['gte']     = 0x00000004
-op_data['lte']     = 0x00000005
-# op_data['eq']      = 0x00000006  OOPS no not supported see below
+op_data['gte_max'] = 0x00000004
+op_data['lte_min'] = 0x00000005
+#op_data['eq']     = 0x00000006  OOPS no not supported see above/below
 op_data['sel']     = 0x00000008
+op_data['mult_0']  = 0x0000000B
+op_data['mult_1']  = 0x0000000C
+op_data['mult_2']  = 0x0000000D
 op_data['rshft']   = 0x0000000F
 op_data['lshft']   = 0x00000011
-op_data['mul']     = 0x0000000B
 op_data['or']      = 0x00000012
 op_data['and']     = 0x00000013
 op_data['xor']     = 0x00000014
 
-op_data['lut']   = 0x0000000E # ?? right ??
+op_data['lut']     = 0x0000000E # ?? right ??
 
 
-# aliases (old)
-# Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
-op_data['uge']     = op_data['gte']
-op_data['max']     = op_data['gte']
-op_data['umax']    = op_data['gte']
-
-op_data['ule']     = op_data['lte']
-op_data['min']     = op_data['lte']
-op_data['umin']    = op_data['lte']
-
+# NOTE FIXME 180929 this should no longer be necessary (below)
 # Added for Harris 7/2018, probably should NOT work...
 # FIXME Will have to fix this some day SOON maybe
 # signed, unsigned, who cares!!!???  all map to same FIXME
-op_data['mux']  = op_data['sel']
 # Bit 6 decides signed/unsigned
-op_data['ashr'] = op_data['rshft'] | (1 << 6)
-op_data['smax'] = op_data['gte']   | (1 << 6)
-op_data['sle']  = op_data['lte']   | (1 << 6)
-op_data['sge']  = op_data['gte']   | (1 << 6)
+op_data['ashr'] = op_data['rshft']     | (1 << 6)
+op_data['smax'] = op_data['gte_max']   | (1 << 6)
+op_data['sle']  = op_data['lte_min']   | (1 << 6)
+op_data['sge']  = op_data['gte_max']   | (1 << 6)
 
-# (Bits [15:12] == 1) => set Z flag
-# (Also see "pe_flag_eq" below
-op_data['eq']   = op_data['xor']
+#FIXME op_data should only be accessed via this function!!!
+def get_op_data(opname): return op_data[get_alias(opname)]
 
+
+##############################################################################
+# Aliases
+
+global ALIAS
+ALIAS = {}
+
+ALIAS['eq'] = 'sub.eq'
+
+# aliases (gt/lt/ge/min/max...)
+# Is this right?  I guess this is right.  Coreir uses ule/uge maybe?
+ALIAS['gte']     = 'sub.ge'
+ALIAS['ge']      = 'sub.ge'
+
+ALIAS['lte']     = 'sub.le'
+ALIAS['le']      = 'sub.le'
+
+ALIAS['gt']      = 'sub.gt'
+ALIAS['lt']      = 'sub.lt'
+
+ALIAS['max']     = 'gte_max'
+ALIAS['min']     = 'lte_min'
+
+# Aliases (other)
+ALIAS['mul']     = 'mult_0'
+ALIAS['mux']     = 'sel'
+
+def get_alias(opname,DBG=0):
+    global ALIAS
+    orig_name = opname
+    if DBG>2: print("1 Found op '%s'" % opname)
+    while opname in ALIAS:
+        if DBG>2: print("2 Found alias '%s'" % ALIAS[opname])
+        opname = ALIAS[opname]
+        if DBG>2: print("3 Found op '%s'" % opname)
+    return opname
+
+def list_aliases():
+    global ALIAS
+    print("# ALIASES")
+    for opname in sorted(ALIAS):
+        print("  %-4s => %-s" % (opname, ALIAS[opname]))
+
+def exhaustive_alias_test(DBG=0):
+    global ALIAS
+    for opname in ALIAS:
+        for op1 in ['wire','reg','const12']:
+            for op2 in ['wire','reg','const12']:
+                op = "%s(%s,%s)" % (opname, op1, op2)
+                print("TEST %s" % op)
+                bs_op(4, op, DBG); print("")
 
 
 # A (data0) mode bits are 16,17; REG_CONST=0; REG_DELAY=3; REG_BYPASS=2
@@ -120,15 +192,51 @@ op_data['wire_2']  = (2 << 28)
 op_data['reg_2']   = (3 << 28)
 
 
-# FIXME need more flags duh, see pe spec
-# data[(15, 12]: flag_sel: PE_FLAG_LUT (0xE)
-# data[(15, 12]: flag_sel: PE_FLAG_PE  (0xF)
-op_data['pe_flag_lut'] = (0xE << 12)
-op_data['pe_flag_pe']  = (0xF << 12)
+def manpage():
+    print('''
+Operations should be of the form "T0x<tilenum>_[us]op<.flag>(op1,op2...)" where
+  <tilenum> is a 4bit hex number
+  [us] is "u" for unsigned or "s" for signed or nothing (also unsigned)
+  op and flag choices are listed below (flag is optional)
+  op1,op2... are one of "const", "reg", or "wire"
 
-# (Bits [15:12] == 1) => set Z flag
-op_data['pe_flag_eq']  = (0x0 << 12)
+Examples:
+    T0x0306_sub.le(wire,const50__148)
+    T0x0306_smul(wire,const50__148)
+    T0x0705_eq(wire,const50__148)
+    T0x1A09_lte_min.lt(wire,reg)
+    T0x022F_gte(wire,reg)
+    T0x0306_ugt(const16,wire)
+''')
 
+    # OPS: Run through the list of 6-bit ops
+    global op_data
+
+    # Find max op number
+    max = 0
+    for i in range(2**6):
+        for o in op_data:
+            if o[0:3] in ['con','reg','wir']: continue
+            if i == op_data[o]:
+                if i>max: max=i
+
+    op_list = range(max)
+    for i in op_list:
+        op_list[i] = '%02x:none' % i
+        for o in op_data:
+            if o[0:3] in ['con','reg','wir']: continue
+            if i == op_data[o]: op_list[i] = '%02x:%s' % (i,o)
+
+    print("# OPS: %s" % op_list)
+    print("")
+
+    # ALIASES
+    list_aliases()
+    print("")
+
+    # PE FLAGS
+    list_pe_flags()
+    print("")
 
 def bs_addr_sort(addr):
     '''Bitstream address looks like this: RRFFTTTT;
@@ -217,6 +325,30 @@ opb = {}
 # T3_in_s2t0 -> T3_mem_in
 
 def main():
+    set_pe_flags()
+    if (0):
+         # Coupla tests
+         bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+         bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
+
+         bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+         bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
+
+         list_aliases()
+         bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+         exit()
+
+         bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
+         bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
+         bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
+         bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
+         bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
+         exhaustive_alias_test(DBG=9)
+         bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
+         bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
+         bs_op(4, 'gte(wire,reg)', DBG=9); print("")
+         exit()
+
     process_args()
 
     if not VERBOSE: DBG=0
@@ -294,6 +426,7 @@ def main():
         # mul(wire,const15_15)
         # add(wire,wire)
         # mul(reg,const13_13$1)
+        # usub.gt(reg,const13_13$1)
         if bs_op(tileno,line, max(0,DBG-1)):
             if DBG: print ''
             continue
@@ -878,12 +1011,15 @@ def bs_mux(tileno, line, DBG=0):
     #     # data[(19, 18)]: data1: REG_CONST= 0x0
     #     # data[(25, 24)]:  bit0: REG_BYPASS=0x2
 
+    # Want signed mux e.g. "umux" or "smux"?  Too bad!!  Why would you want that anyway.
+
     parse = re.search('(mux|sel)\s*\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)', line)
     if not parse:
         if DBG>1: print '# > Not mux or sel (line 836)'
         return False
 
     # Note op1==data0, op2==data1
+    opname = parse.group(1)
     op1    = parse.group(2)+"_a"  # 'reg_a' or 'wire_a' or 'const0__795_a'
     op2    = parse.group(3)+"_b"
     bit0   = parse.group(4)+"_0"  # 'reg_0' or 'wire_0' or 'const0__795_0'
@@ -902,8 +1038,11 @@ def bs_mux(tileno, line, DBG=0):
     assert op2 =='reg_b' or op2 =='wire_b' or op2== 'const_b',op2
     assert bit0=='reg_0' or bit0=='wire_0' or bit0=='const_0',op2
 
-    opname = 'mux'
-    data = op_data[opname] | op_data['pe_flag_pe'] \
+    assert (opname == 'mux') or (opname == 'sel')
+
+    # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
+    # data = op_data[opname] | (PE_FLAG['pe'] << 12)
+    data = get_op_data(opname) | (PE_FLAG['pe'] << 12) \
            | op_data[op1] | op_data[op2] | op_data[bit0]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
@@ -915,16 +1054,50 @@ def bs_mux(tileno, line, DBG=0):
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
     # data[(25, 24)] : bit0: REG_CONST
-    comment = [
-        "data[(5, 0)] : alu_op = %s" % opname,
-        "data[(6, 6)] : unsigned=0x0",
-        "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
-        "data[(17, 16)]: data0: %s" % regtranslate(op1),
-        "data[(19, 18)]: data1: %s" % regtranslate(op2),
-        "data[(25, 24)]:  bit0: %s" % regtranslate(bit0),
-        ]
+
+#     comment = [
+#         "data[( 5,  0)]: alu_op = %s (0x%02X)" % (opname, op_data[opname]),
+#         "data[( 6,  6)]: unsigned=0x0",
+#         "data[(15, 12] : flag_sel: PE_FLAG_PE=0xF",
+#         "data[17, 16] = %2d :: data0 = %s"    % (data >> 16 & 0x03, regtranslate(op1)),
+#         "data[19, 18] = %2d :: data1 = %s"    % (data >> 18 & 0x03, regtranslate(op2)),
+#         "data[25, 24] = %2d ::  bit0 = %s"    % (data >> 25 & 0x03, regtranslate(bit0)),
+#         ]
+
+    # Want signed mux e.g. "umux" or "smux"?  Too bad!!  Why would you want that anyway.
+    sign = 'u'
+    comment = build_comment(data, opname, sign, op1, op2, bit0)
     addbs(addr, data, comment)
+    if DBG>1:
+        print '# T0x%04X %s %s ( %s %s %s )' % (tileno,opname,'eq',op1,op2,bit0)
+        print("%s %08X" % (addr, data))
+        for L in comment: print(L)
     return True
+
+
+def build_comment(data, opname, sign, op1, op2, bit0=''):
+    # data[(5, 0)] : alu_op = mul
+    # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
+    # data[(17, 16)] : data0: REG_DELAY
+    # data[(19, 18)] : data1: REG_CONST
+
+    global PE_FLAG
+    f = data >> 12 & 0x0F
+    for flag_name in PE_FLAG:
+        if PE_FLAG[flag_name] == f: break
+
+    comment = [
+        "data[ 5,  0] = %2d :: alu_op '%s'" % (data >>  0 & 0x1F, opname),
+        "data[ 6,  6] = %2d :: sign   '%s'" % (data >>  6 & 0x01, sign),
+        "data[15, 12] = %2d :: flag   '%s'" % (data >> 12 & 0x0F, flag_name),
+        "data[17, 16] = %2d :: data0  %s"   % (data >> 16 & 0x03, regtranslate(op1)),
+        "data[19, 18] = %2d :: data1  %s"   % (data >> 18 & 0x03, regtranslate(op2)),
+        ]
+    if bit0 != '': comment.append(
+        "data[25, 24] = %2d :: bit0   %s"    % (data >> 25 & 0x03, regtranslate(bit0))
+        )
+    return comment
+
 
 
 def bs_op(tileno, line, DBG=0):
@@ -933,12 +1106,15 @@ def bs_op(tileno, line, DBG=0):
     # add(wire,wire)
     # mul(reg,const13_13$1)
     # ule(wire,const50__148)
+    # sub_le(wire,const50__148)
 
     # OUT (../examples/bw1000.bsa):
     # FF000001 0003 000B
     # data[(4, 0)] : alu_op = mul
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
+
+    if DBG>1: print(line)
 
     parse = re.search('(\S+)\s*\(\s*(\S+)\s*,\s*(\S+)\s*\)', line)
     if not parse: return False
@@ -947,10 +1123,53 @@ def bs_op(tileno, line, DBG=0):
     op1    = parse.group(2)+"_a"  # 'reg_a' or 'wire_a' or 'const19_19$1_a'
     op2    = parse.group(3)+"_b"
 
-    if DBG>1: print '# tile%02d  %s %s %s' % (tileno,opname,op1,op2)
+    # LUTs and PADs get processed elsewhere e.g.
+    # Tx0301_lut66(wire,wire,const0_0)
+    # Tx0201_uge(wire,const20__150)
+    if opname[0:3] == 'lut': return False
+    if opname[0:3] == 'pad': return False
+
+    # Also muxes and sels
+    if opname[0:3] == 'mux': return False
+    if opname[0:3] == 'sel': return False
+
+    # E.g. ALIAS['eq'] = 'usub.eq'
+    opname = get_alias(opname)
+    if DBG>2: print("Found op '%s'" % opname)
+
+    # OOPS no FIXME below opname can be e.g. 'mult_0' or 'lte_max' :(
+    # Unpack flag if one exists, e.g. if opname = "usub.lt" flag is 'lt'
+    # For backward compatibility, default flag is 'eq'
+    # although should probably be 'pe', no?
+    flag = 'pe'
+    parse = re.search(r'([^.]+)[.](.*)', opname)
+    if parse:
+        opname = get_alias(parse.group(1))
+        flag   = parse.group(2)
+
+    if DBG>1: print '# T0x%04X %s %s ( %s %s )' % (tileno,opname,flag,op1,op2)
+
+    global SIGN_BIT
+    sign = 'u'    # Default is unsigned, why not
     if opname not in op_data:
-        if DBG>1: print '# > Not an op (line 843)'
-        return False
+        # Check for sign maybe
+        # E.g. "usub" means "unsigned sub"
+        parse = re.search(r'^([us])(.*)', opname)
+        if parse:
+            sign = parse.group(1); opname = get_alias(parse.group(2))
+
+            # Depending on how alias worked out, may need to redo flag thingy
+            # E.g. 'ugt' => (u)'sub.gt'
+            parse = re.search(r'([^.]+)[.](.*)', opname)
+            if parse:
+                opname = get_alias(parse.group(1))
+                flag   = parse.group(2)
+
+            if opname not in op_data:
+                if DBG>1: print('# > "%s" does not seem to be a valid op (line 1084)' % opname)
+                return False
+
+    if DBG>1: print '# T0x%04X    %s %s %s ( %s %s )' % (tileno,sign,opname,flag,op1,op2)
 
     # If op is a const, returns 'const_a' or 'const_b'
     op1 = bs_const(tileno, op1, 'op1')
@@ -959,10 +1178,13 @@ def bs_op(tileno, line, DBG=0):
     assert op1=='reg_a' or op1=='wire_a' or op1=='const_a',op1
     assert op2=='reg_b' or op2=='wire_b' or op2=='const_b',op2
 
-    if opname == 'eq': flag = op_data['pe_flag_eq']
-    else             : flag = op_data['pe_flag_pe']
+# Don't think we need this anymore...
+#     # FIXME does this belong here?  Looks like a hack to me!
+#     if opname == 'eq': flag = 'eq'
 
-    data = op_data[opname] | flag | op_data[op1] | op_data[op2]
+    if DBG>1: print(sign, opname, flag, op1, op2)
+    # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
+    data = get_op_data(opname) | SIGN_BIT[sign] | (PE_FLAG[flag] << 12) | op_data[op1] | op_data[op2]
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
     addr = "FF00%04X" % tileno
@@ -971,14 +1193,7 @@ def bs_op(tileno, line, DBG=0):
     # data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
     # data[(17, 16)] : data0: REG_DELAY
     # data[(19, 18)] : data1: REG_CONST
-
-    comment = [
-        "data[( 5,  0)]: alu_op = %s"   % opname,
-        "data[( 6,  6)]: unsigned=0x%d" % (op_data[opname] >> 6 & 1),
-        "data[(15, 12] : flag_sel: PE_FLAG_PE=0x%X" % (flag >> 12),
-        "data[(17, 16)]: data0: %s" % regtranslate(op1),
-        "data[(19, 18)]: data1: %s" % regtranslate(op2),
-        ]
+    comment = build_comment(data, opname, sign, op1, op2)
     addbs(addr, data, comment)
     return True
 
@@ -1050,7 +1265,8 @@ def bs_lut(tileno, line, DBG=0):
     assert op2=='reg_2' or op2=='wire_2' or op2=='const_2', op2
 
     opname = 'lut'
-    data = op_data[opname] | op_data['pe_flag_lut'] | op_data[op2] | op_data[op1] | op_data[op0]
+    # FIXME PE_FLAG shift amount should come from config file e.g. cgra_i
+    data = get_op_data(opname) | (PE_FLAG['lut'] << 12) | op_data[op2] | op_data[op1] | op_data[op0]
     # TODO check opname is correct above and op_data etc.
 
     # Address for a PE is reg 'FF' + elem '00' + tileno e.g. '0001'
@@ -1105,10 +1321,17 @@ def lut_const(bitno, kstring, tileno):
     addbs(addr, data, comment)
 
 
+# def regtranslate_old(op):
+#     if   op[0:3]=='reg': return 'REG_DELAY= 0x3'
+#     elif op[0:3]=='wir': return 'REG_BYPASS=0x2'
+#     elif op[0:3]=='con': return 'REG_CONST= 0x0'
+#     else: assert False, 'what izzit'
+
 def regtranslate(op):
-    if   op[0:3]=='reg': return 'REG_DELAY= 0x3'
-    elif op[0:3]=='wir': return 'REG_BYPASS=0x2'
-    elif op[0:3]=='con': return 'REG_CONST= 0x0'
+    # E.g. regtranslate('data0', 'wire') =>
+    if   op[0:3]=='reg': return "'%s' (REG_DELAY)"  % (op)
+    elif op[0:3]=='wir': return "'%s' (REG_BYPASS)" % (op)
+    elif op[0:3]=='con': return "'%s' (REG_CONST)"  % (op)
     else: assert False, 'what izzit'
 
 
@@ -1324,8 +1547,7 @@ Usage:
    %s [ -v ] -cgra [cgra_info_file] [bsb-file]
    %s [ -v ] < [bsb-file]
    %s [ -v ] [bsb-file]
-   %s --help
-''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
+   %s --help''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
 
     # Load cgra_info
     cgra_filename = cgra_info.get_default_cgra_info_filename()
@@ -1335,7 +1557,10 @@ Usage:
     global VERBOSE
     # cgra_filename = get_default_cgra_info_filename()
     while (len(args) > 0):
-        if   (args[0] == '--help'): print usage; sys.exit(0);
+        if (args[0] == '--help'):
+            print usage;
+            manpage();
+            sys.exit(0);
         elif (args[0] == '-v'):    VERBOSE = True
         elif (args[0] == '-q'):    VERBOSE = False
         elif (args[0] == '-cgra' or args[0] == '-cgra_info'):
@@ -1422,8 +1647,79 @@ def find_sb16():
                     return feature
 
 
+def set_pe_flags(DBG=0):
+    global PE_FLAG
+    PE_FLAG = {}
+    ##############################################################################
+    # PE FLAGS
+    # Note could/should set these automatically based on verilog in genesis_verif!
+    # 
+    # FIXME/TODO autogenerate this string with something like:
+    # egrep 'localparam.*PE_FLAG' $top/genesis_verif/test_pe_unq1.sv 
+    pe_flags_raw_string = """
+    localparam PE_FLAG_EQ = 4'h0;
+    localparam PE_FLAG_NE = 4'h1;
+    localparam PE_FLAG_CS = 4'h2;
+    localparam PE_FLAG_CC = 4'h3;
+    localparam PE_FLAG_MI = 4'h4;
+    localparam PE_FLAG_PL = 4'h5;
+    localparam PE_FLAG_VS = 4'h6;
+    localparam PE_FLAG_VC = 4'h7;
+    localparam PE_FLAG_HI = 4'h8;
+    localparam PE_FLAG_LS = 4'h9;
+    localparam PE_FLAG_GE = 4'hA;
+    localparam PE_FLAG_LT = 4'hB;
+    localparam PE_FLAG_GT = 4'hC;
+    localparam PE_FLAG_LE = 4'hD;
+    localparam PE_FLAG_LUT = 4'hE;
+    localparam PE_FLAG_PE  = 4'hF;
+"""
+
+    pe_flags_raw_array = pe_flags_raw_string.split('\n')
+
+    if DBG>2:
+        print("# Found raw pe flags: %s" % pe_flags_raw_string)
+        print("Turned it into an array:"),
+        for line in pe_flags_raw_array: print(line)
+
+    pe_flag = {}
+    for line in pe_flags_raw_array:
+        parse = re.search("PE_FLAG_(\S*).*'h([0-9a-fA-F]+)", line)
+        if parse:
+            if DBG>2: print(parse.group(1), parse.group(2)),
+            flag_name = parse.group(1).lower()
+            flag_num  = int(parse.group(2),16)
+            if DBG>2: print(flag_name, flag_num)
+            PE_FLAG[flag_name] = flag_num
+
+    if DBG:
+        list_pe_flags()
+
+def list_pe_flags_alt():
+    # Sixteen flags, deal with it.
+    flag_list = range(16)
+    print PE_FLAG
+    for i in range(16):
+        print i
+        flag_list[i] = '%1x:none' % i
+        for f in PE_FLAG:
+            if i == PE_FLAG[f]:
+                flag_list[i] = '%1x:%s' % (i,f)
+    print("# FLAGS: %s" % flag_list)
+
+
+
+   
+def list_pe_flags():
+    print("# PE FLAGS:")
+    for i in range(256):
+        for j in PE_FLAG:
+            if PE_FLAG[j] == i:
+                # print("    PE_FLAG[0x%1X] = '%s'" % (i, PE_FLAG[i]))
+                s = "PE_FLAG['%s'" % j
+                print("#    %-13s] = 0x%1X" % (s, PE_FLAG[j]))
+                break;
+   
+
 
 main()
-
-
-

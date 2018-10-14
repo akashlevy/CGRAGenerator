@@ -1,9 +1,36 @@
 #!/usr/bin/env python3
 
-def print_TOC():
-    print('''\
-##### Table of Contents  
+def main():
+    for s in build_sections():
+        s.print_label()
+        print(s.title)
+        if not s.auto_generated: print(s.autogen_warning)
+        print(s.text)
+        print(s.hline)
 
+class Section:
+    def __init__(self, autogen, label, title, text):
+        self.auto_generated = autogen
+        self.label = label
+        self.title = title
+        self.text  = text
+        self.hline = '<!------------------------------------------------------------------>'
+        self.autogen_warning='''
+<small>
+<b>FIXME</b>
+<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
+</small>
+'''
+    def print_label(self):
+        if self.label: print('<a name="%s"/>' % self.label)
+
+def build_sections():
+    sections = []
+    sections.append(Section(
+        autogen=True, # FIXME this is a  LIE!!
+        label="TOC",
+        title="##### Table of Contents",
+        text='''\
 * [Bitstream Address](#bitstream_address)
     * [Tile Number](#tile_number)
     * [Element Number](#element_number)
@@ -14,20 +41,13 @@ def print_TOC():
     * [PE Instruction Decode, bits 15-0](#pe_instruction_decode_15_0)
         * [PE flags](#pe_flags)
         * [ALU Operations](#alu_ops)
-''')
-
-def print_hline():
-    print("<!------------------------------------------------------------------>")
-
-def print_bitstream_address():
-    ba = '''\
-<a name="bitstream_address"/>
-
-## Bitstream Address
-
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-
+'''
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="bitstream_address",
+        title="## Bitstream Address",
+        text='''\
 The CGRA configuration bitstream consists of pairs of 32-bit numbers,
 one for address and one for data.  Each pair programs
 one "feature" in a tile.  The 32-bit address is decoded as shown:
@@ -47,18 +67,12 @@ The bitstream address consists of three elements
 
 The element number for a PE is 0x00.
 '''
-    print(ba)
-
-
-def print_tile_number():
-    tn="""\
-<a name='tile_number'/>
-
-### Tile Number
-
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="tile_number",
+        title="### Tile Number",
+        text="""\
 **Tile number** (bits 15:0) is composed of eight bits.  The leftmost bit
 (MSB) tells whether this is a normal tile on te CGRA grid or if it's a
 global/virtual tile e.g. a global signal tile (GST).
@@ -74,37 +88,21 @@ E.g. tile number 0x0809 indicates a tile that lives in row 8 column 9.
 Tile numbers e.g. 0x8000, 0xA504 etc. indicate global tiles with no
 particular physical placement within the CGRA.
 """
-    print(tn)
-
-def print_element_number():
-    en='''
-<a name='element_number'/>
-
-### Element (Feature) Number
-
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="element_number",
+        title="### Element (Feature) Number",
+        text='''\
 The element number to address a PE is 0x00.  Other numbers usually
 indicate the address of a switchbox or connection box within the tile.
-
-<small>
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-</small>
 '''
-    print(en)
-
-
-
-def print_register_number():
-    rn="""\
-<a name='register_number'/>
-
-### Register Number
-
-<small>
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-</small>
-
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="register_number",
+        title="### Register Number",
+        text="""\
 When the element number is 0x00, indicating a PE address, the register
 number tells how to decode the data word associated with the address.
 
@@ -135,28 +133,18 @@ operation).
 The remainder of this document addresses how to decode the 32-bit
 "op_code".
 """
-    print(rn)
-
-
-def print_pe_instruction_intro():
-    pii="""\
-<a name=pe_instruction>
-
-## PE Instruction (32-bit "op_code")
-
-"""
-
-def print_pe_instrcution_decode():
-    pid="""\
-<a name=pe_instruction_decode_31_16>
-
-<small>
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-</small>
-
-### PE Instruction Decode, bits 31-16 (PE inputs)
-
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="pe_instruction",
+        title='## PE Instruction (32-bit "op_code")',
+        text=""
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="pe_instruction_decode_31_16",
+        title="### PE Instruction Decode, bits 31-16 (PE inputs)",
+        text="""\
 The top (most-significant) 16 bits of the PE instruction (bits 31-16
 of the 32-bit bitstream data word) indicate modes for each of the PE's
 input sources.  Each PE can have three one-bit inputs (in the case
@@ -182,11 +170,13 @@ bits in each field:
 |  2'h3 | REG_DELAY  | Assumes data is always valid, adds 1 cycle delay |
 
 TODO need an example here I think
-
-<a name=pe_instruction_decode_15_0>
-
-### PE Instruction Decode, bits 15-0
-
+"""
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="pe_instruction_decode_15_0",
+        title="### PE Instruction Decode, bits 15-0",
+        text="""\
 The remaining 16 bits in the lower half of the PE instruction are
 decoded as follows:
 
@@ -203,7 +193,29 @@ decoded as follows:
 ** result = b[t]
 * signed tells whether operation is signed (1) or unsigned (0)
 """
-    print(pid)
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="",
+        title="",
+        text="""\
+"""
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="",
+        title="",
+        text="""\
+"""
+    ))
+    sections.append(Section(
+        autogen=False,
+        label="",
+        title="",
+        text="""\
+"""
+    ))
+    return sections
 
 def print_optable():
     print('''\
@@ -215,7 +227,7 @@ def print_optable():
     import gen_optable_md
     gen_optable_md.main()
 
-def main():
+def oldmain():
     print_TOC()
     print_hline()
     print_bitstream_address()
@@ -223,10 +235,10 @@ def main():
     print_element_number()
     print_register_number()
     print_pe_instruction_intro()
-    print_pe_instrcution_decode()
+    print_pe_instruction_decode()
     print_optable()
 
 
 
+# old_main()
 main()
-

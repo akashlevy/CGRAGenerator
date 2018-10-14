@@ -13,7 +13,7 @@ def get_generated_cgra_info_filename():
     CGRA_FILENAME_TOP = "CGRAGenerator/hardware/generator_z/top/cgra_info.txt"
     import os
     mydir = os.path.dirname(os.path.realpath(__file__))
-    # print mydir
+    # print(mydir)
     parse = re.search('^(.*/)CGRAGenerator', mydir)
     if not parse:
         return ''
@@ -28,6 +28,7 @@ def get_cached_cgra_info_filename():
     return mydir + "/" + CGRA_FILENAME_CACHED
 
 def read_cgra_info(filename='', grid='8x8', verbose=False):
+    verbose=True
     # https://docs.python.org/3/library/xml.etree.elementtree.html
     # Default config file is e.g. 'cgra_info_8x8.txt' in this directory
     import os
@@ -64,6 +65,8 @@ def read_cgra_info(filename='', grid='8x8', verbose=False):
 
     global CGRA_FILENAME
     CGRA_FILENAME = filename
+
+    return CGRA
     
 #     global MEMTILE_HEIGHT
 #     MEMTILE_HEIGHT = mem_tile_height()
@@ -95,7 +98,7 @@ def list_opcodes():
     print("")
     table_body = []
     for op in o.iter('op'):
-        # print op.text
+        # print(op.text)
 
         op_sel  = op.attrib['sel']
         op_name = op.attrib['name']
@@ -132,7 +135,7 @@ def list_opcodes():
         
         table_body.append(op_table_md(op_sel, op_name, L1, L2))
 
-    print op_table_header()
+    print(op_table_header())
     for line in table_body: print(line)
 
 

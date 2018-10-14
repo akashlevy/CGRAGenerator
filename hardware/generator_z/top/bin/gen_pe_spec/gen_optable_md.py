@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
 import re
 import sys
 
@@ -7,12 +8,16 @@ global CGRA
 import read_cgra_info
 CGRA = read_cgra_info.read_cgra_info()
 
-
 import traceback # sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 def show_trace(nlines=100):
     sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
 def main():
+    # Header
+    print("#### ALU Operations, bits 5-0")
+
+
+
     o = get_opcodes()
     list_opcodes(o)
 
@@ -148,3 +153,5 @@ def cleanup(eq):
     eq = eq.replace('?', '? ')
     eq = re.sub(r'([^0-9]):([^0-9])', '\\1 : \\2', eq)
     return eq
+
+main()

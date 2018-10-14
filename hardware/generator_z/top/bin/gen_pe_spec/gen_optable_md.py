@@ -15,11 +15,15 @@ def show_trace(nlines=100):
 def main():
     # Header
     print("#### ALU Operations, bits 5-0")
-
-
-
     o = get_opcodes()
     list_opcodes(o)
+    # Trailer
+    print("""\
+Notes:
+* a=data0, b=data1, d=bit0
+* RSHFT/LSHFT 'Shift by' value b is unsigned
+""")
+
 
 # FIXME the CGRA/xml portion of get_opcodes and list_opcodes
 # should be in read_cgra_info module instead of here...!
@@ -97,17 +101,17 @@ def op_table_md(op_sel, op_name, L1, L2):
 | 6'h04 | gte_max |(a gte b)? a : b    | a gte b          | Maximum/<br/>Greater or equal  |
 | 6'h05 | lte_min |(a lte b)? a : b    | a lte b          | Minimum/<br/>Less or equal     |
 | 6'h08 | sel     | d? a : b           |(a+b) gte 2^16    | Select                         |
-| 6'h0b | mult_0  |(a*b)[15:0]         |(a*b+c) gte 2^16  | Shift right                    |
-| 6'h0c | mult_1  |(a*b)[23:8]         |(a*b+c) gte 2^24  | Shift left                     |
-| 6'h0d | mult_2  |(a*b)[31:16]        | 0                | Multiply high                  |
-| 6'h0f | rshft   | a rshft b[3:0]     |(a+b) gte 2^16    | Multiply middle                |
+| 6'h0B | mult_0  |(a*b)[15:0]         |(a*b+c) gte 2^16  | Shift right                    |
+| 6'h0C | mult_1  |(a*b)[23:8]         |(a*b+c) gte 2^24  | Shift left                     |
+| 6'h0D | mult_2  |(a*b)[31:16]        | 0                | Multiply high                  |
+| 6'h0F | rshft   | a rshft b[3:0]     |(a+b) gte 2^16    | Multiply middle                |
 | 6'h11 | lshft   | a lshft b[3:0]     |(a+b) gte 2^16    | Multiply                       |
 | 6'h12 | or      | a|b                |(a+b) gte 2^16    | Or                             |
 | 6'h13 | and     | a and b            |(a+b) gte 2^16    | And                            |
 | 6'h14 | xor     | a^b                |(a+b) gte 2^16    | Xor                            |
 """
-    # "0x01" => "6'h01"
-    op_sel = "6'h" + op_sel[2:100]
+    # "0x0f" => "6'h0F"
+    op_sel = "6'h" + op_sel[2:100].upper()
 
     # "out16 = (a lte b)? a : b" => "(a lte b)? a : b" etc
     L1 = L1[8:1000]
@@ -127,7 +131,7 @@ def op_table_md(op_sel, op_name, L1, L2):
     comment['lshft']   = 'Shift left'
     comment['or']      = 'Or'
     comment['and']     = 'And'
-    comment['xor']     = 'Exclusive-or'
+    comment['xor']     = 'Xor'
     #       | Value| Op   |Res16b|Res1b |Comment|
     return "| %-5s | %-7s |%-19s |%-17s | %-30s |" % (op_sel, op_name, L1, L2, comment[op_name])
 
@@ -152,6 +156,27 @@ def cleanup(eq):
     #
     eq = eq.replace('?', '? ')
     eq = re.sub(r'([^0-9]):([^0-9])', '\\1 : \\2', eq)
+    #
+    eq = eq.replace('gte', '>=')
+    eq = eq.replace('lte', '<=')
+    eq = eq.replace('gt',  '>')
+    eq = eq.replace('lt',  '<')
+    eq = eq.replace('a and b', 'a&b')
+    #
+    # Before:
+    # | 6'h00 | add     | a+b+d              |(a+b+d) >= 2^16   | Addition                       |
+    # | 6'h01 | sub     | a+~b+1             |(a+~b+1) >= 2^16  | Subtraction                    |
+    # After:
+    # | 6'h00 | add     | a+ b+d             |(a+ b+d) >= 2^16  | Addition                       |
+    # | 6'h01 | sub     | a+~b+1             |(a+~b+1) >= 2^16  | Subtraction                    |
+    eq = eq.replace('a+b+d', 'a+ b+d')
+    # 
+    eq = eq.replace('rshft', '>>')
+    eq = eq.replace('lshft', '<<')
+    #
+    # Asterisk by itself is no good in markdown table!  Etc.
+    eq = eq.replace('a*b',     'a\*b')
+    eq = eq.replace('a|b',     'a\|b')
     return eq
 
 main()

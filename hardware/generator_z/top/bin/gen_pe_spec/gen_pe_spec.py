@@ -16,21 +16,18 @@ class Section:
         self.title = title
         self.text  = text
         self.hline = '<!------------------------------------------------------------------>'
-        self.autogen_warning='''\
-<small>\
-<b>FIXME</b>\
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>\
-</small>\
+        self.autogen_warning='''
+##### <i>Note, this section not auto-generated (yet); info may or may not be accurate for your design.<br/></i>
 '''
     def print_label(self):
-        if self.label: print("<a name='%s'/>" % self.label)
+        if self.label: print("<a name='%s'/>\n" % self.label)
 
 def build_sections():
     sections = []
     sections.append(Section(
         autogen=True, # FIXME this is a  LIE!!
         label="TOC",
-        title="##### Table of Contents",
+        title="# Table of Contents",
         text='''\
 * [Bitstream Address](#bitstream_address)
     * [Tile Number](#tile_number)
@@ -75,7 +72,7 @@ The element number for a PE is 0x00.
         title="### Tile Number",
         text="""\
 **Tile number** (bits 15:0) is composed of eight bits.  The leftmost bit
-(MSB) tells whether this is a normal tile on te CGRA grid or if it's a
+(MSB, bit 15) tells whether this is a normal tile on te CGRA grid or if it's a
 global/virtual tile e.g. a global signal tile (GST).
 
     +--+--------------+-----------------+
@@ -110,7 +107,6 @@ number tells how to decode the data word associated with the address.
 | Address<br>[31:24] | Name | Width | Comment |
 | ------- | ----------  | ----- | ------------------------------------------------------ |
 |  8'h00  | lut_code    |    8  | LUT content. Defines the function for 1bit LUT output. |
-| ------- | ----------  | ----- | ------------------------------------------------------ |
 |  8'hFF  | op_code     |   32  | Configures 16bit ALU, see below for opcodes            |
 |  8'hF0  | data0_const |   16  | Sets the value of the data0 register in REG_CONST mode |
 |  8'hF1  | data1_const |   16  | Sets the value of the data1 register in REG_CONST mode |
@@ -136,7 +132,7 @@ The remainder of this document addresses how to decode the 32-bit
 """
     ))
     sections.append(Section(
-        autogen=False,
+        autogen=True,
         label="pe_instruction",
         title='## PE Instruction (32-bit "op_code")',
         text=""
@@ -227,7 +223,7 @@ decoded as follows:
         label="ARM_ccodes",
         title="# Appendix A: ARM Condition Codes",
         text="""\
-<img src="https://github.com/StanfordAHA/CGRAGenerator/raw/master/doc/arm-ccodes.png" width="400"/>\
+<img src="https://github.com/StanfordAHA/CGRAGenerator/raw/master/doc/arm-ccodes.png" width="600"/>\
 """
     ))
     return sections

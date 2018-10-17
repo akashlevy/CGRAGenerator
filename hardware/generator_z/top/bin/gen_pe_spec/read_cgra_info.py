@@ -28,7 +28,6 @@ def get_cached_cgra_info_filename():
     return mydir + "/" + CGRA_FILENAME_CACHED
 
 def read_cgra_info(filename='', grid='8x8', verbose=False):
-    verbose=True
     # https://docs.python.org/3/library/xml.etree.elementtree.html
     # Default config file is e.g. 'cgra_info_8x8.txt' in this directory
     import os

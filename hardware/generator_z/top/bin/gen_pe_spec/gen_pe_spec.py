@@ -2,6 +2,7 @@
 
 def main():
     for s in build_sections():
+        # if s.label != "pe_flags": continue
         s.print_label()
         print(s.title)
         if not s.auto_generated: print(s.autogen_warning)
@@ -15,14 +16,14 @@ class Section:
         self.title = title
         self.text  = text
         self.hline = '<!------------------------------------------------------------------>'
-        self.autogen_warning='''
-<small>
-<b>FIXME</b>
-<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>
-</small>
+        self.autogen_warning='''\
+<small>\
+<b>FIXME</b>\
+<i>This section not auto-generated (yet); info may or may not be accurate for this design.</i>\
+</small>\
 '''
     def print_label(self):
-        if self.label: print('<a name="%s"/>' % self.label)
+        if self.label: print("<a name='%s'/>" % self.label)
 
 def build_sections():
     sections = []
@@ -194,8 +195,28 @@ decoded as follows:
 * signed tells whether operation is signed (1) or unsigned (0)
 """
     ))
+
+    # Auto-generate op table section
+    import gen_optable_md
     sections.append(Section(
-        autogen=False,
+        autogen=True,
+        label="alu_ops",
+        title="#### ALU Operations, bits 5-0",
+        text=gen_optable_md.list_opcodes(DBG=0)
+    ))
+
+    # Auto-generate op table section
+    import gen_flagtable_md
+    sections.append(Section(
+        autogen=True,
+        label="pe_flags",
+        title="#### PE flags, bits 15-12",
+        text ="\nNote: flags should be same as ARM condition codes (see Appendix A).\n\n" \
+               + gen_flagtable_md.gen_flagtable(DBG=0)
+    ))
+
+    sections.append(Section(
+        autogen=True,
         label="",
         title="",
         text="""\
@@ -203,16 +224,10 @@ decoded as follows:
     ))
     sections.append(Section(
         autogen=False,
-        label="",
-        title="",
+        label="ARM_ccodes",
+        title="# Appendix A: ARM Condition Codes",
         text="""\
-"""
-    ))
-    sections.append(Section(
-        autogen=False,
-        label="",
-        title="",
-        text="""\
+<img src="https://github.com/StanfordAHA/CGRAGenerator/raw/master/doc/arm-ccodes.png" width="400"/>\
 """
     ))
     return sections
@@ -237,8 +252,6 @@ def oldmain():
     print_pe_instruction_intro()
     print_pe_instruction_decode()
     print_optable()
-
-
 
 # old_main()
 main()

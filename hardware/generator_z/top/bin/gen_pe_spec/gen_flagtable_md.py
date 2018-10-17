@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import re
 import sys
 
@@ -69,8 +69,11 @@ import sys
 
 import subprocess
 
-def main(DBG=9):
-    test_my_syscall(); exit()
+def main(DBG=0):
+    print(gen_flagtable(DBG))
+
+def gen_flagtable(DBG=0):
+    # test_my_syscall(); exit()
     # 
     # 1. Find genesis_verif
     gendir = find_CGRAGenerator()
@@ -79,21 +82,15 @@ def main(DBG=9):
     if DBG>2:
         print("I think I found test_pe file here:\n  %s" % test_pe_file)
 
-    foo = my_syscall("ls", DBG=9)
-    print foo
-
     filename = test_pe_file
-
-    # foo = my_syscall("/bin/csh -c 'grep PE_FLAG "+test_pe_file+"'", DBG=9)
-    (out,err) = my_syscall("/bin/csh -c 'grep PE_FLAG %s'" % filename, DBG=9)
-    # print out
+    (out,err) = my_syscall("/bin/csh -c 'grep PE_FLAG %s'" % filename, DBG=DBG)
 
     flagname = {}
     flagdef  = {}
     maxnum = 0
     for line in out.split('\n'):
         sline = line.strip() 
-        print 666, sline
+        if DBG: print(666, sline)
         # localparam PE_FLAG_EQ = 4'h0;
         # localparam PE_FLAG_NE = 4'h1;
         # ...
@@ -104,7 +101,7 @@ def main(DBG=9):
         if parse:
             name = parse.group(1).lower()
             num  = int(parse.group(2), 16)
-            print 667, name, num
+            if DBG: print(667, name, num)
             flagname[num] = name
             if num > maxnum: maxnum = num
 
@@ -116,25 +113,57 @@ def main(DBG=9):
             # Note '|' symbols must be escaped
             defn = defn.replace('|', '\|')
 
-            print 668, name, defn
-            flagdef[name] = defn
+            if DBG: print(668, name, defn)
+            flagdef[name] = cleandef(defn)
 
-        print ""
+        if DBG: print("")
 
-    print "FOO", maxnum
     # 2-column table because i is a idiot
     # Oddly specific, really only works well for maxnum == 15 / current flag config probably :(
-    halfmax = (maxnum+1)/2
+    header1 = "| flag_sel | res_p | -------- | flag_sel | res_p           |\n"
+    header2 = "| :------: | ----: | -------- | :------: | :------------:  |\n"
+
+    table = header1 + header2
+    assert (maxnum%2) == 1
+    halfmax = int((maxnum+1)/2)
     for i in range(halfmax):
         if flagname[i] != None:
             i1 = i; i2 = i + halfmax
             name1 = flagname[i]
             name2 = flagname[i+halfmax]
             # print(name1, flagdef[name1], name2, flagdef[name2])
-            print("| %3s 4'h%X |  %2s   | -------- | %3s 4'h%X | %s |" %
+            table = table + ("| %3s 4'h%X |  %2s   | -------- | %3s 4'h%X | %-15s |\n" %
                   (name1, i1, flagdef[name1], name2, i2, flagdef[name2]))
+    table = table + footnotes()
+    return table
 
+def cleandef(s):
+    """E.g. given a def string 'C & ~Z', return ' C & ~Z' so it lines
+    up with other table rows i.e.
+    BEFORE:
+      |  eq 4'h0 |   Z   | -------- |  hi 4'h8 | C & ~Z |
+      |  ne 4'h1 |  ~Z   | -------- |  ls 4'h9 | ~C \| Z |
+    AFTER:
+      |  eq 4'h0 |   Z   | -------- |  hi 4'h8 |  C & ~Z |
+      |  ne 4'h1 |  ~Z   | -------- |  ls 4'h9 | ~C \|  Z |"""
+    
+    if s ==  "C & ~Z" : s = " C & ~Z"
+    if s == "~C \| Z" : s = "~C |  Z"
+    if s == "(N == V)": s = " N == V"
+    if s == "(N != V)": s = " N != V"
+    if s == "Z \| (N != V)": s = " Z | (N != V)"
+    if s == "res_lut" : s = "lut_code[{bit2,bit1,bit0}]"
+    return s
 
+def footnotes():
+    return '''\
+* **C** - 'carry out' flag
+* **V** - 'overflow' flag
+* **Z** - 16b-output == 0
+* **N** - res[16] == sign(res)
+* **lut_code[...]** - value stored in LUT
+* **comp_res_p** - See ALU ops table\
+'''
 
 def test_my_syscall():
     my_syscall('ls /tmp/t*; ls -l /tmp/foo661313666')
@@ -169,7 +198,12 @@ def my_syscall(cmd, DBG=0):
     p = subprocess.Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
     p.wait()
     (stdout, stderr) = p.communicate()
-    # print p.returncode; print stdout; print stderr
+
+    # Interpret bytes as utf-8
+    stdout = stdout.decode('utf-8')
+    stderr = stderr.decode('utf-8')
+
+    # print(p.returncode; print stdout; print stderr)
     if p.returncode != 0:
         print(stdout);
         if stdout == None: stdout = ""
@@ -195,4 +229,4 @@ def find_CGRAGenerator(DBG=0):
             print(gendir)
         return gendir
 
-main()
+# main()

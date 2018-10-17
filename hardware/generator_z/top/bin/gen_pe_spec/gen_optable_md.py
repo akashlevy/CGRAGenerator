@@ -13,16 +13,8 @@ def show_trace(nlines=100):
     sys.stdout.flush(); traceback.print_stack(); sys.stderr.flush()
 
 def main():
-    # Header
     print("#### ALU Operations, bits 5-0")
-    o = get_opcodes()
-    list_opcodes(o)
-    # Trailer
-    print("""\
-Notes:
-* a=data0, b=data1, d=bit0
-* RSHFT/LSHFT 'Shift by' value b is unsigned
-""")
+    print(list_opcodes())
 
 
 # FIXME the CGRA/xml portion of get_opcodes and list_opcodes
@@ -40,15 +32,15 @@ def get_opcodes():
         for p in tile.iter('pe'):
             for o in p.iter('opcode'): return o
 
-def list_opcodes(o, DBG=0):
+def list_opcodes(DBG=0):
     '''Given a pointer to the "opcode" portion of the cgra_info file, generate a nice markdown table'''
     #         <opcode reg_address='0xff' bith='5' bitl='0'>
     #             <op sel='0x00' name='add'>
     #                 pe_out_res=op_a+op_b+op_d
     #                 comp_res_p=(op_a+op_b+op_d) gte 2^16
     #             </op> 
-    print("")
     table_body = []
+    o = get_opcodes()
     for op in o.iter('op'):
         # print op.text
 
@@ -85,8 +77,20 @@ def list_opcodes(o, DBG=0):
         
         table_body.append(op_table_md(op_sel, op_name, L1, L2))
 
-    print(op_table_header())
-    for line in table_body: print(line)
+    table = op_table_header() + '\n'
+    # for line in table_body: print(line)
+    for line in table_body: table = table + line + '\n'
+    if DBG: print(table)
+
+    notes = """\
+Notes:
+* a=data0, b=data1, d=bit0
+* RSHFT/LSHFT 'Shift by' value b is unsigned
+"""
+    table = table + notes + '\n'
+
+    return table
+
 
 
 def op_table_header(): return """\
@@ -179,4 +183,4 @@ def cleanup(eq):
     eq = eq.replace('a|b',     'a\|b')
     return eq
 
-main()
+# main()

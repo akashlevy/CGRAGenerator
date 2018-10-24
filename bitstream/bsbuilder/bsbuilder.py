@@ -28,12 +28,13 @@ FOUND_SIXTEEN = False
 # FIXME2 should come from cgra_info.txt I guess
 
 def set_sign_bit_info():
+    bitpos = cgra_info.sign_bit_position()
     global SIGN_BIT
     SIGN_BIT = {}
     # SIGN_BIT['u']= (0 << 6)
     # SIGN_BIT['s']= (1 << 6)
-    SIGN_BIT['u']= (0 << cgra_info.sign_bit_position())
-    SIGN_BIT['s']= (1 << cgra_info.sign_bit_position())
+    SIGN_BIT['u'] = (0 << bitpos)
+    SIGN_BIT['s'] = (1 << bitpos)
 
 # PE_FLAG dictionary set by set_pe_flags(), below
 global PE_FLAG
@@ -103,15 +104,18 @@ op_data['xor']     = 0x00000014
 op_data['lut']     = 0x0000000E # ?? right ??
 
 
-# NOTE FIXME 180929 this should no longer be necessary (below)
-# Added for Harris 7/2018, probably should NOT work...
-# FIXME Will have to fix this some day SOON maybe
-# signed, unsigned, who cares!!!???  all map to same FIXME
-# Bit 6 decides signed/unsigned
-op_data['ashr'] = op_data['rshft']     | (1 << 6)
-op_data['smax'] = op_data['gte_max']   | (1 << 6)
-op_data['sle']  = op_data['lte_min']   | (1 << 6)
-op_data['sge']  = op_data['gte_max']   | (1 << 6)
+def harris_aliases():
+    # NOTE FIXME 180929 this should no longer be necessary (below)
+    # Added for Harris 7/2018, probably should NOT work...
+    # FIXME Will have to fix this some day SOON maybe
+    # signed, unsigned, who cares!!!???  all map to same FIXME
+    # Bit 6 decides signed/unsigned
+    global op_data
+    global SIGN_BIT
+    op_data['ashr'] = op_data['rshft']   | SIGN_BIT['s']
+    op_data['smax'] = op_data['gte_max'] | SIGN_BIT['s']
+    op_data['sle']  = op_data['lte_min'] | SIGN_BIT['s']
+    op_data['sge']  = op_data['gte_max'] | SIGN_BIT['s']
 
 #FIXME op_data should only be accessed via this function!!!
 def get_op_data(opname): return op_data[get_alias(opname)]
@@ -331,6 +335,7 @@ def main():
     process_args()
     set_sign_bit_info()
     set_pe_flags()
+    harris_aliases()
     if (0):
          # Coupla tests
          bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")

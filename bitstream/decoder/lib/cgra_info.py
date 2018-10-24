@@ -152,7 +152,7 @@ def find_tile_by_type(type):
      '''Given type e.g. "pe_tile_new", return pointer to first tile of that type'''
      for tile in CGRA.findall('tile'):
          if tile.attrib['type'] == type: return tile
-    assert False, 'Could not find a tile with type "%s"' % type
+     assert False, 'Could not find a tile with type "%s"' % type
 
 def find_pad(padname, bitno):
     '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''

@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
 def main():
+    print('''
+PE Spec is automatically generated each time Genesis2 produces a new
+design.  Please make sure that the spec you use matches your design.
+Upon generation, the spec is usually placed in the top level Verilog
+directory e.g. <tt>CGRAGenerator/hardware/generator_z/top/PE-Spec.md</tt>
+''')
     for s in build_sections():
         # if s.label != "pe_flags": continue
         s.print_label()
@@ -34,11 +40,11 @@ def build_sections():
     * [Element Number](#element_number)
     * [Register Number](#register_number)
 
-* [PE Instruction (32-bit "op_code")](#pe_instruction)
+* [Bitstream Data (PE Instruction) (32-bit "op_code")](#pe_instruction)
     * [PE Instruction Decode, bits 31-16 (PE inputs)](#pe_instruction_decode_31_16)
-    * [PE Instruction Decode, bits 15-0](#pe_instruction_decode_15_0)
-        * [PE flags](#pe_flags)
-        * [ALU Operations](#alu_ops)
+    * [PE Instruction Decode, bits 15-0  (flags and ops)](#pe_instruction_decode_15_0)
+        * [ALU Operations, bits 5-0](#alu_ops)
+        * [PE flags, bits 15-12](#pe_flags)
 '''
     ))
     sections.append(Section(
@@ -134,7 +140,7 @@ The remainder of this document addresses how to decode the 32-bit
     sections.append(Section(
         autogen=True,
         label="pe_instruction",
-        title='## PE Instruction (32-bit "op_code")',
+        title='## Bitstream Data (PE Instruction) (32-bit "op_code")',
         text=""
     ))
     sections.append(Section(
@@ -172,7 +178,7 @@ TODO need an example here I think
     sections.append(Section(
         autogen=False,
         label="pe_instruction_decode_15_0",
-        title="### PE Instruction Decode, bits 15-0",
+        title="### PE Instruction Decode, bits 15-0 (flags and ops)",
         text="""\
 The remaining 16 bits in the lower half of the PE instruction are
 decoded as follows:

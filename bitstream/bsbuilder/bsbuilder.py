@@ -28,8 +28,10 @@ FOUND_SIXTEEN = False
 # FIXME2 should come from cgra_info.txt I guess
 global SIGN_BIT
 SIGN_BIT = {}
-SIGN_BIT['u']= (0 << 6)
-SIGN_BIT['s']= (1 << 6)
+# SIGN_BIT['u']= (0 << 6)
+# SIGN_BIT['s']= (1 << 6)
+SIGN_BIT['u']= (0 << cgra_info.sign_bit_position())
+SIGN_BIT['s']= (1 << cgra_info.sign_bit_position())
 
 
 # PE_FLAG dictionary set by set_pe_flags(), below

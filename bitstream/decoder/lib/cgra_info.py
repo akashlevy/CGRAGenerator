@@ -160,13 +160,16 @@ def find_pad(padname, bitno):
     #        <io_bit>0</io_bit>
     # returns (0x0001, 0, 1)
 
-    tile = get_named_tile(padname)
-    for b in tile.iter('io_bit'):
-        if getnum(b.text) != bitno: continue
-        id  = getnum(tile.attrib['tile_addr'])
-        row = getnum(tile.attrib['row'])
-        col = getnum(tile.attrib['col'])
-        return (id, row, col)
+    for tile in CGRA.findall('tile'):
+        # print(669, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
+        if 'name' not in tile.attrib: continue
+        if tile.attrib['name'] != padname: continue
+        for b in tile.iter('io_bit'):
+            if getnum(b.text) != bitno: continue
+            id  = getnum(tile.attrib['tile_addr'])
+            row = getnum(tile.attrib['row'])
+            col = getnum(tile.attrib['col'])
+            return (id, row, col)
     assert False, 'Could not find pad "%s[%s]"' % (padname, bitno)
 
 def sign_bit_position():
@@ -177,7 +180,8 @@ def sign_bit_position():
     tile = find_tile_by_type('pe_tile_new')
     for pe in tile.iter('pe'):
         for oc in pe.iter('opcode'):
-            if oc.text == 'signed': return int(oc.attrib['bith']
+            if oc.text == 'signed': return int(oc.attrib['bith'])
+
     assert False, 'Could not find sign bit info'
 
 

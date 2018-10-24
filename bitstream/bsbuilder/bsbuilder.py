@@ -26,13 +26,14 @@ FOUND_SIXTEEN = False
 
 # FIXME should be set by set_sign_bit_encoding() or something
 # FIXME2 should come from cgra_info.txt I guess
-global SIGN_BIT
-SIGN_BIT = {}
-# SIGN_BIT['u']= (0 << 6)
-# SIGN_BIT['s']= (1 << 6)
-SIGN_BIT['u']= (0 << cgra_info.sign_bit_position())
-SIGN_BIT['s']= (1 << cgra_info.sign_bit_position())
 
+def set_sign_bit_info():
+    global SIGN_BIT
+    SIGN_BIT = {}
+    # SIGN_BIT['u']= (0 << 6)
+    # SIGN_BIT['s']= (1 << 6)
+    SIGN_BIT['u']= (0 << cgra_info.sign_bit_position())
+    SIGN_BIT['s']= (1 << cgra_info.sign_bit_position())
 
 # PE_FLAG dictionary set by set_pe_flags(), below
 global PE_FLAG
@@ -327,6 +328,8 @@ opb = {}
 # T3_in_s2t0 -> T3_mem_in
 
 def main():
+    process_args()
+    set_sign_bit_info()
     set_pe_flags()
     if (0):
          # Coupla tests
@@ -350,8 +353,6 @@ def main():
          bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
          bs_op(4, 'gte(wire,reg)', DBG=9); print("")
          exit()
-
-    process_args()
 
     if not VERBOSE: DBG=0
     else:           DBG=1

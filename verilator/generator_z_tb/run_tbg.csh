@@ -196,7 +196,7 @@ while ($#argv)
     # Switches: I/O
     case '-io_config':
     case '--io_config':
-      set io_config = "$2"; shift; breaksw
+      set io_config = "$2"; shift; set io_config_override = 1; breaksw
 
     case -input:
     case --input:

@@ -305,6 +305,13 @@ if (! -e $config) then
   exit 13
 endif
 
+#######################################################################
+# Clean up the old files, if any
+echo "rm -f build/io16_out_0_0.raw"
+echo "rm -f build/io1_out_0_0.raw"
+rm -f build/io16_out_0_0.raw
+rm -f build/io1_out_0_0.raw
+
 ########################################################################
 # Detect if running from within travis
 unset TRAVIS

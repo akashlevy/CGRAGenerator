@@ -2,11 +2,11 @@ F1000101 00000013
 # data[(15, 0)] : init `data1` reg with const `19`
 
 FF000101 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020101 00000005
 # data[(3, 0)] : @ tile (1, 1) connect wire 5 (out_BUS16_S2_T0) to data0
@@ -24,11 +24,11 @@ F1000102 0000000D
 # data[(15, 0)] : init `data1` reg with const `13`
 
 FF000102 0003F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_DELAY= 0x3
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  3 :: data0  'reg_a' (REG_DELAY)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020102 00000005
 # data[(3, 0)] : @ tile (1, 2) connect wire 5 (out_BUS16_S2_T0) to data0
@@ -43,11 +43,11 @@ F1000103 00000012
 # data[(15, 0)] : init `data1` reg with const `18`
 
 FF000103 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020103 00000006
 # data[(3, 0)] : @ tile (1, 3) connect wire 6 (out_BUS16_S2_T1) to data0
@@ -102,9 +102,9 @@ FF000105 0000E00E
 # data[(5, 0)] : alu_op = lut ; 0xE
 # data[(6, 6)] : unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_LUT=0xE
-# data[(25, 24)]: bit0: REG_CONST= 0x0
-# data[(27, 26)]: bit1: REG_CONST= 0x0
-# data[(29, 28)]: bit2: REG_CONST= 0x0
+# data[(25, 24)]: bit0: 'const_0' (REG_CONST)
+# data[(27, 26)]: bit1: 'const_1' (REG_CONST)
+# data[(29, 28)]: bit2: 'const_2' (REG_CONST)
 
 00080105 00004010
 # data[(5, 4)] : @ tile (1, 5) connect wire 1 (in_BUS16_S2_T2) to out_BUS16_S0_T2
@@ -120,11 +120,11 @@ FF000105 0000E00E
 # data[(1, 0)] : @ tile (1, 16) connect wire 0 (in_0_BUS16_S1_T0) to out_0_BUS16_S0_T0
 
 FF000201 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020201 00000007
 # data[(3, 0)] : @ tile (2, 1) connect wire 7 (out_BUS16_S2_T2) to data0
@@ -139,11 +139,11 @@ FF000201 000AF000
 # data[(25, 24)] : @ tile (2, 1) connect wire 0 (in_BUS16_S0_T2) to out_BUS16_S2_T2
 
 FF000202 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020202 00000006
 # data[(3, 0)] : @ tile (2, 2) connect wire 6 (out_BUS16_S2_T1) to data0
@@ -209,9 +209,9 @@ FF000205 0000E00E
 # data[(5, 0)] : alu_op = lut ; 0xE
 # data[(6, 6)] : unsigned=0x0
 # data[(15, 12] : flag_sel: PE_FLAG_LUT=0xE
-# data[(25, 24)]: bit0: REG_CONST= 0x0
-# data[(27, 26)]: bit1: REG_CONST= 0x0
-# data[(29, 28)]: bit2: REG_CONST= 0x0
+# data[(25, 24)]: bit0: 'const_0' (REG_CONST)
+# data[(27, 26)]: bit1: 'const_1' (REG_CONST)
+# data[(29, 28)]: bit2: 'const_2' (REG_CONST)
 
 00080205 00040020
 # data[(5, 4)] : @ tile (2, 5) connect wire 2 (in_BUS16_S3_T2) to out_BUS16_S0_T2
@@ -225,11 +225,11 @@ F1000206 0000000C
 # data[(15, 0)] : init `data1` reg with const `12`
 
 FF000206 0003F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_DELAY= 0x3
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  3 :: data0  'reg_a' (REG_DELAY)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020206 00000002
 # data[(3, 0)] : @ tile (2, 6) connect wire 2 (in_BUS16_S2_T2) to data0
@@ -242,11 +242,11 @@ FF000206 0003F00B
 # data[(31, 30)] : @ tile (2, 16) connect wire 1 (in_0_BUS16_S1_T0) to out_0_BUS16_S3_T0
 
 FF000301 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020301 00000008
 # data[(3, 0)] : @ tile (3, 1) connect wire 8 (out_BUS16_S2_T3) to data0
@@ -264,11 +264,11 @@ FF000301 000AF000
 # data[(37, 36)] : @ tile (3, 1) connect wire 1 (in_BUS16_S1_T3) to out_BUS16_S3_T3
 
 FF000302 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020302 00000005
 # data[(3, 0)] : @ tile (3, 2) connect wire 5 (out_BUS16_S2_T0) to data0
@@ -289,11 +289,11 @@ F1000303 00000011
 # data[(15, 0)] : init `data1` reg with const `17`
 
 FF000303 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020303 00000008
 # data[(3, 0)] : @ tile (3, 3) connect wire 8 (out_BUS16_S2_T3) to data0
@@ -310,11 +310,11 @@ F1000305 0000000B
 # data[(15, 0)] : init `data1` reg with const `11`
 
 FF000305 0003F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_DELAY= 0x3
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  3 :: data0  'reg_a' (REG_DELAY)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020305 00000009
 # data[(3, 0)] : @ tile (3, 5) connect wire 9 (out_BUS16_S2_T4) to data0
@@ -328,11 +328,11 @@ F1000306 0000000E
 # data[(15, 0)] : init `data1` reg with const `14`
 
 FF000306 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020306 00000004
 # data[(3, 0)] : @ tile (3, 6) connect wire 4 (in_BUS16_S2_T4) to data0
@@ -345,11 +345,11 @@ FF000306 0002F00B
 # data[(31, 30)] : @ tile (3, 16) connect wire 1 (in_0_BUS16_S1_T0) to out_0_BUS16_S3_T0
 
 FF000401 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020401 00000009
 # data[(3, 0)] : @ tile (4, 1) connect wire 9 (out_BUS16_S2_T4) to data0
@@ -367,11 +367,11 @@ FF000401 000AF000
 # data[(37, 36)] : @ tile (4, 1) connect wire 0 (in_BUS16_S0_T3) to out_BUS16_S3_T3
 
 FF000402 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020402 00000000
 # data[(3, 0)] : @ tile (4, 2) connect wire 0 (in_BUS16_S2_T0) to data0
@@ -398,11 +398,11 @@ F1000405 00000000
 # data[(15, 0)] : init `data1` reg with const `0`
 
 FF000405 0002F000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020405 00000007
 # data[(3, 0)] : @ tile (4, 5) connect wire 7 (out_BUS16_S2_T2) to data0
@@ -416,11 +416,11 @@ F1000406 00000000
 # data[(15, 0)] : init `data1` reg with const `0`
 
 FF000406 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020406 00000007
 # data[(3, 0)] : @ tile (4, 6) connect wire 7 (out_BUS16_S2_T2) to data0
@@ -437,11 +437,11 @@ F1000501 00000010
 # data[(15, 0)] : init `data1` reg with const `16`
 
 FF000501 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020501 00000005
 # data[(3, 0)] : @ tile (5, 1) connect wire 5 (out_BUS16_S2_T0) to data0
@@ -451,11 +451,11 @@ FF000501 0002F00B
 # data[(21, 20)] : @ tile (5, 1) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
 
 FF000502 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020502 00000006
 # data[(3, 0)] : @ tile (5, 2) connect wire 6 (out_BUS16_S2_T1) to data0
@@ -481,11 +481,11 @@ FF000502 000AF000
 # data[(29, 28)] : @ tile (5, 4) connect wire 0 (in_0_BUS16_S0_T4) to out_0_BUS16_S2_T4
 
 FF000505 000AF000
-# data[( 5,  0)]: alu_op = add
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_BYPASS=0x2
+# data[ 5,  0] =  0 :: alu_op 'add'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  2 :: data1  'wire_b' (REG_BYPASS)
 
 00020505 00000008
 # data[(3, 0)] : @ tile (5, 5) connect wire 8 (out_BUS16_S2_T3) to data0

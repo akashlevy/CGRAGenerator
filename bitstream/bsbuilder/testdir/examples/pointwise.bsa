@@ -2,11 +2,11 @@ F1000101 00000002
 # data[(15, 0)] : init `data1` reg with const `2`
 
 FF000101 0002F00B
-# data[( 5,  0)]: alu_op = mul
-# data[( 6,  6)]: unsigned=0x0
-# data[(15, 12] : flag_sel: PE_FLAG_PE=0xF
-# data[(17, 16)]: data0: REG_BYPASS=0x2
-# data[(19, 18)]: data1: REG_CONST= 0x0
+# data[ 5,  0] = 11 :: alu_op 'mult_0'
+# data[ 6,  6] =  0 :: sign   'u'
+# data[15, 12] = 15 :: flag   'pe'
+# data[17, 16] =  2 :: data0  'wire_a' (REG_BYPASS)
+# data[19, 18] =  0 :: data1  'const_b' (REG_CONST)
 
 00020101 00000005
 # data[(3, 0)] : @ tile (1, 1) connect wire 5 (out_BUS16_S2_T0) to data0

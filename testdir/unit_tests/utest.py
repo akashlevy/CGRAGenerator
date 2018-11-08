@@ -102,8 +102,8 @@ BINARY_OPS=[
     'abs', # Lenny fixed it!
     'add',
     'sub',
-    'gte',
-    'lte',
+    'gte_max',
+    'lte_min',
     # 'sel', # FIXME needs one-bit working
     'rshft',
     'lshft',
@@ -312,12 +312,12 @@ GOLD['lshft'] = (lambda a, b: [a << (b&0xF), 0])
 def gold_gte(a,b):
     if (a>=b): return [a,-1]
     else:      return [b,-1]
-GOLD['gte']   = gold_gte
+GOLD['gte_max']   = gold_gte
 
 def gold_lte(a,b):
     if (a<=b): return [a,-1]
     else:      return [b,-1]
-GOLD['lte']   = gold_lte
+GOLD['lte_min']   = gold_lte
 
 ##############################################################################
 
@@ -564,7 +564,7 @@ Usage:
 
 Where:
    <testname> = "all" (default) or one of
-                {add,sub,abs,gte,lte,sel,rshft,lshft,mul,or,and,xor}
+                {add,sub,abs,gte_max,lte_min,sel,rshft,lshft,mul,or,and,xor}
                 {lbuf09,lbuf10}
 
    --repeat <nr>  nr = any integer or "forever" DEFAULT=1

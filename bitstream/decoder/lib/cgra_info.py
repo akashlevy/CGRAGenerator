@@ -35,10 +35,13 @@ import sys
 # E.g. tile.find('sb') finds first switchbox in 'tile'
 
 
-# Index:
+# Index/TOC:
 # def mem_tile_height():
-# def find_tile_by_name(tilename):
+# def get_named_tile(name) -- returns ptr to tile
+# def find_tile_by_name(tilename) -- returns row, col info :(
+# def find_tile_by_type(type) -- returns ptr to tile
 # def find_pad(padname, i)
+# def sign_bit_position()
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -126,35 +129,60 @@ def list_all_pe_and_mem_tiles():
             rlist = rlist + (getnum(tile.attrib['tile_addr']),)
     return rlist
                                                
+def get_named_tile(name):
+    '''Return a pointer to the first tile with the given name'''
+    # E.g. <tile type='io1bit' tile_addr='0xA4' row='9' col='19' name='pad_S0_T7'>
+    for tile in CGRA.findall('tile'):
+        # print(669, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
+        if 'name' not in tile.attrib: continue
+        if tile.attrib['name'] == name: return tile
+    assert False, 'Could not find a tile with name "%s"' % name
+
 def find_tile_by_name(name):
     '''Given name e.g. "pad_S0_T7", return id, row, and col'''
     # E.g. <tile type='io1bit' tile_addr='0xA4' row='9' col='19' name='pad_S0_T7'>
     # returns (164,9,19)
+    tile = get_named_tile(name)
+    id  = getnum(tile.attrib['tile_addr'])
+    row = getnum(tile.attrib['row'])
+    col = getnum(tile.attrib['col'])
+    return (id, row, col)
+
+def find_tile_by_type(type):
+     '''Given type e.g. "pe_tile_new", return pointer to first tile of that type'''
+     for tile in CGRA.findall('tile'):
+         if tile.attrib['type'] == type: return tile
+     assert False, 'Could not find a tile with type "%s"' % type
+
+def find_pad(padname, bitno):
+    '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''
+    # E.g. <tile type='io1bit' tile_addr='0x0001' row='0' col='1' name='pads_N_0'>
+    #        <io_bit>0</io_bit>
+    # returns (0x0001, 0, 1)
+
     for tile in CGRA.findall('tile'):
         # print(669, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
         if 'name' not in tile.attrib: continue
-        if tile.attrib['name'] == name:
+        if tile.attrib['name'] != padname: continue
+        for b in tile.iter('io_bit'):
+            if getnum(b.text) != bitno: continue
             id  = getnum(tile.attrib['tile_addr'])
             row = getnum(tile.attrib['row'])
             col = getnum(tile.attrib['col'])
             return (id, row, col)
-    assert False, 'ERROR cannot find tile "%s"' % name
+    assert False, 'Could not find pad "%s[%s]"' % (padname, bitno)
 
-def find_pad(padname, bitno):
-    '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''
-    # E.g. <tile type='io1bit' tile_addr='0x0001' row='0' col='1' name='pads_N_0'><io_bit>0</io_bit>
-    # returns (0x0001, 0, 1)
-    for tile in CGRA.findall('tile'):
-        if tile.attrib['type'] != 'io1bit': continue
-        # print(666, "0x%04X" % getnum(tile.attrib['tile_addr']), tile.attrib['type'])
-        if tile.attrib['name'] == padname:
-            for b in tile.iter('io_bit'):
-                if getnum(b.text) != bitno: continue
-                id  = getnum(tile.attrib['tile_addr'])
-                row = getnum(tile.attrib['row'])
-                col = getnum(tile.attrib['col'])
-                return (id, row, col)
-    assert False, 'ERROR cannot find tile "%s"' % padname
+def sign_bit_position():
+    # E.g. given the below info, sign bit pos would be '6':
+    # <tile type='pe_tile_new' tile_addr='0x0101' row='1' col='1' tracks='BUS1:5 BUS16:5 '>
+    #   <pe feature_address='0'>
+    #       <opcode reg_address='0xff' bith='6' bitl='6'>signed</opcode>
+    tile = find_tile_by_type('pe_tile_new')
+    for pe in tile.iter('pe'):
+        for oc in pe.iter('opcode'):
+            if oc.text == 'signed': return int(oc.attrib['bith'])
+
+    assert False, 'Could not find sign bit info'
 
 
 # def build_mask(bith,bitl):

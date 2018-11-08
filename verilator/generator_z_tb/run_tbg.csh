@@ -196,7 +196,7 @@ while ($#argv)
     # Switches: I/O
     case '-io_config':
     case '--io_config':
-      set io_config = "$2"; shift; breaksw
+      set io_config = "$2"; shift; set io_config_override = 1; breaksw
 
     case -input:
     case --input:
@@ -304,6 +304,13 @@ if (! -e $config) then
   echo "${0:t}: ERROR Cannot find config file '$config'"
   exit 13
 endif
+
+#######################################################################
+# Clean up the old files, if any
+echo "rm -f build/io16_out_0_0.raw"
+echo "rm -f build/io1_out_0_0.raw"
+rm -f build/io16_out_0_0.raw
+rm -f build/io1_out_0_0.raw
 
 ########################################################################
 # Detect if running from within travis

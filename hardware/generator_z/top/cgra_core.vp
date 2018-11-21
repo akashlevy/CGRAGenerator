@@ -306,9 +306,10 @@
 module `mname`(
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {
-f2p_wide_`$side`_`$i`,
-f2p_1bit_`$side`_`$i`,
-p2f_`$side`_`$i`,
+
+    f2p_wide_`$side`_`$i`,
+    f2p_1bit_`$side`_`$i`,
+    p2f_`$side`_`$i`,
 //;   }
 //; }
 // -------------------------------------
@@ -324,48 +325,47 @@ p2f_`$side`_`$i`,
 // VERILATOR_PORT7
 // VERILATOR_PORT8
 // -------------------------------------
-config_addr,
-config_data,
-config_read,
-config_write,
-//; if($include_analog_block) {
-//PORTS FOR ANALOG BLOCK
-ext_cki,
-ext_ckib,
-ext_frefp,
-ext_frefn,
-ext_cki_jm,
-ext_ckib_jm,
-ext_frefp_jm,
-ext_frefn_jm,
-clk_ext_in,
-aux_div_pad,
-fout_div_pad,
-fref_off_pad,
-ffeed_pad,
-frefp_out_jm,
-frefn_out_jm,
-mdllout_pad,
-lf_out
-//; }
-clk,
-reset,
-stall,
-read_data
-);
 
+    config_addr,
+    config_data,
+    config_read,
+    config_write,
+//; if($include_analog_block) {
+    //PORTS FOR ANALOG BLOCK
+    ext_cki,
+    ext_ckib,
+    ext_frefp,
+    ext_frefn,
+    ext_cki_jm,
+    ext_ckib_jm,
+    ext_frefp_jm,
+    ext_frefn_jm,
+    clk_ext_in,
+    aux_div_pad,
+    fout_div_pad,
+    fref_off_pad,
+    ffeed_pad,
+    frefp_out_jm,
+    frefn_out_jm,
+    mdllout_pad,
+    lf_out
+//; }
+    clk,
+    reset,
+    stall,
+    read_data
+);
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
 //;print INFO "<CGRA>\n";
 
-
-  input [31:0] config_addr;
-  input [31:0] config_data;
-  input clk;
-  input reset;
-  input [3:0] stall;
-  input config_read;
-  input config_write;
-  output [31:0] read_data;
+input [31:0] config_addr;
+input [31:0] config_data;
+input clk;
+input reset;
+input [3:0] stall;
+input config_read;
+input config_write;
+output [31:0] read_data;
 
 //; if($include_analog_block) {
   //PADS FOR ANALOG BLOCK
@@ -389,7 +389,7 @@ read_data
   output [3:0] mdllout_pad; // 4-phase MDLL outputs
   wire [19:0] jm_out;   // number of 1's in jitter measurement
   output [12:0] lf_out;    // LF output (MSB 7bits for mtune, LSB 6bits for dithering)
-//; }
+   //; }
    // --------------------------------------
    // PLACEHOLDERS FOR VERILATOR INPUT WIRES
    // --------------------------------------
@@ -403,14 +403,12 @@ read_data
 //signals to/from pad frame
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {
+
   output [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`;
   output [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`;
   input [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`;
 //;   }
 //; }
-
-
-
 
    // ---------------------------------------
    // PLACEHOLDERS FOR VERILATOR OUTPUT WIRES

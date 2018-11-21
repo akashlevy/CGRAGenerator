@@ -81,7 +81,13 @@ ls -l build/harness.cpp
 # CGRAGenerator
 set gen        = ../..
 set VERILATOR_TOP = $gen/verilator/generator_z_tb
-set RTL_DIR       = $gen/hardware/generator_z/top/genesis_verif/
+
+
+# set RTL_DIR       = $gen/hardware/generator_z/top/genesis_verif/
+set RTL_DIR = /nobackup/steveri/github/CGRAGenerator/verilator/generator_z_tb/tristate
+
+
+
 cp $VERILATOR_TOP/sram_stub.v $RTL_DIR/sram_512w_16b.v  # SRAM hack
 
 
@@ -93,7 +99,6 @@ cp $VERILATOR_TOP/sram_stub.v $RTL_DIR/sram_512w_16b.v  # SRAM hack
 #   mv $f $f.old
 # end
 # NEXT:
-
 
 # Verilator wrapper that only builds if the output object is not present
 # (override with --force-rebuild)

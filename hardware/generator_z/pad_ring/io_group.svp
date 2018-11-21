@@ -19,19 +19,19 @@
 module `mname` (
   input clk,
   input reset,
+
   input [`$config_data_width-1`:0] config_data,
   input [`$config_addr_width-1`:0] config_addr,
   input config_read,
   input config_write,
-  input [`$num_ios-1`:0] f2p_wide,
-  input [`$num_ios-1`:0] f2p_1bit,
-//; if ($tristate_supported) {
+
   inout [`$num_ios-1`:0] pads,
-//; } else {
-  input  [`$num_ios-1`:0] pads_in,
-  output [`$num_ios-1`:0] pads_out,
-//; }
+  output       dir,
+
+  input  [`$num_ios-1`:0] f2p_wide,
+  input  [`$num_ios-1`:0] f2p_1bit,
   output [`$num_ios-1`:0] p2f,
+
   output reg [`$config_data_width-1`:0] read_data
 );
 
@@ -125,23 +125,23 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //;   my $vhex_id = sprintf("16'h%04X", $id);
 
   `$io1bit_obj->instantiate()` (
-  .clk(clk),
-  .reset(reset),
-  .config_data(config_data),
-  .config_addr(config_addr),
-  .config_read(config_read),
-  .config_write(config_write),
-//;   if ($tristate_supported) {
-  .pad(pads[`$i`]),
-//;   } else {
-  .pad_in(pads_in[`$i`]),
-  .pad_out(pads_out[`$i`]),
-//;   }
-  .read_data(read_data_tile[`$i`]),
-  .f2p_16(f2p_wide[`$i`]),
-  .f2p_1(f2p_1bit[`$i`]),
-  .p2f(p2f[`$i`]),
-  .tile_id(`$vhex_id`)
+    .clk(clk),
+    .reset(reset),
+
+    .pad(pads[`$i`]),
+    .dir(dir),
+
+    .f2p_16(f2p_wide[`$i`]),
+    .f2p_1(f2p_1bit[`$i`]),
+    .p2f(p2f[`$i`]),
+
+    .config_data(config_data),
+    .config_addr(config_addr),
+    .config_read(config_read),
+    .config_write(config_write),
+
+    .read_data(read_data_tile[`$i`]),
+    .tile_id(`$vhex_id`)
 );
 
 //;   # $io1bit_obj = clone($io1bit_obj, "io1bit_@{[$i+1]}");

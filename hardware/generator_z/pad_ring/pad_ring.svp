@@ -24,10 +24,7 @@ module `mname` (
   input tdi_pad,
   input trst_n_pad,
   output tdo_pad,
-  input [`$config_data_width-1`:0] config_data,
-  input [`$config_addr_width-1`:0] config_addr,
-  input config_read,
-  input config_write,
+
   output clk,
   output reset,
   output tck,
@@ -36,19 +33,20 @@ module `mname` (
   output trst_n,
   input tdo,
 
+  input [`$config_data_width-1`:0] config_data,
+  input [`$config_addr_width-1`:0] config_addr,
+  input config_read,
+  input config_write,
+
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {
 //;   for my $side (@sides) {
+  output        dir_`$side`_`$i`,
+  inout  [`$num_ios_per_group-1`:0] pads_`$side`_`$i`,
+  output [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`,
   input  [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`,
   input  [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`,
-//;     if ($tristate_supported) {
-  inout  [`$num_ios_per_group-1`:0] pads_`$side`_`$i`,
-//;     } else {
-  input  [`$num_ios_per_group-1`:0] pads_`$side`_`$i`_in,
-  output [`$num_ios_per_group-1`:0] pads_`$side`_`$i`_out,
-//;     }
-  output [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`,
-//;   }
 
+//;   }
 //; }
   output reg [`$config_data_width-1`:0] read_data
 );
@@ -67,15 +65,14 @@ wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:
   .config_addr(config_addr),
   .config_read(config_read),
   .config_write(config_write),
+
   .f2p_wide(f2p_wide_`$side`_`$i`),
   .f2p_1bit(f2p_1bit_`$side`_`$i`),
-//;     if ($tristate_supported) {
-  .pads(pads_`$side`_`$i`),
-//;     } else {
-  .pads_in(pads_`$side`_`$i`_in),
-  .pads_out(pads_`$side`_`$i`_out),
-//;     }
   .p2f(p2f_`$side`_`$i`),
+
+  .pads(pads_`$side`_`$i`),
+  .dir(dir_`$side`_`$i`),
+
   .read_data(read_data_group[`$group`])
 );
 //;     $group++;

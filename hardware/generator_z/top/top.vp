@@ -20,22 +20,10 @@
 module `mname` (
   //pads_{side}_{group_num_within_side} [bit number within group]
 //; for (my $i=0; $i<$num_groups_per_side; $i++) {
-//;   if ($tristate_supported) {
   inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_E_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_W_`$i`,
-//;   } else {
-  input [`$num_ios_per_group-1`:0] pads_N_`$i`_in,
-  input [`$num_ios_per_group-1`:0] pads_S_`$i`_in,
-  input [`$num_ios_per_group-1`:0] pads_E_`$i`_in,
-  input [`$num_ios_per_group-1`:0] pads_W_`$i`_in,
-
-  output [`$num_ios_per_group-1`:0] pads_N_`$i`_out,
-  output [`$num_ios_per_group-1`:0] pads_S_`$i`_out,
-  output [`$num_ios_per_group-1`:0] pads_E_`$i`_out,
-  output [`$num_ios_per_group-1`:0] pads_W_`$i`_out,
-//;   }
 //; }
 //; if ($connect_GC == 0) {
   input [`$config_data_width-1`:0] config_data_in,
@@ -49,14 +37,10 @@ module `mname` (
   input clk_pad,
   input reset_pad
 );
-
-
 //; if ($connect_GC == 1) {
 wire [`$config_data_width-1`:0] config_data_in;
 wire [`$config_addr_width-1`:0] config_addr_in;
 //; }
-
-
 wire clk;
 wire reset;
 wire tck;
@@ -70,6 +54,13 @@ wire [`$config_data_width-1`:0] read_data;
 wire [`$config_data_width-1`:0] read_data_core;
 wire [`$config_data_width-1`:0] read_data_pads;
 wire [`$num_stall_domains-1`:0] stall;
+
+//; for (my $i=0; $i<$num_groups_per_side; $i++) {
+wire dir_N_`$i`;
+wire dir_S_`$i`;
+wire dir_E_`$i`;
+wire dir_W_`$i`;
+//; }
 
 assign read_data = read_data_core | read_data_pads;
 
@@ -135,26 +126,6 @@ assign config_write = 1;
 //; my $pad_ring_obj = generate_base("pad_ring", "pads");
 
   `$pad_ring_obj->instantiate()` (
-
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
-//;   for my $side (@sides) {
-    .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
-    .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
-//;     if ($tristate_supported) {
-    .pads_`$side`_`$i`(pads_`$side`_`$i`),
-//;     } else {
-    .pads_`$side`_`$i`_in(pads_`$side`_`$i`_in),
-    .pads_`$side`_`$i`_out(pads_`$side`_`$i`_out),
-//;   }
-    .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
-
-//;   }
-//; }
-    .config_data(config_data_in),
-    .config_addr(config_addr_in),
-    .config_read(config_read),
-    .config_write(config_write),
-    .read_data(read_data_pads),
     .clk_pad(clk_pad),
     .reset_pad(reset_pad),
     .tck_pad(tck_pad),
@@ -162,13 +133,31 @@ assign config_write = 1;
     .tms_pad(tms_pad),
     .trst_n_pad(trst_n_pad),
     .tdo_pad(tdo_pad),
+
     .clk(clk_in),
     .reset(reset_in),
     .tck(tck),
     .tdi(tdi),
     .tms(tms),
     .trst_n(trst_n),
-    .tdo(tdo)
+    .tdo(tdo),
+
+    .config_data(config_data_in),
+    .config_addr(config_addr_in),
+    .config_read(config_read),
+    .config_write(config_write),
+
+//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//;   for my $side (@sides) {
+    .dir_`$side`_`$i`(dir_`$side`_`$i`),
+    .pads_`$side`_`$i`(pads_`$side`_`$i`),
+    .p2f_`$side`_`$i`(p2f_`$side`_`$i`),
+    .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
+    .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
+
+//;   }
+//; }
+    .read_data(read_data_pads)
   );
 
 //; if (0) {

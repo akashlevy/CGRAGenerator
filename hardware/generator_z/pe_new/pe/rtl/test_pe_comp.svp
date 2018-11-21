@@ -410,13 +410,13 @@ assign cmpr_eq_out = cmpr_eq;
 //; if((($mult_mode > 0) & $use_relu) or (($use_add > 0) & $use_abs) ) {
 logic diff_sign;
 //;   if($en_double & $is_msb) {
-//moved to case statement else verilator tristate breaks(!)
+//moved to case statement b/c inlined adder for verilator tristate
 //assign diff_sign = add_res[0][DATA_MSB];
 //;   } elsif($en_double) {
-//moved to case statement else verilator tristate breaks(!)
+//moved to case statement b/c inlined adder for verilator tristate
 //assign diff_sign = double_mode ? res_p_msb : add_res[0][DATA_MSB];
 //;   } else {
-//moved to case statement else verilator tristate breaks(!)
+//moved to case statement b/c inlined adder for verilator tristate
 //assign diff_sign = add_res[0][DATA_MSB];
 //;   }
 //;}
@@ -426,37 +426,51 @@ logic diff_sign;
 localparam DataMSB = DataWidth-1;
 logic [ADD_MSB:0] ovfl_add_signed;
 
-assign ovfl_add_signed[0] = (op_a[DataMSB] == op_b[DataMSB]) &
-                            (op_a[DataMSB] != add_res[0][DataMSB]);
+//moved to case statement b/c inlined adder for verilator tristate
+//assign ovfl_add_signed[0] = (op_a[DataMSB] == op_b[DataMSB]) &
+//                            (op_a[DataMSB] != add_res[0][DataMSB]);
+
 //;   if($use_add > 1) {
-assign ovfl_add_signed[1] = (add_res[0][DataMSB] == op_c[DataMSB]) &
-                            (op_c[DataMSB] != add_res[1][DataMSB]);
+//moved to case statement b/c inlined adder for verilator tristate
+//assign ovfl_add_signed[1] = (add_res[0][DataMSB] == op_c[DataMSB]) &
+//                            (op_c[DataMSB] != add_res[1][DataMSB]);
 //;   }
 
 logic  ovfl_sub_signed;
-always_comb begin
-  ovfl_sub_signed = ((op_a[DataMSB] != op_b[DataMSB]) & (op_a[DataMSB] != add_res[0][DataMSB]));
+//moved to case statement b/c inlined adder for verilator tristate
+//always_comb begin
+//  ovfl_sub_signed = ((op_a[DataMSB] != op_b[DataMSB]) & (op_a[DataMSB] != add_res[0][DataMSB]));
 //; if($use_add > 1) {
-  ovfl_sub_signed = ovfl_sub_signed | ovfl_add_signed[1];
+//  ovfl_sub_signed = ovfl_sub_signed | ovfl_add_signed[1];
 //; }
-end
+//end
 
 //; }
+
+/* for inlined compare func(s) */
+logic a_msb;
+logic b_msb;
+logic diff_msb;
+logic lte_signed;
+logic lte_unsigned;
+logic gte_signed;
+logic gte_unsigned;
 
 always_comb begin : proc_alu
 //; if($use_add > 0) {
   add_a[0] = op_a;
   add_b[0] = op_b;
   add_c_in[0] = 1'b0;
-
 //; if($use_sad) {
+
+  //tristates probably broke sad.  sorry!
   add_a[1] = add_res[0];
   add_b[1] = op_c;
   add_c_in[1] = 1'b0;
 //;}
 
-  res_w   = add_res[ADD_MSB];
-  res_p_w = add_c_out[ADD_MSB];
+  {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+  res_p_w         = c_out_w;
 //; } else {
   res_w   = 'hX;
   res_p_w = 'hX;
@@ -472,7 +486,6 @@ always_comb begin : proc_alu
   ovfl = 1'b0;
 //;}
 
-
   unique case (op_code[5:0])
 //; if($use_add > 0) {
     PE_ADD_OP: begin
@@ -484,14 +497,21 @@ always_comb begin : proc_alu
 //;} else {
         add_c_in[0] = op_d_p;
 //;}
-        res_p_w     = add_c_out[0];
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        res_p_w         = c_out_w;
 //; if($use_sad) {
-        res_p_w     = add_c_out[0] | add_c_out[1];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
+        res_p_w     = c_out_w | c_out_w2;
 //;}
 //; if($en_ovfl) {
-        ovfl        = (is_signed) ? (|ovfl_add_signed) : res_p_w;
+
+        ovfl_add_signed[0] = (op_a[DataMSB] == op_b[DataMSB]) &
+                             (op_a[DataMSB] != res_w[DataMSB]);
+        ovfl               = (is_signed) ? (|ovfl_add_signed) : res_p_w;
 //;}
       end
+
     PE_SUB_OP: begin
         add_b[0]    = ~op_b;
 //; if($en_double & $is_msb) {
@@ -502,10 +522,15 @@ always_comb begin : proc_alu
 //;} else {
         add_c_in[0] = 1'b1;
 //;}
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+
 //; if($en_ovfl) {
+        ovfl_sub_signed = (op_a[DataMSB] != op_b[DataMSB]) & 
+                           (op_a[DataMSB] != res_w[DataMSB]);
         ovfl        = (is_signed) ? ovfl_sub_signed : 1'b0;
 //;}
       end
+
 //; if($use_abs) {
     PE_ABS_OP: begin
 //;   if($use_sad) {

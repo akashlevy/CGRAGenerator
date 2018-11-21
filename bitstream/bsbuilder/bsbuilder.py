@@ -338,6 +338,8 @@ def main():
     harris_aliases()
     if (0):
          # Coupla tests
+         bs_op(4, 'gte_max(const10_10,wire)', DBG=9); print("")
+
          bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
          bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
 

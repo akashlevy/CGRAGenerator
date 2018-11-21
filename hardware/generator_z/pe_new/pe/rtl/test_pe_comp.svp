@@ -537,11 +537,11 @@ always_comb begin : proc_alu
         add_b[0]    = ~op_b;
 
 //;   if($en_double & $is_msb) {
-//assign diff_sign = res_w[DATA_MSB];
+//      diff_sign = res_w[DATA_MSB];
 //;   } elsif($en_double) {
-//assign diff_sign = double_mode ? res_p_msb : res_w[DATA_MSB];
+//      diff_sign = double_mode ? res_p_msb : res_w[DATA_MSB];
 //;   } else {
-//assign diff_sign = res_w[DATA_MSB];
+//      diff_sign = res_w[DATA_MSB];
 //;   }
 
         add_a[1]    = diff_sign ? ~add_res[0]:add_res[0];

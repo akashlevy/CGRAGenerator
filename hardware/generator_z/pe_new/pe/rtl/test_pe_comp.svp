@@ -536,14 +536,13 @@ always_comb begin : proc_alu
 //;   if($use_sad) {
         add_b[0]    = ~op_b;
 
-//;   if($en_double & $is_msb) {
+//;     if($en_double & $is_msb) {
 //      diff_sign = res_w[DATA_MSB];
-//;   } elsif($en_double) {
+//;     } elsif($en_double) {
 //      diff_sign = double_mode ? res_p_msb : res_w[DATA_MSB];
-//;   } else {
+//;     } else {
 //      diff_sign = res_w[DATA_MSB];
-//;   }
-
+//;     }
         add_a[1]    = diff_sign ? ~add_res[0]:add_res[0];
 //;     if($en_double & $is_msb) {
         add_c_in[0] = double_mode ? carry_in[0] : 1'b1;
@@ -553,32 +552,39 @@ always_comb begin : proc_alu
         add_c_in[1] = diff_sign;
 //;     }
 
-
-//; if($en_ovfl) {
+//;     if($en_ovfl) {
         ovfl        = (add_res[0][DATA_MSB] & (~|add_res[0][DATA_MSB-1:0])) |
                       res_w[DATA_MSB];
-//;}
+//;     }
 
         res_p_w     = diff_sign;
-//;   } else {
+//;   } else { # ! $use_sad
         add_a[0]    = ~op_a;
         add_b[0]    = 0;
 //;     if($en_double & $is_msb) {
         add_c_in[0] = double_mode ? carry_in[0] : 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = op_a[DATA_MSB];
 //;     } elsif($en_double) {
         add_c_in[0] = 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = double_mode ? res_p_msb : op_a[DATA_MSB];
-//;     } else {
+//;     } else { # (!$en_double)
         add_c_in[0] = 1'b1;
-        res_p_w     = op_a[DATA_MSB];
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        res_p_w         = op_a[DATA_MSB]; // why?
 //;     }
 
-        res_w       = (diff_sign | !is_signed) ? op_a : add_res[0];
-//; if($en_ovfl) {
+        diff_sign   = res_w[DATA_MSB];
+        res_w       = (diff_sign | !is_signed) ? op_a : res_w;
+//;     if($en_ovfl) {
         ovfl        = res_w[DATA_MSB];
-//;}
-
+//;     }
 //;   }
     end
 //; }
@@ -587,12 +593,29 @@ always_comb begin : proc_alu
         add_b[0]    = ~op_b;
 //; if($en_double & $is_msb) {
         add_c_in[0] = double_mode ? carry_in[0] : 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = cmpr_gte;
 //;} elsif($en_double) {
         add_c_in[0] = 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = double_mode ? res_p_msb : cmpr_gte;
 //;} else {
         add_c_in[0] = 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+
+        // inlined GTE
+        a_msb =    op_a[DATA_MSB];
+        b_msb =    op_b[DATA_MSB];
+        diff_msb = res_w[DATA_MSB];
+        gte_unsigned = (~(a_msb ^ b_msb) & ~diff_msb) | (a_msb & ~b_msb);
+        gte_signed   = (~(a_msb ^ b_msb) & ~diff_msb) | (~a_msb & b_msb);
+        cmpr_gte = is_signed ? gte_signed : gte_unsigned;
+
         res_p_w     = cmpr_gte;
 //;}
 //; if($use_max_min) {
@@ -603,29 +626,49 @@ always_comb begin : proc_alu
         add_b[0]    = ~op_b;
 //; if($en_double & $is_msb) {
         add_c_in[0] = double_mode ? carry_in[0] : 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = cmpr_lte;
 //;} elsif($en_double) {
         add_c_in[0] = 1'b1;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+        {c_out_w2,res_w2} = add_a[1] + add_b[1] + add_c_in[1];
         res_p_w     = double_mode ? res_p_msb : cmpr_lte;
 //;} else {
         add_c_in[0] = 1'b1;
-        res_p_w     = cmpr_lte;
+
+        {c_out_w,res_w} = add_a[0] + add_b[0] + add_c_in[0];
+
+        //inlined LTE (actually LT (misnamed))
+        a_msb =    op_a[DATA_MSB];
+        b_msb =    op_b[DATA_MSB];
+        diff_msb = res_w[DATA_MSB];
+        lte_unsigned = (~(a_msb ^ b_msb) & diff_msb) | (~a_msb & b_msb);
+        lte_signed   = (~(a_msb ^ b_msb) & diff_msb) | (a_msb & ~b_msb);
+        cmpr_lte = is_signed ? lte_signed : lte_unsigned;
+
+        res_p_w     = cmpr_lte | cmpr_eq;
 //;}
 //; if($use_max_min) {
         res_w       = res_p_w ? op_a : op_b;
 //; }
       end
-      PE_SEL_OP: begin
+
+    PE_SEL_OP: begin
         res_w = op_d_p ? op_a : op_b;
       end
+
 //; }
 //; if($use_shift > 0) {
     PE_RSHFT_OP: begin
-        res_w = shift_res;
+        res_w = is_signed ? (op_a >>> op_b) : (op_a >> op_b);
       end
     PE_LSHFT_OP: begin
-        res_w = shift_res;
+        res_w = op_a << op_b;
       end
+
 //; }
 //; if($mult_mode > 0) {
     PE_MULT_0_OP: begin

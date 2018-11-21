@@ -10,52 +10,24 @@
 //;open(TILEINFO, ">$filename") or die "Couldn't open file $filename, $!";
 
 module `mname` (
-  clk, 
-  reset,
+  input clk, 
+  input reset,
 
-//; if ($tristate_supported) {
-  // tristate available: one pad per IO
-  pad,
-//; } else {
-  // tristate unavailable: two pads per IO
-  pad_in,
-  pad_out,
-//; }
+  inout  pad,
+  output dir,
 
-  p2f,
-  f2p_16,
-  f2p_1,
-  config_addr,
-  config_data,
-  config_write,
-  config_read,
-  tile_id,
-  read_data
+  input  f2p_16,
+  input  f2p_1,
+  output p2f,
+
+  input  [31:0] config_addr,
+  input  [31:0] config_data,
+  input  config_read, 
+  input  config_write,
+  output reg [31:0] read_data,
+
+  input [15:0] tile_id
 );
-
-  /* verilator lint_off UNUSED */
-  input  clk;
-  input  reset;
-
-//; if ($tristate_supported) {
-  // tristate available: one pad per IO
-  inout  pad;
-//; } else {
-  // tristate unavailable: two pads per IO
-  input  pad_in;
-  output pad_out;
-//; }
-
-  output p2f;
-  input f2p_16;
-  input f2p_1;
-  input [31:0] config_data;
-  input [31:0] config_addr;
-  input config_read;
-  input config_write;
-  input [15:0] tile_id;
-  output reg [31:0] read_data;
-  /* verilator lint_on UNUSED */
 
   wire ___genesis_wire_`${side}`_`${io_group}`;
 
@@ -63,6 +35,8 @@ module `mname` (
   //; # So we have to let the linter know (verilator 'lint_off' directives above) or it complains:
   //; # %Warning-UNUSED: .../cb_unq1.v:73: Bits of signal are not used: config_addr[23:0]
   //; # FIXME someday? Maybe shouldn't bring in all 32 bits if we're not going to use them?  Then turn off directives!
+
+  assign dir = io_bit;
 
   reg config_en;
   always @(*) begin
@@ -100,15 +74,8 @@ module `mname` (
     end
   end
 
-//; if ($tristate_supported) {
-  // tristate available: one pad per IO
-  assign pad     = (io_bit==1'b1)? ((out_bus==1'b0)? f2p_16 : f2p_1):1'bz;
-  assign p2f     = pad;
-//; } else {
-  // tristate unavailable: two pads per IO
-  assign pad_out = (io_bit==1'b1)? ((out_bus==1'b0)? f2p_16 : f2p_1) : 1'b0;
-  assign p2f     = (io_bit==1'b1)?            1'b0                   : pad_in;
-//; }
+  assign pad = (io_bit) ? ((out_bus==1'b0)? f2p_16 : f2p_1) : 32'dZ;
+  assign p2f = (io_bit) ? 1'b0   : pad;
 
 endmodule
 

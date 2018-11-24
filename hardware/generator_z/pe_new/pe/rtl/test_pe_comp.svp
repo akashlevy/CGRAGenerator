@@ -276,6 +276,8 @@ generate
 endgenerate
 */
 
+wire c_out_w;
+assign carry_out = c_out_w;
 //; if($en_double & $is_msb) {
 assign cmpr_eq   =  ~|(op_a ^ op_b) & (~double_mode | cmpr_eq_in);
 //;} else {

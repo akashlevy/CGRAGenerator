@@ -51,7 +51,7 @@ script:
 
   - echo Fifteen minutes for LT unit tests
   - ../../bin/generate.csh
-  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
+  - pytest
 
 
   ########################################################################

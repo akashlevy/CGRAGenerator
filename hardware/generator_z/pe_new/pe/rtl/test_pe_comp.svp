@@ -374,6 +374,7 @@ end
 //; if($use_shift > 0) {
 logic [DATA_MSB:0] shift_res;
 logic [$clog2(DataWidth)-1+`$en_double`:0] shift_amt;
+logic signed [DataWidth-1:0] signed_op_a = op_a;
 
 /*
 //THIS DOES NOT WORK WITH TRISTATE BUFFERS IN VERILATOR!
@@ -668,7 +669,7 @@ always_comb begin : proc_alu
 //; if($use_shift > 0) {
     PE_RSHFT_OP: begin
         shift_amt = op_b[$clog2(DataWidth)-1+`$en_double`:0];
-        res_w = is_signed ? (op_a >>> shift_amt) : (op_a >> shift_amt);
+        res_w = is_signed ? (signed_op_a >>> shift_amt) : (op_a >> shift_amt);
       end
     PE_LSHFT_OP: begin
         shift_amt = op_b[$clog2(DataWidth)-1+`$en_double`:0];

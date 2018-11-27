@@ -49,9 +49,10 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
 
+  # FIXME/TODO is it possible that this fails silently b/c background job?
   - echo Fifteen minutes for LT unit tests
   - ../../bin/generate.csh
-  - pytest
+  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
 
 
   ########################################################################

@@ -670,7 +670,6 @@ always_comb begin : proc_alu
     PE_RSHFT_OP: begin
         signed_op_a = $signed(op_a);
         shift_amt = op_b[$clog2(DataWidth)-1+`$en_double`:0];
-        //res_w = is_signed ? ($signed(signed_op_a) >>> shift_amt) : (signed_op_a >> shift_amt);
         res_w = is_signed ?
                   ($signed(op_a) >>> shift_amt):
                   ($signed(op_a)  >> shift_amt);

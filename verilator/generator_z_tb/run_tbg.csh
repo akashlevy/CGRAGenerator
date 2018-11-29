@@ -67,9 +67,9 @@ if ($memtile_height == 2) then
   set config = sorry_no_tallmem_config_exists_yet
 endif
 
-set config = $b/srshift.bsa
-echo "DEBUGGING SIGNED_RSHIFT: config=$config"
-echo ""
+# set config = $b/srshift.bsa
+# echo "DEBUGGING SIGNED_RSHIFT: config=$config"
+# echo ""
 
 echo "run.csh: Looks like memtile_height is $memtile_height"
 echo ""

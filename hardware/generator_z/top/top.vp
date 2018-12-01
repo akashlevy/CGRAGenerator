@@ -3,10 +3,9 @@
 
 // New Top level that contains CGRA_core module and IO pad_ring module
 //; #TOP LEVEL PARAMS
-//; my $num_ios_per_side = parameter(name=>'num_ios_per_side', val=>16, min=>16, step=>16);
+//; my $num_io_groups_per_side = parameter(name=>'num_io_groups_per_side', val=>1, min=>1, step=>1);
 //; #Other values
 //; my $num_ios_per_group = 16;
-//; my $num_groups_per_side = $num_ios_per_side/$num_ios_per_group;
 //; my @sides = ('N','S','E','W');
 //; my $connect_GC = parameter(name=>'connect_GC', val=>0, min=>0, max=>1, step=>1);
 //; my $config_addr_width = parameter(name=>'config_addr_width', val=>32, min=>1, step=>1);
@@ -19,7 +18,7 @@
 //; 
 module `mname` (
   //pads_{side}_{group_num_within_side} [bit number within group]
-//; for (my $i=0; $i<$num_groups_per_side; $i++) {
+//; for (my $i=0; $i<$num_io_groups_per_side; $i++) {
 //;   if ($tristate_supported) {
   inout [`$num_ios_per_group-1`:0] pads_N_`$i`,
   inout [`$num_ios_per_group-1`:0] pads_S_`$i`,
@@ -103,7 +102,7 @@ assign config_write = 1;
 //; }
 //; my $jtag_ifc_path = parameter(NAME => 'IFC', VAL => $global_controller_obj -> get_param('IFC'), DOC => "Path to JTAG interface for JTAGDriver");
 
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
 //;   for my $side (@sides) {
   wire [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`;
   wire [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`;
@@ -115,7 +114,7 @@ assign config_write = 1;
 //; my $cgra_core_obj = generate_base("cgra_core","core");
 
   `$cgra_core_obj->instantiate()` (
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
 //;   for my $side (@sides) {
     .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),
@@ -132,11 +131,11 @@ assign config_write = 1;
     .read_data(read_data_core)
   );
 
-//; my $pad_ring_obj = generate_base("pad_ring", "pads");
+//; my $pad_ring_obj = generate_base("pad_ring", "pads", num_groups_per_side => $num_io_groups_per_side);
 
   `$pad_ring_obj->instantiate()` (
 
-//; for (my $i=0; $i < $num_groups_per_side; $i++) {
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
 //;   for my $side (@sides) {
     .f2p_wide_`$side`_`$i`(f2p_wide_`$side`_`$i`),
     .f2p_1bit_`$side`_`$i`(f2p_1bit_`$side`_`$i`),

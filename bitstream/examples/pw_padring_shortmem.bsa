@@ -8,59 +8,35 @@ FF000101 0002F00B
 # data[(17, 16)]: data0: REG_BYPASS=0x2
 # data[(19, 18)]: data1: REG_CONST= 0x0
 
-
-
-# # Oops we're coming from the north now...
-# # First connect N side (3) to side 2 (W)
-# #         <mux snk='out_BUS16_S2_T0' reg_address='0' bith='21' bitl='20' default='3'>
-# #           <src sel='0'>in_BUS16_S0_T0</src>
-# #           <src sel='1'>in_BUS16_S1_T0</src>
-# #           <src sel='2'>in_BUS16_S3_T0</src> ***
-# #           <src sel='3'>pe_out_res</src>
-# #           <src sel='3'>pe_out_res</src>
-# 00080101 00200003
-# # data[(21, 20)] : @ tile (1, 1) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
-# # data[(1, 0)]   : @ tile (1, 1) connect wire 3 (pe_out_res) to out_BUS16_S0_T0
-# 
-# # Now connect W side (2) to data0
-# #     <cb feature_address='2' bus='BUS16'>
-# #         <sel_width>4</sel_width>
-# #         <default>13</default>
-# #         <mux snk='data0'>
-# #           <src sel='0'>in_BUS16_S2_T0</src>
-# #           <src sel='1'>in_BUS16_S2_T1</src>
-# #           <src sel='2'>in_BUS16_S2_T2</src>
-# #           <src sel='3'>in_BUS16_S2_T3</src>
-# #           <src sel='4'>in_BUS16_S2_T4</src>
-# #           <src sel='5'>out_BUS16_S2_T0</src> ***
-# #           <src sel='6'>out_BUS16_S2_T1</src>
-# #           <src sel='7'>out_BUS16_S2_T2</src>
-# #           <src sel='8'>out_BUS16_S2_T3</src>
-# #           <src sel='9'>out_BUS16_S2_T4</src>
-# 00020101 00000005
-# # data[(3, 0)] : @ tile (1, 1) connect wire 5 (in_BUS16_S2_T0) to data0
-
-
-00080101 00000003
+# Oops we're coming from the north now...
+# First connect N side (3) to side 2 (W)
+#         <mux snk='out_BUS16_S2_T0' reg_address='0' bith='21' bitl='20' default='3'>
+#           <src sel='0'>in_BUS16_S0_T0</src>
+#           <src sel='1'>in_BUS16_S1_T0</src>
+#           <src sel='2'>in_BUS16_S3_T0</src> ***
+#           <src sel='3'>pe_out_res</src>
+#           <src sel='3'>pe_out_res</src>
+00080101 00200003
+# data[(21, 20)] : @ tile (1, 1) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
 # data[(1, 0)]   : @ tile (1, 1) connect wire 3 (pe_out_res) to out_BUS16_S0_T0
 
-
-# Haha can connect directly to side 3 now
-#     .in_0(in_BUS16_S2_T0),
-#     .in_1(in_BUS16_S2_T1),
-#     .in_2(in_BUS16_S2_T2),
-#     .in_3(in_BUS16_S2_T3),
-#     .in_4(in_BUS16_S2_T4),
-#     .in_5(in_BUS16_S3_T0), ***
-#     .in_6(in_BUS16_S3_T1),
-#     .in_7(in_BUS16_S3_T2),
-#     .in_8(in_BUS16_S3_T3),
-#     .in_9(in_BUS16_S3_T4),
+# Now connect W side (2) to data0
+#     <cb feature_address='2' bus='BUS16'>
+#         <sel_width>4</sel_width>
+#         <default>13</default>
+#         <mux snk='data0'>
+#           <src sel='0'>in_BUS16_S2_T0</src>
+#           <src sel='1'>in_BUS16_S2_T1</src>
+#           <src sel='2'>in_BUS16_S2_T2</src>
+#           <src sel='3'>in_BUS16_S2_T3</src>
+#           <src sel='4'>in_BUS16_S2_T4</src>
+#           <src sel='5'>out_BUS16_S2_T0</src> ***
+#           <src sel='6'>out_BUS16_S2_T1</src>
+#           <src sel='7'>out_BUS16_S2_T2</src>
+#           <src sel='8'>out_BUS16_S2_T3</src>
+#           <src sel='9'>out_BUS16_S2_T4</src>
 00020101 00000005
-# data[(3, 0)] : @ tile (1, 1) connect wire 5 (in_BUS16_S3_T0) to data0
-
-
-
+# data[(3, 0)] : @ tile (1, 1) connect wire 5 (in_BUS16_S2_T0) to data0
 
 # 00080101 00200003 (already did this, above)
 # data[(21, 20)] : @ tile (1, 1) connect wire 2 (in_BUS16_S3_T0) to out_BUS16_S2_T0
@@ -138,19 +114,3 @@ FF000101 0002F00B
 00000F11 00000001
 00001011 00000001
 
-00000001 00000000
-00000002 00000000
-00000003 00000000
-00000004 00000000
-00000005 00000000
-00000006 00000000
-00000007 00000000
-00000008 00000000
-00000009 00000000
-0000000A 00000000
-0000000B 00000000
-0000000C 00000000
-0000000D 00000000
-0000000E 00000000
-0000000F 00000000
-00000010 00000000

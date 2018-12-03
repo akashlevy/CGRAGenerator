@@ -67,10 +67,6 @@ if ($memtile_height == 2) then
   set config = sorry_no_tallmem_config_exists_yet
 endif
 
-# set config = $b/srshift.bsa
-# echo "DEBUGGING SIGNED_RSHIFT: config=$config"
-# echo ""
-
 echo "run.csh: Looks like memtile_height is $memtile_height"
 echo ""
 
@@ -200,7 +196,7 @@ while ($#argv)
     # Switches: I/O
     case '-io_config':
     case '--io_config':
-      set io_config = "$2"; shift; breaksw
+      set io_config = "$2"; shift; set io_config_override = 1; breaksw
 
     case -input:
     case --input:
@@ -308,6 +304,13 @@ if (! -e $config) then
   echo "${0:t}: ERROR Cannot find config file '$config'"
   exit 13
 endif
+
+#######################################################################
+# Clean up the old files, if any
+echo "rm -f build/io16_out_0_0.raw"
+echo "rm -f build/io1_out_0_0.raw"
+rm -f build/io16_out_0_0.raw
+rm -f build/io1_out_0_0.raw
 
 ########################################################################
 # Detect if running from within travis
@@ -447,15 +450,24 @@ RUN_SIM:
     set trace = "-trace $tracefile"
   endif
 
-#   # For 'quiet' execution, use these two filters to limit output;
-#   # Otherwise just cat everything to stdout
-#   if (! $?VERBOSE) then
-#     set quietfilter = (egrep -v "Cycle: [1-9]00")
-#     set qf2 = (grep -v "^000[23456789].*Two times")
-#   else
-#     set quietfilter = (cat)
-#     set qf2         = (cat)
-#   endif
+
+
+
+
+
+
+
+
+
+  # For 'quiet' execution, use these two filters to limit output;
+  # Otherwise just cat everything to stdout
+  if (! $?VERBOSE) then
+    set quietfilter = (egrep -v "Cycle: [1-9]00")
+    set qf2 = (grep -v "^000[23456789].*Two times")
+  else
+    set quietfilter = (cat)
+    set qf2         = (cat)
+  endif
 
   ########################################################################
   if ($?VERBOSE) then
@@ -487,19 +499,9 @@ pushd build >& /dev/null
 #   od -t u1 io16in_in_arg_1_0_0.raw
 #   echo ""
 
-  # For 'quiet' execution, use these two filters to limit output;
-  # Otherwise just cat everything to stdout
-  if (! $?VERBOSE) then
-    set quietfilter = (egrep -v '([^0]0$|[^0]00$)')
-    set qf2 = (grep -v "^000[23456789].*Two times")
-  else
-    set quietfilter = (cat)
-    set qf2         = (cat)
-  endif
-
   # Cut down 10x on "Cycle" output thingies
-  # ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
-  ./Vtop | $quietfilter | tee $tmpdir/run.log.$$
+  ./Vtop |  egrep -v '([^0]0$|[^0]00$)' \
+      | tee $tmpdir/run.log.$$
 
   # Let process_output put its garbage in 'build' directory
 

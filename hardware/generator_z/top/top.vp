@@ -112,7 +112,7 @@ assign config_write = 1;
 //; }
 
 
-//; my $cgra_core_obj = generate_base("cgra_core","core");
+//; my $cgra_core_obj = generate_base("cgra_core","core", num_io_groups_per_side => $num_io_groups_per_side);
 
   `$cgra_core_obj->instantiate()` (
 //; for (my $i=0; $i < $num_groups_per_side; $i++) {

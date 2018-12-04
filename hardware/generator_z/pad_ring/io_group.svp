@@ -39,18 +39,19 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 
 //; # Given IO number (0..16n) on side N, S, E or W, return row, col of io tile
 //; sub io_row_col {
-//;   my ($i, $side, $num_ios) = @_;
+//;   my ($i, $side, $num_ios, $io_group_num) = @_;
 //;   my ($row,$col) = (-1,-1);
+//;   my $group_offset = ($num_ios * $io_group_num);
 //; 
 //;   if    ($side eq "N") { $row = 0 }           # 0
-//;   elsif ($side eq "E") { $row = $num_ios-$i } # 16..1
-//;   elsif ($side eq "W") { $row = 1+$i }        # 1..16
+//;   elsif ($side eq "E") { $row = $num_ios - $i + $group_offset } # 16..1
+//;   elsif ($side eq "W") { $row = 1 + $i + $group_offset }        # 1..16
 //;   elsif ($side eq "S") { $row = 1+$num_ios }  # 17
 //;
-//;   if    ($side eq "N") { $col = $num_ios-$i } # 16..1
-//;   elsif ($side eq "E") { $col = 1+$num_ios; } # 17
+//;   if    ($side eq "N") { $col = $num_ios - $i + $group_offset } # 16..1
+//;   elsif ($side eq "E") { $col = 1 + $num_ios; } # 17
 //;   elsif ($side eq "W") { $col = 0; }          # 0
-//;   elsif ($side eq "S") { $col = 1+$i }        # 1..16
+//;   elsif ($side eq "S") { $col = 1 + $i + $group_offset }        # 1..16
 //;
 //;   return ($row,$col);
 //; }
@@ -114,7 +115,7 @@ wire [`$config_data_width-1`:0] read_data_tile [`$num_ios-1`:0];
 //; for (my $i=($num_ios-1); $i >=0; $i--) {
 //;
 //;   # <tile type='io1bit' tile_addr='0x2' row='0' col='2' tracks='BUS1:1 BUS16:0' name='pad_S0_T0'>
-//;   my ($row,$col) = io_row_col($i, $side, $num_ios);
+//;   my ($row,$col) = io_row_col($i, $side, $num_ios, $io_group_num);
 //;
 //;   my $id = ($row<<8) + $col;
 //;   my $hex_id = sprintf("0x%04X", $id);

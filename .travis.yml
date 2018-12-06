@@ -63,3 +63,6 @@ script:
   # Summarize results here at the end
   - cat $TRAVIS_BUILD_DIR/pytest.log
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo
+
+  # Did LT tests pass!!??
+  cat $TRAVIS_BUILD_DIR/pytest.log

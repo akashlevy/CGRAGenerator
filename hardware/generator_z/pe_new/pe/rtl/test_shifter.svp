@@ -153,8 +153,8 @@ logic [DataWidth-1:0] rshift_val;
    endgenerate
 //;}
 
-//;my break_rshift = 1;
-//;if (break_rshift) {
+//;my $break_rshift = 1;
+//;if ($break_rshift) {
    // Break right-shift to test unit-tests
    assign res = dir_left ? lshift_val: (shift_inp >> b);
 //;} else {

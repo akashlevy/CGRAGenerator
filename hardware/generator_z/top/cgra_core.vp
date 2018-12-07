@@ -45,7 +45,8 @@
 //; if ($grid_size == "48x48") { @IO_count = qw(32 32 32 32); }
 //; if ($grid_size == "64x64") { @IO_count = qw(64 64 64 64); }
 //; my $num_ios_per_group = 16;
-//; my $num_io_groups_per_side = parameter(name => 'num_io_groups_per_side', val => 1, min => 1, step => 1);
+//; my $num_io_groups_per_side = 
+//;    parameter(name => 'num_io_groups_per_side', val => 1, min => 1, step => 1);
 //; #
 //; # Specify, in form of a AxB grid, the basic tile pattern that repeats. Each
 //; # grid node represents a unit tile (1x1) on the CGRA fabric. Assign a tile
@@ -306,10 +307,12 @@
 module `mname`(
 //; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
 //;   for my $side (@sides) {
-f2p_wide_`$side`_`$i`,
-f2p_1bit_`$side`_`$i`,
-p2f_`$side`_`$i`,
+  f2p_wide_`$side`_`$i`,
+  f2p_1bit_`$side`_`$i`,
+  p2f_`$side`_`$i`,
+
 //;   }
+
 //; }
 // -------------------------------------
 // PLACEHOLDERS FOR VERILATOR PORT WIRES
@@ -324,34 +327,34 @@ p2f_`$side`_`$i`,
 // VERILATOR_PORT7
 // VERILATOR_PORT8
 // -------------------------------------
-config_addr,
-config_data,
-config_read,
-config_write,
+  config_addr,
+  config_data,
+  config_read,
+  config_write,
 //; if($include_analog_block) {
 //PORTS FOR ANALOG BLOCK
-ext_cki,
-ext_ckib,
-ext_frefp,
-ext_frefn,
-ext_cki_jm,
-ext_ckib_jm,
-ext_frefp_jm,
-ext_frefn_jm,
-clk_ext_in,
-aux_div_pad,
-fout_div_pad,
-fref_off_pad,
-ffeed_pad,
-frefp_out_jm,
-frefn_out_jm,
-mdllout_pad,
-lf_out
+  ext_cki,
+  ext_ckib,
+  ext_frefp,
+  ext_frefn,
+  ext_cki_jm,
+  ext_ckib_jm,
+  ext_frefp_jm,
+  ext_frefn_jm,
+  clk_ext_in,
+  aux_div_pad,
+  fout_div_pad,
+  fref_off_pad,
+  ffeed_pad,
+  frefp_out_jm,
+  frefn_out_jm,
+  mdllout_pad,
+  lf_out
 //; }
-clk,
-reset,
-stall,
-read_data
+  clk,
+  reset,
+  stall,
+  read_data
 );
 
 //;open(INFO, ">cgra_info.txt") or die "Couldn't open file cgra_info.txt, $!";
@@ -405,12 +408,10 @@ read_data
 //;   for my $side (@sides) {
   output [`$num_ios_per_group-1`:0] f2p_wide_`$side`_`$i`;
   output [`$num_ios_per_group-1`:0] f2p_1bit_`$side`_`$i`;
-  input [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`;
+  input  [`$num_ios_per_group-1`:0] p2f_`$side`_`$i`;
+  //
 //;   }
 //; }
-
-
-
 
    // ---------------------------------------
    // PLACEHOLDERS FOR VERILATOR OUTPUT WIRES
@@ -521,20 +522,31 @@ wire [31:0] read_data_io1bit;
 //#Naming: wire_<row>_<col>_<busname>_S<side_T<track>
 //#Where : row,col = row,col of source tile
 //#####################################################
+//;     for my $bus (sort keys %bus_num_tracks_hash) {
 //; for (my $h=0; $h<$cgra_grid_height; $h++) {
 //;   for (my $w=0; $w<$cgra_grid_width; $w++) {
 //;     my $key = "${w}_${h}";
 //;     my $tile_type = $tile_grid{$key};
 //;     my $tile_height = $tile_config->{ $tile_type }{ 'tile_height' };
-//;     for my $bus (sort keys %bus_num_tracks_hash) {
 //;       my $num_tracks = $bus_num_tracks_hash { $bus };
 //;       my $bus_width = $bus_width_hash { $bus };
 //;       for(my $s=0; $s<$sides; $s++) {
 //;         for(my $t=0; $t<$num_tracks; $t++) {
     wire [`$bus_width-1`:0] wire_`$h`_`$w`_`$bus`_S`$s`_T`$t`;
 //;         }
+
 //;       }
+//;   }
+//; }
 //;     }
+
+
+
+//; for (my $h=0; $h<$cgra_grid_height; $h++) {
+//;   for (my $w=0; $w<$cgra_grid_width; $w++) {
+//;     my $key = "${w}_${h}";
+//;     my $tile_type = $tile_grid{$key};
+//;     my $tile_height = $tile_config->{ $tile_type }{ 'tile_height' };
 //;     if ($tile_type eq "mem") {
 //;       my $data_bus = $tile_config->{ $tile_type }{ 'gen_mem_for_busname' };
 //;       my $bus_width = $bus_width_hash { $data_bus };
@@ -551,6 +563,8 @@ wire [31:0] read_data_io1bit;
 //;     }
 //;   }
 //; }
+
+
 /* verilator lint_on UNUSED */
 
 
@@ -558,10 +572,10 @@ wire [31:0] read_data_io1bit;
 //; my $io1bit_num_tracks = $bus_num_tracks_hash{ 'BUS1' };
 //; my $io16bit_num_tracks = $bus_num_tracks_hash{ 'BUS16' };
 
-// ASSIGN all signals to/from IO padsi
-
+// ASSIGN all signals to/from IO pads
 // assign wide f2p outputs (one tile -> all pads in a group)
 //; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
+//
 assign f2p_wide_N_`$i` = wire_1_`1 + $i`_BUS16_S3_T0;
 assign f2p_wide_W_`$i` = wire_`($cgra_grid_height-2) - $i`_1_BUS16_S2_T0;
 assign f2p_wide_S_`$i` = wire_`($cgra_grid_height-2)`_`($cgra_grid_width-2) - $i`_BUS16_S1_T0;
@@ -569,12 +583,20 @@ assign f2p_wide_E_`$i` = wire_`1 + $i`_`($cgra_grid_width-2)`_BUS16_S0_T0;
 //; }
 
 // assign 1bit f2p outputs
-//; my $tile_groups = $cgra_grid_height/$num_ios_per_group;
-//; my $num_1bit_io_groups = ($tile_groups < $num_io_groups_per_side) ? $tile_groups : $num_io_groups_per_side;
+//; my $onebit_groups = int($cgra_grid_height/$num_ios_per_group);
+//;
+//; # No
+//; # my $num_1bit_io_groups = 
+//; #   ($onebit_groups < $num_io_groups_per_side) ? $onebit_groups : $num_io_groups_per_side;
+//;
+//; # Yes
+//; my $num_1bit_io_groups = $onebit_groups;
+//;
+// `$cgra_grid_height`/`$num_ios_per_group` = `$onebit_groups`
 //; for (my $i=0; $i < $num_1bit_io_groups; $i++) {
+//;   my $offset = $i * $num_ios_per_group;
 
 //North side
-//; my $offset = $i * $num_ios_per_group;
 //;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
 //;     my $b = $num_ios_per_group - $bit - 1; # Count down 15->0
 assign f2p_1bit_N_`$i`[`$b`] = wire_1_`1+$offset+$bit`_BUS1_S3_T0;
@@ -597,18 +619,71 @@ assign f2p_1bit_S_`$i`[`$b`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_
 //;     my $b = $bit; # Count up 0->15
 assign f2p_1bit_W_`$i`[`$b`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
 //;   }
-
 //; }
-// assign wide p2f inputs (all pads in a group -> a single tile)
+//;
+//; my $unconnected_groups = $num_io_groups_per_side - $onebit_groups;
+//; for (my $i=$onebit_groups; $i < $num_io_groups_per_side; $i++) {
+//;   my $offset = $i * $num_ios_per_group;
+
+//Unconnected onebit wires - north side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;     my $b = $num_ios_per_group - $bit - 1; # Count down 15->0
+assign f2p_1bit_N_`$i`[`$b`] = 1'b0;
+//;   }
+
+//Unconnected onebit wires - east side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;     my $b = $num_ios_per_group - $bit - 1; # Count down 15->0
+assign f2p_1bit_E_`$i`[`$b`] = 1'b0;
+//;   }
+
+//Unconnected onebit wires - south side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;     my $b = $bit; # Count up 0->15
+assign f2p_1bit_S_`$i`[`$b`] = 1'b0;
+//;   }
+
+//Unconnected onebit wires - west side
+//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;     my $b = $bit; # Count up 0->15
+assign f2p_1bit_W_`$i`[`$b`] = 1'b0;
+//;   }
+//; }
+//;
+//;
+//;
+//;
+//;
+// assign wide p2f inputs (all pads in a group -> a single tile): NORTH
 //; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
 //;   for (my $t=0; $t < $io16bit_num_tracks; $t++) {
 assign wire_0_`1 + $i`_BUS16_S1_T`$t` = p2f_N_`$i`;
+//;   }
+//; }
+
+// assign wide p2f inputs (all pads in a group -> a single tile): WEST
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
+//;   for (my $t=0; $t < $io16bit_num_tracks; $t++) {
 assign wire_`($cgra_grid_height-2) - $i`_0_BUS16_S0_T`$t` = p2f_W_`$i`;
+//;   }
+//; }
+
+// assign wide p2f inputs (all pads in a group -> a single tile): SOUTH
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
+//;   for (my $t=0; $t < $io16bit_num_tracks; $t++) {
 assign wire_`($cgra_grid_height-1)`_`($cgra_grid_width-2) - $i`_BUS16_S3_T`$t` = p2f_S_`$i`;
+//;   }
+//; }
+
+// assign wide p2f inputs (all pads in a group -> a single tile): EAST
+//; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
+//;   for (my $t=0; $t < $io16bit_num_tracks; $t++) {
 assign wire_`1 + $i`_`($cgra_grid_width-1)`_BUS16_S2_T`$t` = p2f_E_`$i`;
 //;   }
 //; }
 //;
+
+
 // assign 1 bit p2f inputs (each pad goes to a single tile)
 //; for (my $i=0; $i < $num_1bit_io_groups; $i++) {
 //;   for (my $t=0; $t < $io1bit_num_tracks; $t++) {
@@ -637,7 +712,6 @@ assign wire_`($cgra_grid_height-1)`_`1 + $offset + $bit`_BUS1_S3_T`$t` = p2f_S_`
 //;       my $b = $bit; # Count up 0->15
 assign wire_`1 + $offset + $bit`_0_BUS1_S0_T`$t` = p2f_W_`$i`[`$b`];
 //;     }
-
 //;   }
 //; }
 

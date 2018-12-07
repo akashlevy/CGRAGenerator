@@ -131,7 +131,8 @@ assign config_write = 1;
     .read_data(read_data_core)
   );
 
-//; my $pad_ring_obj = generate_base("pad_ring", "pads", num_groups_per_side => $num_io_groups_per_side);
+//; my $pad_ring_obj = generate_base("pad_ring", "pads",
+//;   num_groups_per_side => $num_io_groups_per_side);
 
   `$pad_ring_obj->instantiate()` (
 

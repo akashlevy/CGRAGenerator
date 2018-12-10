@@ -49,7 +49,7 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
 
-  - echo 'LT unit tests in background'
+  - echo 'Fifteen minutes for LT unit tests (background)'
   - ../../bin/generate.csh
   - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
 

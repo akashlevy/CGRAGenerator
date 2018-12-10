@@ -1,5 +1,6 @@
 //; # Experimenting with globals
 //; our @CGRA_INFO;
+//; our $CONNECT_INFO;
 
 // New Top level that contains CGRA_core module and IO pad_ring module
 //; #TOP LEVEL PARAMS
@@ -188,6 +189,7 @@ assign config_write = 1;
 
 //; open(INFO2, ">cgra_info.xml") or die "Couldn't open file cgra_info.xml, $!";
 //; print INFO2 "<CGRA>\n";
+//; print INFO2 $top::CONNECT_INFO;
 //; for my $i (0 .. $#top::CGRA_INFO) {
 //;     # print INFO2 "----\n" . @top::CGRA_INFO[$i] . "\n";
 //;     # print INFO2 sprintf("\n0x%04X\n", $i);

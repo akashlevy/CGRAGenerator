@@ -575,14 +575,49 @@ wire [31:0] read_data_io1bit;
 // ASSIGN all signals to/from IO pads
 // assign wide f2p outputs (one tile -> all pads in a group)
 //; for (my $i=0; $i < $num_io_groups_per_side; $i++) {
+//;   my ($rn,$cn) = ( 1                         , 1 + $i                    );
+//;   my ($rw,$cw) = ( ($cgra_grid_height-2) - $i, 1                         );
+//;   my ($rs,$cs) = ( ($cgra_grid_height-2)     , ($cgra_grid_width-2) - $i );
+//;   my ($re,$ce) = ( 1 + $i                    , ($cgra_grid_width-2)      );
 //
-assign f2p_wide_N_`$i` = wire_1_`1 + $i`_BUS16_S3_T0;
-assign f2p_wide_W_`$i` = wire_`($cgra_grid_height-2) - $i`_1_BUS16_S2_T0;
-assign f2p_wide_S_`$i` = wire_`($cgra_grid_height-2)`_`($cgra_grid_width-2) - $i`_BUS16_S1_T0;
-assign f2p_wide_E_`$i` = wire_`1 + $i`_`($cgra_grid_width-2)`_BUS16_S0_T0;
+assign f2p_wide_N_`$i` = wire_`$rn`_`$cn`_BUS16_S3_T0;
+assign f2p_wide_E_`$i` = wire_`$re`_`$ce`_BUS16_S0_T0;
+assign f2p_wide_S_`$i` = wire_`$rs`_`$cs`_BUS16_S1_T0;
+assign f2p_wide_W_`$i` = wire_`$rw`_`$cw`_BUS16_S2_T0;
+//;
+//;   # Collateral for cgra_info
+//;   # Want to add something like?
+//;   # <io_connect_wide group='0' N='0x0101' W='0x1001' S='0x1010' E='0x0110'/>
+//;   my $ntile = sprintf("0x%02X%02X", $rn, $cn);
+//;   my $etile = sprintf("0x%02X%02X", $re, $ce);
+//;   my $stile = sprintf("0x%02X%02X", $rs, $cs);
+//;   my $wtile = sprintf("0x%02X%02X", $rw, $cw);
+//;   my $collateral = 
+//;     "<io_connect_wide group='$i' N='$ntile' E='$etile' S='$stile' W='$wtile'/>";
+//;   $top::CONNECT_INFO .= "  $collateral\n";
+//;   # Print collateral inline with verilog as a comment.
+// `$collateral`
 //; }
 
+
 // assign 1bit f2p outputs
+//;
+//; sub onebit_collateral {
+//;   # unpack parms
+//;   my ($group_num, $side, $mstile, $lstile) = @_;
+//;
+//;   # build the collateral
+//;   my $collateral = 
+//;     sprintf("<io_connect_1bit group='%d' side='%s' msb='0x%04X' lsb='0x%04X'/>",
+//;             $group_num, $side, $mstile, $lstile);
+//;
+//;   # print to cgra_info.xml
+//;   $top::CONNECT_INFO .= "  $collateral\n";
+//;
+//;   # print inline with verilog code
+//;   print "// $collateral\n"
+//; }
+//;
 //; my $onebit_groups = int($cgra_grid_height/$num_ios_per_group);
 //;
 //; # No
@@ -596,29 +631,66 @@ assign f2p_wide_E_`$i` = wire_`1 + $i`_`($cgra_grid_width-2)`_BUS16_S0_T0;
 //; for (my $i=0; $i < $num_1bit_io_groups; $i++) {
 //;   my $offset = $i * $num_ios_per_group;
 
+//; # Note collateral should look something like
+//; # side   msb    lsb
+//; # N_0   01,01  01,16
+//; # N_1   01,17  01,32
+//; # 
+//; # E_0   01,16  16,16
+//; # E_1   17,16  32,16
+//; # 
+//; # S_0   33,16  33,01
+//; # S_1   33,32  33,17
+//; # 
+//; # W_0   00,32  00,17
+//; # W_1   00,16  00,01
+//;
+//; # Formatted something like:
+//; # <io_connect_1bit group='0' side='N' msb='0x0101' lsb='0x0110'>
+//;
+//;   my ($lsb,$msb) = (0, $num_ios_per_group-1);
+//;   my ($lstile, $mstile);
+//;
 //North side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;   for (my $bit=0; $bit < $num_ios_per_group; $bit++) {
 //;     my $b = $num_ios_per_group - $bit - 1; # Count down 15->0
-assign f2p_1bit_N_`$i`[`$b`] = wire_1_`1+$offset+$bit`_BUS1_S3_T0;
+//;     my ($r,$c) = (1, 1+$offset+$bit);
+assign f2p_1bit_N_`$i`[`$b`] = wire_`$r`_`$c`_BUS1_S3_T0;
+//;     if ($b==$msb) { $mstile =  ($r<<8) + $c; }
+//;     if ($b==$lsb) { $lstile =  ($r<<8) + $c; }
 //;   }
+//;   onebit_collateral($i, 'N', $mstile, $lstile);
 
 //East side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;   for (my $bit=0; $bit < $num_ios_per_group; $bit++) {
 //;     my $b = $num_ios_per_group - $bit - 1; # Count down 15->0
-assign f2p_1bit_E_`$i`[`$b`] = wire_`1+$offset+$bit`_`$cgra_grid_width-2`_BUS1_S0_T0;
+//;     my ($r,$c) = (1+$offset+$bit, $cgra_grid_width-2);
+assign f2p_1bit_E_`$i`[`$b`] = wire_`$r`_`$c`_BUS1_S0_T0;
+//;     if ($b==$msb) { $mstile =  ($r<<8) + $c; }
+//;     if ($b==$lsb) { $lstile =  ($r<<8) + $c; }
 //;   }
+//;   onebit_collateral($i, 'E', $mstile, $lstile);
 
 //South side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;   for (my $bit=0; $bit < $num_ios_per_group; $bit++) {
 //;     my $b = $bit; # Count up 0->15
-assign f2p_1bit_S_`$i`[`$b`] = wire_`$cgra_grid_height-2`_`1+$offset+$bit`_BUS1_S1_T0;
+//;     my ($r,$c) = ($cgra_grid_height-2, 1+$offset+$bit);
+assign f2p_1bit_S_`$i`[`$b`] = wire_`$r`_`$c`_BUS1_S1_T0;
+//;     if ($b==$msb) { $mstile =  ($r<<8) + $c; }
+//;     if ($b==$lsb) { $lstile =  ($r<<8) + $c; }
 //;   }
+//;   onebit_collateral($i, 'S', $mstile, $lstile);
 
 //West side
-//;   for(my $bit=0; $bit < $num_ios_per_group; $bit++) {
+//;   for (my $bit=0; $bit < $num_ios_per_group; $bit++) {
 //;     my $b = $bit; # Count up 0->15
-assign f2p_1bit_W_`$i`[`$b`] = wire_`1+$offset+$bit`_1_BUS1_S2_T0;
+//;     my ($r,$c) = (1+$offset+$bit, 1);
+assign f2p_1bit_W_`$i`[`$b`] = wire_`$r`_`$c`_BUS1_S2_T0;
+//;     if ($b==$msb) { $mstile =  ($r<<8) + $c; }
+//;     if ($b==$lsb) { $lstile =  ($r<<8) + $c; }
 //;   }
+//;   onebit_collateral($i, 'W', $mstile, $lstile);
+//;
 //; }
 //;
 //; my $unconnected_groups = $num_io_groups_per_side - $onebit_groups;

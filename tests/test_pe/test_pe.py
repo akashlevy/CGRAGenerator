@@ -236,8 +236,8 @@ def test_input_modes(signed, worker_id, input_modes):
 
 def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     # op = random_op
-    # op = choice(ops)
-    op = "add"
+    op = choice(ops) # fail?
+    # op = "add"     # pass
     flag_sel = 0xE  # Lut output
     bit2_mode = 0x2  # BYPASS
     bit1_mode = 0x2  # BYPASS

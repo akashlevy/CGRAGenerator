@@ -51,15 +51,4 @@ script:
 
   - echo Fifteen minutes for LT unit tests
   - ../../bin/generate.csh
-  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
-
-
-  ########################################################################
-  - echo "Twenty-five minutes (1500s) for travis system tests"
-  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
-
-
-  ########################################################################
-  # Summarize results here at the end
-  - cat $TRAVIS_BUILD_DIR/pytest.log
-  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo
+  - pytest

@@ -156,7 +156,7 @@ logic [DataWidth-1:0] rshift_val;
 //;my $break_rshift = 1;
 //;if ($break_rshift) {
    // Break right-shift to test unit-tests
-   // (note harris also breaks if we do ">>" instead of ">>"
+   // (note harris also breaks if we do ">>" instead of ">>>"
    assign res = dir_left ? lshift_val: (shift_inp >>> b);
 //;} else {
    assign res = dir_left ? lshift_val: rshift_val;

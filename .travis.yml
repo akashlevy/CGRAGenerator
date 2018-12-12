@@ -65,5 +65,5 @@ script:
   - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo
 
   # Did LT tests pass!!??  If not, print results and FAIL
-  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && cat $TRAVIS_BUILD_DIR/pytest.log || exit 0
-  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && exit 13 || echo "Lenny unit tests PASSED"
+  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && cat $TRAVIS_BUILD_DIR/pytest.log || echo "Lenny unit tests PASSED"
+  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && exit 13 || echo okay

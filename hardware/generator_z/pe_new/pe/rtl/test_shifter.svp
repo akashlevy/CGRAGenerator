@@ -153,7 +153,7 @@ logic [DataWidth-1:0] rshift_val;
    endgenerate
 //;}
 
-//;my $break_rshift = 0;
+//;my $break_rshift = 1;
 //;if ($break_rshift) {
    // Break right-shift to test Lenny's unit-tests
    // (note harris also breaks if we do ">>" instead of ">>>"

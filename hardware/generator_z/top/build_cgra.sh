@@ -3,7 +3,20 @@
 function help {
   if [[ "$1" == "--help" ]]; then
     echo ""
-    echo "${0:t} [ --use_verilator_hacks | --no_verilator_hacks ]"
+    # echo "${0:t}"
+    echo "Optional switches:"
+    echo "   --design <design_name> (must be first switch on cmd line)"
+    echo "   --use_verilator_hacks | --no_verilator_hacks"
+    echo "   --help"
+    echo ""
+    echo "Available designs:"
+    echo '    shortmem - memory tile = 1 (same height as PE tile)'
+    echo "    tallmem  - memory tile = 2"
+    echo "    2groups  - two 16bit IO pad groups per side"
+    echo ""
+    echo "Example:"
+    echo "  ${0:t} --design 2groups"
+
     exit 13
   fi
 }
@@ -15,7 +28,7 @@ function do_genesis {
   fi
 
   Genesis2.pl -parse -generate -top top -hierarchy top.xml \
-    -xml ./bin/${short_or_tall}mem.xml \
+    -xml ./bin/${design_name}.xml \
     -input top.vp \
     cgra_core.vp \
     \
@@ -86,8 +99,8 @@ function main {
   # Make sure Genesis2 is available
   find_or_install_genesis2
 
-  short_or_tall=`short_or_tall $* | tail -n 1`
-  echo NOTICE Building ${short_or_tall}mem design
+  design_name=`design_name $* | tail -n 1`
+  echo "NOTICE Building design '$design_name'"
 
   # GENERATE
   do_genesis
@@ -126,8 +139,8 @@ function main {
   # This won't work on travis until/unless we install xmllint there...
   if [ `hostname` == "kiwi" ]; then
     echo Checking cgra_info for errors...
-    echo xmllint --noout cgra_info.txt
-    xmllint --noout cgra_info.txt 2>&1 | head -n 20
+    echo xmllint --noout cgra_info.xml
+    xmllint --noout cgra_info.xml 2>&1 | head -n 20
   fi
 }
 
@@ -176,15 +189,24 @@ function find_or_install_genesis2 {
   fi
 }
 
-function short_or_tall {
-  # Default is shortmem
-  short_or_tall="short"
+function design_name {
 
+  # Default is shortmem
+  design_name="shortmem"
+
+  # Backward compatibility why not.
   # Matches e.g. '-tallmem' or '--tallmem'
   if expr "$1" : "tallmem" > /dev/null; then
-    short_or_tall="tall"
+    echo "WARNING found deprecated switch '--tallmem'"
+    echo "WARNING should instead uses '--design tallmem'"
+    design_name="tallmem"
+  fi  
+  if `test "$1" = '--design'`; then
+    design_name="$2"
   fi
-  echo $short_or_tall
+
+  # return value
+  echo $design_name
 }
 
 main $*

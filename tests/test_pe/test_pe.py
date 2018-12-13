@@ -246,7 +246,8 @@ def test_lut(strategy, signed, lut_code, worker_id): #, random_op):
     data0_mode = 0x2  # BYPASS
     irq_en = 0
     acc_en = 0
-    _op = getattr(pe, op)().flag(flag_sel).lut(lut_code).signed(signed)
+    args = [signed] if op in signed_ops else []
+    _op = getattr(pe, op)(*args).flag(flag_sel).lut(lut_code).signed(signed)
     cfg_d = _op.instruction
 
     if strategy is complete:

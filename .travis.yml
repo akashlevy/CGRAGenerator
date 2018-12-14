@@ -67,4 +67,3 @@ script:
   # Did LT tests pass!!??  If not, print results and FAIL
   - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && cat $TRAVIS_BUILD_DIR/pytest.log || echo "Lenny unit tests PASSED"
   - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && exit 13 || echo okay
-

@@ -49,6 +49,22 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
 
-  - echo Fifteen minutes for LT unit tests
+  - echo 'Fifteen minutes for LT unit tests (background)'
   - ../../bin/generate.csh
-  - pytest
+  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
+
+
+  ########################################################################
+  - echo "Twenty-five minutes (1500s) for travis system tests"
+  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE travis_system_tests MEMHEIGHT=short
+
+
+  ########################################################################
+  # Summarize results here at the end
+  - cat $TRAVIS_BUILD_DIR/pytest.log
+  - grep RESULT $TRAVIS_BUILD_DIR/testdir/serpent_results.tmp | grep -v echo
+
+  # Did LT tests pass!!??  If not, print results and FAIL
+  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && cat $TRAVIS_BUILD_DIR/pytest.log || echo "Lenny unit tests PASSED"
+  - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && exit 13 || echo okay
+

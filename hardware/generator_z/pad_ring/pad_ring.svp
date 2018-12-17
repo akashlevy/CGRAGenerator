@@ -3,7 +3,6 @@
 //; my $num_groups_per_side = parameter(Name=>'num_groups_per_side', val=>1, min=>1, step=>1);
 //; my $config_addr_width = parameter(Name=>'config_addr_width', val=>32, min=>1, step =>1);
 //; my $config_data_width = parameter(Name=>'config_data_width', val=>32, min=>1, step =>1);
-//; my $tile_id_offset = parameter(Name=>'tile_id_offset', val=>400, min=>0, step=>1);
 //; 
 //; # my $tristate_supported = parameter(name=>'tristate_supported', val=>0, list=>[0,1]);
 //; my $tristate_supported = 1;
@@ -13,7 +12,6 @@
 //; 
 // This module contains all of the io1bit and io16bit tiles in the CGRA.
 
-//; # my @sides = ('N','S','E','W');
 //; # I need this order for debugging; we can change it back later if you like...
 //; my @sides = ('N','E','S','W');
 module `mname` (
@@ -55,11 +53,15 @@ module `mname` (
 
 wire [`$config_data_width-1`:0] read_data_group [`($num_groups_per_side * 4)-1`:0];
 
-//; my $id_offset = $tile_id_offset;
 //; for my $side (@sides) {
 //;   for (my $i = 0; $i<$num_groups_per_side; $i++) {
-//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${i}",side=>$side,io_group_num=>$i,tile_id_offset=>$id_offset);
-//;     $id_offset += $num_ios_per_group;
+//;     my $io_group_obj = generate("io_group","io_side_${side}_gr_${i}",
+//;       side => $side, 
+//;       group_num           => $i,
+//;       config_addr_width   => $config_addr_width,
+//;       config_data_width   => $config_data_width
+//;     );
+
 `$io_group_obj->instantiate()` (
   .clk(clk),
   .reset(reset),

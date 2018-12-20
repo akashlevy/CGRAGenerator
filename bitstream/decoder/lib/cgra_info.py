@@ -42,6 +42,7 @@ import sys
 # def find_tile_by_type(type) -- returns ptr to tile
 # def find_pad(padname, i)
 # def sign_bit_position()
+# def encode_reg(tileno, snk, DBG=0)
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -796,7 +797,7 @@ def find_regbit(sb, src, DBG=0):
         # Look for sinks whose src is rdst
         owsrc = reg.attrib['src']
         if owsrc == src:
-            if DBG: print '684 found src', reg.attrib['src']
+            if DBG: print '684 found reg src', reg.attrib['src']
             assert reg.attrib['bith'] == reg.attrib['bitl']
             reg_address  = getnum(reg.attrib['reg_address'])
             bith         = getnum(reg.attrib['bith'])
@@ -809,6 +810,55 @@ def find_regbit(sb, src, DBG=0):
              "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
     assert False, errmsg
 
+
+def encode_reg(tileno, snk, DBG=0):
+    '''
+    Get addr, data encoding for reg associated w/ output wire "snk"
+    E.g. if snk=="Tx0202_out_s2t0" we return
+      01080505 00040000
+      "data[(50, 50)] : @ tile (5, 5) latch output wire out_BUS16_S2_T0"
+    '''
+    tile = get_tile(tileno)
+
+    # snk comes in looking like 'out_s2t0'
+    # but we need it to look like "out_BUS16_S2_T0"
+    Tsnk = "Tx%04X_%s" % (tileno,snk)
+    snk = canon2cgra(Tsnk)
+
+    # Find the switchbox that outputs "snk" in "tile"
+    DBG = max(DBG,0)
+    rlist = []
+    box = 'sb'
+    for bb in tile.iter(box):
+        for mux in bb.iter('mux'):
+
+            # Look for the mux that produces 'snk'
+            owsnk = mux.attrib['snk']
+            if owsnk == snk:
+                if DBG: print '835 found snk', mux.attrib['snk']
+
+                # msrc=None is the clue that we only want reg info
+                regbit = find_regbit(bb, snk, DBG)
+                parms = get_encoding(tile, bb, mux, msrc=None, regbit=regbit, DBG=DBG-1)
+                rlist = encode_parms(parms, DBG)
+                (laddr,ldata, haddr,hdata, raddr,rdata) = encode_parms(parms, DBG)
+
+                # Stupid comment for configr
+                # data[(14, 14)] : @ tile (4, 0) latch output wire out_BUS16_S1_T1
+                cr = gen_comment_latch(
+                    parms['configr'],
+                    tileno,
+                    # canon2cgra(snk)) # i mean whatevs
+                    snk)
+
+                if DBG==9:
+                    print("{raddr:08X} {rdata:08X}".format(raddr=raddr,rdata=rdata))
+                    print(cr)
+
+                return (raddr,rdata,cr)
+
+    # Didna find it FIXME better error msg
+    assert False
 
 def find_mux(tile, src, snk, DBG=0):
     '''Find the mux that connects "src" to "snk" in "tile"'''
@@ -856,6 +906,26 @@ def get_encoding(tile,box,mux,msrc,regbit,DBG=0):
 
     parms['tileno'] = getnum(tile.attrib['tile_addr'])
     parms['fa']     = getnum(box.attrib['feature_address'])
+
+    if msrc==None:
+        # msrc==None means encode reg only
+        if DBG==9: print("encode REG ONLY")
+        assert box.tag=='sb'
+        parms['sel']    = 0;
+
+        # select_width 0, howbouda
+        parms['sw'] = 0
+        parms['configh'] = 0
+        parms['configl'] = 0
+
+        parms['configr']= regbit
+        if regbit == -1:
+            errmsg = "\nERROR Cannot find 'configr' field in sb; " + \
+                     "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
+            assert False, errmsg
+
+        return parms;
+
     parms['sel']    = getnum(msrc.attrib['sel'])
 
     # want sb/cb item 'sel_width':
@@ -1099,7 +1169,8 @@ def parse_resource(r):
     returns tileno+remains e.g. parse_resource("T0_in_s0t0") = (0, 'in_s0t0')
     '''
     parse = re.search('^T([^_]+)_(.*)b?', r)
-    if not parse: assert False, r
+    if not parse:
+        assert False, "'{r}' does not look like canonical resource e.g. 'Tx0101_in_s0t0'".format(r=r)
     (tileno,resource) = (getnum(parse.group(1)), parse.group(2))
     return (tileno,resource)
 

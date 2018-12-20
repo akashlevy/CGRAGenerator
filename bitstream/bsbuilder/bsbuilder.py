@@ -321,15 +321,17 @@ opb = {}
 
 # Sample input:
 #
-# T4_mul(wire,const15_15)    # mul_47515_476_PE
-# T8_add(wire,wire)          # add_457_476_477_PE
-# T10_mul(reg,const13_13$1)  # mul_48313_484_PE
-# T21_ule(wire,const50__148) # ule_148_147_149_PE
+# Tx0401_mul(wire,const15_15)   # mul_47515_476_PE
+# Tx0802_add(wire,wire)         # add_457_476_477_PE
+# Tx0103_mul(reg,const13_13$1)  # mul_48313_484_PE
+# Tx0201_ule(wire,const50__148) # ule_148_147_149_PE
 #
-# T0_in_s2t0 -> T0_out_s0t0 (r)
-# T1_in_s2t0 -> T1_out_s0t0
-# T2_in_s2t0 -> T2_out_s0t0
-# T3_in_s2t0 -> T3_mem_in
+# Tx0505_in_s2t0 -> Tx0505_out_s0t0 (r)
+# Tx0506_in_s2t0 -> Tx0506_out_s0t0
+# Tx0507_in_s2t0 -> Tx0507_out_s0t0
+# Tx0508_in_s2t0 -> Tx0508_mem_in
+#
+# Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r) (NEW 12/2018)
 
 def main():
     process_args()
@@ -337,27 +339,37 @@ def main():
     set_pe_flags()
     harris_aliases()
     if (0):
-         # Coupla tests
-         bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
-         bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
-
-         bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
-         bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
-
-         list_aliases()
-         bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
-         exit()
-
-         bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
-         bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
-         bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
-         bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
-         bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
-         exhaustive_alias_test(DBG=9)
-         bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
-         bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
-         bs_op(4, 'gte(wire,reg)', DBG=9); print("")
-         exit()
+        # Coupla tests
+        # New-style register
+        bs_connection(0x0202, 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)', DBG=9);
+        exit()
+        
+        # Connect tile 0x0505 (row5,col5) to mem_in of tile 0x0508 (row5,col8)
+        bs_connection(0x0505, 'Tx0505_in_s2t0 -> Tx0505_out_s0t0 (r)', DBG=9);
+        bs_connection(0x0506, 'Tx0506_in_s2t0 -> Tx0506_out_s0t0',     DBG=9);
+        bs_connection(0x0507, 'Tx0507_in_s2t0 -> Tx0507_out_s0t0',     DBG=9);
+        bs_connection(0x0508, 'Tx0508_in_s2t0 -> Tx0508_mem_in',       DBG=9);
+        
+        bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+        bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
+        
+        bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+        bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
+        
+        list_aliases()
+        bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+        exit()
+        
+        bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
+        bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
+        bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
+        bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
+        bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
+        exhaustive_alias_test(DBG=9)
+        bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
+        bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
+        bs_op(4, 'gte(wire,reg)', DBG=9); print("")
+        exit()
 
     if not VERBOSE: DBG=0
     else:           DBG=1
@@ -610,10 +622,21 @@ def process_output(line):
 ALLSOURCES = {}
 def bs_connection(tileno, line, DBG=0):
     DBG= max(0,DBG)
-    # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
-    # or   line = 'T1_in_s2t0 -> T1_out_s0t0/r'
-    # or   line = 'T25_out_s2t0 -> T25_op1 (r)'
-    # or   line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
+    # OLD examples (still supported):
+    #  line = 'in_s2t0 -> T0_out_s0t0 (r)'
+    #  line = 'T1_in_s2t0 -> T1_out_s0t0/r'
+    #  line = 'T25_out_s2t0 -> T25_op1 (r)'
+    #  line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
+    #
+    # NEW examples:
+    #  line = 'Tx0505_in_s2t0  -> Tx0505_out_s0t0 (r)'
+    #  line = 'Tx0506_in_s2t0  -> Tx0506_out_s0t0'
+    #  line = 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)' // new-style reg 12/2018
+    #  line = 'Tx0508_in_s2t0  -> Tx0508_mem_in'
+
+    if DBG==9:
+        print("########################################################################")
+        print("# bs_connection(0x{tileno:04X}, '{line}')".format(tileno=tileno,line=line))
 
     parse = re.search('(\w+)\s*->\s*(\w+)[^r]*(r)*', line)
     if not parse: return False
@@ -625,11 +648,23 @@ def bs_connection(tileno, line, DBG=0):
     reg = parse.group(3)
     assert reg=='r' or reg==None
 
+    # Verify that tileno in line matches tileno parm
     (t,lhs) = striptile(lhs); assert t == -1 or t == tileno, \
               "'%s': wrong lhs tile '%s' should be -1 or %s\n" % (line, t, tileno)
     (t,rhs) = striptile(rhs); assert t == -1 or t == tileno, \
               "'%s': wrong lhs tile '%s' should be -1 or %s\n" % (line, t, tileno)
     if DBG>1: print "# lhs '%s', rhs '%s', reg '%s'" % (lhs,rhs,reg)
+
+    # New way to specify registers, to make keyi's life easier, e.g.
+    # line = 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)' // new-style reg 12/2018
+    if (lhs == rhs) and (reg=='r'):
+        if DBG==9: print("# Found new-style register syntax")
+
+        # FIXME does this work for bit registers!!!?  I'm guessing no... :(
+        # E.g. cgra_info.encode_reg(0x0505, "out_s2t0")
+        (raddr,rdata,rcomm) = cgra_info.encode_reg(tileno, rhs)
+        addbs(raddr, rdata, rcomm)
+        return True
 
     # FIXME FIXME cgra_info.txt bug regfield crosses 32-bit boundary
     # FIXME FIXME cgra_info.txt bug regfield crosses 32-bit boundary

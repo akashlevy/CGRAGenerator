@@ -705,19 +705,15 @@ wire [31:0] analog_r`$i`;
 //;       }
 //;     }
 //;    if ($tile_type eq "mem") {
-    wire [31:0] config_addr_`$tile_addr_hex`;
-    wire [31:0] config_data_`$tile_addr_hex`;
-    wire  config_read_`$tile_addr_hex`;
-    wire  config_write_`$tile_addr_hex`;
     wire [31:0] read_data_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk_in(clk),
       .reset(reset),
-      .config_addr(config_addr_`$tile_addr_hex`),
-      .config_data(config_data_`$tile_addr_hex`),
-      .config_write(config_write_`$tile_addr_hex`),
-      .config_read(config_read_`$tile_addr_hex`),
+      .config_addr(config_addr),
+      .config_data(config_data),
+      .config_write(config_write),
+      .config_read(config_read),
 //;   for (my $row=0; $row < $tile_config->{ $tile_type }{ 'tile_height' }; $row++) {
 //;     for my $bus (sort keys %bus_num_tracks_hash) {
 //;       my $num_tracks = $bus_num_tracks_hash { $bus };
@@ -786,18 +782,14 @@ wire [31:0] analog_r`$i`;
             //;  }
 //;    } elsif ($tile_type eq "pe") {
     wire [31:0] read_data_`$tile_addr_hex`;
-    wire [31:0] config_addr_`$tile_addr_hex`;
-    wire [31:0] config_data_`$tile_addr_hex`;
-    wire  config_read_`$tile_addr_hex`;
-    wire  config_write_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk_in(clk),
       .reset(reset),
-      .config_addr(config_addr_`$tile_addr_hex`),
-      .config_data(config_data_`$tile_addr_hex`),
-      .config_read(config_read_`$tile_addr_hex`),
-      .config_write(config_write_`$tile_addr_hex`),
+      .config_addr(config_addr),
+      .config_data(config_data),
+      .config_read(config_read),
+      .config_write(config_write),
 //;     for my $bus (sort keys %bus_num_tracks_hash) {
 //;       my $num_tracks = $bus_num_tracks_hash { $bus };
 //;       my $bus_width = $bus_width_hash { $bus };
@@ -841,18 +833,14 @@ wire [31:0] analog_r`$i`;
 //;    } elsif ($tile_type eq "io1") {
 
     wire [31:0] read_data_`$tile_addr_hex`;
-    wire [31:0] config_addr_`$tile_addr_hex`;
-    wire [31:0] config_data_`$tile_addr_hex`;
-    wire  config_read_`$tile_addr_hex`;
-    wire  config_write_`$tile_addr_hex`;
     `$inst_obj->instantiate()` 
     (
       .clk(clk),
       .reset(reset),
-      .config_addr(config_addr_`$tile_addr_hex`),
-      .config_data(config_data_`$tile_addr_hex`),
-      .config_read(config_read_`$tile_addr_hex`),
-      .config_write(config_write_`$tile_addr_hex`),
+      .config_addr(config_addr),
+      .config_data(config_data),
+      .config_read(config_read),
+      .config_write(config_write),
 //;       my $s = $io_side; 
 //;       my $opposite_side = $s + int($sides*0.5);
 //;       if ($opposite_side > ($sides-1)) {$opposite_side -= $sides;}

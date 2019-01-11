@@ -40,9 +40,10 @@ program automatic `mname`(
    parameter io16bit_num_features=1;
    parameter mem_num_features=17;
    parameter pe_num_features=11;
-   parameter low_sram_feature=5;
-   parameter high_sram_feature=8;
+   parameter low_sram_feature=3;
+   parameter high_sram_feature=6;
    parameter gout_sel_feature = 10;
+   parameter gin_sel_feature = 14;
    parameter mem_low_sb_unq3_feature=0;
    parameter mem_high_sb_unq3_feature=1;
    parameter mem_low_sb_unq1_feature = 2;
@@ -118,6 +119,8 @@ program automatic `mname`(
 		end
 		else if(feat==gout_sel_feature)
 			write_config(id,feat,8'h0,(id+feat)%4);
+		else if(feat==gin_sel_feature) begin
+                end
 		else
 			write_config(id,feat,8'h0,(id+feat));
          end

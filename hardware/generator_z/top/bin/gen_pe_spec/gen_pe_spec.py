@@ -6,6 +6,9 @@ PE Spec is automatically generated each time Genesis2 produces a new
 design.  Please make sure that the spec you use matches your design.
 Upon generation, the spec is usually placed in the top level Verilog
 directory e.g. <tt>CGRAGenerator/hardware/generator_z/top/PE-Spec.md</tt>
+
+IMPORTANT: For known bugs in generated designs see CGRA-Bugs.md file e.g.
+<tt>CGRAGenerator/hardware/generator_z/top/CGRA-Bugs.md</tt>
 ''')
     for s in build_sections():
         # if s.label != "pe_flags": continue

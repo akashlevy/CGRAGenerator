@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# need to add:
-# bin/gen_pe_spec/gen_pe_spec.py > PE-Spec.md
-
 function help {
   if [[ "$1" == "--help" ]]; then
     echo ""

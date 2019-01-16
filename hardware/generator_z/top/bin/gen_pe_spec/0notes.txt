@@ -8,14 +8,11 @@
   diff PE-Spec.md.wiki tmp.md
 
 
-
-
-
-Goal:
+==============================================================================
+OLD Goal:
 
 ./gen_pe_spec.py > pe_spec.md
 c; diff -Bb pe_spec.md PE-Spec.md.example | h40
-
 
 ./gen_optable_md.py > tmp
 diff tmp optable-example.md

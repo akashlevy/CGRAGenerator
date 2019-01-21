@@ -1,5 +1,17 @@
 KNOWN BUGS IN THE TAPED_OUT CHIP
 
+UNDER CONSTRUCTION as of 1/2019, still need to add 1-bit bug etc.
+
+For more information see Issue 22
+- https://github.com/StanfordAHA/CGRAGenerator/issues/122
+
+and/or markdown file in hw top (not yet in master as of 1/2019...)
+- https://github.com/StanfordAHA/CGRAGenerator/blob/dev/hardware/generator_z/top/Bugs.md
+
+and/or wiki page
+- https://github.com/StanfordAHA/CGRAGenerator/wiki/Bugs
+
+
 FIXME/HELPME These notes need to be cleaned up!
 
 = Arithmetic right-shift ASHR =

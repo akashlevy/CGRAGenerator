@@ -8,6 +8,7 @@
 //; my $use_abs     = parameter(Name=>'use_abs', val=> 1, List=>[1, 0],  doc=>'0 - no ABS, 1 - enable ABS');
 //; my $use_max_min = parameter(Name=>'use_max_min', val=> 1, List=>[1, 0],  doc=>'0 - no max/min, 1 - enable max/min');
 //; my $use_relu    = parameter(Name=>'use_relu', val=> 1, List=>[1, 0],  doc=>'0 - no relu, 1 - enable relu');
+//; my $use_float    = parameter(Name=>'use_float', val=> 0, List=>[1, 0],  doc=>'0 - no fp support, 1 - support fadd, fmul');
 //;
 //; my $en_opt   = parameter(Name=>'en_opt', val=> 1, List=>[1, 0], doc=>'Use shifter area optimization?');
 //; my $en_trick = parameter(Name=>'en_trick', val=> 0, List=>[1, 0], doc=>'Shiter sharing trick in double presition');
@@ -217,6 +218,21 @@ localparam PE_DIV_OP     = 6'h19;
 logic [2*DataWidth-1:0] mult_res;
 //;}
 
+//; if($use_float) {
+localparam PE_FLOAT_ADD     = 6'h20;
+//; $pecomp_info_hash->{ 'fadd' } = {
+//;   opcode => '20',
+//;   result => 'op_a + op_b',
+//;   predicate => '0'
+//; };
+localparam PE_FLOAT_MULT     = 6'h21;
+//; $pecomp_info_hash->{ 'fmul' } = {
+//;   opcode => '21',
+//;   result => 'op_a * op_b',
+//;   predicate => '0'
+//; };
+//;}
+
 logic [7:0]        nc_op_code;
 assign             nc_op_code = op_code;
 
@@ -323,7 +339,7 @@ logic                 mult_c_out;
 enum {
 Add_Op, Sub_Op, Abs_Op, GteMax_Op, LteMin_Op, 
 Sel_Op, Rshft_Op, Lshft_Op, Mult0_Op, Mult1_Op, Mult2_Op, Relu_Op, Or_Op,
-And_Op, Xor_Op, Cntr_Op, Div_Op, InvalidOp
+And_Op, Xor_Op, Cntr_Op, Div_Op, Fadd, Fmul, InvalidOp
 } pe_oper;
 
 always_comb begin
@@ -350,6 +366,10 @@ always_comb begin
 //; }
 //; if($use_div) {
     PE_DIV_OP     : pe_oper = Div_Op;
+//; }
+//; if($use_float) {
+    PE_FLOAT_ADD  : pe_oper = Fadd;
+    PE_FLOAT_MULT : pe_oper = Fmul;
 //; }
     default       : pe_oper = InvalidOp;
   endcase
@@ -427,6 +447,14 @@ end
 
 //; }
 
+//; if ($use_float > 0) {
+logic [15:0] fadd_res;
+logic [15:0] fmul_res;
+logic [2:0] fmul_res_x;
+  CW_fp_mult #(.sig_width(10), .exp_width(8), .ieee_compliance(0)) mul1 (.a({op_a,3'd0}),.b({op_b,3'd0}),.rnd(3'd0),.z({fmul_res,fmul_res_x}),.status());
+  CW_fp_add #(.sig_width(7), .exp_width(8), .ieee_compliance(0)) add1 (.a(op_a),.b(op_b),.rnd(3'd0),.z(fadd_res),.status());
+//;}
+
 always_comb begin : proc_alu
 //; if($use_add > 0) {
   add_a[0] = op_a;
@@ -456,8 +484,18 @@ always_comb begin : proc_alu
   ovfl = 1'b0;
 //;}
 
-
   unique case (op_code[5:0])
+//; if($use_float > 0) {
+    PE_FLOAT_ADD: begin
+        res_w  = fadd_res;
+        res_p_w     = 1'b0;
+      end
+    PE_FLOAT_MULT: begin
+        res_w  = fmul_res;
+        res_p_w     = 1'b0;
+      end
+//; }
+
 //; if($use_add > 0) {
     PE_ADD_OP: begin
 //; if($en_double & $is_msb) {

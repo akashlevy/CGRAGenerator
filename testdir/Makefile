@@ -89,6 +89,10 @@ travis_system_tests:
 	(make SILENT=TRUE harris  RUN=run_tbg.csh || echo FAIL) \
 	  | tee -a serpent_results.tmp
 
+	@echo "quick bsbuilder test"
+	(cd ..//bitstream/bsbuilder/testdir/sram_mode; make test || echo FAIL bsbuilder) \
+	  | tee -a serpent_results.tmp
+
         # check for hidden errors
 	grep FAIL serpent_results.tmp && exit 13 || echo NO_FAIL
 	grep RESULT serpent_results.tmp

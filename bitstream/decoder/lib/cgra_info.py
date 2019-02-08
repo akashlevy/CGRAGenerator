@@ -40,8 +40,11 @@ import sys
 # def get_named_tile(name) -- returns ptr to tile
 # def find_tile_by_name(tilename) -- returns row, col info :(
 # def find_tile_by_type(type) -- returns ptr to tile
+# def get_mem_config_feature_address()
+# def is_oldstyle_pads() -- returns True or False
 # def find_pad(padname, i)
 # def sign_bit_position()
+# def encode_reg(tileno, snk, DBG=0)
 # def extract_field(dword, bith, bitl):
 # def mem_decode(e,DDDDDDDD):
 # def cb_decode(cb,tileno,DDDDDDDD):
@@ -153,6 +156,49 @@ def find_tile_by_type(type):
      for tile in CGRA.findall('tile'):
          if tile.attrib['type'] == type: return tile
      assert False, 'Could not find a tile with type "%s"' % type
+
+
+def find_all_mem_tiles():
+    '''
+    # [24, 28, 32, 36, 43, 47, 51, 55, 61, 65, 69, 73, 79, 83, 87, 91, 97,
+    # 101, 105, 109, 115, 119, 123, 127, 133, 137, 141, 145, 151, 155, 159,
+    # 163, 169, 173, 177, 181, 187, 191, 195, 199, 205, 209, 213, 217, 223,
+    # 227, 231, 235, 241, 245, 249, 253, 259, 263, 267, 271, 277, 281, 285,
+    # 289, 295, 299, 303, 307]
+    '''
+    mlist = []
+    # <tile type='memory_tile' tile_addr='0x0104' row='1' col='4' tracks='BUS1:5 BUS16:5 '>
+    for tile in CGRA.findall('tile'):
+        if 'type' not in tile.attrib: continue
+        if tile.attrib['type'] != 'memory_tile': continue
+        # Note tile_addr might look like this '0x18' or like this: '24'
+        ta = tile.attrib['tile_addr']
+        if ta[0:2] == '0x': ta = int( ta[2:], 16)
+        else:               ta = int(ta)
+        mlist.append(ta)
+    return mlist
+
+    
+
+
+def get_mem_config_feature_address():
+    #   <tile type='memory_tile' ... >
+    #     <mem feature_address='2' data_bus='BUS16' control_bus='BUS1'>
+    tile = find_tile_by_type('memory_tile')
+    for m in tile.iter('mem'):
+        return int(m.attrib['feature_address'])
+    assert False, "mem tag not found in memory tile"
+
+
+def is_oldstyle_pads():
+    # OLD: <tile type='io1bit' ... name='pad_S3_T0'>
+    # NEW: <tile type='io1bit' ... name='pads_E_0'>
+    for tile in CGRA.findall('tile'):
+        if 'type' not in tile.attrib: continue
+        if tile.attrib['type'] != 'io1bit': continue
+        if 'name' not in tile.attrib: continue
+        name = tile.attrib['name']
+        return name[0:4] == 'pad_'
 
 def find_pad(padname, bitno):
     '''Given pad name e.g. "pads_E_0" and bitnum e.g. 0, return id, row, and col'''
@@ -796,7 +842,7 @@ def find_regbit(sb, src, DBG=0):
         # Look for sinks whose src is rdst
         owsrc = reg.attrib['src']
         if owsrc == src:
-            if DBG: print '684 found src', reg.attrib['src']
+            if DBG: print '684 found reg src', reg.attrib['src']
             assert reg.attrib['bith'] == reg.attrib['bitl']
             reg_address  = getnum(reg.attrib['reg_address'])
             bith         = getnum(reg.attrib['bith'])
@@ -809,6 +855,55 @@ def find_regbit(sb, src, DBG=0):
              "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
     assert False, errmsg
 
+
+def encode_reg(tileno, snk, DBG=0):
+    '''
+    Get addr, data encoding for reg associated w/ output wire "snk"
+    E.g. if snk=="Tx0202_out_s2t0" we return
+      01080505 00040000
+      "data[(50, 50)] : @ tile (5, 5) latch output wire out_BUS16_S2_T0"
+    '''
+    tile = get_tile(tileno)
+
+    # snk comes in looking like 'out_s2t0'
+    # but we need it to look like "out_BUS16_S2_T0"
+    Tsnk = "Tx%04X_%s" % (tileno,snk)
+    snk = canon2cgra(Tsnk)
+
+    # Find the switchbox that outputs "snk" in "tile"
+    DBG = max(DBG,0)
+    rlist = []
+    box = 'sb'
+    for bb in tile.iter(box):
+        for mux in bb.iter('mux'):
+
+            # Look for the mux that produces 'snk'
+            owsnk = mux.attrib['snk']
+            if owsnk == snk:
+                if DBG: print '835 found snk', mux.attrib['snk']
+
+                # msrc=None is the clue that we only want reg info
+                regbit = find_regbit(bb, snk, DBG)
+                parms = get_encoding(tile, bb, mux, msrc=None, regbit=regbit, DBG=DBG-1)
+                rlist = encode_parms(parms, DBG)
+                (laddr,ldata, haddr,hdata, raddr,rdata) = encode_parms(parms, DBG)
+
+                # Stupid comment for configr
+                # data[(14, 14)] : @ tile (4, 0) latch output wire out_BUS16_S1_T1
+                cr = gen_comment_latch(
+                    parms['configr'],
+                    tileno,
+                    # canon2cgra(snk)) # i mean whatevs
+                    snk)
+
+                if DBG==9:
+                    print("{raddr:08X} {rdata:08X}".format(raddr=raddr,rdata=rdata))
+                    print(cr)
+
+                return (raddr,rdata,cr)
+
+    # Didna find it FIXME better error msg
+    assert False
 
 def find_mux(tile, src, snk, DBG=0):
     '''Find the mux that connects "src" to "snk" in "tile"'''
@@ -856,6 +951,26 @@ def get_encoding(tile,box,mux,msrc,regbit,DBG=0):
 
     parms['tileno'] = getnum(tile.attrib['tile_addr'])
     parms['fa']     = getnum(box.attrib['feature_address'])
+
+    if msrc==None:
+        # msrc==None means encode reg only
+        if DBG==9: print("encode REG ONLY")
+        assert box.tag=='sb'
+        parms['sel']    = 0;
+
+        # select_width 0, howbouda
+        parms['sw'] = 0
+        parms['configh'] = 0
+        parms['configl'] = 0
+
+        parms['configr']= regbit
+        if regbit == -1:
+            errmsg = "\nERROR Cannot find 'configr' field in sb; " + \
+                     "did you forget to 'setenv CGRA_GEN_ALL_REG 1'?"
+            assert False, errmsg
+
+        return parms;
+
     parms['sel']    = getnum(msrc.attrib['sel'])
 
     # want sb/cb item 'sel_width':
@@ -1099,7 +1214,8 @@ def parse_resource(r):
     returns tileno+remains e.g. parse_resource("T0_in_s0t0") = (0, 'in_s0t0')
     '''
     parse = re.search('^T([^_]+)_(.*)b?', r)
-    if not parse: assert False, r
+    if not parse:
+        assert False, "'{r}' does not look like canonical resource e.g. 'Tx0101_in_s0t0'".format(r=r)
     (tileno,resource) = (getnum(parse.group(1)), parse.group(2))
     return (tileno,resource)
 
@@ -1227,6 +1343,7 @@ def special_wirenames(d, name):
     elif d == 'mem_out': newname = 'rdata'
 
     elif d in [
+        "addr",
         "cg_en",
         "bit0", "bit1", "bit2",
         "data0", "data1",

@@ -321,15 +321,17 @@ opb = {}
 
 # Sample input:
 #
-# T4_mul(wire,const15_15)    # mul_47515_476_PE
-# T8_add(wire,wire)          # add_457_476_477_PE
-# T10_mul(reg,const13_13$1)  # mul_48313_484_PE
-# T21_ule(wire,const50__148) # ule_148_147_149_PE
+# Tx0401_mul(wire,const15_15)   # mul_47515_476_PE
+# Tx0802_add(wire,wire)         # add_457_476_477_PE
+# Tx0103_mul(reg,const13_13$1)  # mul_48313_484_PE
+# Tx0201_ule(wire,const50__148) # ule_148_147_149_PE
 #
-# T0_in_s2t0 -> T0_out_s0t0 (r)
-# T1_in_s2t0 -> T1_out_s0t0
-# T2_in_s2t0 -> T2_out_s0t0
-# T3_in_s2t0 -> T3_mem_in
+# Tx0505_in_s2t0 -> Tx0505_out_s0t0 (r)
+# Tx0506_in_s2t0 -> Tx0506_out_s0t0
+# Tx0507_in_s2t0 -> Tx0507_out_s0t0
+# Tx0508_in_s2t0 -> Tx0508_mem_in
+#
+# Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r) (NEW 12/2018)
 
 def main():
     process_args()
@@ -337,32 +339,45 @@ def main():
     set_pe_flags()
     harris_aliases()
     if (0):
-         # Coupla tests
-         bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
-         bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
-
-         bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
-         bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
-
-         list_aliases()
-         bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
-         exit()
-
-         bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
-         bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
-         bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
-         bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
-         bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
-         exhaustive_alias_test(DBG=9)
-         bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
-         bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
-         bs_op(4, 'gte(wire,reg)', DBG=9); print("")
-         exit()
+        # Coupla tests
+        # New-style register
+        bs_connection(0x0202, 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)', DBG=9);
+        exit()
+        
+        # Connect tile 0x0505 (row5,col5) to mem_in of tile 0x0508 (row5,col8)
+        bs_connection(0x0505, 'Tx0505_in_s2t0 -> Tx0505_out_s0t0 (r)', DBG=9);
+        bs_connection(0x0506, 'Tx0506_in_s2t0 -> Tx0506_out_s0t0',     DBG=9);
+        bs_connection(0x0507, 'Tx0507_in_s2t0 -> Tx0507_out_s0t0',     DBG=9);
+        bs_connection(0x0508, 'Tx0508_in_s2t0 -> Tx0508_mem_in',       DBG=9);
+        
+        bs_op(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+        bs_op(4, 'mux(wire,reg,wire)', DBG=9); print("")
+        
+        bs_mux(4, 'mux(const0__795,const255__794,wire)', DBG=9); print("")
+        bs_mux(4, 'mux(wire,reg,wire)', DBG=9); print("")
+        
+        list_aliases()
+        bs_op(4, 'sub.le(wire,const50__148)', DBG=9); print("")
+        exit()
+        
+        bs_op(4, 'eq(wire,const50__148)', DBG=9); print("")
+        bs_op(4, 'lte_min.lt(wire,reg)' , DBG=9); print("")
+        bs_op(4, 'gte(wire,reg)'        , DBG=9); print("")
+        bs_op(4, 'gt(wire,reg)'         , DBG=9); print("")
+        bs_op(4, 'gt(const16,wire)'     , DBG=9); print("")
+        exhaustive_alias_test(DBG=9)
+        bs_op(4, 'ugt(const16,wire)'       , DBG=9); print("")
+        bs_op(4, 'sgt(const16,wire)'       , DBG=9); print("")
+        bs_op(4, 'gte(wire,reg)', DBG=9); print("")
+        exit()
 
     if not VERBOSE: DBG=0
     else:           DBG=1
 
     io_info = []
+
+    global MEM_CONFIG_HACK
+    if MEM_CONFIG_HACK: mem_config_hack()
 
     tileno = -1
     for line in input_lines:
@@ -409,16 +424,34 @@ def main():
 
         if DBG: print "# "+line
 
-        # T4_mul(wire,const15_15) or T3_mem_64
-        # Strip off the tile number, leaving e.g. 'mul(wire,const15_15)' or 'mem_64'
-        parse = re.search("^T(\d+)_(.*)", line)
-        if parse:
-            tileno = int(parse.group(1))
-            line = parse.group(2)
-            if DBG>2: print '# tile%02d  %s' % (tileno,line)
+        # We'll fix your little red wagon!
+        # This turns all old-style Tile designations into standard hex format
+        # E.g. "T97_out_s2t1 -> T97_addr" becomes "Tx61_out_s2t1 -> Tx61_addr"
+        parse = re.search("(.*)T(\d+)_(.*)", line)
+        while (parse):
+            if DBG==9: print("\n#A: %s" % line)
+            prefix = parse.group(1)
+            tileno = parse.group(2)
+            suffix = parse.group(3)
+            hextile = "Tx%X_" % int(tileno)
+            line = prefix + hextile + suffix
+            if DBG==9: print("#B: %s" % line)
+            parse = re.search("(.*)T(\d+)_(.*)", line)
 
-        # Or maybe it's a hex number as denoted by a little 'x' e.g.
-        # Tx116_pad(out,1)
+        ################################################################
+        # Shouldn't need this anymore, b/c of what we did just above...
+        # # T4_mul(wire,const15_15) or T3_mem_64
+        # # Strip off the tile number, leaving e.g. 'mul(wire,const15_15)' or 'mem_64'
+        # parse = re.search("^T(\d+)_(.*)", line)
+        # if parse:
+        #     tileno = int(parse.group(1))
+        #     line = parse.group(2)
+        #     if DBG>2: print '# tile%02d  %s' % (tileno,line)
+        ################################################################
+
+        # Tx4_mul(wire,const15_15) or Tx3_mem_64
+        # Strip off the tile number, leaving e.g. 'mul(wire,const15_15)' or 'mem_64'
+        # Tx116_pad(out,1) => pad(out,1)
         parse = re.search("^Tx([0-9a-fA-F]+)_(.*)", line)
         if parse:
             tileno = int(parse.group(1),16)
@@ -453,6 +486,12 @@ def main():
             if DBG: print ''
             continue
         elif DBG: print '# > Not a mem'
+
+        # T97_sram  (sram mode, no fifo depth) (added 1/2019)
+        if bs_sram(tileno,line, DBG-1):
+            if DBG: print ''
+            continue
+        elif DBG: print '# > Not a sram'
 
         # Tx116_pad(out,1)
         if bs_io(tileno, line, DBG-1):
@@ -519,6 +558,38 @@ def main():
 
     return
 
+def mem_config_hack():
+    '''
+    01000018 00000000
+    0100001C 00000000
+    01000020 00000000
+    ...
+    0100012B 00000000
+    0100012F 00000000
+    01000133 00000000
+    '''
+    mlist = cgra_info.find_all_mem_tiles()
+    # print(mlist)
+
+    b = "# MEM_CONFIG_HACK\n" + \
+        "# Override buggy mem config default: set bits 32-63 in every memtile to all zeroes\n"
+
+    # <tile type='memory_tile' tile_addr='0x0104' row='1' col='4' tracks='BUS1:5 BUS16:5 '>
+    # <sb feature_address='0' bus='BUS1' row='0'>
+    # Reg 1, feature 0
+    # FIXME/TODO: should find feature num viea e.g. cgra_info.find_mem_tile_bus1_sb_featurenum
+    reg_feat = 0x01000000
+
+    for t in mlist:
+        # print(t)
+        id = reg_feat | t
+        # print("%08X 00000000 # memtile %d" % (id,t))
+        b = b + "%08X 00000000\n" % id
+    print b
+    return b
+
+
+
 def configure_output_pads():
     b = '''
 # WARNING You did not designate a 16-bit output bus, so I will build one: 
@@ -529,8 +600,20 @@ def configure_output_pads():
     # FIXME should fix the tests and remove this hack (also see FOUND_SIXTEEN)
     pad_bus = 'pads_E_0'
 
+    # Little hack to take care of old-style cgra_info files
+    if cgra_info.is_oldstyle_pads():
+        b = "# WARNING You did not designate a 16-bit output bus and...\n"
+        b = b + "# OOPS looks like cgra_info only has old-style IO pads.\n"
+        b = b + "# NO DEFAULT OUTPUT-BUS FOR YOU!!!\n"
+        print b
+        return b
+
     # Little endian means count backwards 15..0
     for i in range(15, -1, -1):
+        # 1/2019 try/except hack to produce bitstreams for tapeout-version w/jtag
+        # FIXME need a better way of doing this!!!!  Maybe a cmd-line switch -jtag
+        # FIXME but do it back at whoever calls this routine maybe...
+
         (id, row, col) = cgra_info.find_pad(pad_bus, i)
         b = b + "%08X 00000001\n" % id
 
@@ -610,10 +693,21 @@ def process_output(line):
 ALLSOURCES = {}
 def bs_connection(tileno, line, DBG=0):
     DBG= max(0,DBG)
-    # E.g. line = 'in_s2t0 -> T0_out_s0t0 (r)'
-    # or   line = 'T1_in_s2t0 -> T1_out_s0t0/r'
-    # or   line = 'T25_out_s2t0 -> T25_op1 (r)'
-    # or   line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
+    # OLD examples (still supported):
+    #  line = 'in_s2t0 -> T0_out_s0t0 (r)'
+    #  line = 'T1_in_s2t0 -> T1_out_s0t0/r'
+    #  line = 'T25_out_s2t0 -> T25_op1 (r)'
+    #  line = 'T192_out_s2t0 -> T192_data0 (r)' (ignores the "(r)")
+    #
+    # NEW examples:
+    #  line = 'Tx0505_in_s2t0  -> Tx0505_out_s0t0 (r)'
+    #  line = 'Tx0506_in_s2t0  -> Tx0506_out_s0t0'
+    #  line = 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)' // new-style reg 12/2018
+    #  line = 'Tx0508_in_s2t0  -> Tx0508_mem_in'
+
+    if DBG==9:
+        print("########################################################################")
+        print("# bs_connection(0x{tileno:04X}, '{line}')".format(tileno=tileno,line=line))
 
     parse = re.search('(\w+)\s*->\s*(\w+)[^r]*(r)*', line)
     if not parse: return False
@@ -625,11 +719,23 @@ def bs_connection(tileno, line, DBG=0):
     reg = parse.group(3)
     assert reg=='r' or reg==None
 
+    # Verify that tileno in line matches tileno parm
     (t,lhs) = striptile(lhs); assert t == -1 or t == tileno, \
               "'%s': wrong lhs tile '%s' should be -1 or %s\n" % (line, t, tileno)
     (t,rhs) = striptile(rhs); assert t == -1 or t == tileno, \
               "'%s': wrong lhs tile '%s' should be -1 or %s\n" % (line, t, tileno)
     if DBG>1: print "# lhs '%s', rhs '%s', reg '%s'" % (lhs,rhs,reg)
+
+    # New way to specify registers, to make keyi's life easier, e.g.
+    # line = 'Tx0202_out_s2t0 -> Tx0202_out_s2t0 (r)' // new-style reg 12/2018
+    if (lhs == rhs) and (reg=='r'):
+        if DBG==9: print("# Found new-style register syntax")
+
+        # FIXME does this work for bit registers!!!?  I'm guessing no... :(
+        # E.g. cgra_info.encode_reg(0x0505, "out_s2t0")
+        (raddr,rdata,rcomm) = cgra_info.encode_reg(tileno, rhs)
+        addbs(raddr, rdata, rcomm)
+        return True
 
     # FIXME FIXME cgra_info.txt bug regfield crosses 32-bit boundary
     # FIXME FIXME cgra_info.txt bug regfield crosses 32-bit boundary
@@ -939,7 +1045,7 @@ def bs_mem(tileno, line, DBG=0):
 
     # OUT (see e.g. ../examples/bw1000.bsa)
     # 00040003 00000204
-    # data[(1, 0)] : mode = linebuffer
+    # data[(1, 0)] : mode = 0 (linebuffer)
     # data[(2, 2)] : tile_en = 1
     # data[(15, 3)] : fifo_depth = 64
     # data[(18, 16)] : almost_full_count = 0
@@ -958,7 +1064,7 @@ def bs_mem(tileno, line, DBG=0):
 
     data = 0x00000004 | (fd<<3)
     comment = [
-        "data[(1, 0)] : mode = linebuffer",
+        "data[(1, 0)] : mode = 0 (linebuffer)",
         "data[(2, 2)] : tile_en = 1",
         "data[(15, 3)] : fifo_depth = %d" % fd,
         "data[(18, 16)] : almost_full_count = 0",
@@ -966,6 +1072,45 @@ def bs_mem(tileno, line, DBG=0):
         ]
     addbs(addr, data, comment)
     return True
+
+
+#  (sram mode, no fifo depth) (added 1/2019)
+def bs_sram(tileno, line, DBG=0):
+    # IN:
+    #     Tx61_sram
+    # OR (old-style):
+    #     T97_sram  #sram_input$mem$cgramem
+    #
+    # OUT:
+    #     00020061 00000006
+    #     # data[(1, 0)] : mode = 2 (sram)
+    #     # data[(2, 2)] : tile_en = 1
+    #     # data[(15, 3)] : fifo_depth = 0
+    #     # data[(18, 16)] : almost_full_count = 0
+    #     # data[(19, 19)] : chain_enable = 0
+
+    parse = re.search('sram', line)
+    if not parse: return False
+
+#     # FIXME ho HO this is bad; feature address should come from cgra_info
+#     if cgra_info.MEMTILE_HEIGHT == 1:
+#         addr = 0x00020000 | tileno
+#     else:
+#         addr = 0x00040000 | tileno
+    addr = cgra_info.get_mem_config_feature_address()
+    addr = (addr << 16) | tileno
+
+    data = 0x00000006
+    comment = [
+        "data[(1, 0)] : mode = 2 (sram)",
+        "data[(2, 2)] : tile_en = 1",
+        "data[(15, 3)] : fifo_depth = 0",
+        "data[(18, 16)] : almost_full_count = 0",
+        "data[(19, 19)] : chain_enable = 0",
+        ]
+    addbs(addr, data, comment)
+    return True
+
 
 
 def bs_io(tileno, line, DBG=0):
@@ -1548,14 +1693,30 @@ def process_args():
     if (parse): scriptname_tail = parse.group(1)
     args = sys.argv[1:] # shift
 
-    usage = '''
+    cmd = scriptname_tail
+    usage = '''\
 Decodes/annotates the indicated bitstream file, output to stdout
+
 Usage:
-   %s [ -v ] -cgra [cgra_info_file] < [bsb-file]
-   %s [ -v ] -cgra [cgra_info_file] [bsb-file]
-   %s [ -v ] < [bsb-file]
-   %s [ -v ] [bsb-file]
-   %s --help''' % (scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail, scriptname_tail)
+   %s [OPTION]... [bsb-file]
+   %s [OPTION]... < [bsb-file]
+
+Options:
+   -v
+       verbose/debug info to stdout
+
+   --cgra [cgra_info_file]
+       use the indicated cgra_info file
+
+   --mem_config_hack
+       include memtile switchbox-default bug fix sequence in output
+
+   --manpage
+       extended info about bsb syntax etc.
+
+   --help
+       this help message\
+''' % (cmd,cmd)
 
     # Load cgra_info
     cgra_filename = cgra_info.get_default_cgra_info_filename()
@@ -1563,15 +1724,23 @@ Usage:
     # if (len(args) < 1): print usage; sys.exit(-1);
 
     global VERBOSE
+    global MEM_CONFIG_HACK
+    MEM_CONFIG_HACK = False
     # cgra_filename = get_default_cgra_info_filename()
     while (len(args) > 0):
         if (args[0] == '--help'):
-            print usage;
+            print(usage);
+            sys.exit(0);
+        elif (args[0] == '--manpage'):
+            print(usage);
             manpage();
             sys.exit(0);
+        elif (args[0] == '--mem_config_hack'): MEM_CONFIG_HACK = True   
         elif (args[0] == '-v'):    VERBOSE = True
         elif (args[0] == '-q'):    VERBOSE = False
-        elif (args[0] == '-cgra' or args[0] == '-cgra_info'):
+
+        # elif (args[0] == '-cgra' or args[0] == '-cgra_info' or args[0] == '--cgra_info'):
+        elif (re.match(r'^[-].*cgra.*', args[0]) != None):
             cgra_filename = args[1]
             args = args[1:];
         else:
@@ -1719,6 +1888,8 @@ def list_pe_flags_alt():
 
    
 def list_pe_flags():
+    global PE_FLAG
+    set_pe_flags()
     print("# PE FLAGS:")
     for i in range(256):
         for j in PE_FLAG:
@@ -1727,7 +1898,5 @@ def list_pe_flags():
                 s = "PE_FLAG['%s'" % j
                 print("#    %-13s] = 0x%1X" % (s, PE_FLAG[j]))
                 break;
-   
-
 
 main()

@@ -74,7 +74,7 @@ FF000103 0002F00B
 # data[(42, 42)] : @ tile (1, 4) latch output wire out_0_BUS16_S0_T2
 
 00020104 00000204
-# data[(1, 0)] : mode = linebuffer
+# data[(1, 0)] : mode = 0 (linebuffer)
 # data[(2, 2)] : tile_en = 1
 # data[(15, 3)] : fifo_depth = 64
 # data[(18, 16)] : almost_full_count = 0
@@ -181,7 +181,7 @@ FF000202 000AF000
 # data[(44, 44)] : @ tile (2, 4) latch output wire out_0_BUS16_S0_T4
 
 00020204 00000204
-# data[(1, 0)] : mode = linebuffer
+# data[(1, 0)] : mode = 0 (linebuffer)
 # data[(2, 2)] : tile_en = 1
 # data[(15, 3)] : fifo_depth = 64
 # data[(18, 16)] : almost_full_count = 0

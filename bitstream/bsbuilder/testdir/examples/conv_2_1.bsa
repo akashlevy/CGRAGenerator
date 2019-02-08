@@ -64,7 +64,7 @@ FF000103 0002F00B
 # data[(21, 20)] : @ tile (1, 4) connect wire 3 (rdata) to out_0_BUS16_S2_T0
 
 00020104 00000054
-# data[(1, 0)] : mode = linebuffer
+# data[(1, 0)] : mode = 0 (linebuffer)
 # data[(2, 2)] : tile_en = 1
 # data[(15, 3)] : fifo_depth = 10
 # data[(18, 16)] : almost_full_count = 0

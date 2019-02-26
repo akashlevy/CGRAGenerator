@@ -558,17 +558,17 @@ popd >& /dev/null
 #     ls -l $input
 #     ls -l $output
 
-    if ("$output:t" == "conv_1_2_CGRA_out.raw") then
-      # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
-
-      echo; echo "FOUND conv_1_2 output; converting to 9x9..."
-      ./bin/conv_1_2_convert < $output > $tmpdir/tmp.raw
-      mv $tmpdir/tmp.raw $output
-      ls -l $output
-
-      # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
-
-    endif
+    #if ("$output:t" == "conv_1_2_CGRA_out.raw") then
+    #  # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
+    #
+    #  echo; echo "FOUND conv_1_2 output; converting to 9x9..."
+    #  ./bin/conv_1_2_convert < $output > $tmpdir/tmp.raw
+    #  mv $tmpdir/tmp.raw $output
+    #  ls -l $output
+    #
+    #  # echo; set cmd = "od -t u1 $output"; echo $cmd; $cmd | head
+    #
+    #endif
 
     if ("$output:t" == "conv_bw_CGRA_out.raw") then
       echo; echo "FOUND conv_bw output; converting to 62x62..."

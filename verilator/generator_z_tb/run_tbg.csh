@@ -506,8 +506,13 @@ pushd build >& /dev/null
   # Let process_output put its garbage in 'build' directory
 
   # FIXME process_output.py has problems
+  # --
   # Hm appears to do funny hacks in case of conv_1_2 or conv_bw (which I don't use)
+  # conv_1_2 hack no longer needed i guess---removed by Jeff 03/2019
+  # FIXME check - why does conv_bw hack still work?
+  # --
   # Also no provision for one-bit output
+
   echo python3 $TestBenchGenerator/process_output.py $io_config $output bw $DELAY
   python3 $TestBenchGenerator/process_output.py $io_config $output UNUSED $DELAY
 

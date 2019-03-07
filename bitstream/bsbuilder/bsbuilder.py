@@ -128,6 +128,7 @@ global ALIAS
 ALIAS = {}
 
 ALIAS['eq'] = 'sub.eq'
+ALIAS['neq'] = 'sub.ne'
 
 # aliases (gt/lt/ge/min/max...)
 # Is this right?  I guess this is right.  Coreir uses ule/uge maybe?

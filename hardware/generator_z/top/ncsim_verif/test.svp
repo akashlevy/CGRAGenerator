@@ -22,12 +22,17 @@
 //; my $num_tracks = $self->get_top_param('num_tracks');
 //; my $use_bs = parameter(NAME => 'use_bs', val => 1);
 //; my $use_input_file = parameter(NAME => 'use_input_file', val=> 0);
-//; my $config_bs = parameter(NAME => 'config_bs', val =>'/nobackupkiwi/kongty/AHA/CGRAGenerator/hardware/generator_z/top/ncsim_verif/conv_bw_sram_reordered.bsa', DOC => "Bitstream to configure CGRA");
+//; my $config_bs = parameter(NAME => 'config_bs', val => "/horowitz/users/ajcars/conv_bw_reordered.bsa");
 //; my $input_file = parameter(NAME => 'input', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_bw/conv_bw_input.raw', DOC => "Input image to use for test");
 //; my $halide_out_file = parameter(NAME => 'halide_out', val => '/horowitz/users/ajcars/TestBenchGenerator/tests/conv_bw/conv_bw_halide_out.raw', DOC => "Output image to test against");
 //; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
 //; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
 //; my $crop = 0;
+//; my $num_cycles = parameter(NAME => "num_cycles", val => 1000);
+//; my $read_output_from_sram = parameter(NAME => "read_output_from_sram", val => 1, min => 0, max => 1, step => 1);
+//; my $output_mem_tile = parameter(NAME => 'output_mem_tile', val=> "61", doc => "tile id of output mem tile in HEX");
+//; my $output_start_addr = parameter(NAME => 'output_start_addr', val => "82", doc => "mem address to start reading outputs from in hex");
+//; my $output_end_addr = parameter(NAME => 'output_end_addr', val => "3FE", doc => "mem address to stop reading outputs from in hex");
 program automatic `mname`(
 	interface ifc,//JTAG Interface
 	inout logic [`$num_tracks-1`:0] pads_S0,
@@ -268,7 +273,7 @@ program automatic `mname`(
 	 end*/
 //; }
 //; else {
-	 for(int j=0; j<40; j++) begin
+	 for(int j=0; j<`$num_cycles`; j++) begin
 		@(posedge ifc.Clk);
 		in = $urandom_range(65535,0);
                 in = 0;
@@ -276,6 +281,18 @@ program automatic `mname`(
 			S2_in[`$num_tracks-1`-i] = in[i];	
 	 end
 //; }
+//; if ($read_output_from_sram) {
+         GC_op(write_stall, 32'hFFFF, 32'h0);
+         $display("STALL AGAIN");
+         GC_op(switch_clk, 32'h0, 32'h0);
+         $display("SWITCH BACK TO SLOW CLOCK");
+
+         $display("Now READ RESULTS FROM MEMORY");
+         for(int j='h`$output_start_addr`; j<='h`$output_end_addr`; j++) begin
+                read_config(16'h`$output_mem_tile`, 8'h3, j, 1);
+         end
+//; }
+
       end
    endtask // run_test
    task write_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register,input logic [31:0] data_in);
@@ -290,7 +307,7 @@ program automatic `mname`(
      jdrv.Send(jtag_config_trans);
      end
    endtask //write_config
-   task read_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register);
+   task read_config(input logic [15:0] tile_id, input logic [7:0] feature, input logic [7:0] register, int display = 0);
      begin
      jtag_config_trans.op = read;
      jtag_config_trans.addr = {register,feature,tile_id};
@@ -298,6 +315,9 @@ program automatic `mname`(
      jtag_config_trans.done = 0;
      jdrv.Send(jtag_config_trans);
      jtag_config_trans = jdrv.GetResult();
+     if(display) begin
+             $display("CONFIG_READ: Address: %x, Data read: %x", jtag_config_trans.addr, jtag_config_trans.data_out);
+     end
      end
    endtask //read_config
    task check_address(input logic [31:0] address, input logic [31:0] data_in);

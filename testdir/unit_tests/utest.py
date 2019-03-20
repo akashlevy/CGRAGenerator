@@ -41,8 +41,8 @@ mydir  = os.path.dirname(mypath)
 my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % mydir)
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
 my_syscall("cd %s; test -d pe ||      (git clone https://github.com/phanrahan/pe.git)" % mydir)
-my_syscall("cd %s/pe; echo 'git checkout @5c2735920ddef46b82720a3c3499d0e207f41f05'" % mydir)
-my_syscall("cd %s/pe;       git checkout @5c2735920ddef46b82720a3c3499d0e207f41f05"  % mydir)
+my_syscall("cd %s/pe; echo 'git checkout 5c2735920ddef46b82720a3c3499d0e207f41f05'" % mydir)
+my_syscall("cd %s/pe;       git checkout 5c2735920ddef46b82720a3c3499d0e207f41f05"  % mydir)
 
 
 

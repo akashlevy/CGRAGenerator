@@ -42,11 +42,13 @@ my_syscall("cd %s; test -d pe || echo 'WARNING no pe (yet); i will install'" % m
 my_syscall("cd %s; test -d pe || echo 'git clone https://github.com/phanrahan/pe.git'" % mydir)
 my_syscall("cd %s; test -d pe ||      (git clone https://github.com/phanrahan/pe.git)" % mydir)
 
-# 5c27359... is Lenny's checkin of Aug 2018 (last known good I guess)
-my_syscall("cd %s/pe; echo 'git checkout 5c2735920ddef46b82720a3c3499d0e207f41f05'" % mydir)
-my_syscall("cd %s/pe;       git checkout 5c2735920ddef46b82720a3c3499d0e207f41f05"  % mydir)
+# c50b5f6... is Lenny's checkin from Aug 2018 (last known good I guess)
+my_syscall("echo 'git -C %s/pe checkout c50b5f6'" % mydir)
+my_syscall("      git -C %s/pe checkout c50b5f6"  % mydir)
 
 
+# my_syscall("cd %s/pe; echo 'git checkout c50b5f6'" % mydir)
+# my_syscall("cd %s/pe;       git checkout c50b5f6"  % mydir)
 
 # How to check out an older version:
 # my_syscall(\

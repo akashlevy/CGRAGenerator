@@ -6,11 +6,9 @@ notifications:
   email:
     recipients:
       - steveri@stanford.edu
-      # - lenny@stanford.edu
+      - lenny@stanford.edu
     # on_success: never # default: change
     on_failure: always # default: always
-
-
 
 addons:
   apt:
@@ -48,18 +46,9 @@ script:
   ################################################################
   # Fifteen minutes for LT unit tests (background)
 
-
-
-
-
-  # Hm okay need to get lenny tests working again i guess :(
-
   # Install python dependencies - use old/known/good version(s)
   - pip install pytest numpy delegator.py bit_vector==0.42a0
-  # - pip install git+git://github.com/phanrahan/pe.git@5c2735920ddef46b82720a3c3499d0e207f41f05
-  # Wrong version maybe?
   - pip install git+git://github.com/phanrahan/pe.git@c50b5f6
-
 
   # Run python based tests
   - cd $TRAVIS_BUILD_DIR/tests/test_pe
@@ -70,26 +59,7 @@ script:
 
   - echo 'Fifteen minutes for LT unit tests (background)'
   - ../../bin/generate.csh
-  # - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
-  - pytest
-
-
-
-
-  #   # Install python dependencies - use old/known/good version(s)
-  #   - pip install pytest numpy delegator.py bit_vector==0.42a0
-  #   - pip install git+git://github.com/phanrahan/pe.git@5c2735920ddef46b82720a3c3499d0e207f41f05
-  # 
-  #   # Run python based tests
-  #   - cd $TRAVIS_BUILD_DIR/tests/test_pe
-  #   # Set env variables for genesis (installed earlier)
-  #   - export GENESIS_HOME=/tmp/Genesis2/Genesis2Tools
-  #   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
-  #   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
-  # 
-  #   - echo 'Fifteen minutes for LT unit tests (background)'
-  #   - ../../bin/generate.csh
-  #   - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
+  - pytest >& $TRAVIS_BUILD_DIR/pytest.log &
 
 
   ########################################################################

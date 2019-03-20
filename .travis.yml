@@ -2,6 +2,16 @@ dist: trusty
 language: c
 sudo: false
 
+notifications:
+  email:
+    recipients:
+      - steveri@stanford.edu
+      # - lenny@stanford.edu
+    # on_success: never # default: change
+    on_failure: always # default: always
+
+
+
 addons:
   apt:
     # sources:
@@ -46,8 +56,7 @@ script:
 
   # Install python dependencies - use old/known/good version(s)
   - pip install pytest numpy delegator.py bit_vector==0.42a0
-  # - pip install git+git://github.com/phanrahan/pe.git@5c2735920ddef46b82720a3c3499d0e207f41f05
-  - pip install git+git://github.com/phanrahan/pe.git
+  - pip install git+git://github.com/phanrahan/pe.git@5c2735920ddef46b82720a3c3499d0e207f41f05
 
   # Run python based tests
   - cd $TRAVIS_BUILD_DIR/tests/test_pe

@@ -111,7 +111,7 @@ class `mname`;
       tck_edge = 1;
       this.verbose = 1;
       this.ifc = ifc;
-      this.svf_file = svf_file;
+      this.svf_file = $fopen("test.svf", "w");
    endfunction // new
 
    /****************************************************************************

@@ -28,11 +28,11 @@
 //; my $do_config_test = parameter(NAME => 'do_config_test', val => 0);
 //; my $do_gc_op_test = parameter(NAME => 'do_gc_op_test', val => 0);
 //; my $crop = 0;
-//; my $num_cycles = parameter(NAME => "num_cycles", val => 1000);
+//; my $num_cycles = parameter(NAME => "num_cycles", val => 256);
 //; my $read_output_from_sram = parameter(NAME => "read_output_from_sram", val => 1, min => 0, max => 1, step => 1);
 //; my $output_mem_tile = parameter(NAME => 'output_mem_tile', val=> "61", doc => "tile id of output mem tile in HEX");
 //; my $output_start_addr = parameter(NAME => 'output_start_addr', val => "82", doc => "mem address to start reading outputs from in hex");
-//; my $output_end_addr = parameter(NAME => 'output_end_addr', val => "3FE", doc => "mem address to stop reading outputs from in hex");
+//; my $output_end_addr = parameter(NAME => 'output_end_addr', val => "FF", doc => "mem address to stop reading outputs from in hex");
 program automatic `mname`(
 	interface ifc,//JTAG Interface
 	inout logic [`$num_tracks-1`:0] pads_S0,

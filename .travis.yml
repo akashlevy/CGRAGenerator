@@ -38,16 +38,9 @@ script:
   ################################################################
   # Fifteen minutes for LT unit tests (background)
 
-  # Install python dependencies
+  # Install python dependencies - use old/known/good version(s)
   - pip install pytest numpy delegator.py bit_vector==0.42a0
-  # - pip install git+git://github.com/phanrahan/pe.git
-
-  # Bring in old/known/good version that works with this repo
   - pip install git+git://github.com/phanrahan/pe.git@5c2735920ddef46b82720a3c3499d0e207f41f05
-
-
-
-
 
   # Run python based tests
   - cd $TRAVIS_BUILD_DIR/tests/test_pe
@@ -55,14 +48,6 @@ script:
   - export GENESIS_HOME=/tmp/Genesis2/Genesis2Tools
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
-
-  # TEMP/DEBUG: run the one that breaks
-  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE test_unit RUN=run_tbg.csh MEMHEIGHT=short
-
-
-
-
-
 
   - echo 'Fifteen minutes for LT unit tests (background)'
   - ../../bin/generate.csh

@@ -49,6 +49,14 @@ script:
   - export PATH=$GENESIS_HOME/bin:$GENESIS_HOME/gui/bin:$PATH
   - export PERL5LIB=$GENESIS_HOME/PerlLibs/ExtrasForOldPerlDistributions:$PERL5LIB
 
+  # TEMP/DEBUG: run the one that breaks
+  - cd $TRAVIS_BUILD_DIR/testdir; make SILENT=TRUE test_unit RUN=run_tbg.csh MEMHEIGHT=short
+
+
+
+
+
+
   - echo 'Fifteen minutes for LT unit tests (background)'
   - ../../bin/generate.csh
   - pytest >& $TRAVIS_BUILD_DIR/pytest.log &

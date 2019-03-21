@@ -1,0 +1,21 @@
+1. PE-Spec.md.example should be same as (symbolic link) PE-Spec.md.wiki
+
+  diff PE-Spec.md.example PE-Spec.md.wiki
+
+2. default build_cgra.sh in master should produce a spec identical to the one in the wiki
+
+  ./gen_pe_spec.py > tmp.md
+  diff PE-Spec.md.wiki tmp.md
+
+
+==============================================================================
+OLD Goal:
+
+./gen_pe_spec.py > pe_spec.md
+c; diff -Bb pe_spec.md PE-Spec.md.example | h40
+
+./gen_optable_md.py > tmp
+diff tmp optable-example.md
+
+
+

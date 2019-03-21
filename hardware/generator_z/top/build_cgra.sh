@@ -210,6 +210,11 @@ function design_name {
 }
 
 main $*
+echo "BUILD PE SPEC"
+echo "bin/gen_pe_spec/gen_pe_spec.py > PE-Spec.md"
+bin/gen_pe_spec/gen_pe_spec.py > PE-Spec.md
+# NOTE generated PE-Spec in default master should match spec in wiki
+# diff  PE-Spec.md CGRAGenerator.wiki/PE-Spec.md || echo ERROR
 
 
 # NOTES

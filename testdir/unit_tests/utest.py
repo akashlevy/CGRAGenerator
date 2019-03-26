@@ -47,20 +47,6 @@ my_syscall("echo 'git -C %s/pe checkout c50b5f6'" % mydir)
 my_syscall("      git -C %s/pe checkout c50b5f6"  % mydir)
 
 
-# my_syscall("cd %s/pe; echo 'git checkout c50b5f6'" % mydir)
-# my_syscall("cd %s/pe;       git checkout c50b5f6"  % mydir)
-
-# How to check out an older version:
-# my_syscall(\
-#  "cd %s; test -d pe || (\
-#    git clone https://github.com/phanrahan/pe.git \
-#    && git -C pe checkout 67cab7ae574eb54c3f78014946d71832b8c631c1)"\
-#  % mydir)
-
-
-
-
-
 
 ##############################################################################
 # # Could have saved some trouble if this had been left uncommented earlier!

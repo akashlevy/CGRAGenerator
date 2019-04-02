@@ -4,9 +4,10 @@
 * CGRA SPEC: https://github.com/StanfordAHA/CGRAGenerator/wiki/PE-Spec
 -----
 <b>Documents here:</b>
-* 2groups.pdf (12/2018) - diagram of how we implemented two IO groups per side
+* io_2groups.pdf (12/2018) - diagram of how we implemented two IO groups per side
   * also see wiki https://github.com/StanfordAHA/CGRAGenerator/wiki/IOTile-Notes
-  * 2groups.svg - SVG source for 2groups.pdf
+  * IO-2groups.svg - SVG source for 2groups.pdf
+  * (original source is a gdraw file in steveri gdrive)
 * global_signals_arch.pptx - NB doc for global signals and stalls 01/2018
 * 02_23_2017_CGRA.pptx - CGRA status and overview slides presented by Ankita at AHA mtg 02/23/2017. 
 * CGRA_architecture_overview_NB_161117.pdf - CGRA Overview: Nikhil slides from 11/2016 AHA meeting.

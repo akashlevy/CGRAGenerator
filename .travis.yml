@@ -74,3 +74,8 @@ script:
   # Did LT tests pass!!??  If not, print results and FAIL
   - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && cat $TRAVIS_BUILD_DIR/pytest.log || echo "Lenny unit tests PASSED"
   - grep FAILURES $TRAVIS_BUILD_DIR/pytest.log && exit 13 || echo okay
+  
+  ########################################################################
+  # Zip and upload VCD dumps to file.io
+  - tar czvf traces.tar.gz ./verilator/generator_z_tb/*.vcd
+  - curl -F "file=@traces.tar.gz" https://file.io

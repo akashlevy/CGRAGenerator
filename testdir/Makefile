@@ -154,7 +154,7 @@ test: $(HARDWARE_TOP)/cgra_info.txt
 	   -output $(TEMPDIR)/$(IMAGE)_out.raw \
 	   -delay $(DELAY)         \
 	   -nclocks 5M \
-	   -trace output_config-$(CONFIG)_image-$(IMAGE)_delay-$(DELAY)_nclocks-5M.vcd | echo FAIL
+	   -trace output_config-$(CONFIG)_image-$(IMAGE)_delay-$(DELAY)_nclocks-5M.vcd || echo FAIL
 
 	cmp $(VERILATOR_TOP)/io/$(IMAGE)_out.raw $(TEMPDIR)/$(IMAGE)_out.raw      \
 		&& ./writelog.csh log1 PASSED `date +%R` test $(CONFIG) \

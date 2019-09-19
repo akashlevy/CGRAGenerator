@@ -5,8 +5,7 @@ sudo: false
 notifications:
   email:
     recipients:
-      - steveri@stanford.edu
-      - lenny@stanford.edu
+      - akashl@stanford.edu
     # on_success: never # default: change
     on_failure: always # default: always
 

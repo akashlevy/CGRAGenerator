@@ -122,7 +122,7 @@ cascade harris: $(CGRA_INFO)
 
 test_serpent: $(CGRA_INFO)
 	../bitstream/bsbuilder/testdir/make_bitstreams.csh $(TEMPDIR)
-	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) $(TEMPDIR) -trace
+	../bitstream/bsbuilder/testdir/test_bitstreams.csh $(TBG) -trace $(TEMPDIR)
 #	FIXME Who will delete TEMPDIR?
 
 test_serpent_dev:

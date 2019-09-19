@@ -112,7 +112,8 @@ cascade harris: $(CGRA_INFO)
 	  -input  ../../bitstream/bsbuilder/testdir/examples/$@_input.raw \
 	  -output build/$@_CGRA_out.raw \
 	  -out1   build/$@_CGRA_out1.raw \
-	  -delay 260,0 -nclocks 1M || exit 13
+	  -delay 260,0 -nclocks 1M \
+	  -trace output_config-$@_keyi.bsa_image-$@_input.raw_delay-260,0_nclocks-1M.vcd || exit 13
 
 	cd $(VERILATOR_TOP); python ./bin/keyi_compare.py  \
 	  build/$@_CGRA_out.raw build/$@_CGRA_out1.raw \
@@ -152,7 +153,8 @@ test: $(HARDWARE_TOP)/cgra_info.txt
 	   -input  io/$(IMAGE).png \
 	   -output $(TEMPDIR)/$(IMAGE)_out.raw \
 	   -delay $(DELAY)         \
-	   -nclocks 5M || echo FAIL
+	   -nclocks 5M \
+	   -trace output_config-$(CONFIG)_image-$(IMAGE)_delay-$(DELAY)_nclocks-5M.vcd | echo FAIL
 
 	cmp $(VERILATOR_TOP)/io/$(IMAGE)_out.raw $(TEMPDIR)/$(IMAGE)_out.raw      \
 		&& ./writelog.csh log1 PASSED `date +%R` test $(CONFIG) \

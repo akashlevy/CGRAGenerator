@@ -77,5 +77,8 @@ script:
   
   ########################################################################
   # Zip and upload VCD dumps to file.io
-  - tar czvf traces.tar.gz ./verilator/generator_z_tb/*.vcd
+  - pwd
+  - ls
+  - tar czvf traces.tar.gz /home/travis/build/akashlevy/CGRAGenerator/verilator/generator_z_tb/*.vcd
+  - ls
   - curl -F "file=@traces.tar.gz" https://file.io

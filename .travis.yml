@@ -81,7 +81,9 @@ script:
   - ls
   - tar czvf traces.tar.gz /home/travis/build/akashlevy/CGRAGenerator/verilator/generator_z_tb/*.vcd
   - ls
-  - curl --upload-file ./traces.tar.gz https://transfer.sh/traces.tar.gz >curl_out.log 2>&1
+  - curl https://www.keycdn.com/
+  - curl -v https://www.keycdn.com/
+  - curl -v --upload-file ./traces.tar.gz https://transfer.sh/traces.tar.gz >curl_out.log
   - cat curl_out.log
-  - curl -F "file=@traces.tar.gz" https://file.io >curl2_out.log 2>&1
+  - curl -v -F "file=@traces.tar.gz" https://file.io >curl2_out.log
   - cat curl2_out.log
